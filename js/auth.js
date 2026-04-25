@@ -11,12 +11,6 @@
    La sécurité est assurée par les Row Level Security policies côté serveur.
 */
 
-const SUPABASE_URL  = 'https://VOTRE-PROJET.supabase.co';
-const SUPABASE_ANON = 'VOTRE_CLE_ANON_PUBLIQUE';
-
-// ── Client Supabase (chargé via CDN) ──
-const _sb = window.supabase?.createClient(SUPABASE_URL, SUPABASE_ANON);
-
 // ── Helpers ──
 function $id(id) { return document.getElementById(id); }
 
@@ -137,20 +131,35 @@ function showConfirmation() {
 /* ────────────────────────────────────────────
    Initialisation principale
 ──────────────────────────────────────────────*/
-function initAuth() {
-  // Supabase non configuré → mode silencieux (pas d'erreur affichée)
-  if (!_sb || SUPABASE_URL.includes('VOTRE-PROJET')) {
-    console.info('[PrionsEnLigne] Auth Supabase non configurée. Remplacez SUPABASE_URL et SUPABASE_ANON dans js/auth.js');
+async function initAuth() {
+  // Récupère les credentials depuis le endpoint Vercel
+  let sb;
+  try {
+    const res = await fetch('/api/config');
+    if (!res.ok) throw new Error('config fetch failed');
+    const { supabaseUrl, supabaseAnon } = await res.json();
+    if (!supabaseUrl || !supabaseAnon) {
+      console.info('[PrionsEnLigne] Supabase non configuré (variables d\'environnement manquantes).');
+      return;
+    }
+    sb = window.supabase?.createClient(supabaseUrl, supabaseAnon);
+  } catch (err) {
+    console.info('[PrionsEnLigne] Impossible de récupérer la config Supabase :', err.message);
+    return;
+  }
+
+  if (!sb) {
+    console.info('[PrionsEnLigne] Supabase SDK introuvable (CDN non chargé ?).');
     return;
   }
 
   // Récupère la session existante
-  _sb.auth.getSession().then(({ data }) => {
+  sb.auth.getSession().then(({ data }) => {
     updateHeaderUI(data.session?.user || null);
   });
 
   // Écoute les changements d'état (login / logout)
-  _sb.auth.onAuthStateChange((_event, session) => {
+  sb.auth.onAuthStateChange((_event, session) => {
     updateHeaderUI(session?.user || null);
   });
 
@@ -162,7 +171,7 @@ function initAuth() {
 
   // Déconnexion
   $id('hm-signout')?.addEventListener('click', async () => {
-    await _sb.auth.signOut();
+    await sb.auth.signOut();
     $id('hamburger-menu')?.classList.add('hidden');
   });
 
@@ -190,7 +199,7 @@ function initAuth() {
     setAuthLoading(true);
 
     if (isSignup) {
-      const { error } = await _sb.auth.signUp({
+      const { error } = await sb.auth.signUp({
         email,
         password,
         options: { data: { name: name || email.split('@')[0] } },
@@ -199,7 +208,7 @@ function initAuth() {
       if (error) { showAuthError(translateSupabaseError(error)); return; }
       showConfirmation();
     } else {
-      const { error } = await _sb.auth.signInWithPassword({ email, password });
+      const { error } = await sb.auth.signInWithPassword({ email, password });
       setAuthLoading(false);
       if (error) { showAuthError(translateSupabaseError(error)); return; }
       closeAuthModal();
