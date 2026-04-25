@@ -128,23 +128,56 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
   font-weight: 500;
 }
 
-/* User */
+/* User / Burger */
 .header-user {
   display: flex;
   align-items: center;
-  gap: 8px;
   flex-shrink: 0;
+  position: relative;
 }
-.user-avatar {
-  width: 30px; height: 30px;
-  border-radius: 50%;
-  background: rgba(201,168,76,.25);
-  border: 1px solid var(--gold);
-  color: var(--gold);
+
+.hamburger-btn {
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.15);
+  color: var(--cream);
+  width: 36px; height: 36px;
+  border-radius: var(--r-md);
+  cursor: pointer;
+  font-size: 15px;
+  transition: background .15s;
   display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 500;
 }
-.user-name { color: rgba(245,240,232,.7); font-size: 13px; }
+.hamburger-btn:hover { background: rgba(255,255,255,.2); }
+
+/* Dropdown burger */
+.hamburger-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  background: white;
+  border: 1px solid var(--border-mid);
+  border-radius: var(--r-lg);
+  padding: 6px 0;
+  min-width: 190px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.15);
+  z-index: 300;
+  animation: fadeIn .15s ease;
+}
+.hamburger-menu.hidden { display: none; }
+
+.hm-item {
+  padding: 10px 18px;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: background .1s;
+}
+.hm-item:hover { background: var(--cream-mid); color: var(--navy); }
+.hm-item i { color: var(--text-soft); width: 16px; text-align: center; font-size: 13px; }
+.hm-divider { height: 1px; background: var(--border); margin: 4px 0; }
 
 
 /* ══════════════════════════════════════════════
@@ -913,6 +946,12 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
   flex-shrink: 0;
 }
 
+.rp-vol-icon {
+  color: rgba(245,240,232,.45);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
 .rp-btn-play {
   width: 36px; height: 36px;
   border-radius: 50%;
@@ -1068,7 +1107,7 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   font-family: 'Outfit', sans-serif;
   font-size: 10px;
   color: var(--text-soft);
@@ -1079,13 +1118,11 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
   transition: color .15s;
 }
 .bn.active { color: var(--navy); }
-.bn-dot {
-  width: 5px; height: 5px;
-  border-radius: 50%;
-  background: currentColor;
+.bn-icon {
+  font-size: 17px;
   transition: transform .15s;
 }
-.bn.active .bn-dot { transform: scale(1.4); }
+.bn.active .bn-icon { transform: scale(1.1); }
 
 
 /* ══════════════════════════════════════════════

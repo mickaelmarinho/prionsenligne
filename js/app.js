@@ -410,7 +410,17 @@ function initRadioPlayer() {
   if (!player || !audio) return;
 
   audio.volume = 0.8;
-  let currentWeb = '';
+
+  // On traque la source courante avec une variable dédiée
+  // (évite le bug de comparaison audio.src qui retourne l'URL absolue résolue)
+  let currentStream = '';
+  let currentWeb    = '';
+
+  function setIcon(playing) {
+    playIcon.className = playing
+      ? 'fa-solid fa-pause'
+      : 'fa-solid fa-play';
+  }
 
   function showPlayer(name, prayer, time) {
     nameEl.textContent = name;
@@ -421,20 +431,20 @@ function initRadioPlayer() {
 
   function closePlayer() {
     audio.pause();
-    audio.src = '';
+    audio.removeAttribute('src');
+    audio.load();
+    currentStream = '';
     player.classList.remove('visible');
     document.body.classList.remove('player-open');
-    playIcon.textContent = '▶';
+    setIcon(false);
   }
 
   playBtn.addEventListener('click', () => {
     if (audio.paused) {
-      audio.play()
-        .then(() => { playIcon.textContent = '⏸'; })
-        .catch(() => {});
+      audio.play().then(() => setIcon(true)).catch(() => {});
     } else {
       audio.pause();
-      playIcon.textContent = '▶';
+      setIcon(false);
     }
   });
 
@@ -459,23 +469,53 @@ function initRadioPlayer() {
 
       currentWeb = web;
 
+      // Pas de stream direct → ouvre le player web dans un nouvel onglet
       if (!stream) {
         window.open(web, '_blank', 'noopener');
         return;
       }
 
-      if (audio.src !== stream) {
-        audio.src = stream;
+      // Charge le nouveau flux uniquement s'il est différent du courant
+      if (stream !== currentStream) {
+        audio.pause();
+        audio.src   = stream;
+        currentStream = stream;
+        audio.load();
       }
 
       showPlayer(name, prayer, time);
       audio.play()
-        .then(() => { playIcon.textContent = '⏸'; })
+        .then(() => setIcon(true))
         .catch(() => {
+          // Mixed content ou flux non disponible → ouvre le site
           closePlayer();
           if (web) window.open(web, '_blank', 'noopener');
         });
     });
+  });
+}
+
+
+/* ────────────────────────────────────────────
+   7. MENU BURGER
+──────────────────────────────────────────────*/
+
+function initHamburger() {
+  const btn  = document.getElementById('hamburger-btn');
+  const menu = document.getElementById('hamburger-menu');
+  if (!btn || !menu) return;
+
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    const isOpen = !menu.classList.contains('hidden');
+    menu.classList.toggle('hidden');
+    btn.setAttribute('aria-expanded', String(!isOpen));
+  });
+
+  // Ferme en cliquant ailleurs
+  document.addEventListener('click', () => {
+    menu.classList.add('hidden');
+    btn.setAttribute('aria-expanded', 'false');
   });
 }
 
@@ -490,4 +530,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initCalendar();
   initBreviary();
   initRadioPlayer();
+  initHamburger();
 });

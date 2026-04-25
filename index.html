@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
@@ -24,14 +25,23 @@
         <span class="logo-name">PrionsEnLigne</span>
       </div>
       <nav class="main-nav">
-        <button class="nav-tab active" data-tab="aujourd">Aujourd'hui</button>
-        <button class="nav-tab" data-tab="semaine">Semaine</button>
-        <button class="nav-tab" data-tab="mois">Mois</button>
-        <button class="nav-tab" data-tab="sources">Sources</button>
+        <button class="nav-tab active" data-tab="aujourd"><i class="fa-solid fa-sun"></i> Aujourd'hui</button>
+        <button class="nav-tab" data-tab="semaine"><i class="fa-solid fa-calendar-week"></i> Semaine</button>
+        <button class="nav-tab" data-tab="mois"><i class="fa-solid fa-calendar"></i> Mois</button>
+        <button class="nav-tab" data-tab="sources"><i class="fa-solid fa-tower-broadcast"></i> Sources</button>
       </nav>
       <div class="header-user">
-        <div class="user-avatar">M</div>
-        <span class="user-name">Mickaël</span>
+        <button class="hamburger-btn" id="hamburger-btn" aria-label="Menu" aria-expanded="false">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+      </div>
+
+      <!-- Dropdown menu burger -->
+      <div id="hamburger-menu" class="hamburger-menu hidden" role="menu">
+        <div class="hm-item"><i class="fa-solid fa-user"></i> Mon compte</div>
+        <div class="hm-item"><i class="fa-solid fa-bell"></i> Notifications</div>
+        <div class="hm-divider"></div>
+        <div class="hm-item"><i class="fa-solid fa-circle-info"></i> À propos</div>
       </div>
     </div>
   </header>
@@ -54,13 +64,13 @@
 
       <!-- Filtres prières -->
       <div class="prayer-filters">
-        <button class="pf active pf-all"      data-filter="all">Tout</button>
-        <button class="pf pf-laudes"          data-filter="laudes">Laudes</button>
-        <button class="pf pf-matin"           data-filter="matin">Prière du matin</button>
-        <button class="pf pf-messe"           data-filter="messe">Messe</button>
-        <button class="pf pf-chapelet"        data-filter="chapelet">Chapelet</button>
-        <button class="pf pf-vepres"          data-filter="vepres">Vêpres</button>
-        <button class="pf pf-complies"        data-filter="complies">Complies</button>
+        <button class="pf active pf-all"   data-filter="all"><i class="fa-solid fa-grip"></i> Tout</button>
+        <button class="pf pf-laudes"       data-filter="laudes"><i class="fa-solid fa-sun"></i> Laudes</button>
+        <button class="pf pf-matin"        data-filter="matin"><i class="fa-solid fa-mug-hot"></i> Matin</button>
+        <button class="pf pf-messe"        data-filter="messe"><i class="fa-solid fa-church"></i> Messe</button>
+        <button class="pf pf-chapelet"     data-filter="chapelet"><i class="fa-solid fa-circle-dot"></i> Chapelet</button>
+        <button class="pf pf-vepres"       data-filter="vepres"><i class="fa-solid fa-cloud-sun"></i> Vêpres</button>
+        <button class="pf pf-complies"     data-filter="complies"><i class="fa-solid fa-moon"></i> Complies</button>
       </div>
 
       <!-- Timeline -->
@@ -75,12 +85,12 @@
               <button class="tl-src radio"
                 data-name="Radio Maria France" data-prayer="Laudes" data-time="6h00"
                 data-stream="https://stream.radiomaria.fr/radiomariafrance-hd.mp3"
-                data-web="https://www.radiomaria.fr">&#9654; Radio Maria France</button>
+                data-web="https://www.radiomaria.fr"><i class="fa-solid fa-tower-broadcast"></i> Radio Maria France</button>
             </div>
           </div>
           <div class="tl-actions">
             <span class="tl-badge badge-radio">Radio</span>
-            <button class="tl-breviary-btn" data-prayer="laudes">Lire le bréviaire</button>
+            <button class="tl-breviary-btn" data-prayer="laudes"><i class="fa-solid fa-book-open"></i> Bréviaire</button>
           </div>
         </article>
 
@@ -93,12 +103,12 @@
               <button class="tl-src radio"
                 data-name="Radio Espérance" data-prayer="Prière du matin" data-time="8h00"
                 data-stream=""
-                data-web="https://www.radio-esperance.fr/player/">&#9654; Radio Espérance</button>
+                data-web="https://www.radio-esperance.fr/player/"><i class="fa-solid fa-tower-broadcast"></i> Radio Espérance</button>
             </div>
           </div>
           <div class="tl-actions">
             <span class="tl-badge badge-radio">Radio</span>
-            <button class="tl-breviary-btn" data-prayer="matin">Lire le bréviaire</button>
+            <button class="tl-breviary-btn" data-prayer="matin"><i class="fa-solid fa-book-open"></i> Bréviaire</button>
           </div>
         </article>
 
@@ -111,13 +121,13 @@
               <button class="tl-src radio"
                 data-name="Radio Notre-Dame" data-prayer="Sainte Messe" data-time="11h00"
                 data-stream="https://windu.radionotredame.net/RadioNotreDame-Fm.mp3"
-                data-web="https://www.radionotredame.net">&#9654; Radio Notre-Dame</button>
-              <a class="tl-src youtube" href="https://www.ktotv.com" target="_blank" rel="noopener">&#9654; KTO YouTube</a>
+                data-web="https://www.radionotredame.net"><i class="fa-solid fa-tower-broadcast"></i> Radio Notre-Dame</button>
+              <a class="tl-src youtube" href="https://www.ktotv.com" target="_blank" rel="noopener"><i class="fa-brands fa-youtube"></i> KTO YouTube</a>
             </div>
           </div>
           <div class="tl-actions">
             <span class="tl-badge badge-live">En direct</span>
-            <button class="tl-breviary-btn" data-prayer="messe">Lire les textes</button>
+            <button class="tl-breviary-btn" data-prayer="messe"><i class="fa-solid fa-book-open"></i> Textes</button>
           </div>
         </article>
 
@@ -130,13 +140,13 @@
               <button class="tl-src radio"
                 data-name="Radio Maria France" data-prayer="Chapelet" data-time="15h00"
                 data-stream="https://stream.radiomaria.fr/radiomariafrance-hd.mp3"
-                data-web="https://www.radiomaria.fr">&#9654; Radio Maria</button>
-              <a class="tl-src youtube" href="https://www.lourdes-france.org" target="_blank" rel="noopener">&#9654; Lourdes YouTube</a>
+                data-web="https://www.radiomaria.fr"><i class="fa-solid fa-tower-broadcast"></i> Radio Maria</button>
+              <a class="tl-src youtube" href="https://www.lourdes-france.org" target="_blank" rel="noopener"><i class="fa-brands fa-youtube"></i> Lourdes YouTube</a>
             </div>
           </div>
           <div class="tl-actions">
             <span class="tl-badge badge-live">En direct</span>
-            <button class="tl-breviary-btn" data-prayer="chapelet">Lire les mystères</button>
+            <button class="tl-breviary-btn" data-prayer="chapelet"><i class="fa-solid fa-book-open"></i> Mystères</button>
           </div>
         </article>
 
@@ -149,12 +159,12 @@
               <button class="tl-src radio"
                 data-name="Radio Notre-Dame" data-prayer="Vêpres" data-time="17h30"
                 data-stream="https://windu.radionotredame.net/RadioNotreDame-Fm.mp3"
-                data-web="https://www.radionotredame.net">&#9654; Radio Notre-Dame</button>
+                data-web="https://www.radionotredame.net"><i class="fa-solid fa-tower-broadcast"></i> Radio Notre-Dame</button>
             </div>
           </div>
           <div class="tl-actions">
             <span class="tl-badge badge-soon">Dans 2h</span>
-            <button class="tl-breviary-btn" data-prayer="vepres">Lire le bréviaire</button>
+            <button class="tl-breviary-btn" data-prayer="vepres"><i class="fa-solid fa-book-open"></i> Bréviaire</button>
           </div>
         </article>
 
@@ -167,12 +177,12 @@
               <button class="tl-src radio"
                 data-name="Radio Espérance" data-prayer="Complies" data-time="21h00"
                 data-stream=""
-                data-web="https://www.radio-esperance.fr/player/">&#9654; Radio Espérance</button>
+                data-web="https://www.radio-esperance.fr/player/"><i class="fa-solid fa-tower-broadcast"></i> Radio Espérance</button>
             </div>
           </div>
           <div class="tl-actions">
             <span class="tl-badge badge-later">Ce soir</span>
-            <button class="tl-breviary-btn" data-prayer="complies">Lire le bréviaire</button>
+            <button class="tl-breviary-btn" data-prayer="complies"><i class="fa-solid fa-book-open"></i> Bréviaire</button>
           </div>
         </article>
 
@@ -632,7 +642,7 @@
         <div class="breviary-prayer-name" id="brev-prayer-name">Laudes</div>
         <div class="breviary-date" id="brev-date">Samedi 26 avril 2026</div>
       </div>
-      <button class="breviary-close" id="brev-close" aria-label="Fermer le bréviaire">✕</button>
+      <button class="breviary-close" id="brev-close" aria-label="Fermer le bréviaire"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="breviary-body" id="brev-body">
       <div class="brev-loading">
@@ -658,10 +668,11 @@
     </div>
     <div class="rp-controls">
       <button class="rp-btn-play" id="rp-play" aria-label="Lecture / Pause">
-        <span id="rp-icon">&#9654;</span>
+        <i id="rp-icon" class="fa-solid fa-play"></i>
       </button>
+      <i class="fa-solid fa-volume-low rp-vol-icon"></i>
       <input type="range" class="rp-vol" id="rp-vol" min="0" max="1" step="0.05" value="0.8" aria-label="Volume">
-      <button class="rp-btn-close" id="rp-close" aria-label="Fermer le lecteur">&#x2715;</button>
+      <button class="rp-btn-close" id="rp-close" aria-label="Fermer le lecteur"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <audio id="rp-audio" preload="none"></audio>
   </div>
@@ -672,24 +683,24 @@
   ═══════════════════════════════════════════ -->
   <nav class="bottom-nav">
     <button class="bn active" data-tab="aujourd">
-      <span class="bn-dot"></span>
+      <i class="fa-solid fa-sun bn-icon"></i>
       <span>Accueil</span>
     </button>
     <button class="bn" data-tab="semaine">
-      <span class="bn-dot"></span>
+      <i class="fa-solid fa-calendar-week bn-icon"></i>
       <span>Semaine</span>
     </button>
     <button class="bn" data-tab="mois">
-      <span class="bn-dot"></span>
+      <i class="fa-solid fa-calendar bn-icon"></i>
       <span>Mois</span>
     </button>
     <button class="bn" data-tab="sources">
-      <span class="bn-dot"></span>
+      <i class="fa-solid fa-tower-broadcast bn-icon"></i>
       <span>Sources</span>
     </button>
     <button class="bn" id="bn-compte">
-      <span class="bn-dot"></span>
-      <span>Mon compte</span>
+      <i class="fa-solid fa-bars bn-icon"></i>
+      <span>Menu</span>
     </button>
   </nav>
 
