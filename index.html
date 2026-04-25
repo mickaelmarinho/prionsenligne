@@ -71,7 +71,12 @@
           <div class="tl-marker laudes"></div>
           <div class="tl-body">
             <h3 class="tl-prayer">Laudes</h3>
-            <p class="tl-source">Radio Maria France</p>
+            <div class="tl-sources">
+              <button class="tl-src radio"
+                data-name="Radio Maria France" data-prayer="Laudes" data-time="6h00"
+                data-stream="https://stream.radiomaria.fr/radiomariafrance-hd.mp3"
+                data-web="https://www.radiomaria.fr">&#9654; Radio Maria France</button>
+            </div>
           </div>
           <div class="tl-actions">
             <span class="tl-badge badge-radio">Radio</span>
@@ -84,7 +89,12 @@
           <div class="tl-marker matin"></div>
           <div class="tl-body">
             <h3 class="tl-prayer">Prière du matin</h3>
-            <p class="tl-source">Radio Espérance</p>
+            <div class="tl-sources">
+              <button class="tl-src radio"
+                data-name="Radio Espérance" data-prayer="Prière du matin" data-time="8h00"
+                data-stream=""
+                data-web="https://www.radio-esperance.fr/player/">&#9654; Radio Espérance</button>
+            </div>
           </div>
           <div class="tl-actions">
             <span class="tl-badge badge-radio">Radio</span>
@@ -97,7 +107,13 @@
           <div class="tl-marker messe"></div>
           <div class="tl-body">
             <h3 class="tl-prayer">Sainte Messe</h3>
-            <p class="tl-source">Radio Notre-Dame · KTO YouTube</p>
+            <div class="tl-sources">
+              <button class="tl-src radio"
+                data-name="Radio Notre-Dame" data-prayer="Sainte Messe" data-time="11h00"
+                data-stream="https://windu.radionotredame.net/RadioNotreDame-Fm.mp3"
+                data-web="https://www.radionotredame.net">&#9654; Radio Notre-Dame</button>
+              <a class="tl-src youtube" href="https://www.ktotv.com" target="_blank" rel="noopener">&#9654; KTO YouTube</a>
+            </div>
           </div>
           <div class="tl-actions">
             <span class="tl-badge badge-live">En direct</span>
@@ -110,7 +126,13 @@
           <div class="tl-marker chapelet"></div>
           <div class="tl-body">
             <h3 class="tl-prayer">Chapelet</h3>
-            <p class="tl-source">Radio Maria · Sanctuaire de Lourdes YouTube</p>
+            <div class="tl-sources">
+              <button class="tl-src radio"
+                data-name="Radio Maria France" data-prayer="Chapelet" data-time="15h00"
+                data-stream="https://stream.radiomaria.fr/radiomariafrance-hd.mp3"
+                data-web="https://www.radiomaria.fr">&#9654; Radio Maria</button>
+              <a class="tl-src youtube" href="https://www.lourdes-france.org" target="_blank" rel="noopener">&#9654; Lourdes YouTube</a>
+            </div>
           </div>
           <div class="tl-actions">
             <span class="tl-badge badge-live">En direct</span>
@@ -123,7 +145,12 @@
           <div class="tl-marker vepres"></div>
           <div class="tl-body">
             <h3 class="tl-prayer">Vêpres</h3>
-            <p class="tl-source">Radio Notre-Dame</p>
+            <div class="tl-sources">
+              <button class="tl-src radio"
+                data-name="Radio Notre-Dame" data-prayer="Vêpres" data-time="17h30"
+                data-stream="https://windu.radionotredame.net/RadioNotreDame-Fm.mp3"
+                data-web="https://www.radionotredame.net">&#9654; Radio Notre-Dame</button>
+            </div>
           </div>
           <div class="tl-actions">
             <span class="tl-badge badge-soon">Dans 2h</span>
@@ -136,7 +163,12 @@
           <div class="tl-marker complies"></div>
           <div class="tl-body">
             <h3 class="tl-prayer">Complies</h3>
-            <p class="tl-source">Radio Espérance</p>
+            <div class="tl-sources">
+              <button class="tl-src radio"
+                data-name="Radio Espérance" data-prayer="Complies" data-time="21h00"
+                data-stream=""
+                data-web="https://www.radio-esperance.fr/player/">&#9654; Radio Espérance</button>
+            </div>
           </div>
           <div class="tl-actions">
             <span class="tl-badge badge-later">Ce soir</span>
@@ -162,112 +194,196 @@
     <!-- ──────────── SEMAINE ──────────── -->
     <section id="tab-semaine" class="tab-section">
 
-      <div class="week-grid-wrap">
-        <div class="week-table">
+      <div class="week-cards-wrap">
+        <div class="week-cards">
 
-          <!-- En-tête jours -->
-          <div class="wt-header">
-            <div class="wt-label-col"></div>
-            <div class="wt-day-head">Lun<br><span>21</span></div>
-            <div class="wt-day-head">Mar<br><span>22</span></div>
-            <div class="wt-day-head">Mer<br><span>23</span></div>
-            <div class="wt-day-head">Jeu<br><span>24</span></div>
-            <div class="wt-day-head">Ven<br><span>25</span></div>
-            <div class="wt-day-head today-col">Sam<br><span>26</span></div>
-            <div class="wt-day-head">Dim<br><span>27</span></div>
-          </div>
-
-          <!-- Ligne Laudes -->
-          <div class="wt-row">
-            <div class="wt-label laudes-label">
-              <div class="wt-dot laudes"></div>
-              <span>6h · Laudes</span>
+          <!-- Lundi 21 -->
+          <div class="wc-day">
+            <div class="wc-head">
+              <span class="wc-dayname">Lun</span>
+              <span class="wc-daynum">21</span>
             </div>
-            <div class="wt-cell"><div class="wt-pill laudes">Maria</div></div>
-            <div class="wt-cell"><div class="wt-pill laudes">Maria</div></div>
-            <div class="wt-cell"><div class="wt-pill laudes">Maria</div></div>
-            <div class="wt-cell empty"></div>
-            <div class="wt-cell"><div class="wt-pill laudes">Maria</div></div>
-            <div class="wt-cell today-col"><div class="wt-pill laudes">Maria</div></div>
-            <div class="wt-cell empty"></div>
-          </div>
-
-          <!-- Ligne Matin -->
-          <div class="wt-row">
-            <div class="wt-label matin-label">
-              <div class="wt-dot matin"></div>
-              <span>8h · Matin</span>
+            <div class="wc-slots">
+              <div class="wc-slot laudes">
+                <span class="wc-time">6h · Laudes</span>
+                <span class="wc-name">Radio Maria</span>
+              </div>
+              <div class="wc-slot messe">
+                <span class="wc-time">11h · Messe</span>
+                <span class="wc-name">Notre-Dame</span>
+              </div>
+              <div class="wc-slot chapelet">
+                <span class="wc-time">15h · Chapelet</span>
+                <span class="wc-name">Radio Maria</span>
+              </div>
+              <div class="wc-slot complies">
+                <span class="wc-time">21h · Complies</span>
+                <span class="wc-name">Espérance</span>
+              </div>
             </div>
-            <div class="wt-cell empty"></div>
-            <div class="wt-cell"><div class="wt-pill matin">Espérance</div></div>
-            <div class="wt-cell empty"></div>
-            <div class="wt-cell"><div class="wt-pill matin">Espérance</div></div>
-            <div class="wt-cell empty"></div>
-            <div class="wt-cell today-col"><div class="wt-pill matin">Espérance</div></div>
-            <div class="wt-cell empty"></div>
           </div>
 
-          <!-- Ligne Messe -->
-          <div class="wt-row">
-            <div class="wt-label messe-label">
-              <div class="wt-dot messe"></div>
-              <span>11h · Messe</span>
+          <!-- Mardi 22 -->
+          <div class="wc-day">
+            <div class="wc-head">
+              <span class="wc-dayname">Mar</span>
+              <span class="wc-daynum">22</span>
             </div>
-            <div class="wt-cell"><div class="wt-pill messe">Notre-Dame</div></div>
-            <div class="wt-cell"><div class="wt-pill messe">KTO</div></div>
-            <div class="wt-cell"><div class="wt-pill messe">YouTube</div></div>
-            <div class="wt-cell"><div class="wt-pill messe">Notre-Dame</div></div>
-            <div class="wt-cell"><div class="wt-pill messe">Notre-Dame</div></div>
-            <div class="wt-cell today-col"><div class="wt-pill messe">N-D + KTO</div></div>
-            <div class="wt-cell"><div class="wt-pill messe">KTO Dom.</div></div>
-          </div>
-
-          <!-- Ligne Chapelet -->
-          <div class="wt-row">
-            <div class="wt-label chapelet-label">
-              <div class="wt-dot chapelet"></div>
-              <span>15h · Chapelet</span>
+            <div class="wc-slots">
+              <div class="wc-slot laudes">
+                <span class="wc-time">6h · Laudes</span>
+                <span class="wc-name">Radio Maria</span>
+              </div>
+              <div class="wc-slot matin">
+                <span class="wc-time">8h · Matin</span>
+                <span class="wc-name">Espérance</span>
+              </div>
+              <div class="wc-slot messe">
+                <span class="wc-time">11h · Messe</span>
+                <span class="wc-name">KTO</span>
+              </div>
+              <div class="wc-slot chapelet">
+                <span class="wc-time">15h · Chapelet</span>
+                <span class="wc-name">Lourdes YT</span>
+              </div>
+              <div class="wc-slot vepres">
+                <span class="wc-time">17h30 · Vêpres</span>
+                <span class="wc-name">Notre-Dame</span>
+              </div>
             </div>
-            <div class="wt-cell"><div class="wt-pill chapelet">Maria</div></div>
-            <div class="wt-cell"><div class="wt-pill chapelet">Lourdes</div></div>
-            <div class="wt-cell"><div class="wt-pill chapelet">Maria</div></div>
-            <div class="wt-cell"><div class="wt-pill chapelet">Maria</div></div>
-            <div class="wt-cell"><div class="wt-pill chapelet">Notre-Dame</div></div>
-            <div class="wt-cell today-col"><div class="wt-pill chapelet">Maria+Lourdes</div></div>
-            <div class="wt-cell"><div class="wt-pill chapelet">Lourdes YT</div></div>
           </div>
 
-          <!-- Ligne Vêpres -->
-          <div class="wt-row">
-            <div class="wt-label vepres-label">
-              <div class="wt-dot vepres"></div>
-              <span>17h30 · Vêpres</span>
+          <!-- Mercredi 23 -->
+          <div class="wc-day">
+            <div class="wc-head">
+              <span class="wc-dayname">Mer</span>
+              <span class="wc-daynum">23</span>
             </div>
-            <div class="wt-cell empty"></div>
-            <div class="wt-cell"><div class="wt-pill vepres">Notre-Dame</div></div>
-            <div class="wt-cell empty"></div>
-            <div class="wt-cell empty"></div>
-            <div class="wt-cell"><div class="wt-pill vepres">Notre-Dame</div></div>
-            <div class="wt-cell today-col"><div class="wt-pill vepres">Notre-Dame</div></div>
-            <div class="wt-cell"><div class="wt-pill vepres">Notre-Dame</div></div>
-          </div>
-
-          <!-- Ligne Complies -->
-          <div class="wt-row">
-            <div class="wt-label complies-label">
-              <div class="wt-dot complies"></div>
-              <span>21h · Complies</span>
+            <div class="wc-slots">
+              <div class="wc-slot laudes">
+                <span class="wc-time">6h · Laudes</span>
+                <span class="wc-name">Radio Maria</span>
+              </div>
+              <div class="wc-slot messe">
+                <span class="wc-time">11h · Messe</span>
+                <span class="wc-name">YouTube</span>
+              </div>
+              <div class="wc-slot chapelet">
+                <span class="wc-time">15h · Chapelet</span>
+                <span class="wc-name">Radio Maria</span>
+              </div>
             </div>
-            <div class="wt-cell"><div class="wt-pill complies">Espérance</div></div>
-            <div class="wt-cell empty"></div>
-            <div class="wt-cell empty"></div>
-            <div class="wt-cell"><div class="wt-pill complies">Espérance</div></div>
-            <div class="wt-cell empty"></div>
-            <div class="wt-cell today-col"><div class="wt-pill complies">Espérance</div></div>
-            <div class="wt-cell empty"></div>
           </div>
 
-        </div><!-- /week-table -->
+          <!-- Jeudi 24 -->
+          <div class="wc-day">
+            <div class="wc-head">
+              <span class="wc-dayname">Jeu</span>
+              <span class="wc-daynum">24</span>
+            </div>
+            <div class="wc-slots">
+              <div class="wc-slot matin">
+                <span class="wc-time">8h · Matin</span>
+                <span class="wc-name">Espérance</span>
+              </div>
+              <div class="wc-slot messe">
+                <span class="wc-time">11h · Messe</span>
+                <span class="wc-name">Notre-Dame</span>
+              </div>
+              <div class="wc-slot chapelet">
+                <span class="wc-time">15h · Chapelet</span>
+                <span class="wc-name">Radio Maria</span>
+              </div>
+              <div class="wc-slot complies">
+                <span class="wc-time">21h · Complies</span>
+                <span class="wc-name">Espérance</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Vendredi 25 -->
+          <div class="wc-day">
+            <div class="wc-head">
+              <span class="wc-dayname">Ven</span>
+              <span class="wc-daynum">25</span>
+            </div>
+            <div class="wc-slots">
+              <div class="wc-slot laudes">
+                <span class="wc-time">6h · Laudes</span>
+                <span class="wc-name">Radio Maria</span>
+              </div>
+              <div class="wc-slot messe">
+                <span class="wc-time">11h · Messe</span>
+                <span class="wc-name">Notre-Dame</span>
+              </div>
+              <div class="wc-slot chapelet">
+                <span class="wc-time">15h · Chapelet</span>
+                <span class="wc-name">Notre-Dame</span>
+              </div>
+              <div class="wc-slot vepres">
+                <span class="wc-time">17h30 · Vêpres</span>
+                <span class="wc-name">Notre-Dame</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Samedi 26 — Aujourd'hui -->
+          <div class="wc-day today-day">
+            <div class="wc-head">
+              <span class="wc-dayname">Sam</span>
+              <span class="wc-daynum">26</span>
+            </div>
+            <div class="wc-slots">
+              <div class="wc-slot laudes">
+                <span class="wc-time">6h · Laudes</span>
+                <span class="wc-name">Radio Maria</span>
+              </div>
+              <div class="wc-slot matin">
+                <span class="wc-time">8h · Matin</span>
+                <span class="wc-name">Espérance</span>
+              </div>
+              <div class="wc-slot messe">
+                <span class="wc-time">11h · Messe</span>
+                <span class="wc-name">N-D + KTO</span>
+              </div>
+              <div class="wc-slot chapelet">
+                <span class="wc-time">15h · Chapelet</span>
+                <span class="wc-name">Maria + Lourdes</span>
+              </div>
+              <div class="wc-slot vepres">
+                <span class="wc-time">17h30 · Vêpres</span>
+                <span class="wc-name">Notre-Dame</span>
+              </div>
+              <div class="wc-slot complies">
+                <span class="wc-time">21h · Complies</span>
+                <span class="wc-name">Espérance</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dimanche 27 -->
+          <div class="wc-day">
+            <div class="wc-head">
+              <span class="wc-dayname">Dim</span>
+              <span class="wc-daynum">27</span>
+            </div>
+            <div class="wc-slots">
+              <div class="wc-slot messe">
+                <span class="wc-time">11h · Messe</span>
+                <span class="wc-name">KTO Dom.</span>
+              </div>
+              <div class="wc-slot chapelet">
+                <span class="wc-time">15h · Chapelet</span>
+                <span class="wc-name">Lourdes YT</span>
+              </div>
+              <div class="wc-slot vepres">
+                <span class="wc-time">17h30 · Vêpres</span>
+                <span class="wc-name">Notre-Dame</span>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /week-cards -->
       </div>
 
       <div class="legend">
@@ -468,6 +584,46 @@
 
 
   <!-- ═══════════════════════════════════════════
+       FOOTER
+  ═══════════════════════════════════════════ -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="logo">
+          <div class="logo-cross">
+            <span class="cross-v"></span>
+            <span class="cross-h"></span>
+          </div>
+          <span class="logo-name">PrionsEnLigne</span>
+        </div>
+        <p class="footer-tagline">Prier ensemble, chaque jour</p>
+      </div>
+      <nav class="footer-nav">
+        <span class="footer-nav-title">Navigation</span>
+        <button class="footer-nav-link" data-tab="aujourd">Aujourd'hui</button>
+        <button class="footer-nav-link" data-tab="semaine">Semaine</button>
+        <button class="footer-nav-link" data-tab="mois">Mois</button>
+        <button class="footer-nav-link" data-tab="sources">Sources</button>
+      </nav>
+      <div class="footer-legal">
+        <p>Textes liturgiques :</p>
+        <p><a href="https://www.aelf.org" target="_blank" rel="noopener">AELF</a> — Association Épiscopale<br>Liturgique Francophone</p>
+        <p style="margin-top:12px">Radios partenaires :<br>
+          <a href="https://www.radiomaria.fr" target="_blank" rel="noopener">Radio Maria France</a> ·
+          <a href="https://www.radionotredame.net" target="_blank" rel="noopener">Notre-Dame</a> ·
+          <a href="https://www.radio-esperance.fr" target="_blank" rel="noopener">Espérance</a>
+        </p>
+      </div>
+    </div>
+    <hr class="footer-divider">
+    <div class="footer-bottom">
+      <span>© 2026 PrionsEnLigne — Projet personnel, sans but lucratif</span>
+      <span>Hébergé sur <a href="https://vercel.com" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none;">Vercel</a></span>
+    </div>
+  </footer>
+
+
+  <!-- ═══════════════════════════════════════════
        PANNEAU BRÉVIAIRE (slide-in)
   ═══════════════════════════════════════════ -->
   <div id="breviary-panel" class="breviary-panel" aria-hidden="true">
@@ -487,6 +643,28 @@
     </div>
   </div>
   <div id="breviary-overlay" class="breviary-overlay"></div>
+
+
+  <!-- ═══════════════════════════════════════════
+       LECTEUR RADIO (barre sticky)
+  ═══════════════════════════════════════════ -->
+  <div id="radio-player" class="radio-player" role="region" aria-label="Lecteur radio">
+    <div class="rp-info">
+      <div class="rp-dot"></div>
+      <div class="rp-text">
+        <div class="rp-name" id="rp-name">Radio Maria France</div>
+        <div class="rp-sub" id="rp-sub">Laudes · 6h00</div>
+      </div>
+    </div>
+    <div class="rp-controls">
+      <button class="rp-btn-play" id="rp-play" aria-label="Lecture / Pause">
+        <span id="rp-icon">&#9654;</span>
+      </button>
+      <input type="range" class="rp-vol" id="rp-vol" min="0" max="1" step="0.05" value="0.8" aria-label="Volume">
+      <button class="rp-btn-close" id="rp-close" aria-label="Fermer le lecteur">&#x2715;</button>
+    </div>
+    <audio id="rp-audio" preload="none"></audio>
+  </div>
 
 
   <!-- ═══════════════════════════════════════════

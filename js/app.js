@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════
    PRIONSENLIGNE — app.js
-   Navigation, filtres prières, bréviaire AELF, calendrier
+   Navigation, filtres prières, bréviaire AELF, calendrier, lecteur radio
 ═══════════════════════════════════════════════ */
 
 'use strict';
@@ -25,11 +25,14 @@ function initTabs() {
     bnTabs.forEach(b => { if (b.dataset.tab === tabId) b.classList.add('active'); });
   }
 
-  navTabs.forEach(btn => {
-    btn.addEventListener('click', () => activateTab(btn.dataset.tab));
-  });
-  bnTabs.forEach(btn => {
-    btn.addEventListener('click', () => activateTab(btn.dataset.tab));
+  navTabs.forEach(btn => btn.addEventListener('click', () => activateTab(btn.dataset.tab)));
+  bnTabs.forEach(btn => btn.addEventListener('click', () => activateTab(btn.dataset.tab)));
+
+  document.querySelectorAll('.footer-nav-link[data-tab]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activateTab(btn.dataset.tab);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
   });
 }
 
@@ -38,8 +41,8 @@ function initTabs() {
    2. FILTRES PRIÈRES (vue Aujourd'hui)
 ──────────────────────────────────────────────*/
 function initFilters() {
-  const filters  = document.querySelectorAll('.pf');
-  const items    = document.querySelectorAll('.tl-item');
+  const filters = document.querySelectorAll('.pf');
+  const items   = document.querySelectorAll('.tl-item');
 
   filters.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -49,7 +52,7 @@ function initFilters() {
       const type = btn.dataset.filter;
       items.forEach(item => {
         if (type === 'all' || item.dataset.type === type) {
-          item.style.display = 'flex';
+          item.style.display = '';
           item.style.animation = 'fadeIn .2s ease';
         } else {
           item.style.display = 'none';
@@ -64,12 +67,10 @@ function initFilters() {
    3. DATE AUTOMATIQUE
 ──────────────────────────────────────────────*/
 function initDate() {
-  const now = new Date();
-  const days = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  const now    = new Date();
+  const days   = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
   const months = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
-
-  const label = `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
-
+  const label  = `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
   const el = document.getElementById('js-date');
   if (el) el.textContent = label;
 }
@@ -97,21 +98,15 @@ function initCalendar() {
 
   days.forEach(day => {
     day.addEventListener('click', () => {
-      const date  = day.dataset.date  || '';
-      const type  = day.dataset.type  || 'ordinaire';
-      const saint = day.dataset.saint || '';
-      const desc  = day.dataset.desc  || '';
-
-      ddDate.textContent  = date;
-      ddType.textContent  = typeLabels[type] || type;
-      ddType.className    = 'dd-type ' + type;
-      ddSaint.textContent = saint;
-      ddDesc.textContent  = desc;
+      ddDate.textContent  = day.dataset.date  || '';
+      ddType.textContent  = typeLabels[day.dataset.type] || day.dataset.type || '';
+      ddType.className    = 'dd-type ' + (day.dataset.type || 'ordinaire');
+      ddSaint.textContent = day.dataset.saint || '';
+      ddDesc.textContent  = day.dataset.desc  || '';
 
       detail.classList.remove('hidden');
       detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-      // Highlight sélection
       days.forEach(d => d.style.outline = '');
       day.style.outline = '2px solid #c9a84c';
     });
@@ -132,7 +127,6 @@ const PRAYER_NAMES = {
   complies: 'Complies',
 };
 
-/* Textes de secours si l'API AELF n'est pas encore autorisée */
 const FALLBACK_TEXTS = {
   laudes: {
     title: 'Laudes — Prière du matin',
@@ -159,7 +153,7 @@ const FALLBACK_TEXTS = {
     sections: [
       {
         heading: 'Acte d\'offrande',
-        text: `Seigneur, je t'offre ce nouveau jour.\nJe t'offre mes prières, mes pensées,\nmes joies et mes peines d'aujourd'hui.\nOfficier-les avec le Cœur Sacré de Jésus\npour la gloire du Père\net le salut des âmes.`,
+        text: `Seigneur, je t'offre ce nouveau jour.\nJe t'offre mes prières, mes pensées,\nmes joies et mes peines d'aujourd'hui.\nOffre-les avec le Cœur Sacré de Jésus\npour la gloire du Père\net le salut des âmes.`,
         ref: '',
       },
       {
@@ -257,11 +251,10 @@ function openBreviary(prayerKey) {
 
   nameEl.textContent = PRAYER_NAMES[prayerKey] || prayerKey;
 
-  const now = new Date();
+  const now    = new Date();
   const months = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
   dateEl.textContent = `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
 
-  // Afficher le spinner
   bodyEl.innerHTML = `
     <div class="brev-loading">
       <div class="brev-spinner"></div>
@@ -273,7 +266,6 @@ function openBreviary(prayerKey) {
   overlay.classList.add('show');
   panel.setAttribute('aria-hidden', 'false');
 
-  // Tentative AELF API — map du type de prière vers le endpoint AELF
   const aelfMap = {
     laudes:   'laudes',
     messe:    'messes',
@@ -286,7 +278,6 @@ function openBreviary(prayerKey) {
   const aelfOffice = aelfMap[prayerKey];
 
   if (aelfOffice) {
-    // L'API AELF publique : https://api.aelf.org/v1/{office}/{annee}/{mois}/{jour}/{zone}
     const d = new Date();
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -301,7 +292,6 @@ function openBreviary(prayerKey) {
       .then(data => renderAelfData(data, prayerKey, bodyEl))
       .catch(() => renderFallback(prayerKey, bodyEl));
   } else {
-    // Pas de endpoint AELF pour chapelet/matin → fallback immédiat
     setTimeout(() => renderFallback(prayerKey, bodyEl), 600);
   }
 }
@@ -309,7 +299,6 @@ function openBreviary(prayerKey) {
 function renderAelfData(data, prayerKey, bodyEl) {
   let html = '';
 
-  // L'API AELF retourne différentes structures selon l'office
   const office = data.laudes || data.messes || data.vepres || data.complies || null;
 
   if (!office || !office.informations) {
@@ -317,7 +306,6 @@ function renderAelfData(data, prayerKey, bodyEl) {
     return;
   }
 
-  // Informations liturgiques du jour
   const info = office.informations;
   if (info.jour_liturgique_nom) {
     html += `<div class="brev-section">
@@ -326,7 +314,6 @@ function renderAelfData(data, prayerKey, bodyEl) {
     </div>`;
   }
 
-  // Lectures et textes
   const lectures = office.messes || office.laudes || office.vepres || office.complies || [];
   const sections = Array.isArray(lectures) ? lectures : Object.values(lectures);
 
@@ -388,7 +375,6 @@ function closeBreviary() {
 }
 
 function initBreviary() {
-  // Boutons "Lire le bréviaire" sur la timeline
   document.querySelectorAll('.tl-breviary-btn').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
@@ -396,13 +382,11 @@ function initBreviary() {
     });
   });
 
-  // Fermeture
   const closeBtn = document.getElementById('brev-close');
   const overlay  = document.getElementById('breviary-overlay');
   if (closeBtn) closeBtn.addEventListener('click', closeBreviary);
   if (overlay)  overlay.addEventListener('click', closeBreviary);
 
-  // Fermer avec Escape
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeBreviary();
   });
@@ -410,7 +394,94 @@ function initBreviary() {
 
 
 /* ────────────────────────────────────────────
-   6. INIT GLOBAL
+   6. LECTEUR RADIO INTÉGRÉ
+──────────────────────────────────────────────*/
+
+function initRadioPlayer() {
+  const player    = document.getElementById('radio-player');
+  const audio     = document.getElementById('rp-audio');
+  const playBtn   = document.getElementById('rp-play');
+  const playIcon  = document.getElementById('rp-icon');
+  const closeBtn  = document.getElementById('rp-close');
+  const volSlider = document.getElementById('rp-vol');
+  const nameEl    = document.getElementById('rp-name');
+  const subEl     = document.getElementById('rp-sub');
+
+  if (!player || !audio) return;
+
+  audio.volume = 0.8;
+  let currentWeb = '';
+
+  function showPlayer(name, prayer, time) {
+    nameEl.textContent = name;
+    subEl.textContent  = `${prayer} · ${time}`;
+    player.classList.add('visible');
+    document.body.classList.add('player-open');
+  }
+
+  function closePlayer() {
+    audio.pause();
+    audio.src = '';
+    player.classList.remove('visible');
+    document.body.classList.remove('player-open');
+    playIcon.textContent = '▶';
+  }
+
+  playBtn.addEventListener('click', () => {
+    if (audio.paused) {
+      audio.play()
+        .then(() => { playIcon.textContent = '⏸'; })
+        .catch(() => {});
+    } else {
+      audio.pause();
+      playIcon.textContent = '▶';
+    }
+  });
+
+  closeBtn.addEventListener('click', closePlayer);
+
+  volSlider.addEventListener('input', () => {
+    audio.volume = parseFloat(volSlider.value);
+  });
+
+  audio.addEventListener('error', () => {
+    closePlayer();
+    if (currentWeb) window.open(currentWeb, '_blank', 'noopener');
+  });
+
+  document.querySelectorAll('.tl-src.radio').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const stream = btn.dataset.stream || '';
+      const web    = btn.dataset.web    || '';
+      const name   = btn.dataset.name   || '';
+      const prayer = btn.dataset.prayer || '';
+      const time   = btn.dataset.time   || '';
+
+      currentWeb = web;
+
+      if (!stream) {
+        window.open(web, '_blank', 'noopener');
+        return;
+      }
+
+      if (audio.src !== stream) {
+        audio.src = stream;
+      }
+
+      showPlayer(name, prayer, time);
+      audio.play()
+        .then(() => { playIcon.textContent = '⏸'; })
+        .catch(() => {
+          closePlayer();
+          if (web) window.open(web, '_blank', 'noopener');
+        });
+    });
+  });
+}
+
+
+/* ────────────────────────────────────────────
+   7. INIT GLOBAL
 ──────────────────────────────────────────────*/
 document.addEventListener('DOMContentLoaded', () => {
   initTabs();
@@ -418,4 +489,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initDate();
   initCalendar();
   initBreviary();
+  initRadioPlayer();
 });
