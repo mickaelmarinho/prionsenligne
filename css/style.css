@@ -1007,6 +1007,183 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
 
 
 /* ══════════════════════════════════════════════
+   MODAL AUTHENTIFICATION
+══════════════════════════════════════════════ */
+.auth-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26,39,68,.65);
+  z-index: 400;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.auth-overlay.hidden { display: none; }
+
+.auth-modal {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 401;
+  width: min(420px, calc(100vw - 32px));
+  animation: fadeIn .2s ease;
+}
+.auth-modal.hidden { display: none; }
+
+.auth-panel {
+  background: white;
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0,0,0,.3);
+}
+
+.auth-header {
+  background: var(--navy);
+  padding: 18px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.auth-close {
+  background: rgba(255,255,255,.1);
+  border: none;
+  color: var(--cream);
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background .15s;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.auth-close:hover { background: rgba(255,255,255,.2); }
+
+.auth-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+}
+.auth-tab {
+  flex: 1;
+  padding: 13px 16px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  color: var(--text-soft);
+  transition: all .15s;
+}
+.auth-tab.active { color: var(--navy); border-bottom-color: var(--gold); }
+.auth-tab:hover:not(.active) { background: var(--cream-mid); }
+
+#auth-form {
+  padding: 22px 24px 16px;
+}
+
+.auth-group { margin-bottom: 14px; }
+.auth-group label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--text-soft);
+  margin-bottom: 6px;
+}
+.auth-group label i { margin-right: 5px; }
+.auth-group input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border-mid);
+  border-radius: var(--r-md);
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--cream);
+  transition: border-color .15s, box-shadow .15s;
+  outline: none;
+}
+.auth-group input:focus {
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px rgba(26,39,68,.08);
+}
+
+.auth-error {
+  background: #FEE2E2;
+  color: #991B1B;
+  font-size: 12px;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.auth-error.hidden { display: none; }
+
+.auth-submit {
+  width: 100%;
+  padding: 12px;
+  background: var(--navy);
+  color: var(--cream);
+  border: none;
+  border-radius: var(--r-md);
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+  margin-bottom: 4px;
+}
+.auth-submit:hover:not(:disabled) { background: var(--navy-mid); transform: translateY(-1px); }
+.auth-submit:disabled { opacity: .6; cursor: not-allowed; }
+
+.auth-note {
+  padding: 14px 24px 18px;
+  font-size: 11px;
+  color: var(--text-soft);
+  line-height: 1.6;
+  text-align: center;
+  border-top: 1px solid var(--border);
+}
+.auth-note i { color: var(--gold); margin-right: 4px; }
+
+.auth-confirm {
+  padding: 28px 24px 8px;
+  text-align: center;
+}
+.auth-confirm > i {
+  font-size: 48px;
+  color: var(--gold);
+  display: block;
+  margin-bottom: 16px;
+}
+.auth-confirm h3 {
+  font-size: 20px;
+  color: var(--navy);
+  margin-bottom: 10px;
+}
+.auth-confirm p {
+  font-size: 13px;
+  color: var(--text-soft);
+  line-height: 1.7;
+  margin-bottom: 22px;
+}
+
+/* Avatar dans le header quand connecté */
+.hamburger-avatar {
+  width: 28px; height: 28px;
+  background: var(--gold);
+  color: var(--navy);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+
+/* ══════════════════════════════════════════════
    FOOTER
 ══════════════════════════════════════════════ */
 .site-footer {
@@ -1086,6 +1263,34 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
   color: rgba(245,240,232,.3);
   gap: 16px;
   flex-wrap: wrap;
+}
+
+/* Prière quotidienne footer */
+.footer-daily-prayer {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 13px;
+  color: rgba(245,240,232,.5);
+  max-width: 420px;
+  line-height: 1.5;
+}
+.footer-daily-prayer > i {
+  color: var(--gold);
+  font-size: 10px;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+.footer-prayer-author {
+  display: block;
+  font-style: normal;
+  font-family: 'Outfit', sans-serif;
+  font-size: 10px;
+  color: rgba(245,240,232,.3);
+  margin-top: 3px;
+  letter-spacing: .04em;
 }
 
 

@@ -521,7 +521,69 @@ function initHamburger() {
 
 
 /* ────────────────────────────────────────────
-   7. INIT GLOBAL
+   8. PRIÈRE QUOTIDIENNE (footer)
+──────────────────────────────────────────────*/
+
+const DAILY_PRAYERS = [
+  { text: 'Seigneur, fais de moi un instrument de ta paix.', source: 'Saint François d\'Assise' },
+  { text: 'Mon âme exalte le Seigneur, exulte mon esprit en Dieu mon Sauveur !', source: 'Magnificat — Lc 1, 46' },
+  { text: 'Viens, Esprit Saint, remplis le cœur de tes fidèles et allume en eux le feu de ton amour.', source: 'Séquence de la Pentecôte' },
+  { text: 'Seigneur, tu m\'as fait pour toi, et mon cœur est sans repos tant qu\'il ne repose pas en toi.', source: 'Saint Augustin' },
+  { text: 'Que votre règne vienne, que votre volonté soit faite sur la terre comme au ciel.', source: 'Notre Père — Mt 6, 10' },
+  { text: 'Je suis le chemin, la vérité et la vie. Nul ne vient au Père que par moi.', source: 'Jn 14, 6' },
+  { text: 'Dieu est amour, et celui qui demeure dans l\'amour demeure en Dieu et Dieu en lui.', source: '1 Jn 4, 16' },
+  { text: 'N\'ayez pas peur ! Ouvrez, ouvrez tout grand les portes au Christ.', source: 'Saint Jean-Paul II' },
+  { text: 'Prends, Seigneur, et reçois toute ma liberté, ma mémoire, mon intelligence et toute ma volonté.', source: 'Saint Ignace de Loyola' },
+  { text: 'Il faut aimer sans se lasser. Si vous êtes décourageant, l\'autre perd confiance.', source: 'Sainte Teresa de Calcutta' },
+  { text: 'La prière est une élévation de l\'âme vers Dieu.', source: 'Saint Jean Damascène' },
+  { text: 'Je ne cherche pas à comprendre pour croire, mais je crois pour comprendre.', source: 'Saint Anselme' },
+  { text: 'Celui qui chante prie deux fois.', source: 'Saint Augustin' },
+  { text: 'Je puis tout en Celui qui me fortifie.', source: 'Ph 4, 13' },
+  { text: 'Que la paix du Christ règne dans vos cœurs.', source: 'Col 3, 15' },
+  { text: 'Aime et fais ce que tu veux.', source: 'Saint Augustin' },
+  { text: 'La Vierge Marie est le plus court chemin vers Jésus.', source: 'Saint Louis-Marie Grignion de Montfort' },
+  { text: 'Réjouissez-vous toujours dans le Seigneur ; je le répète, réjouissez-vous.', source: 'Ph 4, 4' },
+  { text: 'Demandez et vous recevrez, cherchez et vous trouverez, frappez et l\'on vous ouvrira.', source: 'Mt 7, 7' },
+  { text: 'Il n\'y a pas de plus grand amour que de donner sa vie pour ceux qu\'on aime.', source: 'Jn 15, 13' },
+  { text: 'Je suis la résurrection et la vie. Celui qui croit en moi vivra, même s\'il est mort.', source: 'Jn 11, 25' },
+  { text: 'La paix de Dieu, qui surpasse toute intelligence, gardera vos cœurs et vos pensées.', source: 'Ph 4, 7' },
+  { text: 'Voici que je me tiens à la porte, et je frappe. Si quelqu\'un entend ma voix et ouvre la porte, j\'entrerai chez lui.', source: 'Ap 3, 20' },
+  { text: 'Le Seigneur est mon berger, je ne manque de rien.', source: 'Ps 23, 1' },
+  { text: 'Même si je marche dans la vallée de l\'ombre de la mort, je ne crains aucun mal, car tu es avec moi.', source: 'Ps 23, 4' },
+  { text: 'Avec Dieu rien n\'est impossible.', source: 'Lc 1, 37' },
+  { text: 'Je vous laisse la paix, je vous donne ma paix. Ce n\'est pas à la manière du monde que je vous la donne.', source: 'Jn 14, 27' },
+  { text: 'Heureux les cœurs purs, car ils verront Dieu.', source: 'Mt 5, 8' },
+  { text: 'Heureux les artisans de paix, car ils seront appelés fils de Dieu.', source: 'Mt 5, 9' },
+  { text: 'Maintenant demeurent la foi, l\'espérance, et l\'amour. Mais la plus grande, c\'est l\'amour.', source: '1 Co 13, 13' },
+  { text: 'L\'amour est patient, l\'amour est serviable, il n\'est pas envieux ni fanfaron.', source: '1 Co 13, 4' },
+  { text: 'Tout est possible à celui qui croit.', source: 'Mc 9, 23' },
+  { text: 'Soyez forts et courageux. Ne craignez rien, car c\'est le Seigneur votre Dieu qui marche avec vous.', source: 'Dt 31, 6' },
+  { text: 'Mon Dieu, je vous aime par-dessus toutes choses et mon prochain comme moi-même pour l\'amour de vous.', source: 'Acte d\'amour' },
+  { text: 'Enseigne-moi à te chercher et montre-toi à moi qui te cherche.', source: 'Saint Anselme' },
+  { text: 'N\'abandonne pas ta prière même si tu n\'en ressens pas la ferveur. La constance est elle-même une prière.', source: 'Saint Jean Chrysostome' },
+  { text: 'Toutes choses concourent au bien de ceux qui aiment Dieu.', source: 'Rm 8, 28' },
+  { text: 'Que tes yeux soient ouverts sur cette maison nuit et jour, sur ce lieu dont tu as dit : Mon nom y sera.', source: '2 Ch 7, 15' },
+  { text: 'Je suis avec vous tous les jours jusqu\'à la fin du monde.', source: 'Mt 28, 20' },
+  { text: 'Venez à moi, vous tous qui êtes fatigués et ployez sous le fardeau, et moi je vous donnerai le repos.', source: 'Mt 11, 28' },
+];
+
+function initDailyPrayer() {
+  const textEl   = document.getElementById('footer-prayer-text');
+  const authorEl = document.getElementById('footer-prayer-author');
+  if (!textEl || !authorEl) return;
+
+  const now       = new Date();
+  const start     = new Date(now.getFullYear(), 0, 0);
+  const dayOfYear = Math.floor((now - start) / 86400000);
+  const prayer    = DAILY_PRAYERS[dayOfYear % DAILY_PRAYERS.length];
+
+  textEl.textContent   = `« ${prayer.text} »`;
+  authorEl.textContent = `— ${prayer.source}`;
+}
+
+
+/* ────────────────────────────────────────────
+   9. INIT GLOBAL
 ──────────────────────────────────────────────*/
 document.addEventListener('DOMContentLoaded', () => {
   initTabs();
@@ -531,4 +593,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initBreviary();
   initRadioPlayer();
   initHamburger();
+  initDailyPrayer();
 });
