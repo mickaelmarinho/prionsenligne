@@ -1,0 +1,25 @@
+DESTINATAIRE : contact@aelf.org
+OBJET : Demande d'autorisation d'utilisation de l'API AELF — site prionsenligne.fr
+
+---
+
+Madame, Monsieur,
+
+Je me permets de vous contacter au sujet de votre API de lectures liturgiques du jour.
+
+Je développe actuellement un site internet catholique francophone, prionsenligne.fr, dont l'objectif est de rassembler en un seul endroit les radios catholiques en direct (Radio Maria France, Radio Notre-Dame, Radio Espérance), les chaînes YouTube de diffusion de la messe et du chapelet, ainsi qu'un calendrier liturgique quotidien.
+
+Dans ce cadre, je souhaiterais intégrer les textes officiels de la liturgie des Heures (Laudes, Messe, Vêpres, Complies) directement dans le site, afin que les visiteurs puissent écouter la radio tout en lisant les textes du jour en parallèle.
+
+Votre API (https://api.aelf.org) permettrait de récupérer automatiquement ces textes chaque jour, toujours à jour et selon le calendrier liturgique en vigueur.
+
+Le site est un projet personnel, sans but lucratif, entièrement gratuit pour les utilisateurs, et sans publicité. Son seul objectif est de faciliter la prière quotidienne des catholiques francophones.
+
+Je souhaite m'assurer d'utiliser votre API dans le strict respect de vos conditions d'utilisation et du droit de propriété intellectuelle sur les traductions liturgiques.
+
+Pourriez-vous m'indiquer les modalités d'accès à votre API, les conditions d'utilisation applicables à ce type de projet, et si une convention ou un accord particulier est nécessaire ?
+
+Dans l'attente de votre réponse, je vous adresse mes sincères salutations,
+
+Mickaël Marinho
+prionsenligne.fr

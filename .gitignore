@@ -1,0 +1,6 @@
+# Fichiers dupliqués à la racine (versions dans css/ et js/)
+app.js
+style.css
+
+# Claude Code
+.claude/
