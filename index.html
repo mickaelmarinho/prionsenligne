@@ -671,24 +671,70 @@
         <button class="auth-tab" id="auth-tab-signup">Créer un compte</button>
       </div>
       <form id="auth-form" novalidate>
-        <div class="auth-group" id="auth-name-group" style="display:none">
-          <label for="auth-name"><i class="fa-solid fa-user"></i> Prénom</label>
-          <input type="text" id="auth-name" placeholder="Votre prénom" autocomplete="given-name">
+
+        <!-- ── Champs ── -->
+        <div id="auth-fields">
+
+          <!-- En-tête modes réinitialisation -->
+          <div id="auth-reset-header" style="display:none">
+            <button type="button" class="auth-back-btn" id="auth-back-btn">
+              <i class="fa-solid fa-arrow-left"></i> Retour à la connexion
+            </button>
+            <p class="auth-reset-title" id="auth-reset-title"></p>
+            <p class="auth-reset-desc"  id="auth-reset-desc"></p>
+          </div>
+
+          <!-- Prénom (inscription uniquement) -->
+          <div class="auth-group" id="auth-name-group" style="display:none">
+            <label for="auth-name"><i class="fa-solid fa-user"></i> Prénom</label>
+            <input type="text" id="auth-name" placeholder="Votre prénom" autocomplete="given-name">
+          </div>
+
+          <!-- Email -->
+          <div class="auth-group" id="auth-email-group">
+            <label for="auth-email"><i class="fa-solid fa-envelope"></i> Adresse e-mail</label>
+            <input type="email" id="auth-email" placeholder="vous@exemple.fr" autocomplete="email" required>
+          </div>
+
+          <!-- Mot de passe + bouton afficher/masquer -->
+          <div class="auth-group" id="auth-password-group">
+            <label for="auth-password" id="auth-password-label"><i class="fa-solid fa-lock"></i> Mot de passe</label>
+            <div class="auth-pw-wrap">
+              <input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" required minlength="6">
+              <button type="button" class="auth-pw-toggle" id="auth-pw-toggle" aria-label="Afficher le mot de passe" tabindex="-1">
+                <i class="fa-solid fa-eye" id="auth-pw-eye"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Confirmer le mot de passe (inscription + nouveau mdp) -->
+          <div class="auth-group" id="auth-confirm-group" style="display:none">
+            <label for="auth-confirm" id="auth-confirm-label"><i class="fa-solid fa-lock"></i> Confirmer le mot de passe</label>
+            <input type="password" id="auth-confirm" placeholder="••••••••" autocomplete="new-password" minlength="6">
+          </div>
+
+          <div id="auth-error" class="auth-error hidden"></div>
+
+          <!-- Lien mot de passe oublié (connexion uniquement) -->
+          <div class="auth-forgot" id="auth-forgot">
+            <button type="button" id="auth-forgot-btn">Mot de passe oublié&nbsp;?</button>
+          </div>
+
+          <button type="submit" class="auth-submit" id="auth-submit" data-label="Se connecter">Se connecter</button>
         </div>
-        <div class="auth-group">
-          <label for="auth-email"><i class="fa-solid fa-envelope"></i> Adresse e-mail</label>
-          <input type="email" id="auth-email" placeholder="vous@exemple.fr" autocomplete="email" required>
+
+        <!-- ── Écrans de succès ── -->
+        <div id="auth-success-screen" class="auth-confirm" style="display:none">
+          <i id="auth-success-icon" class="fa-solid fa-envelope-circle-check"></i>
+          <h3 id="auth-success-title"></h3>
+          <p  id="auth-success-desc"></p>
+          <button class="auth-submit" id="auth-success-btn" type="button"></button>
         </div>
-        <div class="auth-group">
-          <label for="auth-password"><i class="fa-solid fa-lock"></i> Mot de passe</label>
-          <input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" required minlength="6">
-        </div>
-        <div id="auth-error" class="auth-error hidden"></div>
-        <button type="submit" class="auth-submit" id="auth-submit" data-label="Se connecter">Se connecter</button>
+
       </form>
-      <p class="auth-note">
+      <p class="auth-note" id="auth-note">
         <i class="fa-solid fa-shield-halved"></i>
-        Rejoignez la communauté PrionsEnLigne pour sauvegarder vos prières, vos intentions et rejoindre des groupes de prière.
+        Rejoignez la communauté PrionsEnLigne pour sauvegarder vos intentions et prier ensemble.
       </p>
     </div>
   </div>

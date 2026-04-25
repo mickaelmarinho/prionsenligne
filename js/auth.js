@@ -1,102 +1,176 @@
 /* ═══════════════════════════════════════════════
    PRIONSENLIGNE — auth.js
-   Authentification via Supabase
-═══════════════════════════════════════════════
-
-   CONFIGURATION :
-   1. Créez un projet sur https://supabase.com (gratuit)
-   2. Dashboard → Settings → API
-   3. Remplacez les deux valeurs ci-dessous
-   La clé "anon/public" est conçue pour être exposée côté client.
-   La sécurité est assurée par les Row Level Security policies côté serveur.
-*/
+   Authentification complète via Supabase
+   Modes : login · signup · reset-request · reset-password
+═══════════════════════════════════════════════ */
 
 // ── Helpers ──
 function $id(id) { return document.getElementById(id); }
 
 // ── État ──
 let _currentUser = null;
+let _formMode    = 'login'; // 'login' | 'signup' | 'reset-request' | 'reset-password'
 
-/* ────────────────────────────────────────────
-   Mise à jour de l'UI header selon l'état auth
-──────────────────────────────────────────────*/
+/* ════════════════════════════════════════════
+   UI HEADER
+═════════════════════════════════════════════*/
 function updateHeaderUI(user) {
   _currentUser = user;
   const btn        = $id('hamburger-btn');
   const signoutItem= $id('hm-signout');
   const headerUser = $id('header-user');
-  // Items auth mobile (bas du menu burger)
-  const hmAuthSep   = $id('hm-auth-sep');
-  const hmLoginItem = $id('hm-login-item');
-  const hmSignupItem= $id('hm-signup-item');
+  const hmAuthSep  = $id('hm-auth-sep');
+  const hmLogin    = $id('hm-login-item');
+  const hmSignup   = $id('hm-signup-item');
 
   if (user) {
     const name    = user.user_metadata?.name || user.email;
     const initial = name.charAt(0).toUpperCase();
     if (btn) btn.innerHTML = `<span class="hamburger-avatar" title="${name}">${initial}</span>`;
     headerUser?.classList.add('user-logged-in');
-    // Cacher les items auth dans le menu mobile
-    if (hmAuthSep)    hmAuthSep.style.display    = 'none';
-    if (hmLoginItem)  hmLoginItem.style.display  = 'none';
-    if (hmSignupItem) hmSignupItem.style.display = 'none';
+    if (hmAuthSep) hmAuthSep.style.display = 'none';
+    if (hmLogin)   hmLogin.style.display   = 'none';
+    if (hmSignup)  hmSignup.style.display  = 'none';
   } else {
     if (btn) btn.innerHTML = '<i class="fa-solid fa-bars"></i>';
     headerUser?.classList.remove('user-logged-in');
-    // Afficher les items auth dans le menu mobile
-    if (hmAuthSep)    hmAuthSep.style.display    = '';
-    if (hmLoginItem)  hmLoginItem.style.display  = '';
-    if (hmSignupItem) hmSignupItem.style.display = '';
+    if (hmAuthSep) hmAuthSep.style.display = '';
+    if (hmLogin)   hmLogin.style.display   = '';
+    if (hmSignup)  hmSignup.style.display  = '';
   }
-
   if (signoutItem) signoutItem.style.display = user ? '' : 'none';
 }
 
-/* ────────────────────────────────────────────
-   Ouverture / fermeture du modal
-──────────────────────────────────────────────*/
+/* ════════════════════════════════════════════
+   MODAL — OUVERTURE / FERMETURE
+═════════════════════════════════════════════*/
 function openAuthModal(mode) {
   const modal   = $id('auth-modal');
   const overlay = $id('auth-overlay');
   if (!modal) return;
+  restoreFields();
   setMode(mode || 'login');
   modal.classList.remove('hidden');
   overlay.classList.remove('hidden');
-  setTimeout(() => $id('auth-email')?.focus(), 50);
+  // Focus sur le bon champ
+  setTimeout(() => {
+    const target = (mode === 'reset-password') ? $id('auth-password') : $id('auth-email');
+    target?.focus();
+  }, 60);
 }
 
 function closeAuthModal() {
   $id('auth-modal')?.classList.add('hidden');
   $id('auth-overlay')?.classList.add('hidden');
   clearAuthError();
+  // Reset propre du formulaire (sans perdre les listeners)
+  setTimeout(() => {
+    restoreFields();
+    setMode('login');
+    $id('auth-form')?.reset();
+  }, 300);
 }
 
-/* ────────────────────────────────────────────
-   Basculer Connexion / Créer un compte
-──────────────────────────────────────────────*/
+/* Afficher les champs, cacher l'écran de succès */
+function restoreFields() {
+  const fields = $id('auth-fields');
+  const screen = $id('auth-success-screen');
+  const note   = $id('auth-note');
+  if (fields) fields.style.display = '';
+  if (screen) screen.style.display = 'none';
+  if (note)   note.style.display   = '';
+}
+
+/* ════════════════════════════════════════════
+   MODAL — MODES
+═════════════════════════════════════════════*/
 function setMode(mode) {
+  _formMode = mode;
+
+  const isLogin    = mode === 'login';
   const isSignup   = mode === 'signup';
-  const nameGroup  = $id('auth-name-group');
-  const submitBtn  = $id('auth-submit');
-  const tabLogin   = $id('auth-tab-login');
-  const tabSignup  = $id('auth-tab-signup');
+  const isResetReq = mode === 'reset-request';
+  const isResetPw  = mode === 'reset-password';
+  const isReset    = isResetReq || isResetPw;
 
-  tabLogin?.classList.toggle('active', !isSignup);
-  tabSignup?.classList.toggle('active', isSignup);
+  // Onglets (cachés en mode reset)
+  const tabsEl = document.querySelector('.auth-tabs');
+  if (tabsEl) tabsEl.style.display = isReset ? 'none' : '';
+  $id('auth-tab-login')?.classList.toggle('active', isLogin);
+  $id('auth-tab-signup')?.classList.toggle('active', isSignup);
 
-  if (nameGroup)  nameGroup.style.display  = isSignup ? '' : 'none';
+  // En-tête reset
+  const resetHeader = $id('auth-reset-header');
+  if (resetHeader) resetHeader.style.display = isReset ? '' : 'none';
+  if (isResetReq) {
+    if ($id('auth-reset-title')) $id('auth-reset-title').textContent = 'Réinitialiser le mot de passe';
+    if ($id('auth-reset-desc'))  $id('auth-reset-desc').textContent  =
+      'Entrez votre adresse e-mail. Vous recevrez un lien pour créer un nouveau mot de passe.';
+  }
+  if (isResetPw) {
+    if ($id('auth-reset-title')) $id('auth-reset-title').textContent = 'Nouveau mot de passe';
+    if ($id('auth-reset-desc'))  $id('auth-reset-desc').textContent  =
+      'Choisissez un nouveau mot de passe sécurisé pour votre compte.';
+  }
+
+  // Prénom (inscription uniquement)
+  const nameGrp = $id('auth-name-group');
+  if (nameGrp) nameGrp.style.display = isSignup ? '' : 'none';
+
+  // Email (tous sauf reset-password)
+  const emailGrp = $id('auth-email-group');
+  if (emailGrp) emailGrp.style.display = isResetPw ? 'none' : '';
+
+  // Mot de passe (tous sauf reset-request)
+  const pwGrp = $id('auth-password-group');
+  if (pwGrp) pwGrp.style.display = isResetReq ? 'none' : '';
+
+  // Labels password selon mode
+  const pwLabel = $id('auth-password-label');
+  if (pwLabel) pwLabel.innerHTML = isResetPw
+    ? '<i class="fa-solid fa-lock"></i> Nouveau mot de passe'
+    : '<i class="fa-solid fa-lock"></i> Mot de passe';
+
+  const pwInput = $id('auth-password');
+  if (pwInput) pwInput.autocomplete = (isSignup || isResetPw) ? 'new-password' : 'current-password';
+
+  // Confirmer (inscription + reset-password)
+  const confirmGrp = $id('auth-confirm-group');
+  if (confirmGrp) confirmGrp.style.display = (isSignup || isResetPw) ? '' : 'none';
+  const confirmLabel = $id('auth-confirm-label');
+  if (confirmLabel) confirmLabel.innerHTML = isResetPw
+    ? '<i class="fa-solid fa-lock"></i> Confirmer le nouveau mot de passe'
+    : '<i class="fa-solid fa-lock"></i> Confirmer le mot de passe';
+
+  // Lien mot de passe oublié (connexion uniquement)
+  const forgotEl = $id('auth-forgot');
+  if (forgotEl) forgotEl.style.display = isLogin ? '' : 'none';
+
+  // Bouton submit
+  const submitBtn = $id('auth-submit');
   if (submitBtn) {
-    submitBtn.textContent   = isSignup ? 'Créer mon compte' : 'Se connecter';
+    const labels = {
+      'login':          'Se connecter',
+      'signup':         'Créer mon compte',
+      'reset-request':  'Envoyer le lien',
+      'reset-password': 'Enregistrer le mot de passe',
+    };
+    submitBtn.textContent   = labels[mode] || 'Se connecter';
     submitBtn.dataset.label = submitBtn.textContent;
   }
+
   clearAuthError();
 }
 
-/* ────────────────────────────────────────────
-   Feedback erreurs / chargement
-──────────────────────────────────────────────*/
+/* ════════════════════════════════════════════
+   FEEDBACK — ERREURS / CHARGEMENT
+═════════════════════════════════════════════*/
 function showAuthError(msg) {
   const el = $id('auth-error');
-  if (el) { el.textContent = msg; el.classList.remove('hidden'); }
+  if (el) {
+    el.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${msg}`;
+    el.classList.remove('hidden');
+  }
 }
 function clearAuthError() {
   const el = $id('auth-error');
@@ -112,38 +186,80 @@ function setAuthLoading(on) {
 }
 
 function translateSupabaseError(err) {
-  const m = err?.message || '';
-  if (m.includes('Invalid login'))     return 'Email ou mot de passe incorrect.';
-  if (m.includes('Email not confirmed')) return 'Veuillez confirmer votre email avant de vous connecter.';
-  if (m.includes('already registered')) return 'Cet email est déjà utilisé.';
-  if (m.includes('Password should'))   return 'Le mot de passe doit comporter au moins 6 caractères.';
-  if (m.includes('rate limit'))        return 'Trop de tentatives. Réessayez dans quelques minutes.';
-  if (m.includes('Failed to fetch') || m.includes('NetworkError'))
+  const m = (err?.message || '').toLowerCase();
+  if (m.includes('invalid login'))       return 'Email ou mot de passe incorrect.';
+  if (m.includes('email not confirmed')) return 'Veuillez confirmer votre email avant de vous connecter.';
+  if (m.includes('already registered')
+   || m.includes('user already registered')) return 'Cet email est déjà utilisé.';
+  if (m.includes('password should'))    return 'Le mot de passe doit comporter au moins 6 caractères.';
+  if (m.includes('rate limit'))         return 'Trop de tentatives. Réessayez dans quelques minutes.';
+  if (m.includes('email address')
+   && m.includes('invalid'))            return 'Adresse email invalide.';
+  if (m.includes('failed to fetch') || m.includes('networkerror') || m.includes('fetch'))
     return 'Impossible de se connecter. Vérifiez votre connexion internet.';
-  return 'Une erreur est survenue. Réessayez.';
+  return 'Une erreur est survenue. Veuillez réessayer.';
 }
 
-/* ────────────────────────────────────────────
-   Confirmation après inscription
-──────────────────────────────────────────────*/
+/* ════════════════════════════════════════════
+   ÉCRANS DE SUCCÈS
+═════════════════════════════════════════════*/
+function showSuccessScreen({ icon, title, desc, btnLabel, btnAction }) {
+  const fields = $id('auth-fields');
+  const screen = $id('auth-success-screen');
+  const note   = $id('auth-note');
+  const tabsEl = document.querySelector('.auth-tabs');
+
+  if (fields)  fields.style.display  = 'none';
+  if (screen)  screen.style.display  = '';
+  if (note)    note.style.display    = 'none';
+  if (tabsEl)  tabsEl.style.display  = 'none';
+
+  if ($id('auth-success-icon'))  $id('auth-success-icon').className = `fa-solid ${icon}`;
+  if ($id('auth-success-title')) $id('auth-success-title').textContent = title;
+  if ($id('auth-success-desc'))  $id('auth-success-desc').innerHTML  = desc;
+
+  const btn = $id('auth-success-btn');
+  if (btn) {
+    btn.textContent = btnLabel;
+    btn.onclick = btnAction;
+  }
+}
+
 function showConfirmation() {
-  const form = $id('auth-form');
-  if (!form) return;
-  form.innerHTML = `
-    <div class="auth-confirm">
-      <i class="fa-solid fa-envelope-circle-check"></i>
-      <h3>Vérifiez votre email</h3>
-      <p>Un lien de confirmation a été envoyé à votre adresse.<br>
-         Cliquez dessus pour activer votre compte PrionsEnLigne.</p>
-      <button class="auth-submit" onclick="closeAuthModal()" type="button">Fermer</button>
-    </div>`;
+  showSuccessScreen({
+    icon:      'fa-envelope-circle-check',
+    title:     'Vérifiez votre email',
+    desc:      'Un lien de confirmation a été envoyé à votre adresse.<br>Cliquez dessus pour activer votre compte PrionsEnLigne.<br><small style="color:var(--text-soft)">Pensez à vérifier vos spams.</small>',
+    btnLabel:  'Fermer',
+    btnAction: closeAuthModal,
+  });
 }
 
-/* ────────────────────────────────────────────
-   Initialisation principale
-──────────────────────────────────────────────*/
+function showResetSent() {
+  showSuccessScreen({
+    icon:      'fa-paper-plane',
+    title:     'Email envoyé !',
+    desc:      'Un lien de réinitialisation a été envoyé à votre adresse.<br><small style="color:var(--text-soft)">Pensez à vérifier vos spams. Le lien expire dans 1 heure.</small>',
+    btnLabel:  'Retour à la connexion',
+    btnAction: () => { restoreFields(); setMode('login'); },
+  });
+}
+
+function showPasswordUpdated() {
+  showSuccessScreen({
+    icon:      'fa-circle-check',
+    title:     'Mot de passe mis à jour !',
+    desc:      'Votre mot de passe a été modifié avec succès.<br>Vous êtes maintenant connecté.',
+    btnLabel:  'Continuer',
+    btnAction: closeAuthModal,
+  });
+}
+
+/* ════════════════════════════════════════════
+   INITIALISATION PRINCIPALE
+═════════════════════════════════════════════*/
 async function initAuth() {
-  // Récupère les credentials depuis le endpoint Vercel
+  // ── Récupère les credentials depuis le endpoint Vercel ──
   let sb;
   try {
     const res = await fetch('/api/config');
@@ -164,21 +280,25 @@ async function initAuth() {
     return;
   }
 
-  // Récupère la session existante
-  sb.auth.getSession().then(({ data }) => {
-    updateHeaderUI(data.session?.user || null);
+  // ── Session existante ──
+  const { data: { session } } = await sb.auth.getSession();
+  updateHeaderUI(session?.user || null);
+
+  // ── Écoute les changements d'état ──
+  sb.auth.onAuthStateChange((event, sess) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      // L'utilisateur a cliqué sur le lien de reset dans son email
+      openAuthModal('reset-password');
+    } else {
+      updateHeaderUI(sess?.user || null);
+    }
   });
 
-  // Écoute les changements d'état (login / logout)
-  sb.auth.onAuthStateChange((_event, session) => {
-    updateHeaderUI(session?.user || null);
-  });
-
-  // Boutons desktop "Se connecter" / "Rejoindre"
-  $id('header-btn-login')?.addEventListener('click', () => openAuthModal('login'));
+  // ── Boutons header desktop ──
+  $id('header-btn-login')?.addEventListener('click',  () => openAuthModal('login'));
   $id('header-btn-signup')?.addEventListener('click', () => openAuthModal('signup'));
 
-  // Items auth en bas du menu burger (mobile)
+  // ── Items menu burger mobile ──
   $id('hm-login-item')?.addEventListener('click', () => {
     $id('hamburger-menu')?.classList.add('hidden');
     openAuthModal('login');
@@ -188,36 +308,70 @@ async function initAuth() {
     openAuthModal('signup');
   });
 
-  // Déconnexion
+  // ── Déconnexion ──
   $id('hm-signout')?.addEventListener('click', async () => {
     await sb.auth.signOut();
     $id('hamburger-menu')?.classList.add('hidden');
   });
 
-  // Fermeture modal
+  // ── Fermeture modal ──
   $id('auth-close')?.addEventListener('click', closeAuthModal);
   $id('auth-overlay')?.addEventListener('click', closeAuthModal);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAuthModal(); });
 
-  // Onglets
-  $id('auth-tab-login')?.addEventListener('click',  () => setMode('login'));
-  $id('auth-tab-signup')?.addEventListener('click', () => setMode('signup'));
+  // ── Onglets ──
+  $id('auth-tab-login')?.addEventListener('click',  () => { restoreFields(); setMode('login'); });
+  $id('auth-tab-signup')?.addEventListener('click', () => { restoreFields(); setMode('signup'); });
 
-  // Soumission formulaire
+  // ── Mot de passe oublié ──
+  $id('auth-forgot-btn')?.addEventListener('click', () => {
+    restoreFields();
+    setMode('reset-request');
+  });
+
+  // ── Retour (mode reset) ──
+  $id('auth-back-btn')?.addEventListener('click', () => {
+    restoreFields();
+    setMode('login');
+  });
+
+  // ── Toggle afficher / masquer mot de passe ──
+  $id('auth-pw-toggle')?.addEventListener('click', () => {
+    const input = $id('auth-password');
+    const icon  = $id('auth-pw-eye');
+    if (!input) return;
+    const hidden = input.type === 'password';
+    input.type     = hidden ? 'text' : 'password';
+    icon.className = hidden ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+  });
+
+  // ── Soumission formulaire ──
   $id('auth-form')?.addEventListener('submit', async e => {
     e.preventDefault();
     clearAuthError();
 
-    const isSignup  = $id('auth-tab-signup')?.classList.contains('active');
-    const email     = $id('auth-email')?.value.trim();
-    const password  = $id('auth-password')?.value;
-    const name      = $id('auth-name')?.value.trim();
+    // ── CONNEXION ──
+    if (_formMode === 'login') {
+      const email    = $id('auth-email')?.value.trim();
+      const password = $id('auth-password')?.value;
+      if (!email || !password) { showAuthError('Veuillez remplir tous les champs.'); return; }
+      setAuthLoading(true);
+      const { error } = await sb.auth.signInWithPassword({ email, password });
+      setAuthLoading(false);
+      if (error) { showAuthError(translateSupabaseError(error)); return; }
+      closeAuthModal();
+    }
 
-    if (!email || !password) { showAuthError('Veuillez remplir tous les champs.'); return; }
-
-    setAuthLoading(true);
-
-    if (isSignup) {
+    // ── INSCRIPTION ──
+    else if (_formMode === 'signup') {
+      const email    = $id('auth-email')?.value.trim();
+      const password = $id('auth-password')?.value;
+      const confirm  = $id('auth-confirm')?.value;
+      const name     = $id('auth-name')?.value.trim();
+      if (!email || !password) { showAuthError('Veuillez remplir tous les champs.'); return; }
+      if (password.length < 6) { showAuthError('Le mot de passe doit comporter au moins 6 caractères.'); return; }
+      if (password !== confirm) { showAuthError('Les mots de passe ne correspondent pas.'); return; }
+      setAuthLoading(true);
       const { error } = await sb.auth.signUp({
         email,
         password,
@@ -226,11 +380,33 @@ async function initAuth() {
       setAuthLoading(false);
       if (error) { showAuthError(translateSupabaseError(error)); return; }
       showConfirmation();
-    } else {
-      const { error } = await sb.auth.signInWithPassword({ email, password });
+    }
+
+    // ── DEMANDE RESET MOT DE PASSE ──
+    else if (_formMode === 'reset-request') {
+      const email = $id('auth-email')?.value.trim();
+      if (!email) { showAuthError('Veuillez entrer votre adresse e-mail.'); return; }
+      setAuthLoading(true);
+      const { error } = await sb.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + '/',
+      });
       setAuthLoading(false);
       if (error) { showAuthError(translateSupabaseError(error)); return; }
-      closeAuthModal();
+      showResetSent();
+    }
+
+    // ── NOUVEAU MOT DE PASSE ──
+    else if (_formMode === 'reset-password') {
+      const password = $id('auth-password')?.value;
+      const confirm  = $id('auth-confirm')?.value;
+      if (!password) { showAuthError('Veuillez entrer un nouveau mot de passe.'); return; }
+      if (password.length < 6) { showAuthError('Le mot de passe doit comporter au moins 6 caractères.'); return; }
+      if (password !== confirm) { showAuthError('Les mots de passe ne correspondent pas.'); return; }
+      setAuthLoading(true);
+      const { error } = await sb.auth.updateUser({ password });
+      setAuthLoading(false);
+      if (error) { showAuthError(translateSupabaseError(error)); return; }
+      showPasswordUpdated();
     }
   });
 }
