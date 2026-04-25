@@ -23,21 +23,32 @@ let _currentUser = null;
 function updateHeaderUI(user) {
   _currentUser = user;
   const btn        = $id('hamburger-btn');
-  const accountItem= $id('hm-account');
   const signoutItem= $id('hm-signout');
-
-  if (!btn) return;
+  const headerUser = $id('header-user');
+  // Items auth mobile (bas du menu burger)
+  const hmAuthSep   = $id('hm-auth-sep');
+  const hmLoginItem = $id('hm-login-item');
+  const hmSignupItem= $id('hm-signup-item');
 
   if (user) {
     const name    = user.user_metadata?.name || user.email;
     const initial = name.charAt(0).toUpperCase();
-    btn.innerHTML = `<span class="hamburger-avatar" title="${name}">${initial}</span>`;
+    if (btn) btn.innerHTML = `<span class="hamburger-avatar" title="${name}">${initial}</span>`;
+    headerUser?.classList.add('user-logged-in');
+    // Cacher les items auth dans le menu mobile
+    if (hmAuthSep)    hmAuthSep.style.display    = 'none';
+    if (hmLoginItem)  hmLoginItem.style.display  = 'none';
+    if (hmSignupItem) hmSignupItem.style.display = 'none';
   } else {
-    btn.innerHTML = '<i class="fa-solid fa-bars"></i>';
+    if (btn) btn.innerHTML = '<i class="fa-solid fa-bars"></i>';
+    headerUser?.classList.remove('user-logged-in');
+    // Afficher les items auth dans le menu mobile
+    if (hmAuthSep)    hmAuthSep.style.display    = '';
+    if (hmLoginItem)  hmLoginItem.style.display  = '';
+    if (hmSignupItem) hmSignupItem.style.display = '';
   }
 
-  if (accountItem)  accountItem.style.display = user ? 'none' : '';
-  if (signoutItem)  signoutItem.style.display  = user ? ''     : 'none';
+  if (signoutItem) signoutItem.style.display = user ? '' : 'none';
 }
 
 /* ────────────────────────────────────────────
@@ -163,10 +174,18 @@ async function initAuth() {
     updateHeaderUI(session?.user || null);
   });
 
-  // Clic "Mon compte" → ouvre le modal
-  $id('hm-account')?.addEventListener('click', () => {
+  // Boutons desktop "Se connecter" / "Rejoindre"
+  $id('header-btn-login')?.addEventListener('click', () => openAuthModal('login'));
+  $id('header-btn-signup')?.addEventListener('click', () => openAuthModal('signup'));
+
+  // Items auth en bas du menu burger (mobile)
+  $id('hm-login-item')?.addEventListener('click', () => {
     $id('hamburger-menu')?.classList.add('hidden');
     openAuthModal('login');
+  });
+  $id('hm-signup-item')?.addEventListener('click', () => {
+    $id('hamburger-menu')?.classList.add('hidden');
+    openAuthModal('signup');
   });
 
   // Déconnexion

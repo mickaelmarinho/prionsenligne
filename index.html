@@ -30,7 +30,17 @@
         <button class="nav-tab" data-tab="mois"><i class="fa-solid fa-calendar"></i> Mois</button>
         <button class="nav-tab" data-tab="sources"><i class="fa-solid fa-tower-broadcast"></i> Sources</button>
       </nav>
-      <div class="header-user">
+      <div class="header-user" id="header-user">
+        <!-- Desktop : boutons visibles quand déconnecté -->
+        <div class="header-auth-desktop" id="header-auth-desktop">
+          <button class="nav-auth-btn nav-login-btn" id="header-btn-login">
+            <i class="fa-solid fa-right-to-bracket"></i> Se connecter
+          </button>
+          <button class="nav-auth-btn nav-signup-btn" id="header-btn-signup">
+            <i class="fa-solid fa-hands-praying"></i> Rejoindre
+          </button>
+        </div>
+        <!-- Bouton burger (mobile toujours · desktop quand connecté) -->
         <button class="hamburger-btn" id="hamburger-btn" aria-label="Menu" aria-expanded="false">
           <i class="fa-solid fa-bars"></i>
         </button>
@@ -38,11 +48,14 @@
 
       <!-- Dropdown menu burger -->
       <div id="hamburger-menu" class="hamburger-menu hidden" role="menu">
-        <div class="hm-item" id="hm-account"><i class="fa-solid fa-user"></i> Mon compte</div>
         <div class="hm-item" id="hm-signout" style="display:none"><i class="fa-solid fa-right-from-bracket"></i> Se déconnecter</div>
         <div class="hm-item"><i class="fa-solid fa-bell"></i> Notifications</div>
         <div class="hm-divider"></div>
         <div class="hm-item"><i class="fa-solid fa-circle-info"></i> À propos</div>
+        <!-- Auth mobile — en bas du menu -->
+        <div class="hm-divider" id="hm-auth-sep"></div>
+        <div class="hm-item" id="hm-login-item"><i class="fa-solid fa-right-to-bracket"></i> Se connecter</div>
+        <div class="hm-item hm-join" id="hm-signup-item"><i class="fa-solid fa-hands-praying"></i> Rejoindre</div>
       </div>
     </div>
   </header>
