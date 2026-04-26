@@ -468,39 +468,41 @@ function initRadioPlayer() {
     if (currentWeb) window.open(currentWeb, '_blank', 'noopener');
   });
 
-  document.querySelectorAll('.tl-src.radio').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const stream = btn.dataset.stream || '';
-      const web    = btn.dataset.web    || '';
-      const name   = btn.dataset.name   || '';
-      const prayer = btn.dataset.prayer || '';
-      const time   = btn.dataset.time   || '';
+  // Délégation d'événement — capture TOUS les boutons radio
+  // (onglet Aujourd'hui statique ET onglet Semaine généré dynamiquement)
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('[data-action="radio"]');
+    if (!btn) return;
 
-      currentWeb = web;
+    const stream = btn.dataset.stream || '';
+    const web    = btn.dataset.web    || '';
+    const name   = btn.dataset.name   || '';
+    const prayer = btn.dataset.prayer || '';
+    const time   = btn.dataset.time   || '';
 
-      // Pas de stream direct → ouvre le player web dans un nouvel onglet
-      if (!stream) {
-        window.open(web, '_blank', 'noopener');
-        return;
-      }
+    currentWeb = web;
 
-      // Charge le nouveau flux uniquement s'il est différent du courant
-      if (stream !== currentStream) {
-        audio.pause();
-        audio.src   = stream;
-        currentStream = stream;
-        audio.load();
-      }
+    // Pas de stream → ouvre le site dans un nouvel onglet
+    if (!stream) {
+      window.open(web, '_blank', 'noopener');
+      return;
+    }
 
-      showPlayer(name, prayer, time);
-      audio.play()
-        .then(() => setIcon(true))
-        .catch(() => {
-          // Mixed content ou flux non disponible → ouvre le site
-          closePlayer();
-          if (web) window.open(web, '_blank', 'noopener');
-        });
-    });
+    // Charge uniquement si flux différent du courant
+    if (stream !== currentStream) {
+      audio.pause();
+      audio.src     = stream;
+      currentStream = stream;
+      audio.load();
+    }
+
+    showPlayer(name, prayer, time);
+    audio.play()
+      .then(() => setIcon(true))
+      .catch(() => {
+        closePlayer();
+        if (web) window.open(web, '_blank', 'noopener');
+      });
   });
 }
 
@@ -596,66 +598,197 @@ function initDailyPrayer() {
 
 
 /* ────────────────────────────────────────────
-   9. VUE SEMAINE — dynamique (sources complètes)
+   9. VUE SEMAINE — sources & horaires réels
 ──────────────────────────────────────────────*/
 
 /*
-  Grille horaire par type de jour.
-  Chaque slot : { type, time, label, src }
-    type  → classe CSS couleur (laudes / matin / messe / chapelet / vepres / complies)
-    time  → horaire affiché
-    label → nom court affiché dans la carte
-    src   → noms abrégés des sources séparés par ·
+  SOURCES : toutes les webradios / chaînes YouTube catholiques françaises.
+    n   → nom affiché dans les boutons
+    s   → URL du flux audio direct (vide = pas de lecture intégrée possible)
+    w   → URL du site / player web (fallback systématique)
+*/
+const SOURCES = {
+  rm:  { n: 'Radio Maria',      s: 'https://stream.radiomaria.fr/radiomariafrance-hd.mp3',  w: 'https://www.radiomaria.fr' },
+  nd:  { n: 'Radio N-Dame',     s: 'https://windu.radionotredame.net/RadioNotreDame-Fm.mp3', w: 'https://www.radionotredame.net' },
+  rcf: { n: 'RCF',              s: '', w: 'https://rcf.fr/radios/ecouter-rcf' },
+  esp: { n: 'Espérance',        s: '', w: 'https://www.radio-esperance.fr/player/' },
+  fid: { n: 'Fidélité',         s: '', w: 'https://www.radiofidelite.fr/player/' },
+  kto: { n: 'KTO',              s: '', w: 'https://www.ktotv.com/live' },
+  lou: { n: 'Lourdes',          s: '', w: 'https://www.lourdes-france.org/en/live-broadcasts/' },
+  vat: { n: 'Vatican News',     s: '', w: 'https://www.vaticannews.va/fr/video.html' },
+  jer: { n: 'Jérusalem',        s: '', w: 'https://www.jerusalem.cef.fr/les-offices/' },
+  sol: { n: 'Solesmes',         s: '', w: 'https://www.solesmes.com/offices-monastiques' },
+  ndp: { n: 'N-D de Paris',     s: '', w: 'https://www.notredamedeparis.fr/la-cathedrale/en-direct/' },
+  ars: { n: 'Sct. d\'Ars',      s: '', w: 'https://www.saintcure-ars.fr' },
+};
+
+/*
+  WEEK_SCHEDULE : grille horaire par type de jour liturgique.
+  Chaque slot → { type, label, entries: [{ t:'HH:MM', tl:'HHhMM', srcs:['clé',...] }] }
+  Les jours non définis (Lun=1, Mar=2, Jeu=4) utilisent `ordinary`.
 */
 const WEEK_SCHEDULE = {
 
-  // ── Lundi / Mardi / Jeudi ── (jours ordinaires sans particularité)
+  // Lun / Mar / Jeu — jours ordinaires
   ordinary: [
-    { type: 'laudes',   time: '6h00',  label: 'Laudes',          src: 'R. Maria · N-Dame · RCF' },
-    { type: 'matin',    time: '8h00',  label: 'Prière du matin', src: 'Espérance · RCF' },
-    { type: 'messe',    time: '11h00', label: 'Sainte Messe',    src: 'N-Dame · KTO · R. Maria · Lourdes' },
-    { type: 'chapelet', time: '15h00', label: 'Chapelet',        src: 'R. Maria · Lourdes · N-Dame' },
-    { type: 'vepres',   time: '19h00', label: 'Vêpres',          src: 'N-Dame · Jérusalem · R. Maria' },
-    { type: 'complies', time: '22h30', label: 'Complies',        src: 'R. Maria · N-Dame · Espérance' },
+    { type: 'laudes',   label: 'Laudes',           entries: [
+      { t: '7:00',  tl: '7h00',  srcs: ['rm', 'nd'] },
+      { t: '7:45',  tl: '7h45',  srcs: ['jer', 'sol'] },
+    ]},
+    { type: 'matin',    label: 'Prière du matin',  entries: [
+      { t: '7:30',  tl: '7h30',  srcs: ['rcf'] },
+      { t: '8:00',  tl: '8h00',  srcs: ['esp'] },
+    ]},
+    { type: 'messe',    label: 'Sainte Messe',     entries: [
+      { t: '9:00',  tl: '9h00',  srcs: ['rm'] },
+      { t: '9:15',  tl: '9h15',  srcs: ['lou'] },
+      { t: '10:00', tl: '10h00', srcs: ['nd'] },
+      { t: '11:00', tl: '11h00', srcs: ['kto'] },
+    ]},
+    { type: 'chapelet', label: 'Chapelet de Midi', entries: [
+      { t: '12:00', tl: '12h00', srcs: ['rm'] },
+    ]},
+    { type: 'chapelet', label: 'Chapelet',         entries: [
+      { t: '15:00', tl: '15h00', srcs: ['rm', 'lou'] },
+      { t: '15:30', tl: '15h30', srcs: ['nd'] },
+    ]},
+    { type: 'vepres',   label: 'Vêpres',           entries: [
+      { t: '19:00', tl: '19h00', srcs: ['rm'] },
+      { t: '19:30', tl: '19h30', srcs: ['nd', 'jer', 'sol'] },
+    ]},
+    { type: 'complies', label: 'Complies',         entries: [
+      { t: '21:00', tl: '21h00', srcs: ['sol'] },
+      { t: '21:30', tl: '21h30', srcs: ['rm'] },
+      { t: '22:00', tl: '22h00', srcs: ['nd', 'esp'] },
+    ]},
   ],
 
-  // ── Mercredi — Audience papale à Rome ──
+  // Mercredi — Audience papale à Rome
   3: [
-    { type: 'laudes',   time: '6h00',  label: 'Laudes',           src: 'R. Maria · N-Dame · RCF' },
-    { type: 'matin',    time: '8h00',  label: 'Prière du matin',  src: 'Espérance · RCF' },
-    { type: 'messe',    time: '11h00', label: 'Audience papale',  src: 'Vatican · KTO · N-Dame · R. Maria' },
-    { type: 'chapelet', time: '15h00', label: 'Chapelet',         src: 'R. Maria · Lourdes · N-Dame' },
-    { type: 'vepres',   time: '19h00', label: 'Vêpres',           src: 'N-Dame · Jérusalem · R. Maria' },
-    { type: 'complies', time: '22h30', label: 'Complies',         src: 'R. Maria · N-Dame · Espérance' },
+    { type: 'laudes',   label: 'Laudes',           entries: [
+      { t: '7:00',  tl: '7h00',  srcs: ['rm', 'nd'] },
+      { t: '7:45',  tl: '7h45',  srcs: ['jer', 'sol'] },
+    ]},
+    { type: 'matin',    label: 'Prière du matin',  entries: [
+      { t: '7:30',  tl: '7h30',  srcs: ['rcf'] },
+      { t: '8:00',  tl: '8h00',  srcs: ['esp'] },
+    ]},
+    { type: 'messe',    label: 'Sainte Messe',     entries: [
+      { t: '9:00',  tl: '9h00',  srcs: ['rm'] },
+      { t: '9:15',  tl: '9h15',  srcs: ['lou'] },
+      { t: '10:00', tl: '10h00', srcs: ['nd'] },
+    ]},
+    { type: 'messe',    label: 'Audience papale',  entries: [
+      { t: '10:30', tl: '10h30', srcs: ['vat', 'kto'] },
+    ]},
+    { type: 'chapelet', label: 'Chapelet de Midi', entries: [
+      { t: '12:00', tl: '12h00', srcs: ['rm'] },
+    ]},
+    { type: 'chapelet', label: 'Chapelet',         entries: [
+      { t: '15:00', tl: '15h00', srcs: ['rm', 'lou'] },
+      { t: '15:30', tl: '15h30', srcs: ['nd'] },
+    ]},
+    { type: 'vepres',   label: 'Vêpres',           entries: [
+      { t: '19:00', tl: '19h00', srcs: ['rm'] },
+      { t: '19:30', tl: '19h30', srcs: ['nd', 'jer', 'sol'] },
+    ]},
+    { type: 'complies', label: 'Complies',         entries: [
+      { t: '21:00', tl: '21h00', srcs: ['sol'] },
+      { t: '21:30', tl: '21h30', srcs: ['rm'] },
+      { t: '22:00', tl: '22h00', srcs: ['nd', 'esp'] },
+    ]},
   ],
 
-  // ── Vendredi — Mémoire de la Passion ──
+  // Vendredi — Chapelet de la Miséricorde (15h)
   5: [
-    { type: 'laudes',   time: '6h00',  label: 'Laudes',             src: 'R. Maria · N-Dame · RCF' },
-    { type: 'matin',    time: '8h00',  label: 'Prière du matin',    src: 'Espérance · RCF' },
-    { type: 'messe',    time: '11h00', label: 'Sainte Messe',       src: 'N-Dame · KTO · R. Maria · Lourdes' },
-    { type: 'chapelet', time: '15h00', label: 'Chapelet de la Miséricorde', src: 'R. Maria · Lourdes · N-Dame' },
-    { type: 'vepres',   time: '19h00', label: 'Vêpres',             src: 'N-Dame · Jérusalem · Fidélité' },
-    { type: 'complies', time: '22h30', label: 'Complies',           src: 'R. Maria · N-Dame · Espérance' },
+    { type: 'laudes',   label: 'Laudes',                        entries: [
+      { t: '7:00',  tl: '7h00',  srcs: ['rm', 'nd'] },
+      { t: '7:45',  tl: '7h45',  srcs: ['jer', 'sol'] },
+    ]},
+    { type: 'matin',    label: 'Prière du matin',               entries: [
+      { t: '7:30',  tl: '7h30',  srcs: ['rcf'] },
+      { t: '8:00',  tl: '8h00',  srcs: ['esp'] },
+    ]},
+    { type: 'messe',    label: 'Sainte Messe',                  entries: [
+      { t: '9:00',  tl: '9h00',  srcs: ['rm'] },
+      { t: '9:15',  tl: '9h15',  srcs: ['lou'] },
+      { t: '10:00', tl: '10h00', srcs: ['nd'] },
+      { t: '11:00', tl: '11h00', srcs: ['kto'] },
+    ]},
+    { type: 'chapelet', label: 'Chapelet de Midi',              entries: [
+      { t: '12:00', tl: '12h00', srcs: ['rm'] },
+    ]},
+    { type: 'chapelet', label: 'Chapelet de la Miséricorde',    entries: [
+      { t: '15:00', tl: '15h00', srcs: ['rm', 'lou', 'fid'] },
+      { t: '15:30', tl: '15h30', srcs: ['nd'] },
+    ]},
+    { type: 'vepres',   label: 'Vêpres',                        entries: [
+      { t: '19:00', tl: '19h00', srcs: ['rm'] },
+      { t: '19:30', tl: '19h30', srcs: ['nd', 'jer', 'sol'] },
+    ]},
+    { type: 'complies', label: 'Complies',                      entries: [
+      { t: '21:00', tl: '21h00', srcs: ['sol'] },
+      { t: '21:30', tl: '21h30', srcs: ['rm'] },
+      { t: '22:00', tl: '22h00', srcs: ['nd', 'esp', 'fid'] },
+    ]},
   ],
 
-  // ── Samedi — Jour de Notre-Dame ──
+  // Samedi — Jour marial, Vêpres du dimanche anticipées
   6: [
-    { type: 'laudes',   time: '6h00',  label: 'Laudes',              src: 'R. Maria · N-Dame · RCF' },
-    { type: 'messe',    time: '11h00', label: 'Sainte Messe',        src: 'N-Dame · KTO · R. Maria · Ars' },
-    { type: 'chapelet', time: '15h00', label: 'Chapelet marial',     src: 'R. Maria · Lourdes · N-Dame · Fidélité' },
-    { type: 'vepres',   time: '18h00', label: 'Vêpres du dimanche',  src: 'N-Dame · Jérusalem · R. Maria · Solesmes' },
-    { type: 'complies', time: '22h30', label: 'Complies',            src: 'R. Maria · N-Dame · Espérance' },
+    { type: 'laudes',   label: 'Laudes',              entries: [
+      { t: '7:00',  tl: '7h00',  srcs: ['rm', 'nd'] },
+      { t: '7:45',  tl: '7h45',  srcs: ['sol'] },
+    ]},
+    { type: 'messe',    label: 'Sainte Messe',        entries: [
+      { t: '9:00',  tl: '9h00',  srcs: ['rm'] },
+      { t: '10:00', tl: '10h00', srcs: ['nd'] },
+      { t: '11:00', tl: '11h00', srcs: ['kto', 'ars'] },
+    ]},
+    { type: 'chapelet', label: 'Chapelet marial',     entries: [
+      { t: '12:00', tl: '12h00', srcs: ['rm'] },
+      { t: '15:00', tl: '15h00', srcs: ['rm', 'lou', 'fid'] },
+      { t: '15:30', tl: '15h30', srcs: ['nd'] },
+    ]},
+    { type: 'vepres',   label: 'Vêpres du dimanche', entries: [
+      { t: '18:00', tl: '18h00', srcs: ['rm'] },
+      { t: '18:30', tl: '18h30', srcs: ['nd'] },
+      { t: '19:00', tl: '19h00', srcs: ['jer'] },
+      { t: '19:30', tl: '19h30', srcs: ['sol'] },
+    ]},
+    { type: 'complies', label: 'Complies',            entries: [
+      { t: '21:00', tl: '21h00', srcs: ['sol'] },
+      { t: '21:30', tl: '21h30', srcs: ['rm'] },
+      { t: '22:00', tl: '22h00', srcs: ['nd', 'esp'] },
+    ]},
   ],
 
-  // ── Dimanche — Cœur de la semaine liturgique ──
+  // Dimanche — Cœur de la semaine liturgique
   0: [
-    { type: 'laudes',   time: '8h00',  label: 'Laudes dominicales',   src: 'N-Dame · R. Maria · RCF · Espérance' },
-    { type: 'messe',    time: '11h00', label: "Grand'Messe",          src: 'N-Dame · KTO · N-D Paris · Lourdes · R. Maria' },
-    { type: 'chapelet', time: '12h00', label: 'Angélus Domini',       src: 'Vatican · KTO · N-Dame' },
-    { type: 'chapelet', time: '15h00', label: 'Chapelet du Rosaire',  src: 'R. Maria · Lourdes · N-Dame · Ars' },
-    { type: 'vepres',   time: '17h30', label: 'Vêpres solennelles',   src: 'N-Dame · N-D Paris · Jérusalem · Solesmes' },
-    { type: 'complies', time: '22h30', label: 'Complies',             src: 'R. Maria · N-Dame · Espérance · RCF' },
+    { type: 'laudes',   label: 'Laudes dominicales',  entries: [
+      { t: '8:00',  tl: '8h00',  srcs: ['rm', 'nd', 'rcf'] },
+    ]},
+    { type: 'messe',    label: "Grand'Messe",          entries: [
+      { t: '10:00', tl: '10h00', srcs: ['nd', 'ndp'] },
+      { t: '10:30', tl: '10h30', srcs: ['rm', 'lou'] },
+      { t: '11:00', tl: '11h00', srcs: ['kto'] },
+    ]},
+    { type: 'chapelet', label: 'Angélus',              entries: [
+      { t: '12:00', tl: '12h00', srcs: ['vat', 'kto', 'nd'] },
+    ]},
+    { type: 'chapelet', label: 'Chapelet du Rosaire',  entries: [
+      { t: '15:00', tl: '15h00', srcs: ['rm', 'lou', 'nd'] },
+    ]},
+    { type: 'vepres',   label: 'Vêpres solennelles',  entries: [
+      { t: '17:30', tl: '17h30', srcs: ['ndp'] },
+      { t: '18:00', tl: '18h00', srcs: ['nd'] },
+      { t: '19:00', tl: '19h00', srcs: ['rm'] },
+      { t: '19:30', tl: '19h30', srcs: ['jer', 'sol'] },
+    ]},
+    { type: 'complies', label: 'Complies',             entries: [
+      { t: '21:00', tl: '21h00', srcs: ['sol'] },
+      { t: '21:30', tl: '21h30', srcs: ['rm'] },
+      { t: '22:00', tl: '22h00', srcs: ['nd', 'esp', 'rcf'] },
+    ]},
   ],
 };
 
@@ -663,37 +796,59 @@ function initWeek() {
   const container = document.getElementById('week-cards');
   if (!container) return;
 
-  const today = getParisDate();
-  const todayDow = today.getDay(); // 0=Dim … 6=Sam
+  const today    = getParisDate();
+  const todayDow = today.getDay();                          // 0=Dim … 6=Sam
+  const moOffset = todayDow === 0 ? -6 : 1 - todayDow;    // France : semaine Lun→Dim
+  const monday   = new Date(today);
+  monday.setDate(today.getDate() + moOffset);
 
-  // France : semaine Lun → Dim
-  const mondayOffset = todayDow === 0 ? -6 : 1 - todayDow;
-  const monday = new Date(today);
-  monday.setDate(today.getDate() + mondayOffset);
-
-  const SHORT_DAYS  = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
-
+  const SHORT_DAYS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
   container.innerHTML = '';
 
   for (let i = 0; i < 7; i++) {
     const date = new Date(monday);
     date.setDate(monday.getDate() + i);
-    const dow = date.getDay();
+    const dow     = date.getDay();
+    const isToday = date.getDate()     === today.getDate()  &&
+                    date.getMonth()    === today.getMonth()  &&
+                    date.getFullYear() === today.getFullYear();
 
-    const isToday = (
-      date.getDate()     === today.getDate()     &&
-      date.getMonth()    === today.getMonth()     &&
-      date.getFullYear() === today.getFullYear()
-    );
+    const daySlots = WEEK_SCHEDULE[dow] ?? WEEK_SCHEDULE.ordinary;
 
-    // Sélection de la grille horaire pour ce jour
-    const slots = WEEK_SCHEDULE[dow] ?? WEEK_SCHEDULE.ordinary;
-
-    const slotsHtml = slots.map(s => `
-      <div class="wc-slot ${s.type}">
-        <span class="wc-time">${s.time} · ${s.label}</span>
-        <span class="wc-name">${s.src}</span>
-      </div>`).join('');
+    let slotsHtml = '';
+    for (const slot of daySlots) {
+      let entriesHtml = '';
+      for (const entry of slot.entries) {
+        let btnsHtml = '';
+        for (const key of entry.srcs) {
+          const src = SOURCES[key];
+          if (!src) continue;
+          if (src.s) {
+            // Flux audio direct → bouton lecture intégrée
+            btnsHtml += `<button class="wc-src-btn wc-radio" data-action="radio"
+              data-stream="${src.s}" data-web="${src.w}"
+              data-name="${src.n}" data-prayer="${slot.label}" data-time="${entry.tl}"
+              title="Écouter ${src.n}">
+              <i class="fa-solid fa-play"></i>${src.n}
+            </button>`;
+          } else {
+            // Pas de flux → lien vers le site dans un nouvel onglet
+            btnsHtml += `<a class="wc-src-btn wc-link" href="${src.w}"
+              target="_blank" rel="noopener" title="Ouvrir ${src.n}">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i>${src.n}
+            </a>`;
+          }
+        }
+        entriesHtml += `<div class="wc-entry">
+          <span class="wc-etime">${entry.tl}</span>
+          <div class="wc-src-list">${btnsHtml}</div>
+        </div>`;
+      }
+      slotsHtml += `<div class="wc-slot ${slot.type}">
+        <div class="wc-slot-label">${slot.label}</div>
+        ${entriesHtml}
+      </div>`;
+    }
 
     const card = document.createElement('div');
     card.className = `wc-day${isToday ? ' today-day' : ''}`;
@@ -703,7 +858,6 @@ function initWeek() {
         <span class="wc-daynum">${date.getDate()}</span>
       </div>
       <div class="wc-slots">${slotsHtml}</div>`;
-
     container.appendChild(card);
   }
 }

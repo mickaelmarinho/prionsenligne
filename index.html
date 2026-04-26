@@ -92,112 +92,206 @@
       <!-- Timeline -->
       <div class="timeline" id="timeline">
 
-        <article class="tl-item" data-type="laudes" data-start="6:00" data-duration="60">
-          <div class="tl-time">6h00</div>
+        <!-- ── LAUDES ── 7h00 → 8h30 ── -->
+        <article class="tl-item" data-type="laudes" data-start="7:00" data-duration="90">
+          <div class="tl-time">7h00</div>
           <div class="tl-marker laudes"></div>
           <div class="tl-body">
             <h3 class="tl-prayer">Laudes</h3>
             <div class="tl-sources">
-              <button class="tl-src radio"
-                data-name="Radio Maria France" data-prayer="Laudes" data-time="6h00"
+              <button class="tl-src radio" data-action="radio"
+                data-name="Radio Maria" data-prayer="Laudes" data-time="7h00"
                 data-stream="https://stream.radiomaria.fr/radiomariafrance-hd.mp3"
-                data-web="https://www.radiomaria.fr"><i class="fa-solid fa-tower-broadcast"></i> Radio Maria France</button>
+                data-web="https://www.radiomaria.fr">
+                <i class="fa-solid fa-play"></i> Radio Maria <small class="src-time">7h00</small>
+              </button>
+              <button class="tl-src radio" data-action="radio"
+                data-name="Radio Notre-Dame" data-prayer="Laudes" data-time="7h00"
+                data-stream="https://windu.radionotredame.net/RadioNotreDame-Fm.mp3"
+                data-web="https://www.radionotredame.net">
+                <i class="fa-solid fa-play"></i> Radio N-Dame <small class="src-time">7h00</small>
+              </button>
+              <a class="tl-src youtube" href="https://www.jerusalem.cef.fr/les-offices/" target="_blank" rel="noopener">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> Jérusalem <small class="src-time">7h45</small>
+              </a>
+              <a class="tl-src youtube" href="https://www.solesmes.com/offices-monastiques" target="_blank" rel="noopener">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> Solesmes <small class="src-time">7h45</small>
+              </a>
             </div>
           </div>
           <div class="tl-actions">
-            <span class="tl-badge badge-radio">Radio</span>
+            <span class="tl-badge">—</span>
             <button class="tl-breviary-btn" data-prayer="laudes"><i class="fa-solid fa-book-open"></i> Bréviaire</button>
           </div>
         </article>
 
-        <article class="tl-item" data-type="matin" data-start="8:00" data-duration="60">
-          <div class="tl-time">8h00</div>
+        <!-- ── PRIÈRE DU MATIN ── 7h30 → 9h00 ── -->
+        <article class="tl-item" data-type="matin" data-start="7:30" data-duration="90">
+          <div class="tl-time">7h30</div>
           <div class="tl-marker matin"></div>
           <div class="tl-body">
             <h3 class="tl-prayer">Prière du matin</h3>
             <div class="tl-sources">
-              <button class="tl-src radio"
-                data-name="Radio Espérance" data-prayer="Prière du matin" data-time="8h00"
-                data-stream=""
-                data-web="https://www.radio-esperance.fr/player/"><i class="fa-solid fa-tower-broadcast"></i> Radio Espérance</button>
+              <a class="tl-src youtube" href="https://rcf.fr/radios/ecouter-rcf" target="_blank" rel="noopener">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> RCF <small class="src-time">7h30</small>
+              </a>
+              <a class="tl-src youtube" href="https://www.radio-esperance.fr/player/" target="_blank" rel="noopener">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> Espérance <small class="src-time">8h00</small>
+              </a>
             </div>
           </div>
           <div class="tl-actions">
-            <span class="tl-badge badge-radio">Radio</span>
+            <span class="tl-badge">—</span>
             <button class="tl-breviary-btn" data-prayer="matin"><i class="fa-solid fa-book-open"></i> Bréviaire</button>
           </div>
         </article>
 
-        <article class="tl-item" data-type="messe" data-start="11:00" data-duration="90">
-          <div class="tl-time">11h00</div>
+        <!-- ── SAINTE MESSE ── 9h00 → 13h00 ── -->
+        <article class="tl-item" data-type="messe" data-start="9:00" data-duration="240">
+          <div class="tl-time">9h00</div>
           <div class="tl-marker messe"></div>
           <div class="tl-body">
             <h3 class="tl-prayer">Sainte Messe</h3>
             <div class="tl-sources">
-              <button class="tl-src radio"
-                data-name="Radio Notre-Dame" data-prayer="Sainte Messe" data-time="11h00"
+              <button class="tl-src radio" data-action="radio"
+                data-name="Radio Maria" data-prayer="Sainte Messe" data-time="9h00"
+                data-stream="https://stream.radiomaria.fr/radiomariafrance-hd.mp3"
+                data-web="https://www.radiomaria.fr">
+                <i class="fa-solid fa-play"></i> Radio Maria <small class="src-time">9h00</small>
+              </button>
+              <a class="tl-src youtube" href="https://www.lourdes-france.org/en/live-broadcasts/" target="_blank" rel="noopener">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> Lourdes <small class="src-time">9h15</small>
+              </a>
+              <button class="tl-src radio" data-action="radio"
+                data-name="Radio Notre-Dame" data-prayer="Sainte Messe" data-time="10h00"
                 data-stream="https://windu.radionotredame.net/RadioNotreDame-Fm.mp3"
-                data-web="https://www.radionotredame.net"><i class="fa-solid fa-tower-broadcast"></i> Radio Notre-Dame</button>
-              <a class="tl-src youtube" href="https://www.ktotv.com" target="_blank" rel="noopener"><i class="fa-brands fa-youtube"></i> KTO YouTube</a>
+                data-web="https://www.radionotredame.net">
+                <i class="fa-solid fa-play"></i> Radio N-Dame <small class="src-time">10h00</small>
+              </button>
+              <a class="tl-src youtube" href="https://www.ktotv.com/live" target="_blank" rel="noopener">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> KTO <small class="src-time">11h00</small>
+              </a>
             </div>
           </div>
           <div class="tl-actions">
-            <span class="tl-badge badge-live">En direct</span>
+            <span class="tl-badge">—</span>
             <button class="tl-breviary-btn" data-prayer="messe"><i class="fa-solid fa-book-open"></i> Textes</button>
           </div>
         </article>
 
-        <article class="tl-item" data-type="chapelet" data-start="15:00" data-duration="60">
+        <!-- ── CHAPELET DE MIDI ── 12h00 → 13h00 ── -->
+        <article class="tl-item" data-type="chapelet" data-start="12:00" data-duration="60">
+          <div class="tl-time">12h00</div>
+          <div class="tl-marker chapelet"></div>
+          <div class="tl-body">
+            <h3 class="tl-prayer">Chapelet de Midi</h3>
+            <div class="tl-sources">
+              <button class="tl-src radio" data-action="radio"
+                data-name="Radio Maria" data-prayer="Chapelet de Midi" data-time="12h00"
+                data-stream="https://stream.radiomaria.fr/radiomariafrance-hd.mp3"
+                data-web="https://www.radiomaria.fr">
+                <i class="fa-solid fa-play"></i> Radio Maria <small class="src-time">12h00</small>
+              </button>
+            </div>
+          </div>
+          <div class="tl-actions">
+            <span class="tl-badge">—</span>
+            <button class="tl-breviary-btn" data-prayer="chapelet"><i class="fa-solid fa-book-open"></i> Mystères</button>
+          </div>
+        </article>
+
+        <!-- ── CHAPELET ── 15h00 → 16h30 ── -->
+        <article class="tl-item" data-type="chapelet" data-start="15:00" data-duration="90">
           <div class="tl-time">15h00</div>
           <div class="tl-marker chapelet"></div>
           <div class="tl-body">
             <h3 class="tl-prayer">Chapelet</h3>
             <div class="tl-sources">
-              <button class="tl-src radio"
-                data-name="Radio Maria France" data-prayer="Chapelet" data-time="15h00"
+              <button class="tl-src radio" data-action="radio"
+                data-name="Radio Maria" data-prayer="Chapelet" data-time="15h00"
                 data-stream="https://stream.radiomaria.fr/radiomariafrance-hd.mp3"
-                data-web="https://www.radiomaria.fr"><i class="fa-solid fa-tower-broadcast"></i> Radio Maria</button>
-              <a class="tl-src youtube" href="https://www.lourdes-france.org" target="_blank" rel="noopener"><i class="fa-brands fa-youtube"></i> Lourdes YouTube</a>
+                data-web="https://www.radiomaria.fr">
+                <i class="fa-solid fa-play"></i> Radio Maria <small class="src-time">15h00</small>
+              </button>
+              <a class="tl-src youtube" href="https://www.lourdes-france.org/en/live-broadcasts/" target="_blank" rel="noopener">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> Lourdes <small class="src-time">15h00</small>
+              </a>
+              <button class="tl-src radio" data-action="radio"
+                data-name="Radio Notre-Dame" data-prayer="Chapelet" data-time="15h30"
+                data-stream="https://windu.radionotredame.net/RadioNotreDame-Fm.mp3"
+                data-web="https://www.radionotredame.net">
+                <i class="fa-solid fa-play"></i> Radio N-Dame <small class="src-time">15h30</small>
+              </button>
             </div>
           </div>
           <div class="tl-actions">
-            <span class="tl-badge badge-live">En direct</span>
+            <span class="tl-badge">—</span>
             <button class="tl-breviary-btn" data-prayer="chapelet"><i class="fa-solid fa-book-open"></i> Mystères</button>
           </div>
         </article>
 
-        <article class="tl-item" data-type="vepres" data-start="17:30" data-duration="60">
-          <div class="tl-time">17h30</div>
+        <!-- ── VÊPRES ── 19h00 → 20h30 ── -->
+        <article class="tl-item" data-type="vepres" data-start="19:00" data-duration="90">
+          <div class="tl-time">19h00</div>
           <div class="tl-marker vepres"></div>
           <div class="tl-body">
             <h3 class="tl-prayer">Vêpres</h3>
             <div class="tl-sources">
-              <button class="tl-src radio"
-                data-name="Radio Notre-Dame" data-prayer="Vêpres" data-time="17h30"
+              <button class="tl-src radio" data-action="radio"
+                data-name="Radio Maria" data-prayer="Vêpres" data-time="19h00"
+                data-stream="https://stream.radiomaria.fr/radiomariafrance-hd.mp3"
+                data-web="https://www.radiomaria.fr">
+                <i class="fa-solid fa-play"></i> Radio Maria <small class="src-time">19h00</small>
+              </button>
+              <button class="tl-src radio" data-action="radio"
+                data-name="Radio Notre-Dame" data-prayer="Vêpres" data-time="19h30"
                 data-stream="https://windu.radionotredame.net/RadioNotreDame-Fm.mp3"
-                data-web="https://www.radionotredame.net"><i class="fa-solid fa-tower-broadcast"></i> Radio Notre-Dame</button>
+                data-web="https://www.radionotredame.net">
+                <i class="fa-solid fa-play"></i> Radio N-Dame <small class="src-time">19h30</small>
+              </button>
+              <a class="tl-src youtube" href="https://www.jerusalem.cef.fr/les-offices/" target="_blank" rel="noopener">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> Jérusalem <small class="src-time">19h30</small>
+              </a>
+              <a class="tl-src youtube" href="https://www.solesmes.com/offices-monastiques" target="_blank" rel="noopener">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> Solesmes <small class="src-time">19h30</small>
+              </a>
             </div>
           </div>
           <div class="tl-actions">
-            <span class="tl-badge badge-soon">Dans 2h</span>
+            <span class="tl-badge">—</span>
             <button class="tl-breviary-btn" data-prayer="vepres"><i class="fa-solid fa-book-open"></i> Bréviaire</button>
           </div>
         </article>
 
-        <article class="tl-item" data-type="complies" data-start="21:00" data-duration="60">
+        <!-- ── COMPLIES ── 21h00 → 22h30 ── -->
+        <article class="tl-item" data-type="complies" data-start="21:00" data-duration="90">
           <div class="tl-time">21h00</div>
           <div class="tl-marker complies"></div>
           <div class="tl-body">
             <h3 class="tl-prayer">Complies</h3>
             <div class="tl-sources">
-              <button class="tl-src radio"
-                data-name="Radio Espérance" data-prayer="Complies" data-time="21h00"
-                data-stream=""
-                data-web="https://www.radio-esperance.fr/player/"><i class="fa-solid fa-tower-broadcast"></i> Radio Espérance</button>
+              <a class="tl-src youtube" href="https://www.solesmes.com/offices-monastiques" target="_blank" rel="noopener">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> Solesmes <small class="src-time">21h00</small>
+              </a>
+              <button class="tl-src radio" data-action="radio"
+                data-name="Radio Maria" data-prayer="Complies" data-time="21h30"
+                data-stream="https://stream.radiomaria.fr/radiomariafrance-hd.mp3"
+                data-web="https://www.radiomaria.fr">
+                <i class="fa-solid fa-play"></i> Radio Maria <small class="src-time">21h30</small>
+              </button>
+              <button class="tl-src radio" data-action="radio"
+                data-name="Radio Notre-Dame" data-prayer="Complies" data-time="22h00"
+                data-stream="https://windu.radionotredame.net/RadioNotreDame-Fm.mp3"
+                data-web="https://www.radionotredame.net">
+                <i class="fa-solid fa-play"></i> Radio N-Dame <small class="src-time">22h00</small>
+              </button>
+              <a class="tl-src youtube" href="https://www.radio-esperance.fr/player/" target="_blank" rel="noopener">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> Espérance <small class="src-time">22h00</small>
+              </a>
             </div>
           </div>
           <div class="tl-actions">
-            <span class="tl-badge badge-later">Ce soir</span>
+            <span class="tl-badge">—</span>
             <button class="tl-breviary-btn" data-prayer="complies"><i class="fa-solid fa-book-open"></i> Bréviaire</button>
           </div>
         </article>
