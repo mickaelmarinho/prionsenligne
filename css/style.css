@@ -149,7 +149,19 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
 }
 .hamburger-btn:hover { background: rgba(255,255,255,.2); }
 
-/* Dropdown burger */
+/* Overlay fond sombre derrière le drawer (mobile) */
+.hamburger-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.38);
+  z-index: 249;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s ease;
+}
+.hamburger-overlay.show { opacity: 1; pointer-events: all; }
+
+/* ── Dropdown / drawer burger ── */
 .hamburger-menu {
   position: absolute;
   top: calc(100% + 10px);
@@ -161,9 +173,31 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
   min-width: 190px;
   box-shadow: 0 8px 30px rgba(0,0,0,.15);
   z-index: 300;
-  animation: fadeIn .15s ease;
+  /* Animation douce : pas de display:none — utilise opacity + transform */
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px) scale(.97);
+  transition: opacity .18s ease, transform .18s ease;
 }
-.hamburger-menu.hidden { display: none; }
+/* Visible */
+.hamburger-menu:not(.hidden) {
+  opacity: 1;
+  pointer-events: all;
+  transform: translateY(0) scale(1);
+}
+
+/* ── Labels de section dans le drawer ── */
+.hm-section-label {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--text-soft);
+  padding: 10px 18px 3px;
+}
+/* La section navigation est cachée sur desktop (bottom-nav non présente) */
+.hm-nav-label, .hm-nav-item, .hm-nav-divider { display: none; }
+.hm-nav-item.hm-active { background: var(--cream-mid); color: var(--navy); font-weight: 500; }
 
 .hm-item {
   padding: 10px 18px;
@@ -1594,13 +1628,34 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
   .header-auth-desktop { display: none !important; }
   #hamburger-btn { display: flex !important; }
 
-  /* Burger dropdown fixé en haut à droite sur mobile (visible même depuis la bottom-nav) */
+  /* ── Sur mobile : drawer glissant depuis le bas ── */
   .hamburger-menu {
     position: fixed;
-    top: 68px;
-    right: 16px;
-    left: auto;
+    bottom: 70px;   /* juste au-dessus de la bottom-nav */
+    left: 8px; right: 8px;
+    top: auto;
+    min-width: unset;
+    max-height: 76vh;
+    overflow-y: auto;
+    border-radius: 18px;
+    transform: translateY(24px) scale(.96);
+    box-shadow: 0 -4px 30px rgba(0,0,0,.18);
+    /* Poignée visuelle */
   }
+  .hamburger-menu::before {
+    content: '';
+    display: block;
+    width: 36px; height: 4px;
+    background: var(--border-mid);
+    border-radius: 2px;
+    margin: 10px auto 2px;
+  }
+  .hamburger-menu:not(.hidden) {
+    transform: translateY(0) scale(1);
+  }
+  /* Navigation onglets visible dans le drawer mobile */
+  .hm-nav-label, .hm-nav-item, .hm-nav-divider { display: flex; }
+  .hm-nav-label { display: block; }
 
   .day-banner { flex-direction: column; align-items: flex-start; gap: 8px; padding: 14px 16px; }
   .day-feast  { font-size: 18px; }
@@ -1663,4 +1718,250 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
   #hm-auth-sep,
   #hm-login-item,
   #hm-signup-item { display: none !important; }
+
+  /* FAB chapelet : bien ancré en bas à droite, au-dessus du player */
+  .chapelet-fab { bottom: 30px; }
+  body.player-open .chapelet-fab { bottom: 88px; }
 }
+
+
+/* ══════════════════════════════════════════════
+   WIDGET — PROCHAIN OFFICE
+══════════════════════════════════════════════ */
+.next-office-widget {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  background: var(--navy);
+  color: var(--cream);
+  border-radius: var(--r-lg);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+}
+.no-label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  opacity: .5;
+  margin-bottom: 5px;
+}
+.no-prayer {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 300;
+  line-height: 1.15;
+}
+.no-srcs {
+  font-size: 11px;
+  opacity: .5;
+  margin-top: 5px;
+}
+.no-right { text-align: right; flex-shrink: 0; }
+.no-time {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 32px;
+  font-weight: 300;
+  color: var(--gold);
+  line-height: 1;
+}
+.no-countdown {
+  font-size: 11px;
+  opacity: .65;
+  margin-top: 4px;
+}
+
+
+/* ══════════════════════════════════════════════
+   WIDGET — CHAPELET NUMÉRIQUE
+══════════════════════════════════════════════ */
+
+/* Bouton flottant (FAB) */
+.chapelet-fab {
+  position: fixed;
+  right: 20px;
+  bottom: 84px;       /* au-dessus de la bottom-nav mobile */
+  width: 52px; height: 52px;
+  background: var(--chapelet);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 20px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 18px rgba(153,53,86,.4);
+  transition: transform .15s, box-shadow .15s;
+  z-index: 95;
+}
+.chapelet-fab:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 24px rgba(153,53,86,.5);
+}
+body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio */
+
+/* Modale */
+.chapelet-modal {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.5);
+  z-index: 450;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.chapelet-modal.hidden { display: none; }
+
+.ch-panel {
+  background: white;
+  border-radius: 24px 24px 0 0;
+  width: 100%; max-width: 500px;
+  padding: 8px 24px max(24px, env(safe-area-inset-bottom));
+  max-height: 88vh;
+  overflow-y: auto;
+}
+@media (min-width: 641px) {
+  .chapelet-modal { align-items: center; }
+  .ch-panel { border-radius: 20px; max-height: 92vh; }
+}
+
+.ch-panel::before {   /* poignée */
+  content: '';
+  display: block;
+  width: 36px; height: 4px;
+  background: var(--border-mid);
+  border-radius: 2px;
+  margin: 10px auto 16px;
+}
+@media (min-width: 641px) { .ch-panel::before { display: none; } }
+
+.ch-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.ch-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--navy);
+}
+.ch-close {
+  background: var(--cream-mid);
+  border: none;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  color: var(--text-soft);
+  transition: background .12s;
+}
+.ch-close:hover { background: var(--cream); }
+
+.ch-mystery {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--chapelet);
+  margin-bottom: 3px;
+}
+.ch-decade-info {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  margin-bottom: 14px;
+  color: var(--text-soft);
+  font-size: 12px;
+}
+.ch-myst-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  color: var(--text);
+  font-weight: 400;
+}
+
+/* Grille de perles */
+.ch-beads {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 14px 0;
+}
+.ch-decade-dots {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+}
+.ch-bead {
+  width: 13px; height: 13px;
+  border-radius: 50%;
+  background: var(--border-mid);
+  flex-shrink: 0;
+  transition: background .2s, transform .2s, box-shadow .2s;
+}
+.ch-bead.ch-bead-sp {
+  border-radius: 4px;       /* carré pour Notre Père & Gloria */
+  width: 11px; height: 11px;
+  margin-top: 1px;
+}
+.ch-bead.done    { background: rgba(153,53,86,.35); }
+.ch-bead.current {
+  background: var(--chapelet);
+  transform: scale(1.45);
+  box-shadow: 0 0 8px rgba(153,53,86,.45);
+}
+
+/* Prière en cours */
+.ch-prayer-txt {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 26px;
+  text-align: center;
+  color: var(--text);
+  margin: 18px 0 20px;
+  min-height: 34px;
+  line-height: 1.2;
+}
+
+/* Bouton principal */
+.ch-tap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 16px;
+  background: var(--chapelet);
+  color: white;
+  border: none;
+  border-radius: var(--r-lg);
+  font-size: 15px;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s;
+  margin-bottom: 14px;
+}
+.ch-tap:hover:not(:disabled)  { background: #7a2843; }
+.ch-tap:disabled               { background: var(--text-soft); cursor: default; }
+
+.ch-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.ch-progress {
+  font-size: 12px;
+  color: var(--text-soft);
+}
+.ch-reset {
+  font-size: 12px;
+  color: var(--text-soft);
+  background: none;
+  border: 1px solid var(--border-mid);
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 4px 10px;
+  transition: background .12s;
+}
+.ch-reset:hover { background: var(--cream-mid); color: var(--text); }

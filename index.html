@@ -12,6 +12,9 @@
 </head>
 <body>
 
+  <!-- Overlay fond sombre — drawer burger mobile -->
+  <div id="hamburger-overlay" class="hamburger-overlay"></div>
+
   <!-- ═══════════════════════════════════════════
        NAVIGATION
   ═══════════════════════════════════════════ -->
@@ -48,6 +51,16 @@
 
       <!-- Dropdown menu burger -->
       <div id="hamburger-menu" class="hamburger-menu hidden" role="menu">
+
+        <!-- ── Navigation (visible uniquement dans le drawer mobile) ── -->
+        <div class="hm-section-label hm-nav-label">Navigation</div>
+        <div class="hm-item hm-nav-item" data-tab="aujourd"><i class="fa-solid fa-sun"></i> Aujourd'hui</div>
+        <div class="hm-item hm-nav-item" data-tab="semaine"><i class="fa-solid fa-calendar-week"></i> Semaine</div>
+        <div class="hm-item hm-nav-item" data-tab="mois"><i class="fa-solid fa-calendar"></i> Mois</div>
+        <div class="hm-item hm-nav-item" data-tab="sources"><i class="fa-solid fa-tower-broadcast"></i> Sources</div>
+        <div class="hm-divider hm-nav-divider"></div>
+
+        <!-- ── Menu général ── -->
         <div class="hm-item" id="hm-signout" style="display:none"><i class="fa-solid fa-right-from-bracket"></i> Se déconnecter</div>
         <div class="hm-item"><i class="fa-solid fa-bell"></i> Notifications</div>
         <div class="hm-divider"></div>
@@ -67,6 +80,19 @@
 
     <!-- ──────────── AUJOURD'HUI ──────────── -->
     <section id="tab-aujourd" class="tab-section active">
+
+      <!-- ── Widget : prochain office ── -->
+      <div class="next-office-widget" id="next-office">
+        <div class="no-left">
+          <div class="no-label" id="no-label">Prochain office</div>
+          <div class="no-prayer" id="no-prayer">Chargement…</div>
+          <div class="no-srcs" id="no-srcs"></div>
+        </div>
+        <div class="no-right">
+          <div class="no-time" id="no-time">—</div>
+          <div class="no-countdown" id="no-countdown"></div>
+        </div>
+      </div>
 
       <div class="day-banner">
         <div class="day-banner-left">
@@ -694,6 +720,36 @@
       <span>Menu</span>
     </button>
   </nav>
+
+  <!-- ═══════════════════════════════════════════
+       WIDGET — CHAPELET NUMÉRIQUE
+  ═══════════════════════════════════════════ -->
+  <button class="chapelet-fab" id="chapelet-fab" title="Chapelet numérique">
+    <i class="fa-solid fa-circle-dot"></i>
+  </button>
+
+  <div class="chapelet-modal hidden" id="chapelet-modal" role="dialog" aria-modal="true" aria-label="Chapelet numérique">
+    <div class="ch-panel">
+      <div class="ch-header">
+        <span class="ch-title">Chapelet numérique</span>
+        <button class="ch-close" id="ch-close" aria-label="Fermer"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="ch-mystery" id="ch-mystery">—</div>
+      <div class="ch-decade-info">
+        <span id="ch-decade-num">1ᵉ mystère</span>
+        <span class="ch-myst-name" id="ch-myst-name">—</span>
+      </div>
+      <div class="ch-beads" id="ch-beads"></div>
+      <div class="ch-prayer-txt" id="ch-prayer-txt">Notre Père</div>
+      <button class="ch-tap" id="ch-tap">
+        <i class="fa-solid fa-hand-point-up"></i> Suivant
+      </button>
+      <div class="ch-footer">
+        <span class="ch-progress" id="ch-progress">1 / 60</span>
+        <button class="ch-reset" id="ch-reset">Recommencer</button>
+      </div>
+    </div>
+  </div>
 
   <script src="js/app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

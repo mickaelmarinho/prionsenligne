@@ -512,26 +512,202 @@ function initRadioPlayer() {
 ──────────────────────────────────────────────*/
 
 function initHamburger() {
-  const btn    = document.getElementById('hamburger-btn');   // header (desktop + mobile)
-  const bnBtn  = document.getElementById('bn-compte');       // bottom-nav (mobile)
-  const menu   = document.getElementById('hamburger-menu');
+  const btn     = document.getElementById('hamburger-btn');
+  const bnBtn   = document.getElementById('bn-compte');
+  const menu    = document.getElementById('hamburger-menu');
+  const overlay = document.getElementById('hamburger-overlay');
   if (!menu) return;
+
+  function openMenu() {
+    menu.classList.remove('hidden');
+    overlay?.classList.add('show');
+    btn?.setAttribute('aria-expanded', 'true');
+    // Marque l'onglet courant dans la nav du drawer
+    const active = document.querySelector('.nav-tab.active')?.dataset.tab;
+    menu.querySelectorAll('.hm-nav-item').forEach(it =>
+      it.classList.toggle('hm-active', it.dataset.tab === active)
+    );
+  }
+
+  function closeMenu() {
+    menu.classList.add('hidden');
+    overlay?.classList.remove('show');
+    btn?.setAttribute('aria-expanded', 'false');
+  }
 
   function toggleMenu(e) {
     e.stopPropagation();
-    const isOpen = !menu.classList.contains('hidden');
-    menu.classList.toggle('hidden');
-    if (btn) btn.setAttribute('aria-expanded', String(!isOpen));
+    menu.classList.contains('hidden') ? openMenu() : closeMenu();
   }
 
-  btn?.addEventListener('click', toggleMenu);
-  bnBtn?.addEventListener('click', toggleMenu);
+  btn?.addEventListener('click',    toggleMenu);
+  bnBtn?.addEventListener('click',  toggleMenu);
+  overlay?.addEventListener('click', closeMenu);
 
-  // Ferme en cliquant ailleurs
-  document.addEventListener('click', () => {
-    menu.classList.add('hidden');
-    if (btn) btn.setAttribute('aria-expanded', 'false');
+  // Liens de navigation dans le drawer (visibles sur mobile)
+  menu.querySelectorAll('.hm-nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelector(`.nav-tab[data-tab="${item.dataset.tab}"]`)?.click();
+      closeMenu();
+    });
   });
+
+  // Ferme quand on clique en dehors
+  document.addEventListener('click', e => {
+    if (!menu.contains(e.target) && e.target !== btn && !btn?.contains(e.target)
+        && e.target !== bnBtn && !bnBtn?.contains(e.target)) {
+      closeMenu();
+    }
+  });
+}
+
+
+/* ────────────────────────────────────────────
+   8b. WIDGET — PROCHAIN OFFICE
+──────────────────────────────────────────────*/
+
+function initNextOffice() {
+  const labelEl     = document.getElementById('no-label');
+  const prayerEl    = document.getElementById('no-prayer');
+  const timeEl      = document.getElementById('no-time');
+  const countdownEl = document.getElementById('no-countdown');
+  const srcsEl      = document.getElementById('no-srcs');
+  if (!prayerEl) return;
+
+  function update() {
+    const now    = getParisDate();
+    const dow    = now.getDay();
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const slots  = WEEK_SCHEDULE[dow] ?? WEEK_SCHEDULE.ordinary;
+
+    let found = null;
+    outer: for (const slot of slots) {
+      for (const entry of slot.entries) {
+        const [h, m] = entry.t.split(':').map(Number);
+        if (h * 60 + m > nowMin) { found = { slot, entry, startMin: h * 60 + m }; break outer; }
+      }
+    }
+
+    if (!found) {
+      // Plus rien aujourd'hui → Laudes demain matin
+      if (labelEl)  labelEl.textContent     = 'Prochaines Laudes';
+      prayerEl.textContent                  = 'Demain matin';
+      if (timeEl)   timeEl.textContent      = '7h00';
+      if (countdownEl) countdownEl.textContent = '';
+      if (srcsEl)   srcsEl.textContent      = 'Radio Maria · Radio N-Dame';
+      return;
+    }
+
+    const diff = found.startMin - nowMin;
+    const h = Math.floor(diff / 60), m = diff % 60;
+    const countdown = diff < 60 ? `dans ${diff} min`
+                    : m === 0   ? `dans ${h}h`
+                    : `dans ${h}h${String(m).padStart(2,'0')}`;
+
+    const srcNames = found.entry.srcs.map(k => SOURCES[k]?.n || k).join(' · ');
+
+    if (labelEl)     labelEl.textContent     = 'Prochain office';
+    prayerEl.textContent                     = found.slot.label;
+    if (timeEl)      timeEl.textContent      = found.entry.tl;
+    if (countdownEl) countdownEl.textContent = countdown;
+    if (srcsEl)      srcsEl.textContent      = srcNames;
+  }
+
+  update();
+  setInterval(update, 60_000);
+}
+
+
+/* ────────────────────────────────────────────
+   8c. WIDGET — CHAPELET NUMÉRIQUE
+──────────────────────────────────────────────*/
+
+function initChapelet() {
+  const fab     = document.getElementById('chapelet-fab');
+  const modal   = document.getElementById('chapelet-modal');
+  const closeBtn= document.getElementById('ch-close');
+  const tapBtn  = document.getElementById('ch-tap');
+  const resetBtn= document.getElementById('ch-reset');
+  if (!fab || !modal) return;
+
+  // Mystères selon le jour (tradition catholique)
+  const DOW_KEY  = {0:'glorieux',1:'joyeux',2:'douloureux',3:'glorieux',4:'lumineux',5:'douloureux',6:'joyeux'};
+  const MYST = {
+    joyeux:    { name:'Mystères Joyeux',     list:["L'Annonciation","La Visitation","La Nativité","La Présentation au Temple","Le Recouvrement au Temple"] },
+    douloureux:{ name:'Mystères Douloureux', list:["L'Agonie à Gethsémani","La Flagellation","Le Couronnement d'épines","Le Portement de Croix","La Crucifixion et la Mort"] },
+    lumineux:  { name:'Mystères Lumineux',   list:["Le Baptême de Jésus","Les Noces de Cana","L'Annonce du Royaume","La Transfiguration","L'Institution de l'Eucharistie"] },
+    glorieux:  { name:'Mystères Glorieux',   list:["La Résurrection","L'Ascension","La Pentecôte","L'Assomption de Marie","Le Couronnement de Marie"] },
+  };
+
+  const mystery = MYST[DOW_KEY[getParisDate().getDay()]];
+
+  // Séquence : 5 décades × 12 pas (Notre Père + 10 JvsM + Gloire au Père)
+  let step = 0;
+  const TOTAL = 60;
+
+  function getPrayer(s) {
+    const b = s % 12;
+    if (b === 0)  return 'Notre Père';
+    if (b === 11) return 'Gloire au Père';
+    return `Je vous salue Marie · ${b}/10`;
+  }
+
+  function buildBeads() {
+    const c = document.getElementById('ch-beads');
+    if (!c) return;
+    c.innerHTML = '';
+    for (let d = 0; d < 5; d++) {
+      const row = document.createElement('div');
+      row.className = 'ch-decade-dots';
+      for (let b = 0; b < 12; b++) {
+        const bead = document.createElement('div');
+        bead.className = 'ch-bead' + (b === 0 || b === 11 ? ' ch-bead-sp' : '');
+        row.appendChild(bead);
+      }
+      c.appendChild(row);
+    }
+  }
+
+  function render() {
+    const decade = Math.floor(step / 12);
+    const el = id => document.getElementById(id);
+    el('ch-mystery')?.textContent && (el('ch-mystery').textContent = mystery.name);
+    if (el('ch-mystery'))    el('ch-mystery').textContent    = mystery.name;
+    if (el('ch-myst-name'))  el('ch-myst-name').textContent  = mystery.list[Math.min(decade, 4)];
+    if (el('ch-decade-num')) el('ch-decade-num').textContent = `${decade + 1}ᵉ mystère`;
+    if (el('ch-prayer-txt')) el('ch-prayer-txt').textContent = getPrayer(step);
+    if (el('ch-progress'))   el('ch-progress').textContent   = `${step + 1} / ${TOTAL}`;
+
+    modal.querySelectorAll('.ch-bead').forEach((bead, i) => {
+      bead.classList.toggle('done',    i < step);
+      bead.classList.toggle('current', i === step);
+    });
+
+    if (tapBtn) {
+      const done = step >= TOTAL - 1;
+      tapBtn.innerHTML = done
+        ? '<i class="fa-solid fa-check"></i> Chapelet terminé !'
+        : '<i class="fa-solid fa-hand-point-up"></i> Suivant';
+      tapBtn.disabled = done;
+    }
+  }
+
+  fab.addEventListener('click', () => {
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    buildBeads();
+    render();
+  });
+
+  const closeModal = () => {
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
+  };
+
+  closeBtn?.addEventListener('click', closeModal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+  tapBtn?.addEventListener('click',  () => { if (step < TOTAL - 1) { step++; render(); } });
+  resetBtn?.addEventListener('click',() => { step = 0; render(); });
 }
 
 
@@ -939,4 +1115,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initDailyPrayer();
   initBadges();
   initWeek();
+  initNextOffice();
+  initChapelet();
 });
