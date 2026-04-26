@@ -64,10 +64,19 @@ function initFilters() {
 
 
 /* ────────────────────────────────────────────
+   HELPER — Date en heure de Paris
+──────────────────────────────────────────────*/
+function getParisDate() {
+  // Retourne toujours la date courante selon le fuseau Europe/Paris,
+  // quel que soit le fuseau du navigateur de l'utilisateur.
+  return new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Paris' }));
+}
+
+/* ────────────────────────────────────────────
    3. DATE AUTOMATIQUE
 ──────────────────────────────────────────────*/
 function initDate() {
-  const now    = new Date();
+  const now    = getParisDate();
   const days   = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
   const months = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
   const label  = `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
@@ -251,7 +260,7 @@ function openBreviary(prayerKey) {
 
   nameEl.textContent = PRAYER_NAMES[prayerKey] || prayerKey;
 
-  const now    = new Date();
+  const now    = getParisDate();
   const months = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
   dateEl.textContent = `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
 
@@ -278,7 +287,7 @@ function openBreviary(prayerKey) {
   const aelfOffice = aelfMap[prayerKey];
 
   if (aelfOffice) {
-    const d = new Date();
+    const d = getParisDate();
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, '0');
     const j = String(d.getDate()).padStart(2, '0');
@@ -501,21 +510,25 @@ function initRadioPlayer() {
 ──────────────────────────────────────────────*/
 
 function initHamburger() {
-  const btn  = document.getElementById('hamburger-btn');
-  const menu = document.getElementById('hamburger-menu');
-  if (!btn || !menu) return;
+  const btn    = document.getElementById('hamburger-btn');   // header (desktop + mobile)
+  const bnBtn  = document.getElementById('bn-compte');       // bottom-nav (mobile)
+  const menu   = document.getElementById('hamburger-menu');
+  if (!menu) return;
 
-  btn.addEventListener('click', e => {
+  function toggleMenu(e) {
     e.stopPropagation();
     const isOpen = !menu.classList.contains('hidden');
     menu.classList.toggle('hidden');
-    btn.setAttribute('aria-expanded', String(!isOpen));
-  });
+    if (btn) btn.setAttribute('aria-expanded', String(!isOpen));
+  }
+
+  btn?.addEventListener('click', toggleMenu);
+  bnBtn?.addEventListener('click', toggleMenu);
 
   // Ferme en cliquant ailleurs
   document.addEventListener('click', () => {
     menu.classList.add('hidden');
-    btn.setAttribute('aria-expanded', 'false');
+    if (btn) btn.setAttribute('aria-expanded', 'false');
   });
 }
 
@@ -572,7 +585,7 @@ function initDailyPrayer() {
   const authorEl = document.getElementById('footer-prayer-author');
   if (!textEl || !authorEl) return;
 
-  const now       = new Date();
+  const now       = getParisDate();
   const start     = new Date(now.getFullYear(), 0, 0);
   const dayOfYear = Math.floor((now - start) / 86400000);
   const prayer    = DAILY_PRAYERS[dayOfYear % DAILY_PRAYERS.length];
