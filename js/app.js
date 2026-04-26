@@ -39,18 +39,17 @@ function initTabs() {
 
 /* ────────────────────────────────────────────
    2. FILTRES PRIÈRES (vue Aujourd'hui)
+   Les items étant générés dynamiquement par initTodayTimeline(),
+   on re-requête le DOM à chaque clic plutôt que de capturer la NodeList à l'init.
 ──────────────────────────────────────────────*/
 function initFilters() {
-  const filters = document.querySelectorAll('.pf');
-  const items   = document.querySelectorAll('.tl-item');
-
-  filters.forEach(btn => {
+  document.querySelectorAll('.pf').forEach(btn => {
     btn.addEventListener('click', () => {
-      filters.forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.pf').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
 
       const type = btn.dataset.filter;
-      items.forEach(item => {
+      document.querySelectorAll('.tl-item').forEach(item => {
         if (type === 'all' || item.dataset.type === type) {
           item.style.display = '';
           item.style.animation = 'fadeIn .2s ease';
@@ -384,11 +383,11 @@ function closeBreviary() {
 }
 
 function initBreviary() {
-  document.querySelectorAll('.tl-breviary-btn').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      openBreviary(btn.dataset.prayer);
-    });
+  // Délégation d'événement — capture les boutons générés dynamiquement par initTodayTimeline()
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.tl-breviary-btn');
+    if (!btn) return;
+    openBreviary(btn.dataset.prayer);
   });
 
   const closeBtn = document.getElementById('brev-close');
@@ -1061,6 +1060,90 @@ function initWeek() {
 
 
 /* ────────────────────────────────────────────
+   9b. TIMELINE AUJOURD'HUI — générée dynamiquement
+   Aplatit WEEK_SCHEDULE du jour courant, trie par heure,
+   et injecte une carte par créneau (une source ou groupe de sources à la même heure).
+──────────────────────────────────────────────*/
+function initTodayTimeline() {
+  const container = document.getElementById('timeline');
+  if (!container) return;
+
+  const now  = getParisDate();
+  const dow  = now.getDay();
+  const slots = WEEK_SCHEDULE[dow] ?? WEEK_SCHEDULE.ordinary;
+
+  // Aplatit toutes les entrées {slot, entry} et trie chronologiquement
+  const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
+  const flat  = [];
+  for (const slot of slots)
+    for (const entry of slot.entries)
+      flat.push({ slot, entry });
+  flat.sort((a, b) => toMin(a.entry.t) - toMin(b.entry.t));
+
+  const BREV_LABEL = {
+    laudes: 'Bréviaire', matin: 'Bréviaire', messe: 'Textes',
+    chapelet: 'Mystères', vepres: 'Bréviaire', complies: 'Bréviaire',
+  };
+
+  container.innerHTML = '';
+
+  flat.forEach(({ slot, entry }, i) => {
+    const startMin = toMin(entry.t);
+
+    // Durée estimée : gap jusqu'au prochain créneau, plafonné à 75 min
+    let duration = 60;
+    if (i < flat.length - 1) {
+      const gap = toMin(flat[i + 1].entry.t) - startMin;
+      if (gap > 0 && gap <= 75) duration = gap;
+    }
+
+    // Boutons sources
+    let srcsHtml = '';
+    for (const key of entry.srcs) {
+      const src = SOURCES[key];
+      if (!src) continue;
+      if (src.s) {
+        srcsHtml += `<button class="tl-src radio" data-action="radio"
+          data-stream="${src.s}" data-web="${src.w}"
+          data-name="${src.n}" data-prayer="${slot.label}" data-time="${entry.tl}">
+          <i class="fa-solid fa-play"></i> ${src.n}
+        </button>`;
+      } else {
+        srcsHtml += `<a class="tl-src youtube" href="${src.w}" target="_blank" rel="noopener">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> ${src.n}
+        </a>`;
+      }
+    }
+
+    const brevLabel = BREV_LABEL[slot.type];
+    const brevHtml  = brevLabel
+      ? `<button class="tl-breviary-btn" data-prayer="${slot.type}">
+           <i class="fa-solid fa-book-open"></i> ${brevLabel}
+         </button>`
+      : '';
+
+    const art = document.createElement('article');
+    art.className        = 'tl-item';
+    art.dataset.type     = slot.type;
+    art.dataset.start    = entry.t;
+    art.dataset.duration = String(duration);
+    art.innerHTML = `
+      <div class="tl-time">${entry.tl}</div>
+      <div class="tl-marker ${slot.type}"></div>
+      <div class="tl-body">
+        <h3 class="tl-prayer">${slot.label}</h3>
+        <div class="tl-sources">${srcsHtml}</div>
+      </div>
+      <div class="tl-actions">
+        <span class="tl-badge">—</span>
+        ${brevHtml}
+      </div>`;
+    container.appendChild(art);
+  });
+}
+
+
+/* ────────────────────────────────────────────
    10. BADGES HORAIRES — temps réel (heure Paris)
 ──────────────────────────────────────────────*/
 function initBadges() {
@@ -1133,14 +1216,15 @@ function initBadges() {
 ──────────────────────────────────────────────*/
 document.addEventListener('DOMContentLoaded', () => {
   initTabs();
-  initFilters();
   initDate();
   initCalendar();
-  initBreviary();
+  initBreviary();        // délégation → doit être avant ou après, peu importe
   initRadioPlayer();
   initHamburger();
   initDailyPrayer();
-  initBadges();
+  initTodayTimeline();   // génère les items de la timeline AVANT les filtres et badges
+  initFilters();         // re-requête le DOM → doit être après initTodayTimeline
+  initBadges();          // idem
   initWeek();
   initWelcome();
   initNextOffice();

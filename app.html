@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PrionsEnLigne — Agenda des prières</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- Overlay fond sombre — drawer burger mobile -->
+  <div id="hamburger-overlay" class="hamburger-overlay"></div>
+
+  <!-- ═══════════════════════════════════════════
+       NAVIGATION
+  ═══════════════════════════════════════════ -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-cross">
+          <span class="cross-v"></span>
+          <span class="cross-h"></span>
+        </div>
+        <span class="logo-name">PrionsEnLigne</span>
+      </div>
+      <nav class="main-nav">
+        <button class="nav-tab active" data-tab="aujourd"><i class="fa-solid fa-sun"></i> Aujourd'hui</button>
+        <button class="nav-tab" data-tab="semaine"><i class="fa-solid fa-calendar-week"></i> Semaine</button>
+        <button class="nav-tab" data-tab="mois"><i class="fa-solid fa-calendar"></i> Mois</button>
+        <button class="nav-tab" data-tab="sources"><i class="fa-solid fa-tower-broadcast"></i> Sources</button>
+      </nav>
+      <div class="header-user" id="header-user">
+        <div class="header-auth-desktop" id="header-auth-desktop">
+          <button class="nav-auth-btn nav-login-btn" id="header-btn-login">
+            <i class="fa-solid fa-right-to-bracket"></i> Se connecter
+          </button>
+          <button class="nav-auth-btn nav-signup-btn" id="header-btn-signup">
+            <i class="fa-solid fa-hands-praying"></i> Rejoindre
+          </button>
+        </div>
+        <button class="hamburger-btn" id="hamburger-btn" aria-label="Menu" aria-expanded="false">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+      </div>
+
+      <!-- Dropdown menu burger -->
+      <div id="hamburger-menu" class="hamburger-menu hidden" role="menu">
+        <div class="hm-section-label hm-nav-label">Navigation</div>
+        <div class="hm-item hm-nav-item" data-tab="aujourd"><i class="fa-solid fa-sun"></i> Aujourd'hui</div>
+        <div class="hm-item hm-nav-item" data-tab="semaine"><i class="fa-solid fa-calendar-week"></i> Semaine</div>
+        <div class="hm-item hm-nav-item" data-tab="mois"><i class="fa-solid fa-calendar"></i> Mois</div>
+        <div class="hm-item hm-nav-item" data-tab="sources"><i class="fa-solid fa-tower-broadcast"></i> Sources</div>
+        <div class="hm-divider hm-nav-divider"></div>
+        <div class="hm-item" id="hm-signout" style="display:none"><i class="fa-solid fa-right-from-bracket"></i> Se déconnecter</div>
+        <div class="hm-item"><i class="fa-solid fa-bell"></i> Notifications</div>
+        <div class="hm-divider"></div>
+        <div class="hm-item"><i class="fa-solid fa-circle-info"></i> À propos</div>
+        <div class="hm-divider" id="hm-auth-sep"></div>
+        <div class="hm-item" id="hm-login-item"><i class="fa-solid fa-right-to-bracket"></i> Se connecter</div>
+        <div class="hm-item hm-join" id="hm-signup-item"><i class="fa-solid fa-hands-praying"></i> Rejoindre</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════
+       MAIN CONTENT
+  ═══════════════════════════════════════════ -->
+  <main class="site-main">
+
+    <!-- ──────────── AUJOURD'HUI ──────────── -->
+    <section id="tab-aujourd" class="tab-section active">
+
+      <!-- ── Bloc bienvenue — première visite uniquement ── -->
+      <div class="welcome-banner" id="welcome-banner">
+        <button class="wb-close" id="wb-close" aria-label="Fermer ce message"><i class="fa-solid fa-xmark"></i></button>
+        <div class="wb-body">
+          <div class="wb-brand">
+            <div class="logo-cross wb-cross">
+              <span class="cross-v"></span>
+              <span class="cross-h"></span>
+            </div>
+          </div>
+          <div class="wb-content">
+            <h2 class="wb-title">Bienvenue sur PrionsEnLigne</h2>
+            <p class="wb-desc">Votre compagnon quotidien pour prier en communion avec l'Église — offices du bréviaire, messes en direct, chapelet et calendrier liturgique, le tout entièrement gratuit.</p>
+            <ul class="wb-features">
+              <li><i class="fa-solid fa-sun"></i> Offices du jour avec liens directs vers les radios catholiques</li>
+              <li><i class="fa-solid fa-book-open"></i> Textes liturgiques officiels fournis par l'AELF</li>
+              <li><i class="fa-solid fa-circle-dot"></i> Chapelet numérique guidé selon les mystères du jour</li>
+              <li><i class="fa-solid fa-calendar"></i> Calendrier des saints et du temps liturgique</li>
+            </ul>
+          </div>
+        </div>
+        <div class="wb-footer">
+          <button class="wb-start" id="wb-start"><i class="fa-solid fa-hands-praying"></i> Commencer à prier</button>
+          <span class="wb-dismiss" id="wb-dismiss">Ne plus afficher</span>
+        </div>
+      </div>
+
+      <!-- ── Widget : prochain office ── -->
+      <div class="next-office-widget" id="next-office">
+        <div class="no-left">
+          <div class="no-label" id="no-label">Prochain office</div>
+          <div class="no-prayer" id="no-prayer">Chargement…</div>
+          <div class="no-srcs" id="no-srcs"></div>
+        </div>
+        <div class="no-right">
+          <div class="no-time" id="no-time">—</div>
+          <div class="no-countdown" id="no-countdown"></div>
+        </div>
+      </div>
+
+      <div class="day-banner">
+        <div class="day-banner-left">
+          <div class="day-date" id="js-date">Dimanche 26 avril 2026</div>
+          <div class="day-feast" id="js-feast">Saint Marc, évangéliste</div>
+        </div>
+        <div class="feast-pill" id="js-feast-type">Fête liturgique</div>
+      </div>
+
+      <!-- Filtres + Timeline -->
+      <div class="today-main">
+
+        <div class="prayer-filters">
+          <button class="pf active pf-all"   data-filter="all"><i class="fa-solid fa-grip"></i> Tout</button>
+          <button class="pf pf-laudes"       data-filter="laudes"><i class="fa-solid fa-sun"></i> Laudes</button>
+          <button class="pf pf-matin"        data-filter="matin"><i class="fa-solid fa-mug-hot"></i> Matin</button>
+          <button class="pf pf-messe"        data-filter="messe"><i class="fa-solid fa-church"></i> Messe</button>
+          <button class="pf pf-chapelet"     data-filter="chapelet"><i class="fa-solid fa-circle-dot"></i> Chapelet</button>
+          <button class="pf pf-vepres"       data-filter="vepres"><i class="fa-solid fa-cloud-sun"></i> Vêpres</button>
+          <button class="pf pf-complies"     data-filter="complies"><i class="fa-solid fa-moon"></i> Complies</button>
+        </div>
+
+        <!-- Timeline — générée dynamiquement par initTodayTimeline() selon le jour réel -->
+        <div class="timeline" id="timeline">
+          <!-- contenu injecté par JS -->
+        </div>
+
+      </div><!-- /today-main -->
+
+      <!-- Légende -->
+      <div class="legend">
+        <span class="leg laudes">Laudes</span>
+        <span class="leg matin">Matin</span>
+        <span class="leg messe">Messe</span>
+        <span class="leg chapelet">Chapelet</span>
+        <span class="leg vepres">Vêpres</span>
+        <span class="leg complies">Complies</span>
+      </div>
+
+    </section><!-- /aujourd'hui -->
+
+
+    <!-- ──────────── SEMAINE ──────────── -->
+    <section id="tab-semaine" class="tab-section">
+      <div class="week-cards-wrap">
+        <div class="week-cards" id="week-cards"><!-- généré par initWeek() --></div>
+      </div>
+      <div class="legend">
+        <span class="leg laudes">Laudes</span>
+        <span class="leg matin">Matin</span>
+        <span class="leg messe">Messe</span>
+        <span class="leg chapelet">Chapelet</span>
+        <span class="leg vepres">Vêpres</span>
+        <span class="leg complies">Complies</span>
+      </div>
+    </section><!-- /semaine -->
+
+
+    <!-- ──────────── MOIS ──────────── -->
+    <section id="tab-mois" class="tab-section">
+
+      <div class="month-nav">
+        <button class="month-btn">‹ Mars</button>
+        <h2 class="month-title">Avril 2026</h2>
+        <button class="month-btn">Mai ›</button>
+      </div>
+
+      <div id="day-detail" class="day-detail hidden">
+        <div class="dd-date" id="dd-date"></div>
+        <span class="dd-type" id="dd-type"></span>
+        <h3 class="dd-saint" id="dd-saint"></h3>
+        <p class="dd-desc" id="dd-desc"></p>
+      </div>
+
+      <div class="cal-grid">
+        <div class="cal-head">L</div><div class="cal-head">M</div>
+        <div class="cal-head">M</div><div class="cal-head">J</div>
+        <div class="cal-head">V</div><div class="cal-head">S</div>
+        <div class="cal-head">D</div>
+
+        <div class="cal-day other"><span class="cal-num">31</span></div>
+        <div class="cal-day" data-date="Mercredi 1er avril" data-type="ordinaire" data-saint="Sainte Valérie" data-desc="Temps ordinaire."><span class="cal-num">1</span><span class="cal-saint">Ste Valérie</span></div>
+        <div class="cal-day memoire" data-date="Jeudi 2 avril" data-type="memoire" data-saint="Saint François de Paule" data-desc="Fondateur de l'Ordre des Minimes, né en Calabre en 1416."><span class="cal-num">2</span><span class="cal-saint">St François</span><div class="cal-dot purple"></div></div>
+        <div class="cal-day" data-date="Vendredi 3 avril" data-type="ordinaire" data-saint="Sainte Agape" data-desc="Martyre du IVe siècle."><span class="cal-num">3</span><span class="cal-saint">Ste Agape</span></div>
+        <div class="cal-day memoire" data-date="Samedi 4 avril" data-type="memoire" data-saint="Saint Isidore de Séville" data-desc="Docteur de l'Église, archevêque de Séville, patron des informaticiens."><span class="cal-num">4</span><span class="cal-saint">St Isidore</span><div class="cal-dot purple"></div></div>
+        <div class="cal-day" data-date="Dimanche 5 avril" data-type="ordinaire" data-saint="Dimanche de Pâques VII" data-desc="Temps pascal."><span class="cal-num">5</span><span class="cal-saint">Pâques VII</span></div>
+
+        <div class="cal-day" data-date="Lundi 6 avril" data-type="ordinaire" data-saint="Saint Marcellin" data-desc="Pape et martyr du IVe siècle."><span class="cal-num">6</span><span class="cal-saint">St Marcellin</span></div>
+        <div class="cal-day memoire" data-date="Mardi 7 avril" data-type="memoire" data-saint="Saint Jean-Baptiste de la Salle" data-desc="Fondateur des Frères des Écoles Chrétiennes, patron des éducateurs."><span class="cal-num">7</span><span class="cal-saint">St J-B de la Salle</span><div class="cal-dot purple"></div></div>
+        <div class="cal-day" data-date="Mercredi 8 avril" data-type="ordinaire" data-saint="Saint Gautier" data-desc="Abbé, XIIe siècle."><span class="cal-num">8</span><span class="cal-saint">St Gautier</span></div>
+        <div class="cal-day" data-date="Jeudi 9 avril" data-type="ordinaire" data-saint="Sainte Madeleine" data-desc="Temps ordinaire."><span class="cal-num">9</span><span class="cal-saint">Ste Madeleine</span></div>
+        <div class="cal-day" data-date="Vendredi 10 avril" data-type="ordinaire" data-saint="Saint Fulbert" data-desc="Évêque de Chartres, bâtisseur de cathédrale."><span class="cal-num">10</span><span class="cal-saint">St Fulbert</span></div>
+        <div class="cal-day memoire" data-date="Samedi 11 avril" data-type="memoire" data-saint="Saint Stanislas" data-desc="Évêque et martyr, patron de la Pologne."><span class="cal-num">11</span><span class="cal-saint">St Stanislas</span><div class="cal-dot purple"></div></div>
+        <div class="cal-day fete" data-date="Dimanche 12 avril" data-type="fete" data-saint="Dimanche de la Miséricorde Divine" data-desc="Instituée par saint Jean-Paul II. Jésus dit à sainte Faustine : 'Je veux que la fête de la Miséricorde soit le refuge et l'abri de toutes les âmes.'"><span class="cal-num">12</span><span class="cal-saint">Miséricorde</span><div class="cal-dot gold"></div></div>
+
+        <div class="cal-day" data-date="Lundi 13 avril" data-type="ordinaire" data-saint="Saint Martin Ier" data-desc="Pape et martyr."><span class="cal-num">13</span><span class="cal-saint">St Martin I</span></div>
+        <div class="cal-day" data-date="Mardi 14 avril" data-type="ordinaire" data-saint="Sainte Lidwine" data-desc="Mystique néerlandaise, patronne des malades."><span class="cal-num">14</span><span class="cal-saint">Ste Lidwine</span></div>
+        <div class="cal-day" data-date="Mercredi 15 avril" data-type="ordinaire" data-saint="Sainte Anastasie" data-desc="Temps ordinaire."><span class="cal-num">15</span><span class="cal-saint">Ste Anastasie</span></div>
+        <div class="cal-day" data-date="Jeudi 16 avril" data-type="ordinaire" data-saint="Sainte Bernadette" data-desc="Voyante de Lourdes, sainte du sourire."><span class="cal-num">16</span><span class="cal-saint">Ste Bernadette</span></div>
+        <div class="cal-day" data-date="Vendredi 17 avril" data-type="ordinaire" data-saint="Saint Anicet" data-desc="Pape et martyr."><span class="cal-num">17</span><span class="cal-saint">St Anicet</span></div>
+        <div class="cal-day fete" data-date="Samedi 18 avril" data-type="fete" data-saint="Saint Parfait" data-desc="Prêtre de Cordoue, martyrisé en 850 pour avoir refusé de renier sa foi."><span class="cal-num">18</span><span class="cal-saint">St Parfait</span><div class="cal-dot gold"></div></div>
+        <div class="cal-day" data-date="Dimanche 19 avril" data-type="ordinaire" data-saint="3e dimanche de Pâques" data-desc="Temps pascal."><span class="cal-num">19</span><span class="cal-saint">3e Pâques</span></div>
+
+        <div class="cal-day" data-date="Lundi 20 avril" data-type="ordinaire" data-saint="Sainte Odette" data-desc="Vierge, patronne des aveugles."><span class="cal-num">20</span><span class="cal-saint">Ste Odette</span></div>
+        <div class="cal-day memoire" data-date="Mardi 21 avril" data-type="memoire" data-saint="Saint Anselme" data-desc="Docteur de l'Église, archevêque de Cantorbéry. Auteur de la preuve ontologique de l'existence de Dieu."><span class="cal-num">21</span><span class="cal-saint">St Anselme</span><div class="cal-dot purple"></div></div>
+        <div class="cal-day" data-date="Mercredi 22 avril" data-type="ordinaire" data-saint="Saint Alexandre" data-desc="Pape et martyr."><span class="cal-num">22</span><span class="cal-saint">St Alexandre</span></div>
+        <div class="cal-day fete" data-date="Jeudi 23 avril" data-type="fete" data-saint="Saint Georges" data-desc="Martyr légendaire, patron de l'Angleterre. Sa croix rouge sur fond blanc est l'un des symboles chrétiens les plus reconnus."><span class="cal-num">23</span><span class="cal-saint">St Georges</span><div class="cal-dot gold"></div></div>
+        <div class="cal-day memoire" data-date="Vendredi 24 avril" data-type="memoire" data-saint="Saint Fidèle de Sigmaringen" data-desc="Premier martyr capucin, missionnaire en Suisse."><span class="cal-num">24</span><span class="cal-saint">St Fidèle</span><div class="cal-dot purple"></div></div>
+        <div class="cal-day fete" data-date="Samedi 25 avril" data-type="fete" data-saint="Saint Marc, évangéliste" data-desc="Auteur du 2e Évangile, le plus court et le plus dynamique. Compagnon de Pierre à Rome, il fut le premier évêque d'Alexandrie."><span class="cal-num">25</span><span class="cal-saint">St Marc Évang.</span><div class="cal-dot gold"></div></div>
+        <div class="cal-day today fete" data-date="Dimanche 26 avril — Aujourd'hui" data-type="fete" data-saint="Saint Marc (reporté)" data-desc="La fête de Saint Marc, évangéliste, est célébrée ce dimanche du temps pascal en communion avec toute l'Église."><span class="cal-num">26</span><span class="cal-saint">St Marc</span><div class="cal-dot gold"></div></div>
+
+        <div class="cal-day" data-date="Lundi 27 avril" data-type="ordinaire" data-saint="Sainte Zita" data-desc="Patronne des domestiques et des servantes."><span class="cal-num">27</span><span class="cal-saint">Ste Zita</span></div>
+        <div class="cal-day memoire" data-date="Mardi 28 avril" data-type="memoire" data-saint="Saint Pierre Chanel" data-desc="Premier martyr d'Océanie, missionnaire en Polynésie."><span class="cal-num">28</span><span class="cal-saint">St Pierre Chanel</span><div class="cal-dot purple"></div></div>
+        <div class="cal-day fete" data-date="Mercredi 29 avril" data-type="fete" data-saint="Sainte Catherine de Sienne" data-desc="Docteure de l'Église, copatrone de l'Europe. Mystique dominicaine qui vécut une union profonde au Christ crucifié."><span class="cal-num">29</span><span class="cal-saint">Ste Catherine</span><div class="cal-dot gold"></div></div>
+        <div class="cal-day memoire" data-date="Jeudi 30 avril" data-type="memoire" data-saint="Saint Pie V" data-desc="Pape dominicain, promoteur du rosaire, qui unifia la liturgie tridentine."><span class="cal-num">30</span><span class="cal-saint">St Pie V</span><div class="cal-dot purple"></div></div>
+        <div class="cal-day other"><span class="cal-num">1</span></div>
+        <div class="cal-day other"><span class="cal-num">2</span></div>
+        <div class="cal-day other"><span class="cal-num">3</span></div>
+      </div>
+
+      <div class="month-legend">
+        <span><span class="cal-dot gold inline"></span> Fête / Solennité</span>
+        <span><span class="cal-dot purple inline"></span> Mémoire</span>
+        <span class="today-legend">26 Aujourd'hui</span>
+      </div>
+
+    </section><!-- /mois -->
+
+
+    <!-- ──────────── SOURCES ──────────── -->
+    <section id="tab-sources" class="tab-section">
+
+      <div class="sources-intro">
+        <p>Toutes les sources diffusent gratuitement sur internet. Cliquez sur une carte pour accéder directement au lecteur ou à la page de diffusion.</p>
+      </div>
+
+      <h2 class="sources-title">Radios catholiques</h2>
+      <div class="sources-grid">
+
+        <a class="src-card src-card-link" href="https://www.radiomaria.fr" target="_blank" rel="noopener">
+          <div class="src-card-head"><span class="src-type radio">Radio</span><div class="src-live-dot"></div></div>
+          <h3 class="src-name">Radio Maria France</h3>
+          <p class="src-info">24h/24 · Catholique · La Garde (83)</p>
+          <div class="src-tags">
+            <span class="stag laudes">Laudes</span><span class="stag messe">Messe</span>
+            <span class="stag chapelet">Chapelet</span><span class="stag vepres">Vêpres</span><span class="stag complies">Complies</span>
+          </div>
+        </a>
+
+        <a class="src-card src-card-link" href="https://www.radionotredame.net" target="_blank" rel="noopener">
+          <div class="src-card-head"><span class="src-type radio-stream">Radio <i class="fa-solid fa-play" style="font-size:8px;margin-left:3px;"></i></span><div class="src-live-dot"></div></div>
+          <h3 class="src-name">Radio Notre-Dame</h3>
+          <p class="src-info">24h/24 · Paris · Île-de-France · <strong>Lecture intégrée</strong></p>
+          <div class="src-tags">
+            <span class="stag laudes">Laudes</span><span class="stag messe">Messe</span>
+            <span class="stag chapelet">Chapelet</span><span class="stag vepres">Vêpres</span><span class="stag complies">Complies</span>
+          </div>
+        </a>
+
+        <a class="src-card src-card-link" href="https://rcf.fr/radios/ecouter-rcf" target="_blank" rel="noopener">
+          <div class="src-card-head"><span class="src-type radio">Radio</span><div class="src-live-dot"></div></div>
+          <h3 class="src-name">RCF</h3>
+          <p class="src-info">24h/24 · Réseau national · Chrétien</p>
+          <div class="src-tags"><span class="stag matin">Matin</span><span class="stag laudes">Laudes</span></div>
+        </a>
+
+        <a class="src-card src-card-link" href="https://radio-esperance.fr" target="_blank" rel="noopener">
+          <div class="src-card-head"><span class="src-type radio">Radio</span><div class="src-live-dot"></div></div>
+          <h3 class="src-name">Radio Espérance</h3>
+          <p class="src-info">24h/24 · Saint-Étienne (42)</p>
+          <div class="src-tags"><span class="stag matin">Matin</span><span class="stag chapelet">Chapelet</span><span class="stag complies">Complies</span></div>
+        </a>
+
+        <a class="src-card src-card-link" href="https://www.radiofidelite.fr/player/" target="_blank" rel="noopener">
+          <div class="src-card-head"><span class="src-type radio">Radio</span><div class="src-live-dot"></div></div>
+          <h3 class="src-name">Radio Fidélité</h3>
+          <p class="src-info">24h/24 · Angers (49) · Maine-et-Loire</p>
+          <div class="src-tags"><span class="stag chapelet">Chapelet</span><span class="stag complies">Complies</span></div>
+        </a>
+
+      </div>
+
+      <h2 class="sources-title">Télévision &amp; vidéo en direct</h2>
+      <div class="sources-grid">
+
+        <a class="src-card src-card-link" href="https://www.ktotv.com/live" target="_blank" rel="noopener">
+          <div class="src-card-head"><span class="src-type youtube">TV</span><div class="src-live-dot"></div></div>
+          <h3 class="src-name">KTO Télévision</h3>
+          <p class="src-info">Selon les horaires · Paris · Nationale</p>
+          <div class="src-tags"><span class="stag messe">Messe</span><span class="stag chapelet">Chapelet</span></div>
+        </a>
+
+        <a class="src-card src-card-link" href="https://www.lourdes-france.com/lourdesplus/" target="_blank" rel="noopener">
+          <div class="src-card-head"><span class="src-type youtube">Vidéo</span><div class="src-live-dot"></div></div>
+          <h3 class="src-name">Sanctuaire de Lourdes</h3>
+          <p class="src-info">Selon les horaires · Hautes-Pyrénées</p>
+          <div class="src-tags"><span class="stag messe">Messe</span><span class="stag chapelet">Chapelet</span></div>
+        </a>
+
+        <a class="src-card src-card-link" href="https://www.vaticannews.va/fr/video.html" target="_blank" rel="noopener">
+          <div class="src-card-head"><span class="src-type youtube">Vidéo</span></div>
+          <h3 class="src-name">Vatican News</h3>
+          <p class="src-info">Audiences, Angélus · Rome</p>
+          <div class="src-tags"><span class="stag messe">Messe</span><span class="stag chapelet">Chapelet</span></div>
+        </a>
+
+        <a class="src-card src-card-link" href="https://www.notredamedeparis.fr/la-cathedrale/en-direct/" target="_blank" rel="noopener">
+          <div class="src-card-head"><span class="src-type youtube">Vidéo</span><div class="src-live-dot"></div></div>
+          <h3 class="src-name">Notre-Dame de Paris</h3>
+          <p class="src-info">Selon les horaires · Cathédrale · Paris</p>
+          <div class="src-tags"><span class="stag messe">Messe</span><span class="stag vepres">Vêpres</span></div>
+        </a>
+
+      </div>
+
+      <h2 class="sources-title">Sanctuaires &amp; communautés</h2>
+      <div class="sources-grid">
+        <a class="src-card src-card-link" href="https://www.saintcure-ars.fr" target="_blank" rel="noopener">
+          <div class="src-card-head"><span class="src-type monastique">Sanctuaire</span></div>
+          <h3 class="src-name">Sanctuaire d'Ars</h3>
+          <p class="src-info">Messe en direct les dimanches · Ars-sur-Formans (01)</p>
+          <div class="src-tags"><span class="stag messe">Messe</span></div>
+        </a>
+      </div>
+
+      <div class="src-note">
+        <i class="fa-solid fa-circle-info" style="color:var(--gold);margin-right:6px;"></i>
+        Les sources marquées <strong>Lecture intégrée</strong> (<i class="fa-solid fa-play" style="font-size:9px;"></i>) peuvent être écoutées directement depuis l'agenda sans quitter le site. Les autres ouvrent la page de diffusion dans un nouvel onglet.
+      </div>
+
+    </section><!-- /sources -->
+
+  </main><!-- /site-main -->
+
+
+  <!-- ═══════════════════════════════════════════
+       FOOTER
+  ═══════════════════════════════════════════ -->
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="logo">
+          <div class="logo-cross"><span class="cross-v"></span><span class="cross-h"></span></div>
+          <span class="logo-name">PrionsEnLigne</span>
+        </div>
+        <p class="footer-tagline">Prier ensemble, chaque jour</p>
+      </div>
+      <nav class="footer-nav">
+        <span class="footer-nav-title">Navigation</span>
+        <button class="footer-nav-link" data-tab="aujourd">Aujourd'hui</button>
+        <button class="footer-nav-link" data-tab="semaine">Semaine</button>
+        <button class="footer-nav-link" data-tab="mois">Mois</button>
+        <button class="footer-nav-link" data-tab="sources">Sources</button>
+      </nav>
+      <div class="footer-legal">
+        <p>Textes liturgiques :</p>
+        <p><a href="https://www.aelf.org" target="_blank" rel="noopener">AELF</a> — Association Épiscopale<br>Liturgique Francophone</p>
+        <p style="margin-top:12px">Radios partenaires :<br>
+          <a href="https://www.radiomaria.fr" target="_blank" rel="noopener">Radio Maria France</a> ·
+          <a href="https://www.radionotredame.net" target="_blank" rel="noopener">Notre-Dame</a> ·
+          <a href="https://radio-esperance.fr" target="_blank" rel="noopener">Espérance</a>
+        </p>
+      </div>
+    </div>
+    <hr class="footer-divider">
+    <div class="footer-bottom">
+      <span>© 2026 PrionsEnLigne — Projet personnel, sans but lucratif</span>
+      <span id="footer-daily-prayer" class="footer-daily-prayer">
+        <i class="fa-solid fa-quote-left"></i>
+        <span>
+          <span id="footer-prayer-text"></span>
+          <span class="footer-prayer-author" id="footer-prayer-author"></span>
+        </span>
+      </span>
+    </div>
+  </footer>
+
+
+  <!-- ═══════════════════════════════════════════
+       MODAL AUTHENTIFICATION
+  ═══════════════════════════════════════════ -->
+  <div id="auth-overlay" class="auth-overlay hidden"></div>
+  <div id="auth-modal" class="auth-modal hidden" role="dialog" aria-modal="true" aria-label="Connexion">
+    <div class="auth-panel">
+      <div class="auth-header">
+        <div class="logo">
+          <div class="logo-cross"><span class="cross-v"></span><span class="cross-h"></span></div>
+          <span class="logo-name">PrionsEnLigne</span>
+        </div>
+        <button class="auth-close" id="auth-close" aria-label="Fermer"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="auth-tabs">
+        <button class="auth-tab active" id="auth-tab-login">Connexion</button>
+        <button class="auth-tab" id="auth-tab-signup">Créer un compte</button>
+      </div>
+      <form id="auth-form" novalidate>
+        <div id="auth-fields">
+          <div id="auth-reset-header" style="display:none">
+            <button type="button" class="auth-back-btn" id="auth-back-btn"><i class="fa-solid fa-arrow-left"></i> Retour à la connexion</button>
+            <p class="auth-reset-title" id="auth-reset-title"></p>
+            <p class="auth-reset-desc"  id="auth-reset-desc"></p>
+          </div>
+          <div class="auth-group" id="auth-name-group" style="display:none">
+            <label for="auth-name"><i class="fa-solid fa-user"></i> Prénom</label>
+            <input type="text" id="auth-name" placeholder="Votre prénom" autocomplete="given-name">
+          </div>
+          <div class="auth-group" id="auth-email-group">
+            <label for="auth-email"><i class="fa-solid fa-envelope"></i> Adresse e-mail</label>
+            <input type="email" id="auth-email" placeholder="vous@exemple.fr" autocomplete="email" required>
+          </div>
+          <div class="auth-group" id="auth-password-group">
+            <label for="auth-password" id="auth-password-label"><i class="fa-solid fa-lock"></i> Mot de passe</label>
+            <div class="auth-pw-wrap">
+              <input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password" required minlength="6">
+              <button type="button" class="auth-pw-toggle" id="auth-pw-toggle" aria-label="Afficher le mot de passe" tabindex="-1">
+                <i class="fa-solid fa-eye" id="auth-pw-eye"></i>
+              </button>
+            </div>
+          </div>
+          <div class="auth-group" id="auth-confirm-group" style="display:none">
+            <label for="auth-confirm" id="auth-confirm-label"><i class="fa-solid fa-lock"></i> Confirmer le mot de passe</label>
+            <input type="password" id="auth-confirm" placeholder="••••••••" autocomplete="new-password" minlength="6">
+          </div>
+          <div id="auth-error" class="auth-error hidden"></div>
+          <div class="auth-forgot" id="auth-forgot">
+            <button type="button" id="auth-forgot-btn">Mot de passe oublié&nbsp;?</button>
+          </div>
+          <button type="submit" class="auth-submit" id="auth-submit" data-label="Se connecter">Se connecter</button>
+        </div>
+        <div id="auth-success-screen" class="auth-confirm" style="display:none">
+          <i id="auth-success-icon" class="fa-solid fa-envelope-circle-check"></i>
+          <h3 id="auth-success-title"></h3>
+          <p  id="auth-success-desc"></p>
+          <button class="auth-submit" id="auth-success-btn" type="button"></button>
+        </div>
+      </form>
+      <p class="auth-note" id="auth-note">
+        <i class="fa-solid fa-shield-halved"></i>
+        Rejoignez la communauté PrionsEnLigne pour sauvegarder vos intentions et prier ensemble.
+      </p>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════
+       PANNEAU BRÉVIAIRE
+  ═══════════════════════════════════════════ -->
+  <div id="breviary-panel" class="breviary-panel" aria-hidden="true">
+    <div class="breviary-header">
+      <div>
+        <div class="breviary-prayer-name" id="brev-prayer-name">Laudes</div>
+        <div class="breviary-date" id="brev-date"></div>
+      </div>
+      <button class="breviary-close" id="brev-close" aria-label="Fermer le bréviaire"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="breviary-body" id="brev-body">
+      <div class="brev-loading">
+        <div class="brev-spinner"></div>
+        <p>Chargement des textes du jour…</p>
+        <p class="brev-note">Les textes liturgiques sont fournis par l'AELF<br>(Association Épiscopale Liturgique Francophone)</p>
+      </div>
+    </div>
+  </div>
+  <div id="breviary-overlay" class="breviary-overlay"></div>
+
+
+  <!-- ═══════════════════════════════════════════
+       LECTEUR RADIO
+  ═══════════════════════════════════════════ -->
+  <div id="radio-player" class="radio-player" role="region" aria-label="Lecteur radio">
+    <div class="rp-info">
+      <div class="rp-dot"></div>
+      <div class="rp-text">
+        <div class="rp-name" id="rp-name">Radio Notre-Dame</div>
+        <div class="rp-sub" id="rp-sub">En cours</div>
+      </div>
+    </div>
+    <div class="rp-controls">
+      <button class="rp-btn-play" id="rp-play" aria-label="Lecture / Pause">
+        <i id="rp-icon" class="fa-solid fa-play"></i>
+      </button>
+      <i class="fa-solid fa-volume-low rp-vol-icon"></i>
+      <input type="range" class="rp-vol" id="rp-vol" min="0" max="1" step="0.05" value="0.8" aria-label="Volume">
+      <button class="rp-btn-close" id="rp-close" aria-label="Fermer le lecteur"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <audio id="rp-audio" preload="none"></audio>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════
+       NAV BAS (mobile)
+  ═══════════════════════════════════════════ -->
+  <nav class="bottom-nav">
+    <button class="bn active" data-tab="aujourd">
+      <i class="fa-solid fa-sun bn-icon"></i><span>Accueil</span>
+    </button>
+    <button class="bn" data-tab="semaine">
+      <i class="fa-solid fa-calendar-week bn-icon"></i><span>Semaine</span>
+    </button>
+    <button class="bn" data-tab="mois">
+      <i class="fa-solid fa-calendar bn-icon"></i><span>Mois</span>
+    </button>
+    <button class="bn" data-tab="sources">
+      <i class="fa-solid fa-tower-broadcast bn-icon"></i><span>Sources</span>
+    </button>
+    <button class="bn" id="bn-compte">
+      <i class="fa-solid fa-bars bn-icon"></i><span>Menu</span>
+    </button>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════
+       WIDGET — CHAPELET NUMÉRIQUE
+  ═══════════════════════════════════════════ -->
+  <!-- FAB avec icône SVG chapelet (perles + croix) -->
+  <button class="chapelet-fab" id="chapelet-fab" title="Chapelet numérique">
+    <svg class="ch-fab-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <!-- Fil oval représentant le chapelet -->
+      <ellipse cx="12" cy="10.5" rx="8" ry="6.5" stroke="white" stroke-width="0.7" fill="none" stroke-opacity="0.4"/>
+      <!-- 10 perles réparties sur l'oval -->
+      <circle cx="12"   cy="4"    r="1.7" fill="white"/>
+      <circle cx="16.8" cy="5.4"  r="1.4" fill="white"/>
+      <circle cx="19.8" cy="9.2"  r="1.4" fill="white"/>
+      <circle cx="19.5" cy="13.5" r="1.4" fill="white"/>
+      <circle cx="16.5" cy="16.8" r="1.7" fill="white"/>
+      <circle cx="12"   cy="17"   r="1.4" fill="white"/>
+      <circle cx="7.5"  cy="16.8" r="1.7" fill="white"/>
+      <circle cx="4.5"  cy="13.5" r="1.4" fill="white"/>
+      <circle cx="4.2"  cy="9.2"  r="1.4" fill="white"/>
+      <circle cx="7.2"  cy="5.4"  r="1.4" fill="white"/>
+      <!-- Pendentif reliant la croix -->
+      <line x1="12" y1="17" x2="12" y2="19.5" stroke="white" stroke-width="1.1" stroke-opacity="0.55" stroke-linecap="round"/>
+      <!-- Croix -->
+      <line x1="12" y1="19.5" x2="12" y2="24"   stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+      <line x1="9.8" y1="21.3" x2="14.2" y2="21.3" stroke="white" stroke-width="2.2" stroke-linecap="round"/>
+    </svg>
+  </button>
+
+  <div class="chapelet-modal hidden" id="chapelet-modal" role="dialog" aria-modal="true" aria-label="Chapelet numérique">
+    <div class="ch-panel">
+      <div class="ch-header">
+        <span class="ch-title">Chapelet numérique</span>
+        <button class="ch-close" id="ch-close" aria-label="Fermer"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="ch-mystery" id="ch-mystery">—</div>
+      <div class="ch-decade-info">
+        <span id="ch-decade-num">1ᵉ mystère</span>
+        <span class="ch-myst-name" id="ch-myst-name">—</span>
+      </div>
+      <div class="ch-beads" id="ch-beads"></div>
+      <div class="ch-prayer-txt" id="ch-prayer-txt">Notre Père</div>
+      <button class="ch-tap" id="ch-tap">
+        <i class="fa-solid fa-hand-point-up"></i> Suivant
+      </button>
+      <div class="ch-footer">
+        <span class="ch-progress" id="ch-progress">1 / 60</span>
+        <button class="ch-reset" id="ch-reset">Recommencer</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/auth.js"></script>
+  <script>document.addEventListener('DOMContentLoaded', initAuth);</script>
+</body>
+</html>

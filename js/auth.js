@@ -333,7 +333,7 @@ function initAuthUI() {
       if (!email) { showAuthError('Veuillez entrer votre adresse e-mail.'); return; }
       setAuthLoading(true);
       const { error } = await _sb.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + '/',
+        redirectTo: window.location.origin + '/app.html',
       });
       setAuthLoading(false);
       if (error) { showAuthError(translateSupabaseError(error)); return; }
