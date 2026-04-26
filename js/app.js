@@ -596,7 +596,121 @@ function initDailyPrayer() {
 
 
 /* ────────────────────────────────────────────
-   9. BADGES HORAIRES — temps réel (heure Paris)
+   9. VUE SEMAINE — dynamique (sources complètes)
+──────────────────────────────────────────────*/
+
+/*
+  Grille horaire par type de jour.
+  Chaque slot : { type, time, label, src }
+    type  → classe CSS couleur (laudes / matin / messe / chapelet / vepres / complies)
+    time  → horaire affiché
+    label → nom court affiché dans la carte
+    src   → noms abrégés des sources séparés par ·
+*/
+const WEEK_SCHEDULE = {
+
+  // ── Lundi / Mardi / Jeudi ── (jours ordinaires sans particularité)
+  ordinary: [
+    { type: 'laudes',   time: '6h00',  label: 'Laudes',          src: 'R. Maria · N-Dame · RCF' },
+    { type: 'matin',    time: '8h00',  label: 'Prière du matin', src: 'Espérance · RCF' },
+    { type: 'messe',    time: '11h00', label: 'Sainte Messe',    src: 'N-Dame · KTO · R. Maria · Lourdes' },
+    { type: 'chapelet', time: '15h00', label: 'Chapelet',        src: 'R. Maria · Lourdes · N-Dame' },
+    { type: 'vepres',   time: '19h00', label: 'Vêpres',          src: 'N-Dame · Jérusalem · R. Maria' },
+    { type: 'complies', time: '22h30', label: 'Complies',        src: 'R. Maria · N-Dame · Espérance' },
+  ],
+
+  // ── Mercredi — Audience papale à Rome ──
+  3: [
+    { type: 'laudes',   time: '6h00',  label: 'Laudes',           src: 'R. Maria · N-Dame · RCF' },
+    { type: 'matin',    time: '8h00',  label: 'Prière du matin',  src: 'Espérance · RCF' },
+    { type: 'messe',    time: '11h00', label: 'Audience papale',  src: 'Vatican · KTO · N-Dame · R. Maria' },
+    { type: 'chapelet', time: '15h00', label: 'Chapelet',         src: 'R. Maria · Lourdes · N-Dame' },
+    { type: 'vepres',   time: '19h00', label: 'Vêpres',           src: 'N-Dame · Jérusalem · R. Maria' },
+    { type: 'complies', time: '22h30', label: 'Complies',         src: 'R. Maria · N-Dame · Espérance' },
+  ],
+
+  // ── Vendredi — Mémoire de la Passion ──
+  5: [
+    { type: 'laudes',   time: '6h00',  label: 'Laudes',             src: 'R. Maria · N-Dame · RCF' },
+    { type: 'matin',    time: '8h00',  label: 'Prière du matin',    src: 'Espérance · RCF' },
+    { type: 'messe',    time: '11h00', label: 'Sainte Messe',       src: 'N-Dame · KTO · R. Maria · Lourdes' },
+    { type: 'chapelet', time: '15h00', label: 'Chapelet de la Miséricorde', src: 'R. Maria · Lourdes · N-Dame' },
+    { type: 'vepres',   time: '19h00', label: 'Vêpres',             src: 'N-Dame · Jérusalem · Fidélité' },
+    { type: 'complies', time: '22h30', label: 'Complies',           src: 'R. Maria · N-Dame · Espérance' },
+  ],
+
+  // ── Samedi — Jour de Notre-Dame ──
+  6: [
+    { type: 'laudes',   time: '6h00',  label: 'Laudes',              src: 'R. Maria · N-Dame · RCF' },
+    { type: 'messe',    time: '11h00', label: 'Sainte Messe',        src: 'N-Dame · KTO · R. Maria · Ars' },
+    { type: 'chapelet', time: '15h00', label: 'Chapelet marial',     src: 'R. Maria · Lourdes · N-Dame · Fidélité' },
+    { type: 'vepres',   time: '18h00', label: 'Vêpres du dimanche',  src: 'N-Dame · Jérusalem · R. Maria · Solesmes' },
+    { type: 'complies', time: '22h30', label: 'Complies',            src: 'R. Maria · N-Dame · Espérance' },
+  ],
+
+  // ── Dimanche — Cœur de la semaine liturgique ──
+  0: [
+    { type: 'laudes',   time: '8h00',  label: 'Laudes dominicales',   src: 'N-Dame · R. Maria · RCF · Espérance' },
+    { type: 'messe',    time: '11h00', label: "Grand'Messe",          src: 'N-Dame · KTO · N-D Paris · Lourdes · R. Maria' },
+    { type: 'chapelet', time: '12h00', label: 'Angélus Domini',       src: 'Vatican · KTO · N-Dame' },
+    { type: 'chapelet', time: '15h00', label: 'Chapelet du Rosaire',  src: 'R. Maria · Lourdes · N-Dame · Ars' },
+    { type: 'vepres',   time: '17h30', label: 'Vêpres solennelles',   src: 'N-Dame · N-D Paris · Jérusalem · Solesmes' },
+    { type: 'complies', time: '22h30', label: 'Complies',             src: 'R. Maria · N-Dame · Espérance · RCF' },
+  ],
+};
+
+function initWeek() {
+  const container = document.getElementById('week-cards');
+  if (!container) return;
+
+  const today = getParisDate();
+  const todayDow = today.getDay(); // 0=Dim … 6=Sam
+
+  // France : semaine Lun → Dim
+  const mondayOffset = todayDow === 0 ? -6 : 1 - todayDow;
+  const monday = new Date(today);
+  monday.setDate(today.getDate() + mondayOffset);
+
+  const SHORT_DAYS  = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+
+  container.innerHTML = '';
+
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(monday);
+    date.setDate(monday.getDate() + i);
+    const dow = date.getDay();
+
+    const isToday = (
+      date.getDate()     === today.getDate()     &&
+      date.getMonth()    === today.getMonth()     &&
+      date.getFullYear() === today.getFullYear()
+    );
+
+    // Sélection de la grille horaire pour ce jour
+    const slots = WEEK_SCHEDULE[dow] ?? WEEK_SCHEDULE.ordinary;
+
+    const slotsHtml = slots.map(s => `
+      <div class="wc-slot ${s.type}">
+        <span class="wc-time">${s.time} · ${s.label}</span>
+        <span class="wc-name">${s.src}</span>
+      </div>`).join('');
+
+    const card = document.createElement('div');
+    card.className = `wc-day${isToday ? ' today-day' : ''}`;
+    card.innerHTML = `
+      <div class="wc-head">
+        <span class="wc-dayname">${SHORT_DAYS[dow]}</span>
+        <span class="wc-daynum">${date.getDate()}</span>
+      </div>
+      <div class="wc-slots">${slotsHtml}</div>`;
+
+    container.appendChild(card);
+  }
+}
+
+
+/* ────────────────────────────────────────────
+   10. BADGES HORAIRES — temps réel (heure Paris)
 ──────────────────────────────────────────────*/
 function initBadges() {
 
@@ -676,4 +790,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initHamburger();
   initDailyPrayer();
   initBadges();
+  initWeek();
 });
