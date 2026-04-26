@@ -596,7 +596,75 @@ function initDailyPrayer() {
 
 
 /* ────────────────────────────────────────────
-   9. INIT GLOBAL
+   9. BADGES HORAIRES — temps réel (heure Paris)
+──────────────────────────────────────────────*/
+function initBadges() {
+
+  // Formate la différence en texte lisible
+  function formatDiff(diffMin) {
+    if (diffMin <= 0) return null;
+    if (diffMin < 60) return `Dans ${diffMin} min`;
+    const h = Math.floor(diffMin / 60);
+    const m = diffMin % 60;
+    return m === 0 ? `Dans ${h}h` : `Dans ${h}h${String(m).padStart(2, '0')}`;
+  }
+
+  function updateBadges() {
+    const now    = getParisDate();
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+
+    document.querySelectorAll('.tl-item[data-start]').forEach(item => {
+      const [sh, sm] = item.dataset.start.split(':').map(Number);
+      const duration  = parseInt(item.dataset.duration || '60', 10);
+      const startMin  = sh * 60 + sm;
+      const endMin    = startMin + duration;
+      const diffMin   = startMin - nowMin;   // négatif si déjà commencé
+
+      const badgeEl = item.querySelector('.tl-badge');
+      if (!badgeEl) return;
+
+      let label, cls;
+
+      if (nowMin >= endMin) {
+        // ── Terminé ──
+        label = 'Terminé';
+        cls   = 'badge-past';
+        item.classList.add('tl-past');
+
+      } else if (nowMin >= startMin) {
+        // ── En cours ──
+        label = 'En direct';
+        cls   = 'badge-live';
+        item.classList.remove('tl-past');
+
+      } else if (diffMin <= 180) {
+        // ── Dans moins de 3h ──
+        label = formatDiff(diffMin) || 'Bientôt';
+        cls   = diffMin <= 30 ? 'badge-imminent' : 'badge-soon';
+        item.classList.remove('tl-past');
+
+      } else {
+        // ── Plus tard dans la journée — affiche l'heure de début ──
+        const hStr = String(sh);
+        const mStr = sm > 0 ? String(sm).padStart(2, '0') : '00';
+        label = `À ${hStr}h${mStr === '00' ? '' : mStr}`;
+        cls   = 'badge-later';
+        item.classList.remove('tl-past');
+      }
+
+      badgeEl.textContent = label;
+      badgeEl.className   = `tl-badge ${cls}`;
+    });
+  }
+
+  updateBadges();
+  // Mise à jour automatique toutes les minutes
+  setInterval(updateBadges, 60_000);
+}
+
+
+/* ────────────────────────────────────────────
+   10. INIT GLOBAL
 ──────────────────────────────────────────────*/
 document.addEventListener('DOMContentLoaded', () => {
   initTabs();
@@ -607,4 +675,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initRadioPlayer();
   initHamburger();
   initDailyPrayer();
+  initBadges();
 });
