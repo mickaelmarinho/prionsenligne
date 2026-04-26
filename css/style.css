@@ -1755,6 +1755,153 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
 
 
 /* ══════════════════════════════════════════════
+   BLOC BIENVENUE — première visite
+══════════════════════════════════════════════ */
+.welcome-banner {
+  background: white;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--gold);
+  border-radius: var(--r-lg);
+  padding: 20px 22px 16px;
+  margin-bottom: 20px;
+  position: relative;
+  animation: fadeIn .35s ease;
+  transition: opacity .35s ease, transform .35s ease, max-height .4s ease;
+  overflow: hidden;
+}
+.welcome-banner.wb-hiding {
+  opacity: 0;
+  transform: translateY(-6px) scale(.98);
+  max-height: 0 !important;
+  padding: 0;
+  margin: 0;
+  border-width: 0;
+}
+
+/* Bouton fermer (×) en haut à droite */
+.wb-close {
+  position: absolute;
+  top: 12px; right: 12px;
+  background: var(--cream-mid);
+  border: none;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-soft);
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s, color .15s;
+}
+.wb-close:hover { background: var(--border-mid); color: var(--text); }
+
+/* Corps principal */
+.wb-body {
+  display: flex;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+/* Petite croix décorative */
+.wb-cross {
+  width: 28px; height: 28px;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+.wb-cross .cross-v {
+  background: var(--gold);
+  width: 3px; height: 28px;
+}
+.wb-cross .cross-h {
+  background: var(--gold);
+  top: 8px;
+  width: 28px; height: 3px;
+}
+
+.wb-content { flex: 1; min-width: 0; }
+
+.wb-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--navy);
+  margin-bottom: 7px;
+}
+
+.wb-desc {
+  font-size: 13px;
+  color: var(--text-soft);
+  line-height: 1.65;
+  margin-bottom: 12px;
+}
+
+.wb-features {
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 5px 16px;
+  margin: 0;
+  padding: 0;
+}
+.wb-features li {
+  font-size: 12px;
+  color: var(--text-mid);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.wb-features li i {
+  color: var(--gold);
+  font-size: 11px;
+  width: 14px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* Pied du bloc */
+.wb-footer {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.wb-start {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--navy);
+  color: var(--cream);
+  border: none;
+  border-radius: 20px;
+  padding: 8px 20px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s, transform .1s;
+}
+.wb-start:hover { background: var(--navy-mid); transform: translateY(-1px); }
+
+.wb-dismiss {
+  font-size: 11px;
+  color: var(--text-soft);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color .15s;
+}
+.wb-dismiss:hover { color: var(--text); }
+
+/* Mobile : croix déco masquée, layout empilé */
+@media (max-width: 640px) {
+  .wb-cross  { display: none; }
+  .wb-title  { font-size: 17px; }
+  .wb-features { grid-template-columns: 1fr; }
+}
+
+
+/* ══════════════════════════════════════════════
    WIDGET — PROCHAIN OFFICE
 ══════════════════════════════════════════════ */
 .next-office-widget {

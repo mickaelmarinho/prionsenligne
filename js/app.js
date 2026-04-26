@@ -563,6 +563,38 @@ function initHamburger() {
 
 
 /* ────────────────────────────────────────────
+   8a. BLOC BIENVENUE — première visite
+──────────────────────────────────────────────*/
+
+function initWelcome() {
+  const banner   = document.getElementById('welcome-banner');
+  if (!banner) return;
+
+  const KEY = 'pel_welcomed';
+
+  // Déjà vu → supprime immédiatement sans animation
+  if (localStorage.getItem(KEY)) {
+    banner.remove();
+    return;
+  }
+
+  // Capture la hauteur réelle avant d'animer (pour la transition max-height)
+  banner.style.maxHeight = banner.scrollHeight + 'px';
+
+  function dismiss() {
+    banner.classList.add('wb-hiding');
+    // Supprime du DOM après la fin de la transition (400 ms)
+    setTimeout(() => banner.remove(), 420);
+    localStorage.setItem(KEY, '1');
+  }
+
+  document.getElementById('wb-close')?.addEventListener('click',   dismiss);
+  document.getElementById('wb-start')?.addEventListener('click',   dismiss);
+  document.getElementById('wb-dismiss')?.addEventListener('click', dismiss);
+}
+
+
+/* ────────────────────────────────────────────
    8b. WIDGET — PROCHAIN OFFICE
 ──────────────────────────────────────────────*/
 
@@ -1110,6 +1142,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initDailyPrayer();
   initBadges();
   initWeek();
+  initWelcome();
   initNextOffice();
   initChapelet();
 });

@@ -81,6 +81,33 @@
     <!-- ──────────── AUJOURD'HUI ──────────── -->
     <section id="tab-aujourd" class="tab-section active">
 
+      <!-- ── Bloc bienvenue — première visite uniquement (géré par JS + localStorage) ── -->
+      <div class="welcome-banner" id="welcome-banner">
+        <button class="wb-close" id="wb-close" aria-label="Fermer ce message"><i class="fa-solid fa-xmark"></i></button>
+        <div class="wb-body">
+          <div class="wb-brand">
+            <div class="logo-cross wb-cross">
+              <span class="cross-v"></span>
+              <span class="cross-h"></span>
+            </div>
+          </div>
+          <div class="wb-content">
+            <h2 class="wb-title">Bienvenue sur PrionsEnLigne</h2>
+            <p class="wb-desc">Votre compagnon quotidien pour prier en communion avec l'Église — offices du bréviaire, messes en direct, chapelet et calendrier liturgique, le tout entièrement gratuit.</p>
+            <ul class="wb-features">
+              <li><i class="fa-solid fa-sun"></i> Offices du jour avec liens directs vers les radios catholiques</li>
+              <li><i class="fa-solid fa-book-open"></i> Textes liturgiques officiels fournis par l'AELF</li>
+              <li><i class="fa-solid fa-circle-dot"></i> Chapelet numérique guidé selon les mystères du jour</li>
+              <li><i class="fa-solid fa-calendar"></i> Calendrier des saints et du temps liturgique</li>
+            </ul>
+          </div>
+        </div>
+        <div class="wb-footer">
+          <button class="wb-start" id="wb-start"><i class="fa-solid fa-hands-praying"></i> Commencer à prier</button>
+          <span class="wb-dismiss" id="wb-dismiss">Ne plus afficher</span>
+        </div>
+      </div>
+
       <!-- ── Widget : prochain office ── -->
       <div class="next-office-widget" id="next-office">
         <div class="no-left">
