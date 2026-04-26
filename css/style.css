@@ -895,6 +895,44 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
 .src-add-icon { font-size: 24px; color: var(--border-mid); }
 .src-add:hover { background: var(--cream-mid); }
 
+/* Carte source cliquable (lien) */
+.src-card-link {
+  text-decoration: none;
+  display: block;
+  cursor: pointer;
+}
+.src-card-link:hover {
+  box-shadow: 0 6px 20px rgba(0,0,0,.11);
+  transform: translateY(-2px);
+  border-color: var(--gold-pale);
+}
+.src-card-link .src-name { color: var(--text); }
+.src-card-link::after {
+  content: '↗';
+  float: right;
+  font-size: 12px;
+  color: var(--border-mid);
+  margin-top: -28px;
+  transition: color .15s;
+}
+.src-card-link:hover::after { color: var(--gold); }
+
+/* Badges de type supplémentaires */
+.src-type.radio-stream { background: #EEF2FB; color: #3046A0; }
+.src-type.monastique   { background: rgba(201,168,76,.15); color: #7a5f00; }
+
+/* Intro Sources */
+.sources-intro {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  padding: 12px 18px;
+  margin-bottom: 4px;
+  font-size: 13px;
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+
 .src-note {
   font-size: 12px;
   color: var(--text-soft);
