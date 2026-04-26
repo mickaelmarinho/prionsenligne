@@ -608,16 +608,17 @@ function initDailyPrayer() {
     w   → URL du site / player web (fallback systématique)
 */
 const SOURCES = {
-  rm:  { n: 'Radio Maria',      s: 'https://stream.radiomaria.fr/radiomariafrance-hd.mp3',  w: 'https://www.radiomaria.fr' },
+  // Radio Maria : flux bloqué par CORS sur HTTPS → traité comme lien externe
+  rm:  { n: 'Radio Maria',      s: '', w: 'https://www.radiomaria.fr' },
   nd:  { n: 'Radio N-Dame',     s: 'https://windu.radionotredame.net/RadioNotreDame-Fm.mp3', w: 'https://www.radionotredame.net' },
   rcf: { n: 'RCF',              s: '', w: 'https://rcf.fr/radios/ecouter-rcf' },
-  esp: { n: 'Espérance',        s: '', w: 'https://www.radio-esperance.fr/player/' },
+  esp: { n: 'Espérance',        s: '', w: 'https://radio-esperance.fr' },
   fid: { n: 'Fidélité',         s: '', w: 'https://www.radiofidelite.fr/player/' },
   kto: { n: 'KTO',              s: '', w: 'https://www.ktotv.com/live' },
-  lou: { n: 'Lourdes',          s: '', w: 'https://www.lourdes-france.org/en/live-broadcasts/' },
+  lou: { n: 'Lourdes',          s: '', w: 'https://www.lourdes-france.com/lourdesplus/' },
   vat: { n: 'Vatican News',     s: '', w: 'https://www.vaticannews.va/fr/video.html' },
   jer: { n: 'Jérusalem',        s: '', w: 'https://www.jerusalem.cef.fr/les-offices/' },
-  sol: { n: 'Solesmes',         s: '', w: 'https://www.solesmes.com/offices-monastiques' },
+  // sol (Solesmes) retiré : ne diffuse pas en live sur internet
   ndp: { n: 'N-D de Paris',     s: '', w: 'https://www.notredamedeparis.fr/la-cathedrale/en-direct/' },
   ars: { n: 'Sct. d\'Ars',      s: '', w: 'https://www.saintcure-ars.fr' },
 };
@@ -633,7 +634,7 @@ const WEEK_SCHEDULE = {
   ordinary: [
     { type: 'laudes',   label: 'Laudes',           entries: [
       { t: '7:00',  tl: '7h00',  srcs: ['rm', 'nd'] },
-      { t: '7:45',  tl: '7h45',  srcs: ['jer', 'sol'] },
+      { t: '7:45',  tl: '7h45',  srcs: ['jer'] },
     ]},
     { type: 'matin',    label: 'Prière du matin',  entries: [
       { t: '7:30',  tl: '7h30',  srcs: ['rcf'] },
@@ -654,10 +655,9 @@ const WEEK_SCHEDULE = {
     ]},
     { type: 'vepres',   label: 'Vêpres',           entries: [
       { t: '19:00', tl: '19h00', srcs: ['rm'] },
-      { t: '19:30', tl: '19h30', srcs: ['nd', 'jer', 'sol'] },
+      { t: '19:30', tl: '19h30', srcs: ['nd', 'jer'] },
     ]},
     { type: 'complies', label: 'Complies',         entries: [
-      { t: '21:00', tl: '21h00', srcs: ['sol'] },
       { t: '21:30', tl: '21h30', srcs: ['rm'] },
       { t: '22:00', tl: '22h00', srcs: ['nd', 'esp'] },
     ]},
@@ -667,7 +667,7 @@ const WEEK_SCHEDULE = {
   3: [
     { type: 'laudes',   label: 'Laudes',           entries: [
       { t: '7:00',  tl: '7h00',  srcs: ['rm', 'nd'] },
-      { t: '7:45',  tl: '7h45',  srcs: ['jer', 'sol'] },
+      { t: '7:45',  tl: '7h45',  srcs: ['jer'] },
     ]},
     { type: 'matin',    label: 'Prière du matin',  entries: [
       { t: '7:30',  tl: '7h30',  srcs: ['rcf'] },
@@ -690,10 +690,9 @@ const WEEK_SCHEDULE = {
     ]},
     { type: 'vepres',   label: 'Vêpres',           entries: [
       { t: '19:00', tl: '19h00', srcs: ['rm'] },
-      { t: '19:30', tl: '19h30', srcs: ['nd', 'jer', 'sol'] },
+      { t: '19:30', tl: '19h30', srcs: ['nd', 'jer'] },
     ]},
     { type: 'complies', label: 'Complies',         entries: [
-      { t: '21:00', tl: '21h00', srcs: ['sol'] },
       { t: '21:30', tl: '21h30', srcs: ['rm'] },
       { t: '22:00', tl: '22h00', srcs: ['nd', 'esp'] },
     ]},
@@ -703,7 +702,7 @@ const WEEK_SCHEDULE = {
   5: [
     { type: 'laudes',   label: 'Laudes',                        entries: [
       { t: '7:00',  tl: '7h00',  srcs: ['rm', 'nd'] },
-      { t: '7:45',  tl: '7h45',  srcs: ['jer', 'sol'] },
+      { t: '7:45',  tl: '7h45',  srcs: ['jer'] },
     ]},
     { type: 'matin',    label: 'Prière du matin',               entries: [
       { t: '7:30',  tl: '7h30',  srcs: ['rcf'] },
@@ -724,10 +723,9 @@ const WEEK_SCHEDULE = {
     ]},
     { type: 'vepres',   label: 'Vêpres',                        entries: [
       { t: '19:00', tl: '19h00', srcs: ['rm'] },
-      { t: '19:30', tl: '19h30', srcs: ['nd', 'jer', 'sol'] },
+      { t: '19:30', tl: '19h30', srcs: ['nd', 'jer'] },
     ]},
     { type: 'complies', label: 'Complies',                      entries: [
-      { t: '21:00', tl: '21h00', srcs: ['sol'] },
       { t: '21:30', tl: '21h30', srcs: ['rm'] },
       { t: '22:00', tl: '22h00', srcs: ['nd', 'esp', 'fid'] },
     ]},
@@ -737,7 +735,6 @@ const WEEK_SCHEDULE = {
   6: [
     { type: 'laudes',   label: 'Laudes',              entries: [
       { t: '7:00',  tl: '7h00',  srcs: ['rm', 'nd'] },
-      { t: '7:45',  tl: '7h45',  srcs: ['sol'] },
     ]},
     { type: 'messe',    label: 'Sainte Messe',        entries: [
       { t: '9:00',  tl: '9h00',  srcs: ['rm'] },
@@ -753,10 +750,8 @@ const WEEK_SCHEDULE = {
       { t: '18:00', tl: '18h00', srcs: ['rm'] },
       { t: '18:30', tl: '18h30', srcs: ['nd'] },
       { t: '19:00', tl: '19h00', srcs: ['jer'] },
-      { t: '19:30', tl: '19h30', srcs: ['sol'] },
     ]},
     { type: 'complies', label: 'Complies',            entries: [
-      { t: '21:00', tl: '21h00', srcs: ['sol'] },
       { t: '21:30', tl: '21h30', srcs: ['rm'] },
       { t: '22:00', tl: '22h00', srcs: ['nd', 'esp'] },
     ]},
@@ -782,10 +777,9 @@ const WEEK_SCHEDULE = {
       { t: '17:30', tl: '17h30', srcs: ['ndp'] },
       { t: '18:00', tl: '18h00', srcs: ['nd'] },
       { t: '19:00', tl: '19h00', srcs: ['rm'] },
-      { t: '19:30', tl: '19h30', srcs: ['jer', 'sol'] },
+      { t: '19:30', tl: '19h30', srcs: ['jer'] },
     ]},
     { type: 'complies', label: 'Complies',             entries: [
-      { t: '21:00', tl: '21h00', srcs: ['sol'] },
       { t: '21:30', tl: '21h30', srcs: ['rm'] },
       { t: '22:00', tl: '22h00', srcs: ['nd', 'esp', 'rcf'] },
     ]},
