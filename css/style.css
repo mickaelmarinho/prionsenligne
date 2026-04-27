@@ -56,7 +56,7 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
   background: var(--navy);
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 300;
   box-shadow: 0 2px 20px rgba(0,0,0,.15);
 }
 
