@@ -1461,6 +1461,19 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
 .hm-join i { color: var(--gold) !important; }
 .hm-join:hover { background: rgba(201,168,76,.08) !important; }
 
+/* Bouton Se déconnecter (desktop header) */
+.nav-logout-btn {
+  background: transparent;
+  color: rgba(245,240,232,.7);
+  border: 1px solid rgba(245,240,232,.2);
+}
+.nav-logout-btn:hover {
+  background: rgba(255,255,255,.1);
+  color: var(--cream);
+  border-color: rgba(245,240,232,.4);
+}
+.nav-logout-btn.hidden { display: none !important; }
+
 /* Avatar dans le header quand connecté */
 .hamburger-avatar {
   width: 28px; height: 28px;

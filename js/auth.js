@@ -25,12 +25,13 @@ let _formMode    = 'login';
 ═════════════════════════════════════════════*/
 function updateHeaderUI(user) {
   _currentUser = user;
-  const btn        = $id('hamburger-btn');
-  const signoutItem= $id('hm-signout');
-  const headerUser = $id('header-user');
-  const hmAuthSep  = $id('hm-auth-sep');
-  const hmLogin    = $id('hm-login-item');
-  const hmSignup   = $id('hm-signup-item');
+  const btn         = $id('hamburger-btn');
+  const signoutItem = $id('hm-signout');
+  const logoutBtn   = $id('header-btn-logout');
+  const headerUser  = $id('header-user');
+  const hmAuthSep   = $id('hm-auth-sep');
+  const hmLogin     = $id('hm-login-item');
+  const hmSignup    = $id('hm-signup-item');
 
   if (user) {
     const name    = user.user_metadata?.name || user.email;
@@ -40,12 +41,14 @@ function updateHeaderUI(user) {
     if (hmAuthSep) hmAuthSep.style.display = 'none';
     if (hmLogin)   hmLogin.style.display   = 'none';
     if (hmSignup)  hmSignup.style.display  = 'none';
+    logoutBtn?.classList.remove('hidden');
   } else {
     if (btn) btn.innerHTML = '<i class="fa-solid fa-bars"></i>';
     headerUser?.classList.remove('user-logged-in');
     if (hmAuthSep) hmAuthSep.style.display = '';
     if (hmLogin)   hmLogin.style.display   = '';
     if (hmSignup)  hmSignup.style.display  = '';
+    logoutBtn?.classList.add('hidden');
   }
   if (signoutItem) signoutItem.style.display = user ? '' : 'none';
 }
@@ -263,6 +266,12 @@ function initAuthUI() {
   // ── Ouvrir le modal (header desktop) ──
   $id('header-btn-login')?.addEventListener('click',  () => openAuthModal('login'));
   $id('header-btn-signup')?.addEventListener('click', () => openAuthModal('signup'));
+
+  // ── Déconnexion (bouton desktop header) ──
+  $id('header-btn-logout')?.addEventListener('click', async () => {
+    if (!_sb) return;
+    await _sb.auth.signOut();
+  });
 
   // ── Ouvrir le modal (menu burger mobile) ──
   $id('hm-login-item')?.addEventListener('click', () => {
