@@ -688,6 +688,102 @@ function initNextOffice() {
    8c. WIDGET — CHAPELET NUMÉRIQUE
 ──────────────────────────────────────────────*/
 
+/* ────────────────────────────────────────────
+   TEXTES MULTILINGUES DU CHAPELET
+──────────────────────────────────────────────*/
+const CHAPELET_TEXTS = {
+  fr: {
+    flag: '🇫🇷', label: 'Français',
+    names: {
+      credo:  'Je crois en Dieu',
+      patre:  'Notre Père',
+      ave:    'Je vous salue, Marie',
+      gloria: 'Gloire au Père',
+    },
+    texts: {
+      credo: `Je crois en Dieu, le Père tout-puissant,\ncréateur du ciel et de la terre.\nEt en Jésus-Christ, son Fils unique, notre Seigneur,\nqui a été conçu du Saint-Esprit,\nest né de la Vierge Marie,\na souffert sous Ponce Pilate,\na été crucifié, est mort et a été enseveli,\nest descendu aux enfers,\nle troisième jour est ressuscité des morts,\nest monté aux cieux,\nest assis à la droite de Dieu le Père tout-puissant,\nd'où il viendra juger les vivants et les morts.\nJe crois en l'Esprit Saint,\nà la sainte Église catholique,\nà la communion des saints,\nà la rémission des péchés,\nà la résurrection de la chair,\nà la vie éternelle. Amen.`,
+      patre: `Notre Père, qui êtes aux cieux,\nque votre Nom soit sanctifié,\nque votre règne vienne,\nque votre volonté soit faite\nsur la terre comme au ciel.\nDonnez-nous aujourd'hui notre pain de ce jour.\nPardonnez-nous nos offenses,\ncomme nous pardonnons aussi\nà ceux qui nous ont offensés.\nEt ne nous soumettez pas à la tentation,\nmais délivrez-nous du Mal. Amen.`,
+      ave: `Je vous salue, Marie pleine de grâces,\nle Seigneur est avec vous.\nVous êtes bénie entre toutes les femmes\net Jésus, le fruit de vos entrailles, est béni.\n\nSainte Marie, Mère de Dieu,\npriez pour nous pauvres pécheurs,\nmaintenant et à l'heure de notre mort. Amen.`,
+      gloria: `Gloire au Père, et au Fils,\net au Saint-Esprit.\nComme il était au commencement,\nmaintenant et toujours,\ndans les siècles des siècles. Amen.`,
+    },
+  },
+  en: {
+    flag: '🇬🇧', label: 'English',
+    names: {
+      credo:  'I believe in God',
+      patre:  'Our Father',
+      ave:    'Hail Mary',
+      gloria: 'Glory be',
+    },
+    texts: {
+      credo: `I believe in God, the Father Almighty,\nCreator of Heaven and earth;\nand in Jesus Christ, His only Son, Our Lord,\nWho was conceived by the Holy Spirit,\nborn of the Virgin Mary,\nsuffered under Pontius Pilate,\nwas crucified, died, and was buried.\nHe descended into Hell;\nthe third day He rose again from the dead;\nHe ascended into Heaven,\nand sitteth at the right hand of God,\nthe Father Almighty;\nfrom thence He shall come to judge the living and the dead.\nI believe in the Holy Spirit,\nthe Holy Catholic Church,\nthe communion of Saints,\nthe forgiveness of sins,\nthe resurrection of the body\nand life everlasting. Amen.`,
+      patre: `Our Father, who art in heaven,\nhallowed be Thy name;\nThy kingdom come,\nThy will be done on earth as it is in heaven.\nGive us this day our daily bread,\nand forgive us our trespasses,\nas we forgive those who trespass against us;\nand lead us not into temptation,\nbut deliver us from evil. Amen.`,
+      ave: `Hail Mary, full of grace,\nthe Lord is with thee.\nBlessed art thou among women\nand blessed is the fruit of thy womb, Jesus.\n\nHoly Mary, Mother of God,\npray for us sinners,\nnow and at the hour of our death. Amen.`,
+      gloria: `Glory be to the Father,\nand to the Son,\nand to the Holy Spirit.\nAs it was in the beginning,\nis now, and ever shall be,\nworld without end. Amen.`,
+    },
+  },
+  es: {
+    flag: '🇪🇸', label: 'Español',
+    names: {
+      credo:  'Creo en Dios',
+      patre:  'Padre nuestro',
+      ave:    'Dios te salve, María',
+      gloria: 'Gloria al Padre',
+    },
+    texts: {
+      credo: `Creo en Dios, Padre todopoderoso,\ncreador del cielo y de la tierra.\nCreo en Jesucristo, su único Hijo, nuestro Señor,\nque fue concebido por obra del Espíritu Santo,\nnació de la Virgen María,\npadeció bajo el poder de Poncio Pilato,\nfue crucificado, muerto y sepultado,\ndescendió a los infiernos,\nal tercer día resucitó de entre los muertos,\nsubió a los cielos y está sentado\na la derecha de Dios Padre todopoderoso,\ndesde allí ha de venir a juzgar a vivos y muertos.\nCreo en el Espíritu Santo,\nla santa Iglesia católica,\nla comunión de los santos,\nel perdón de los pecados,\nla resurrección de la carne\ny la vida eterna. Amén.`,
+      patre: `Padre nuestro, que estás en el cielo,\nsantificado sea tu nombre.\nVenga a nosotros tu reino.\nHágase tu voluntad\nen la tierra como en el cielo.\nDanos hoy nuestro pan de cada día.\nPerdona nuestras ofensas,\ncomo también nosotros perdonamos\na los que nos ofenden.\nNo nos dejes caer en tentación\ny líbranos del mal. Amén.`,
+      ave: `Dios te salve, María,\nllena eres de gracia,\nel Señor es contigo.\nBendita tú eres entre todas las mujeres\ny bendito es el fruto de tu vientre, Jesús.\n\nSanta María, Madre de Dios,\nruega por nosotros, pecadores,\nahora y en la hora de nuestra muerte. Amén.`,
+      gloria: `Gloria al Padre,\ny al Hijo,\ny al Espíritu Santo.\nComo era en el principio,\nahora y siempre,\npor los siglos de los siglos. Amén.`,
+    },
+  },
+  it: {
+    flag: '🇮🇹', label: 'Italiano',
+    names: {
+      credo:  'Credo in Dio',
+      patre:  'Padre nostro',
+      ave:    'Ave Maria',
+      gloria: 'Gloria al Padre',
+    },
+    texts: {
+      credo: `Credo in Dio, Padre onnipotente,\ncreatore del cielo e della terra.\nE in Gesù Cristo, suo unico Figlio, nostro Signore,\nil quale fu concepito di Spirito Santo,\nnacque da Maria Vergine,\npatì sotto Ponzio Pilato,\nfu crocifisso, morì e fu sepolto;\ndiscese agli inferi;\nil terzo giorno risuscitò dai morti;\nsalì al cielo,\nsiede alla destra di Dio Padre onnipotente;\ndi là verrà a giudicare i vivi e i morti.\nCredo nello Spirito Santo,\nla santa Chiesa cattolica,\nla comunione dei santi,\nla remissione dei peccati,\nla risurrezione della carne\ne la vita eterna. Amen.`,
+      patre: `Padre nostro, che sei nei cieli,\nsia santificato il tuo nome;\nvenga il tuo regno;\nsia fatta la tua volontà,\ncome in cielo così in terra.\nDacci oggi il nostro pane quotidiano,\ne rimetti a noi i nostri debiti\ncome noi li rimettiamo ai nostri debitori,\ne non ci indurre in tentazione,\nma liberaci dal male. Amen.`,
+      ave: `Ave Maria, piena di grazia,\nil Signore è con te.\nTu sei benedetta fra le donne\ne benedetto è il frutto del tuo seno, Gesù.\n\nSanta Maria, Madre di Dio,\nprega per noi peccatori,\nadesso e nell'ora della nostra morte. Amen.`,
+      gloria: `Gloria al Padre\ne al Figlio\ne allo Spirito Santo.\nCome era nel principio\ne ora e sempre\nnei secoli dei secoli. Amen.`,
+    },
+  },
+  pt: {
+    flag: '🇧🇷', label: 'Português',
+    names: {
+      credo:  'Creio em Deus',
+      patre:  'Pai nosso',
+      ave:    'Ave Maria',
+      gloria: 'Glória ao Pai',
+    },
+    texts: {
+      credo: `Creio em Deus Pai todo-poderoso,\ncriador do céu e da terra.\nE em Jesus Cristo, seu único Filho, Nosso Senhor,\nque foi concebido pelo poder do Espírito Santo,\nnasceu da Virgem Maria,\npadeceu sob Pôncio Pilatos,\nfoi crucificado, morto e sepultado,\ndesceu à mansão dos mortos,\nressuscitou ao terceiro dia,\nsubiu aos céus,\nestá sentado à direita de Deus Pai todo-poderoso\ne há de vir a julgar os vivos e os mortos.\nCreio no Espírito Santo,\nna santa Igreja Católica,\nna comunhão dos Santos,\nna remissão dos pecados,\nna ressurreição da carne\ne na vida eterna. Amém.`,
+      patre: `Pai nosso que estais no céu,\nsantificado seja o vosso nome.\nVenha a nós o vosso reino.\nSeja feita a vossa vontade,\nassim na terra como no céu.\nO pão nosso de cada dia nos dai hoje.\nPerdoai-nos as nossas ofensas\nassim como nós perdoamos\na quem nos tem ofendido.\nE não nos deixeis cair em tentação,\nmas livrai-nos do mal. Amém.`,
+      ave: `Ave Maria, cheia de graça,\no Senhor é convosco.\nBendita sois vós entre as mulheres\ne bendito é o fruto do vosso ventre, Jesus.\n\nSanta Maria, Mãe de Deus,\norai por nós pecadores,\nagora e na hora de nossa morte. Amém.`,
+      gloria: `Glória ao Pai,\nao Filho\ne ao Espírito Santo.\nAssim como era no princípio,\nagora e sempre,\npelos séculos dos séculos. Amém.`,
+    },
+  },
+  la: {
+    flag: '✝', label: 'Latine',
+    names: {
+      credo:  'Credo',
+      patre:  'Pater noster',
+      ave:    'Ave Maria',
+      gloria: 'Gloria Patri',
+    },
+    texts: {
+      credo: `Credo in Deum, Patrem omnipotentem,\ncreatorem caeli et terrae.\nEt in Iesum Christum, Filium eius unicum, Dominum nostrum,\nqui conceptus est de Spiritu Sancto,\nnatus ex Maria Virgine,\npassus sub Pontio Pilato,\ncrucifixus, mortuus, et sepultus,\ndescendit ad inferos,\ntertia die resurrexit a mortuis,\nascendit ad caelos,\nsedet ad dexteram Dei Patris omnipotentis,\ninde venturus est iudicare vivos et mortuos.\nCredo in Spiritum Sanctum,\nsanctam Ecclesiam catholicam,\nsanctorum communionem,\nremissionem peccatorum,\ncarnis resurrectionem,\nvitam aeternam. Amen.`,
+      patre: `Pater noster, qui es in caelis,\nsanctificetur nomen tuum.\nAdveniat regnum tuum.\nFiat voluntas tua,\nsicut in caelo et in terra.\nPanem nostrum quotidianum da nobis hodie,\net dimitte nobis debita nostra\nsicut et nos dimittimus debitoribus nostris.\nEt ne nos inducas in tentationem,\nsed libera nos a malo. Amen.`,
+      ave: `Ave Maria, gratia plena,\nDominus tecum.\nBenedicta tu in mulieribus,\net benedictus fructus ventris tui, Iesus.\n\nSancta Maria, Mater Dei,\nora pro nobis peccatoribus,\nnunc et in hora mortis nostrae. Amen.`,
+      gloria: `Gloria Patri,\net Filio,\net Spiritui Sancto.\nSicut erat in principio,\net nunc et semper,\net in saecula saeculorum. Amen.`,
+    },
+  },
+};
+
 function initChapelet() {
   const fab     = document.getElementById('chapelet-fab');
   const modal   = document.getElementById('chapelet-modal');
@@ -708,23 +804,47 @@ function initChapelet() {
   const mystery = MYST[DOW_KEY[getParisDate().getDay()]];
 
   // Séquence : intro (6 pas) + 5 décades × 12 pas = 66 pas au total
-  //   Intro : Je crois en Dieu · Notre Père · JvsM ×3 · Gloire au Père
-  //   Décades : Notre Père + 10 Je vous salue Marie + Gloire au Père
   const INTRO = 6;
   let step = 0;
   const TOTAL = INTRO + 60; // 66
 
-  function getPrayer(s) {
-    if (s === 0) return 'Je crois en Dieu';
-    if (s === 1) return 'Notre Père';
-    if (s === 2) return 'Je vous salue Marie · 1/3';
-    if (s === 3) return 'Je vous salue Marie · 2/3';
-    if (s === 4) return 'Je vous salue Marie · 3/3';
-    if (s === 5) return 'Gloire au Père';
+  // Langue courante — mémorisée en localStorage
+  let lang = localStorage.getItem('pel_ch_lang') || 'fr';
+
+  // Retourne la clé de prière pour une étape donnée
+  function getPrayerKey(s) {
+    if (s === 0) return 'credo';
+    if (s === 1) return 'patre';
+    if (s >= 2 && s <= 4) return 'ave';
+    if (s === 5) return 'gloria';
     const b = (s - INTRO) % 12;
-    if (b === 0)  return 'Notre Père';
-    if (b === 11) return 'Gloire au Père';
-    return `Je vous salue Marie · ${b}/10`;
+    if (b === 0)  return 'patre';
+    if (b === 11) return 'gloria';
+    return 'ave';
+  }
+
+  // Retourne le libellé court (nom affiché en grand) selon la langue et l'étape
+  function getPrayer(s) {
+    const L = CHAPELET_TEXTS[lang] || CHAPELET_TEXTS.fr;
+    const key = getPrayerKey(s);
+    const name = L.names[key];
+    if (s === 2) return `${name} · 1/3`;
+    if (s === 3) return `${name} · 2/3`;
+    if (s === 4) return `${name} · 3/3`;
+    if (s > INTRO) {
+      const b = (s - INTRO) % 12;
+      if (b >= 1 && b <= 10) return `${name} · ${b}/10`;
+    }
+    return name;
+  }
+
+  // Met à jour la zone texte complet
+  function updateFullText(s) {
+    const el = document.getElementById('ch-prayer-full');
+    if (!el) return;
+    const L = CHAPELET_TEXTS[lang] || CHAPELET_TEXTS.fr;
+    el.textContent = L.texts[getPrayerKey(s)] || '';
+    el.scrollTop = 0;
   }
 
   function buildBeads() {
@@ -768,6 +888,7 @@ function initChapelet() {
 
     if (el('ch-prayer-txt')) el('ch-prayer-txt').textContent = getPrayer(step);
     if (el('ch-progress'))   el('ch-progress').textContent   = `${step + 1} / ${TOTAL}`;
+    updateFullText(step);
 
     modal.querySelectorAll('.ch-bead').forEach((bead, i) => {
       bead.classList.toggle('done',    i < step);
@@ -783,10 +904,30 @@ function initChapelet() {
     }
   }
 
+  // Initialise l'état actif du sélecteur de langue
+  function syncLangBtns() {
+    modal.querySelectorAll('.ch-lang-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.lang === lang);
+    });
+  }
+
+  // Sélecteur de langue
+  document.getElementById('ch-lang-bar')?.addEventListener('click', e => {
+    const btn = e.target.closest('.ch-lang-btn');
+    if (!btn) return;
+    lang = btn.dataset.lang;
+    localStorage.setItem('pel_ch_lang', lang);
+    syncLangBtns();
+    render(); // remet à jour nom + texte
+  });
+
   fab.addEventListener('click', () => {
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+    // Restaure la langue mémorisée
+    lang = localStorage.getItem('pel_ch_lang') || 'fr';
     buildBeads();
+    syncLangBtns();
     render();
   });
 

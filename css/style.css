@@ -2036,6 +2036,7 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 10px;
   margin-bottom: 14px;
 }
 .ch-title {
@@ -2121,6 +2122,50 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   transform: scale(1.45);
   box-shadow: 0 0 8px rgba(153,53,86,.45);
 }
+
+/* Sélecteur de langue — rangée de drapeaux */
+.ch-lang-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.ch-lang-btn {
+  background: none;
+  border: 1.5px solid transparent;
+  border-radius: 7px;
+  padding: 3px 5px;
+  font-size: 16px;
+  cursor: pointer;
+  line-height: 1;
+  transition: border-color .15s, background .15s;
+  color: var(--text-soft);
+}
+.ch-lang-btn[data-lang="la"] { font-size: 12px; font-weight: 600; letter-spacing: .02em; padding: 4px 6px; }
+.ch-lang-btn:hover  { border-color: var(--chapelet); background: rgba(153,53,86,.07); }
+.ch-lang-btn.active { border-color: var(--chapelet); background: rgba(153,53,86,.1); }
+
+/* Texte complet de la prière en cours */
+.ch-prayer-full {
+  max-height: 120px;
+  overflow-y: auto;
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--text-mid);
+  text-align: center;
+  white-space: pre-line;
+  background: var(--cream);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
+  scroll-behavior: smooth;
+}
+.ch-prayer-full:empty { display: none; }
+/* Scrollbar discrète */
+.ch-prayer-full::-webkit-scrollbar { width: 4px; }
+.ch-prayer-full::-webkit-scrollbar-track { background: transparent; }
+.ch-prayer-full::-webkit-scrollbar-thumb { background: rgba(153,53,86,.25); border-radius: 4px; }
 
 /* Prière en cours */
 .ch-prayer-txt {
