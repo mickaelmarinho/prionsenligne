@@ -472,6 +472,58 @@ h1, h2, h3, .lp-logo-name { font-family: 'Cormorant Garamond', serif; }
 
 
 /* ══════════════════════════════════════════════
+   BOUTON MUSIQUE GRÉGORIENNE
+══════════════════════════════════════════════ */
+.lp-music-btn {
+  position: fixed;
+  bottom: 28px;
+  right: 24px;
+  z-index: 90;
+
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  background: rgba(26,39,68,.82);
+  border: 1px solid rgba(201,168,76,.25);
+  border-radius: 30px;
+  padding: 9px 16px 9px 12px;
+  color: rgba(245,240,232,.55);
+  font-family: 'Outfit', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background .2s, border-color .2s, color .2s, box-shadow .2s;
+}
+.lp-music-btn:hover {
+  background: rgba(26,39,68,.95);
+  border-color: rgba(201,168,76,.55);
+  color: var(--gold);
+  box-shadow: 0 4px 20px rgba(201,168,76,.15);
+}
+.lp-music-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  transition: color .2s;
+}
+
+/* État lecture : gold + légère pulsation */
+.lp-music-btn.lp-music-playing {
+  border-color: rgba(201,168,76,.6);
+  color: var(--gold);
+  animation: musicPulse 3s ease-in-out infinite;
+}
+@keyframes musicPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201,168,76,.0); }
+  50%       { box-shadow: 0 0 0 6px rgba(201,168,76,.12); }
+}
+
+/* ══════════════════════════════════════════════
    RESPONSIVE
 ══════════════════════════════════════════════ */
 @media (max-width: 640px) {

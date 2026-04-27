@@ -191,12 +191,73 @@
   </footer>
 
 
+  <!-- ═══════════════════════════════════════════
+       BOUTON MUSIQUE GRÉGORIENNE (opt-in)
+  ═══════════════════════════════════════════ -->
+  <audio id="lp-chant" preload="none" loop>
+    <source src="https://streaming.radio-gregorien.fr/radio-gregorien" type="audio/mpeg">
+  </audio>
+
+  <button class="lp-music-btn" id="lp-music-btn" title="Musique grégorienne" aria-label="Écouter du chant grégorien">
+    <svg class="lp-music-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 18V5l12-2v13"/>
+      <circle cx="6" cy="18" r="3"/>
+      <circle cx="18" cy="16" r="3"/>
+    </svg>
+    <span class="lp-music-label" id="lp-music-label">Grégorien</span>
+  </button>
+
   <script>
     // Tous les liens vers app.html (CTA et cartes de fonctionnalités) marquent
     // la visite pour éviter l'affichage du bloc de bienvenue dans app.html.
     document.querySelectorAll('[href^="app.html"]').forEach(el => {
       el.addEventListener('click', () => localStorage.setItem('pel_welcomed', '1'));
     });
+
+    // ── Lecteur grégorien opt-in ──────────────────────────────
+    (function () {
+      const btn    = document.getElementById('lp-music-btn');
+      const audio  = document.getElementById('lp-chant');
+      const label  = document.getElementById('lp-music-label');
+      const STREAM = 'https://streaming.radio-gregorien.fr/radio-gregorien';
+      const WEB    = 'https://www.radio-gregorien.fr';
+      let playing  = false;
+
+      function setPlaying(state) {
+        playing = state;
+        btn.classList.toggle('lp-music-playing', state);
+        label.textContent = state ? 'Pause' : 'Grégorien';
+        // Icône : notes → pause
+        btn.querySelector('.lp-music-icon').innerHTML = state
+          ? '<line x1="6" y1="4" x2="6" y2="20"/><line x1="18" y1="4" x2="18" y2="20"/>'
+          : '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>';
+      }
+
+      btn.addEventListener('click', () => {
+        if (!playing) {
+          // Premier clic : charge et joue
+          if (!audio.src || audio.src === window.location.href) {
+            audio.src = STREAM;
+          }
+          audio.volume = 0.4;
+          audio.play()
+            .then(() => setPlaying(true))
+            .catch(() => {
+              // Navigateur bloque le flux → ouvre le site
+              window.open(WEB, '_blank', 'noopener');
+            });
+        } else {
+          audio.pause();
+          setPlaying(false);
+        }
+      });
+
+      // Gestion d'erreur réseau (flux indisponible)
+      audio.addEventListener('error', () => {
+        setPlaying(false);
+        window.open(WEB, '_blank', 'noopener');
+      });
+    })();
   </script>
 
 </body>
