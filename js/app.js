@@ -753,7 +753,7 @@ const CHAPELET_TEXTS = {
     },
   },
   pt: {
-    flag: '🇧🇷', label: 'Português',
+    flag: '🇵🇹', label: 'Português',
     names: {
       credo:  'Creio em Deus',
       patre:  'Pai nosso',
@@ -761,10 +761,10 @@ const CHAPELET_TEXTS = {
       gloria: 'Glória ao Pai',
     },
     texts: {
-      credo: `Creio em Deus Pai todo-poderoso,\ncriador do céu e da terra.\nE em Jesus Cristo, seu único Filho, Nosso Senhor,\nque foi concebido pelo poder do Espírito Santo,\nnasceu da Virgem Maria,\npadeceu sob Pôncio Pilatos,\nfoi crucificado, morto e sepultado,\ndesceu à mansão dos mortos,\nressuscitou ao terceiro dia,\nsubiu aos céus,\nestá sentado à direita de Deus Pai todo-poderoso\ne há de vir a julgar os vivos e os mortos.\nCreio no Espírito Santo,\nna santa Igreja Católica,\nna comunhão dos Santos,\nna remissão dos pecados,\nna ressurreição da carne\ne na vida eterna. Amém.`,
-      patre: `Pai nosso que estais no céu,\nsantificado seja o vosso nome.\nVenha a nós o vosso reino.\nSeja feita a vossa vontade,\nassim na terra como no céu.\nO pão nosso de cada dia nos dai hoje.\nPerdoai-nos as nossas ofensas\nassim como nós perdoamos\na quem nos tem ofendido.\nE não nos deixeis cair em tentação,\nmas livrai-nos do mal. Amém.`,
-      ave: `Ave Maria, cheia de graça,\no Senhor é convosco.\nBendita sois vós entre as mulheres\ne bendito é o fruto do vosso ventre, Jesus.\n\nSanta Maria, Mãe de Deus,\norai por nós pecadores,\nagora e na hora de nossa morte. Amém.`,
-      gloria: `Glória ao Pai,\nao Filho\ne ao Espírito Santo.\nAssim como era no princípio,\nagora e sempre,\npelos séculos dos séculos. Amém.`,
+      credo: `Creio em Deus Pai todo-poderoso,\ncriador do céu e da terra.\nE em Jesus Cristo, seu único Filho, Nosso Senhor,\nque foi concebido pelo poder do Espírito Santo,\nnasceu da Virgem Maria,\npadeceu sob Pôncio Pilatos,\nfoi crucificado, morreu e foi sepultado,\ndesceu à mansão dos mortos,\nressuscitou ao terceiro dia,\nsubiu ao céu,\nestá sentado à direita de Deus Pai todo-poderoso,\ndonde há-de vir a julgar os vivos e os mortos.\nCreio no Espírito Santo,\nna santa Igreja Católica,\nna comunhão dos Santos,\nna remissão dos pecados,\nna ressurreição da carne\ne na vida eterna. Amém.`,
+      patre: `Pai nosso que estais no céu,\nsantificado seja o vosso nome,\nvenha a nós o vosso reino,\nseja feita a vossa vontade\nassim na terra como no céu.\nO pão nosso de cada dia nos dai hoje,\nperdoai-nos as nossas ofensas\nassim como nós perdoamos\na quem nos tem ofendido,\ne não nos deixeis cair em tentação,\nmas livrai-nos do mal. Amém.`,
+      ave: `Ave Maria, cheia de graça,\no Senhor é convosco,\nbendita sois vós entre as mulheres\ne bendito é o fruto do vosso ventre Jesus.\n\nSanta Maria, Mãe de Deus,\nrogai por nós pecadores,\nagora e na hora da nossa morte. Amém.`,
+      gloria: `Glória ao Pai,\nao Filho\ne ao Espírito Santo,\nassim como era no princípio,\nagora e sempre\ne pelos séculos dos séculos. Amém.`,
     },
   },
   la: {
