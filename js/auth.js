@@ -8,8 +8,8 @@
 //   Settings → Environment Variables (le /api/config les injecte automatiquement).
 // Pour test local (sans serveur Vercel) : coller ici les valeurs du dashboard Supabase
 //   Project Settings → API → Project URL  et  anon / public key
-const _SB_URL_LOCAL  = '';   // ex : 'https://xxxxxxxxxxxx.supabase.co'
-const _SB_KEY_LOCAL  = '';   // ex : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+const _SB_URL_LOCAL  = 'https://idltzfiaourgfwiuiphp.supabase.co';
+const _SB_KEY_LOCAL  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkbHR6Zmlhb3VyZ2Z3aXVpcGhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMzYxOTksImV4cCI6MjA5MjcxMjE5OX0.d5egaKYxiIarxdkW6Lxvttlbd8dukJtmoJ3k4s1Hjro';
 // ─────────────────────────────────────────────
 
 // ── Helpers ──
