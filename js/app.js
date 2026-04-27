@@ -43,20 +43,43 @@ function initTabs() {
    on re-requête le DOM à chaque clic plutôt que de capturer la NodeList à l'init.
 ──────────────────────────────────────────────*/
 function initFilters() {
+  // Sélection multiple : chaque filtre se toggle indépendamment.
+  // Un Set vide = « Tout » affiché.
+  const active = new Set();
+
+  function applyFilters() {
+    const showAll = active.size === 0;
+    document.querySelectorAll('.tl-item').forEach(item => {
+      const show = showAll || active.has(item.dataset.type);
+      item.style.display = show ? '' : 'none';
+      if (show) item.style.animation = 'fadeIn .2s ease';
+    });
+  }
+
   document.querySelectorAll('.pf').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.pf').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-
       const type = btn.dataset.filter;
-      document.querySelectorAll('.tl-item').forEach(item => {
-        if (type === 'all' || item.dataset.type === type) {
-          item.style.display = '';
-          item.style.animation = 'fadeIn .2s ease';
+
+      if (type === 'all') {
+        // Réinitialise tout → « Tout »
+        active.clear();
+        document.querySelectorAll('.pf').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      } else {
+        document.querySelector('.pf[data-filter="all"]')?.classList.remove('active');
+        if (active.has(type)) {
+          active.delete(type);
+          btn.classList.remove('active');
+          if (active.size === 0) {
+            document.querySelector('.pf[data-filter="all"]')?.classList.add('active');
+          }
         } else {
-          item.style.display = 'none';
+          active.add(type);
+          btn.classList.add('active');
         }
-      });
+      }
+
+      applyFilters();
     });
   });
 }
@@ -123,21 +146,33 @@ function initCalendar() {
     solennite: 'Solennité',
   };
 
-  days.forEach(day => {
-    day.addEventListener('click', () => {
-      ddDate.textContent  = day.dataset.date  || '';
-      ddType.textContent  = typeLabels[day.dataset.type] || day.dataset.type || '';
-      ddType.className    = 'dd-type ' + (day.dataset.type || 'ordinaire');
-      ddSaint.textContent = day.dataset.saint || '';
-      ddDesc.textContent  = day.dataset.desc  || '';
+  function selectDay(day) {
+    ddDate.textContent  = day.dataset.date  || '';
+    ddType.textContent  = typeLabels[day.dataset.type] || day.dataset.type || '';
+    ddType.className    = 'dd-type ' + (day.dataset.type || 'ordinaire');
+    ddSaint.textContent = day.dataset.saint || '';
+    ddDesc.textContent  = day.dataset.desc  || '';
 
-      detail.classList.remove('hidden');
-      detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    detail.classList.remove('hidden');
+    detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
-      days.forEach(d => d.style.outline = '');
-      day.style.outline = '2px solid #c9a84c';
-    });
-  });
+    days.forEach(d => d.style.outline = '');
+    day.style.outline = '2px solid #c9a84c';
+  }
+
+  days.forEach(day => day.addEventListener('click', () => selectDay(day)));
+
+  // Auto-sélectionne le saint du jour à chaque fois que l'onglet Calendrier est ouvert
+  function autoSelectToday() {
+    const todayCell = document.querySelector('.cal-day.today');
+    if (todayCell) selectDay(todayCell);
+  }
+
+  document.querySelector('.nav-tab[data-tab="mois"]')
+    ?.addEventListener('click', () => setTimeout(autoSelectToday, 60));
+
+  // Aussi déclenché si on arrive directement sur l'onglet mois (deep link géré après)
+  window._calAutoSelectToday = autoSelectToday;
 }
 
 
@@ -1556,13 +1591,34 @@ function handleDeepLink() {
   const hash = location.hash.replace('#', '').toLowerCase();
   if (!hash) return;
 
-  // Onglets dédiés
-  if (['semaine', 'mois', 'sources'].includes(hash)) {
+  // Ouvre directement le chapelet numérique (modal)
+  if (hash === 'open-chapelet') {
+    setTimeout(() => document.getElementById('chapelet-fab')?.click(), 150);
+    return;
+  }
+
+  // Offices du bréviaire → active laudes + vêpres + complies simultanément
+  if (hash === 'breviaire') {
+    ['laudes', 'vepres', 'complies'].forEach(f =>
+      document.querySelector(`.pf[data-filter="${f}"]`)?.click()
+    );
+    return;
+  }
+
+  // Onglets dédiés simples
+  if (['semaine', 'sources'].includes(hash)) {
     document.querySelector(`.nav-tab[data-tab="${hash}"]`)?.click();
     return;
   }
 
-  // Filtre sur l'onglet Aujourd'hui (déjà actif par défaut)
+  // Calendrier → switch onglet + auto-sélection du saint du jour
+  if (hash === 'mois') {
+    document.querySelector('.nav-tab[data-tab="mois"]')?.click();
+    setTimeout(() => window._calAutoSelectToday?.(), 150);
+    return;
+  }
+
+  // Filtre sur l'onglet Aujourd'hui
   const pf = document.querySelector(`.pf[data-filter="${hash}"]`);
   if (pf) pf.click();
 }

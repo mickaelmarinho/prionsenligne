@@ -1644,34 +1644,58 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
 /* ══════════════════════════════════════════════
    RESPONSIVE — MOBILE
 ══════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+   RESPONSIVE — DESKTOP LARGE (≥1100px)
+══════════════════════════════════════════════ */
+@media (min-width: 1100px) {
+  .site-main { max-width: 1200px; margin: 0 auto; padding: 28px 40px; }
+  /* Vue semaine : plus de colonnes visibles */
+  .week-cards { gap: 12px; }
+  .wc-day { min-width: 160px; }
+}
+
 /* ── Desktop sidebar filtres (≥900px) ── */
 @media (min-width: 900px) {
   .prayer-filters {
     flex-direction: column;
-    width: 150px;
+    width: 160px;
     flex-wrap: nowrap;
     margin-bottom: 0;
     position: sticky;
     top: 76px;
-    gap: 4px;
+    gap: 5px;
+    align-self: flex-start;
   }
   .pf {
     width: 100%;
     text-align: left;
-    padding: 8px 14px;
+    padding: 9px 14px;
     border-radius: var(--r-md);
     justify-content: flex-start;
+    font-size: 13px;
   }
+  /* Timeline : plus large sur desktop */
+  .timeline { flex: 1; min-width: 0; }
 }
 
 @media (max-width: 899px) {
   .today-main { flex-direction: column; gap: 0; }
+  /* Filtres en rangée scrollable horizontalement */
+  .prayer-filters {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .prayer-filters::-webkit-scrollbar { display: none; }
+  .pf { flex-shrink: 0; }
 }
 
 @media (max-width: 640px) {
-  .site-main { padding: 16px 14px; }
+  .site-main { padding: 14px 12px; }
   .main-nav  { display: none; }
-  .header-inner { justify-content: space-between; padding: 0 16px; }
+  .header-inner { justify-content: space-between; padding: 0 14px; }
   .user-name { display: none; }
 
   /* Mobile : boutons desktop cachés, burger toujours visible */
@@ -1681,7 +1705,7 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
   /* ── Sur mobile : drawer glissant depuis le bas ── */
   .hamburger-menu {
     position: fixed;
-    bottom: 70px;   /* juste au-dessus de la bottom-nav */
+    bottom: 70px;
     left: 8px; right: 8px;
     top: auto;
     min-width: unset;
@@ -1690,7 +1714,6 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
     border-radius: 18px;
     transform: translateY(24px) scale(.96);
     box-shadow: 0 -4px 30px rgba(0,0,0,.18);
-    /* Poignée visuelle */
   }
   .hamburger-menu::before {
     content: '';
@@ -1700,23 +1723,18 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
     border-radius: 2px;
     margin: 10px auto 2px;
   }
-  .hamburger-menu:not(.hidden) {
-    transform: translateY(0) scale(1);
-  }
-  /* Navigation onglets visible dans le drawer mobile */
+  .hamburger-menu:not(.hidden) { transform: translateY(0) scale(1); }
+
   .hm-nav-label, .hm-nav-item, .hm-nav-divider { display: flex; }
   .hm-nav-label { display: block; }
 
-  .day-banner { flex-direction: column; align-items: flex-start; gap: 8px; padding: 14px 16px; }
-  .day-feast  { font-size: 18px; }
+  .day-banner { flex-direction: column; align-items: flex-start; gap: 6px; padding: 12px 14px; }
+  .day-feast  { font-size: 17px; }
 
-  /* Timeline : actions visibles en dessous */
-  .tl-item {
-    flex-wrap: wrap;
-    padding: 12px 14px;
-    gap: 8px 14px;
-  }
-  .tl-body { flex-basis: calc(100% - 54px - 10px - 14px); }
+  /* Timeline : compacte sur mobile */
+  .tl-item { flex-wrap: wrap; padding: 11px 12px; gap: 6px 12px; }
+  .tl-body { flex-basis: calc(100% - 50px - 12px); }
+  .tl-prayer { font-size: 15px; }
   .tl-actions {
     flex-basis: 100%;
     flex-direction: row !important;
@@ -1724,54 +1742,64 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
     justify-content: flex-end;
     gap: 8px;
     padding: 0;
-    padding-left: 54px;
+    padding-left: 50px;
   }
+  .tl-src { font-size: 11px; padding: 4px 8px; }
 
-  /* Week cards : largeur adaptée au contenu sur mobile */
-  .wc-day { width: 200px; }
-  .wc-daynum { font-size: 22px; }
+  /* Week cards : scroll horizontal fluide */
+  .week-cards { gap: 10px; padding-bottom: 8px; }
+  .wc-day { width: 185px; min-width: 185px; }
+  .wc-daynum { font-size: 20px; }
   .wc-src-btn { font-size: 9px; padding: 2px 5px; }
+  .wc-etime { font-size: 11px; }
+
+  /* Chapelet modal : plus de hauteur sur mobile */
+  .ch-panel { padding: 18px 16px 20px; }
+  .ch-prayer-txt { font-size: 22px; }
+  .ch-prayer-full { max-height: 100px; font-size: 12px; }
+  .ch-lang-btn { font-size: 14px; padding: 2px 4px; }
+
+  /* Calendrier : cellules compactes */
+  .cal-num { font-size: 12px; }
 
   /* Footer mobile */
-  .footer-inner {
-    grid-template-columns: 1fr;
-    gap: 24px;
-    text-align: center;
-  }
+  .footer-inner { grid-template-columns: 1fr; gap: 20px; text-align: center; }
   .footer-legal { text-align: center; }
   .footer-nav { flex-direction: row; flex-wrap: wrap; justify-content: center; }
 
   /* Lecteur radio */
-  .rp-vol { width: 60px; }
+  .rp-vol { width: 56px; }
+  .rp-name { font-size: 13px; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
 
 /* ══════════════════════════════════════════════
-   RESPONSIVE — DESKTOP (>=641px)
+   RESPONSIVE — DESKTOP (≥641px)
 ══════════════════════════════════════════════ */
 @media (min-width: 641px) {
   .bottom-nav { display: none; }
   body { padding-bottom: 0; }
 
-  /* Lecteur radio : collé en bas, pas au-dessus de la bottom-nav */
   .radio-player { bottom: 0; }
-
-  /* Quand le lecteur est ouvert, on pousse le footer */
   body.player-open { padding-bottom: 64px; }
 
   /* Desktop déconnecté : cacher le burger, montrer les boutons */
   #header-user:not(.user-logged-in) #hamburger-btn { display: none; }
 
-  /* Desktop connecté : cacher les boutons, montrer le burger (avatar) */
+  /* Desktop connecté : cacher les boutons, montrer le burger */
   #header-user.user-logged-in .header-auth-desktop { display: none; }
 
-  /* Items auth en bas du dropdown : cachés sur desktop (les boutons header suffisent) */
   #hm-auth-sep,
   #hm-login-item,
   #hm-signup-item { display: none !important; }
 
-  /* FAB chapelet : bien ancré en bas à droite, au-dessus du player */
+  /* FAB chapelet */
   .chapelet-fab { bottom: 30px; }
   body.player-open .chapelet-fab { bottom: 88px; }
+
+  /* Chapelet modal : centré, bien espacé */
+  .ch-panel { max-width: 500px; padding: 28px 32px; }
+  .ch-prayer-full { max-height: 140px; }
+  .ch-lang-bar { gap: 5px; }
 }
 
 

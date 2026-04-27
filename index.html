@@ -81,7 +81,7 @@
 
       <div class="lp-feat-grid">
 
-        <a href="app.html#laudes" class="lp-feat-card lp-feat-link">
+        <a href="app.html#breviaire" class="lp-feat-card lp-feat-link">
           <div class="lp-feat-icon laudes"><i class="fa-solid fa-sun"></i></div>
           <h3>Offices du bréviaire</h3>
           <p>Laudes, Vêpres et Complies à l'heure juste — avec les radios qui les diffusent en direct et les textes officiels de l'AELF.</p>
@@ -95,18 +95,18 @@
           <span class="lp-feat-see">Voir les messes du jour <i class="fa-solid fa-arrow-right"></i></span>
         </a>
 
-        <a href="app.html#chapelet" class="lp-feat-card lp-feat-link">
+        <a href="app.html#open-chapelet" class="lp-feat-card lp-feat-link">
           <div class="lp-feat-icon chapelet"><i class="fa-solid fa-circle-dot"></i></div>
           <h3>Chapelet numérique</h3>
-          <p>Un guide interactif pas à pas, avec les mystères du jour selon la tradition catholique. Disponible à tout moment.</p>
-          <span class="lp-feat-see">Accéder au chapelet <i class="fa-solid fa-arrow-right"></i></span>
+          <p>Un guide interactif pas à pas, avec les mystères du jour selon la tradition catholique. En 6 langues.</p>
+          <span class="lp-feat-see">Ouvrir le chapelet <i class="fa-solid fa-arrow-right"></i></span>
         </a>
 
-        <a href="app.html#laudes" class="lp-feat-card lp-feat-link">
-          <div class="lp-feat-icon breviary"><i class="fa-solid fa-book-open"></i></div>
-          <h3>Textes liturgiques</h3>
-          <p>Les lectures et antiennes du jour fournies par l'AELF, disponibles directement depuis chaque prière de l'agenda.</p>
-          <span class="lp-feat-see">Ouvrir le bréviaire <i class="fa-solid fa-arrow-right"></i></span>
+        <a href="app.html#chapelet" class="lp-feat-card lp-feat-link">
+          <div class="lp-feat-icon breviary"><i class="fa-solid fa-circle-dot"></i></div>
+          <h3>Chapelet</h3>
+          <p>Tous les chapelets du jour en un coup d'œil — Divine Miséricorde, Lourdes, chapelet du matin et du soir.</p>
+          <span class="lp-feat-see">Voir les chapelets du jour <i class="fa-solid fa-arrow-right"></i></span>
         </a>
 
         <a href="app.html#semaine" class="lp-feat-card lp-feat-link">
@@ -119,7 +119,7 @@
         <a href="app.html#mois" class="lp-feat-card lp-feat-link">
           <div class="lp-feat-icon calendar"><i class="fa-solid fa-calendar"></i></div>
           <h3>Calendrier des saints</h3>
-          <p>Fêtes, mémoires et solennités du mois en cours, avec le nom du saint du jour et sa notice liturgique.</p>
+          <p>Fêtes, mémoires et solennités du mois en cours — le saint du jour est affiché automatiquement à l'ouverture.</p>
           <span class="lp-feat-see">Voir le calendrier <i class="fa-solid fa-arrow-right"></i></span>
         </a>
 
@@ -195,7 +195,8 @@
        BOUTON MUSIQUE GRÉGORIENNE (opt-in)
   ═══════════════════════════════════════════ -->
   <audio id="lp-chant" preload="none" loop>
-    <source src="https://streaming.radio-gregorien.fr/radio-gregorien" type="audio/mpeg">
+    <source src="https://radiogregorienfr.ice.infomaniak.ch/radiogregorienfr-high.mp3" type="audio/mpeg">
+    <source src="https://radiogregorienfr.ice.infomaniak.ch/radiogregorienfr-low.mp3"  type="audio/mpeg">
   </audio>
 
   <button class="lp-music-btn" id="lp-music-btn" title="Musique grégorienne" aria-label="Écouter du chant grégorien">
@@ -216,47 +217,48 @@
 
     // ── Lecteur grégorien opt-in ──────────────────────────────
     (function () {
-      const btn    = document.getElementById('lp-music-btn');
-      const audio  = document.getElementById('lp-chant');
-      const label  = document.getElementById('lp-music-label');
-      const STREAM = 'https://streaming.radio-gregorien.fr/radio-gregorien';
-      const WEB    = 'https://www.radio-gregorien.fr';
-      let playing  = false;
+      const btn   = document.getElementById('lp-music-btn');
+      const audio = document.getElementById('lp-chant');
+      const label = document.getElementById('lp-music-label');
+      let playing = false;
+      let errored = false;
+
+      const ICON_MUSIC = '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>';
+      const ICON_PAUSE = '<line x1="6" y1="4" x2="6" y2="20"/><line x1="18" y1="4" x2="18" y2="20"/>';
 
       function setPlaying(state) {
         playing = state;
         btn.classList.toggle('lp-music-playing', state);
         label.textContent = state ? 'Pause' : 'Grégorien';
-        // Icône : notes → pause
-        btn.querySelector('.lp-music-icon').innerHTML = state
-          ? '<line x1="6" y1="4" x2="6" y2="20"/><line x1="18" y1="4" x2="18" y2="20"/>'
-          : '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>';
+        btn.querySelector('.lp-music-icon').innerHTML = state ? ICON_PAUSE : ICON_MUSIC;
+      }
+
+      function showError() {
+        errored = true;
+        setPlaying(false);
+        label.textContent = 'Indisponible';
+        btn.style.opacity = '0.5';
+        setTimeout(() => {
+          label.textContent = 'Grégorien';
+          btn.style.opacity = '';
+          errored = false;
+        }, 3000);
       }
 
       btn.addEventListener('click', () => {
+        if (errored) return;
         if (!playing) {
-          // Premier clic : charge et joue
-          if (!audio.src || audio.src === window.location.href) {
-            audio.src = STREAM;
-          }
           audio.volume = 0.4;
           audio.play()
             .then(() => setPlaying(true))
-            .catch(() => {
-              // Navigateur bloque le flux → ouvre le site
-              window.open(WEB, '_blank', 'noopener');
-            });
+            .catch(() => showError());
         } else {
           audio.pause();
           setPlaying(false);
         }
       });
 
-      // Gestion d'erreur réseau (flux indisponible)
-      audio.addEventListener('error', () => {
-        setPlaying(false);
-        window.open(WEB, '_blank', 'noopener');
-      });
+      audio.addEventListener('error', () => showError());
     })();
   </script>
 
