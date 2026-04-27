@@ -185,17 +185,27 @@ function setAuthLoading(on) {
 }
 
 function translateSupabaseError(err) {
+  // Log complet pour diagnostic
+  console.error('[PrionsEnLigne] Supabase error:', err?.message, err);
   const m = (err?.message || '').toLowerCase();
-  if (m.includes('invalid login'))       return 'Email ou mot de passe incorrect.';
-  if (m.includes('email not confirmed')) return 'Veuillez confirmer votre email avant de vous connecter.';
+  if (m.includes('invalid login') || m.includes('invalid credentials'))
+    return 'Email ou mot de passe incorrect.';
+  if (m.includes('email not confirmed'))
+    return 'Veuillez confirmer votre email avant de vous connecter.';
   if (m.includes('already registered') || m.includes('user already registered'))
     return 'Cet email est déjà utilisé.';
-  if (m.includes('password should'))    return 'Le mot de passe doit comporter au moins 6 caractères.';
-  if (m.includes('rate limit'))         return 'Trop de tentatives. Réessayez dans quelques minutes.';
-  if (m.includes('email') && m.includes('invalid')) return 'Adresse email invalide.';
-  if (m.includes('failed to fetch') || m.includes('networkerror'))
+  if (m.includes('password should') || m.includes('password'))
+    return 'Le mot de passe doit comporter au moins 6 caractères.';
+  if (m.includes('rate limit') || m.includes('too many'))
+    return 'Trop de tentatives. Réessayez dans quelques minutes.';
+  if (m.includes('signup') && (m.includes('disabled') || m.includes('not allowed')))
+    return 'Les inscriptions sont temporairement désactivées.';
+  if (m.includes('email') && m.includes('invalid'))
+    return 'Adresse email invalide.';
+  if (m.includes('failed to fetch') || m.includes('networkerror') || m.includes('fetch'))
     return 'Impossible de se connecter. Vérifiez votre connexion internet.';
-  return 'Une erreur est survenue. Veuillez réessayer.';
+  // Message brut pour aider au diagnostic (sera retiré en production)
+  return `Erreur : ${err?.message || 'inconnue'}`;
 }
 
 /* ════════════════════════════════════════════
