@@ -116,10 +116,10 @@
 
       <div class="day-banner">
         <div class="day-banner-left">
-          <div class="day-date" id="js-date">Dimanche 26 avril 2026</div>
-          <div class="day-feast" id="js-feast">Saint Marc, évangéliste</div>
+          <div class="day-date" id="js-date">—</div>
+          <div class="day-feast" id="js-feast">—</div>
         </div>
-        <div class="feast-pill" id="js-feast-type">Fête liturgique</div>
+        <div class="feast-pill" id="js-feast-type">—</div>
       </div>
 
       <!-- Filtres + Timeline -->
@@ -142,16 +142,6 @@
 
       </div><!-- /today-main -->
 
-      <!-- Légende -->
-      <div class="legend">
-        <span class="leg laudes">Laudes</span>
-        <span class="leg matin">Matin</span>
-        <span class="leg messe">Messe</span>
-        <span class="leg chapelet">Chapelet</span>
-        <span class="leg vepres">Vêpres</span>
-        <span class="leg complies">Complies</span>
-      </div>
-
     </section><!-- /aujourd'hui -->
 
 
@@ -159,14 +149,6 @@
     <section id="tab-semaine" class="tab-section">
       <div class="week-cards-wrap">
         <div class="week-cards" id="week-cards"><!-- généré par initWeek() --></div>
-      </div>
-      <div class="legend">
-        <span class="leg laudes">Laudes</span>
-        <span class="leg matin">Matin</span>
-        <span class="leg messe">Messe</span>
-        <span class="leg chapelet">Chapelet</span>
-        <span class="leg vepres">Vêpres</span>
-        <span class="leg complies">Complies</span>
       </div>
     </section><!-- /semaine -->
 
@@ -222,7 +204,7 @@
         <div class="cal-day fete" data-date="Jeudi 23 avril" data-type="fete" data-saint="Saint Georges" data-desc="Martyr légendaire, patron de l'Angleterre. Sa croix rouge sur fond blanc est l'un des symboles chrétiens les plus reconnus."><span class="cal-num">23</span><span class="cal-saint">St Georges</span><div class="cal-dot gold"></div></div>
         <div class="cal-day memoire" data-date="Vendredi 24 avril" data-type="memoire" data-saint="Saint Fidèle de Sigmaringen" data-desc="Premier martyr capucin, missionnaire en Suisse."><span class="cal-num">24</span><span class="cal-saint">St Fidèle</span><div class="cal-dot purple"></div></div>
         <div class="cal-day fete" data-date="Samedi 25 avril" data-type="fete" data-saint="Saint Marc, évangéliste" data-desc="Auteur du 2e Évangile, le plus court et le plus dynamique. Compagnon de Pierre à Rome, il fut le premier évêque d'Alexandrie."><span class="cal-num">25</span><span class="cal-saint">St Marc Évang.</span><div class="cal-dot gold"></div></div>
-        <div class="cal-day today fete" data-date="Dimanche 26 avril — Aujourd'hui" data-type="fete" data-saint="Saint Marc (reporté)" data-desc="La fête de Saint Marc, évangéliste, est célébrée ce dimanche du temps pascal en communion avec toute l'Église."><span class="cal-num">26</span><span class="cal-saint">St Marc</span><div class="cal-dot gold"></div></div>
+        <div class="cal-day fete" data-date="Dimanche 26 avril" data-type="fete" data-saint="Saint Marc, évangéliste" data-desc="Fête de l'auteur du deuxième Évangile, compagnon de Pierre à Rome et premier évêque d'Alexandrie."><span class="cal-num">26</span><span class="cal-saint">St Marc</span><div class="cal-dot gold"></div></div>
 
         <div class="cal-day" data-date="Lundi 27 avril" data-type="ordinaire" data-saint="Sainte Zita" data-desc="Patronne des domestiques et des servantes."><span class="cal-num">27</span><span class="cal-saint">Ste Zita</span></div>
         <div class="cal-day memoire" data-date="Mardi 28 avril" data-type="memoire" data-saint="Saint Pierre Chanel" data-desc="Premier martyr d'Océanie, missionnaire en Polynésie."><span class="cal-num">28</span><span class="cal-saint">St Pierre Chanel</span><div class="cal-dot purple"></div></div>
@@ -236,7 +218,7 @@
       <div class="month-legend">
         <span><span class="cal-dot gold inline"></span> Fête / Solennité</span>
         <span><span class="cal-dot purple inline"></span> Mémoire</span>
-        <span class="today-legend">26 Aujourd'hui</span>
+        <span class="today-legend"></span>
       </div>
 
     </section><!-- /mois -->
@@ -370,16 +352,19 @@
       <div class="footer-legal">
         <p>Textes liturgiques :</p>
         <p><a href="https://www.aelf.org" target="_blank" rel="noopener">AELF</a> — Association Épiscopale<br>Liturgique Francophone</p>
-        <p style="margin-top:12px">Radios partenaires :<br>
-          <a href="https://www.radiomaria.fr" target="_blank" rel="noopener">Radio Maria France</a> ·
+        <p style="margin-top:12px">Sources :<br>
+          <a href="https://www.radiomaria.fr" target="_blank" rel="noopener">Radio Maria</a> ·
           <a href="https://www.radionotredame.net" target="_blank" rel="noopener">Notre-Dame</a> ·
-          <a href="https://radio-esperance.fr" target="_blank" rel="noopener">Espérance</a>
+          <a href="https://rcf.fr" target="_blank" rel="noopener">RCF</a> ·
+          <a href="https://radio-esperance.fr" target="_blank" rel="noopener">Espérance</a> ·
+          <a href="https://www.radiofidelite.fr" target="_blank" rel="noopener">Fidélité</a> ·
+          <a href="https://www.ktotv.com" target="_blank" rel="noopener">KTO</a>
         </p>
       </div>
     </div>
     <hr class="footer-divider">
     <div class="footer-bottom">
-      <span>© 2026 PrionsEnLigne — Projet personnel, sans but lucratif</span>
+      <span>© 2026 PrionsEnLigne</span>
       <span id="footer-daily-prayer" class="footer-daily-prayer">
         <i class="fa-solid fa-quote-left"></i>
         <span>
@@ -562,7 +547,7 @@
         <span class="ch-myst-name" id="ch-myst-name">—</span>
       </div>
       <div class="ch-beads" id="ch-beads"></div>
-      <div class="ch-prayer-txt" id="ch-prayer-txt">Notre Père</div>
+      <div class="ch-prayer-txt" id="ch-prayer-txt">Je crois en Dieu</div>
       <button class="ch-tap" id="ch-tap">
         <i class="fa-solid fa-hand-point-up"></i> Suivant
       </button>

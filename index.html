@@ -65,41 +65,47 @@
 
       <div class="lp-feat-grid">
 
-        <div class="lp-feat-card">
+        <a href="app.html#laudes" class="lp-feat-card lp-feat-link">
           <div class="lp-feat-icon laudes"><i class="fa-solid fa-sun"></i></div>
           <h3>Offices du bréviaire</h3>
           <p>Laudes, Vêpres et Complies à l'heure juste — avec les radios qui les diffusent en direct et les textes officiels de l'AELF.</p>
-        </div>
+          <span class="lp-feat-see">Voir les offices du jour <i class="fa-solid fa-arrow-right"></i></span>
+        </a>
 
-        <div class="lp-feat-card">
+        <a href="app.html#messe" class="lp-feat-card lp-feat-link">
           <div class="lp-feat-icon messe"><i class="fa-solid fa-church"></i></div>
           <h3>Messe en direct</h3>
           <p>Radio Maria, Radio Notre-Dame, KTO, Lourdes, Vatican News… chaque messe du jour, à son heure réelle, en un clic.</p>
-        </div>
+          <span class="lp-feat-see">Voir les messes du jour <i class="fa-solid fa-arrow-right"></i></span>
+        </a>
 
-        <div class="lp-feat-card">
+        <a href="app.html#chapelet" class="lp-feat-card lp-feat-link">
           <div class="lp-feat-icon chapelet"><i class="fa-solid fa-circle-dot"></i></div>
           <h3>Chapelet numérique</h3>
           <p>Un guide interactif pas à pas, avec les mystères du jour selon la tradition catholique. Disponible à tout moment.</p>
-        </div>
+          <span class="lp-feat-see">Accéder au chapelet <i class="fa-solid fa-arrow-right"></i></span>
+        </a>
 
-        <div class="lp-feat-card">
+        <a href="app.html#laudes" class="lp-feat-card lp-feat-link">
           <div class="lp-feat-icon breviary"><i class="fa-solid fa-book-open"></i></div>
           <h3>Textes liturgiques</h3>
           <p>Les lectures et antiennes du jour fournies par l'AELF, disponibles directement depuis chaque prière de l'agenda.</p>
-        </div>
+          <span class="lp-feat-see">Ouvrir le bréviaire <i class="fa-solid fa-arrow-right"></i></span>
+        </a>
 
-        <div class="lp-feat-card">
+        <a href="app.html#semaine" class="lp-feat-card lp-feat-link">
           <div class="lp-feat-icon vepres"><i class="fa-solid fa-calendar-week"></i></div>
           <h3>Vue semaine complète</h3>
           <p>Consultez l'agenda de toute la semaine liturgique — offices, messes et chapelets avec leurs sources et horaires exacts.</p>
-        </div>
+          <span class="lp-feat-see">Voir la semaine <i class="fa-solid fa-arrow-right"></i></span>
+        </a>
 
-        <div class="lp-feat-card">
+        <a href="app.html#mois" class="lp-feat-card lp-feat-link">
           <div class="lp-feat-icon calendar"><i class="fa-solid fa-calendar"></i></div>
           <h3>Calendrier des saints</h3>
           <p>Fêtes, mémoires et solennités du mois en cours, avec le nom du saint du jour et sa notice liturgique.</p>
-        </div>
+          <span class="lp-feat-see">Voir le calendrier <i class="fa-solid fa-arrow-right"></i></span>
+        </a>
 
       </div>
     </div>
@@ -162,7 +168,7 @@
        FOOTER
   ═══════════════════════════════════════════ -->
   <footer class="lp-footer">
-    <span>© 2026 PrionsEnLigne — Projet personnel, sans but lucratif</span>
+    <span>© 2026 PrionsEnLigne</span>
     <span>
       Textes liturgiques : <a href="https://www.aelf.org" target="_blank" rel="noopener">AELF</a>
     </span>
@@ -170,9 +176,9 @@
 
 
   <script>
-    // Les boutons CTA de la landing page marquent la visite pour éviter
-    // l'affichage du bloc de bienvenue dans app.html
-    document.querySelectorAll('[href="app.html"]').forEach(el => {
+    // Tous les liens vers app.html (CTA et cartes de fonctionnalités) marquent
+    // la visite pour éviter l'affichage du bloc de bienvenue dans app.html.
+    document.querySelectorAll('[href^="app.html"]').forEach(el => {
       el.addEventListener('click', () => localStorage.setItem('pel_welcomed', '1'));
     });
   </script>

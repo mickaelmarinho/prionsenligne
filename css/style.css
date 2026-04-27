@@ -788,12 +788,12 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
   gap: 6px;
 }
 .today-legend::before {
-  content: '26';
+  content: attr(data-day);
   background: var(--navy);
   color: white;
   width: 18px; height: 18px;
   border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
+  display: inline-flex; align-items: center; justify-content: center;
   font-size: 9px;
 }
 
@@ -2071,6 +2071,17 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   gap: 4px;
   justify-content: center;
 }
+/* Rangée d'introduction (Je crois, Notre Père, 3 JvsM, Gloire) */
+.ch-intro-row {
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+  border-bottom: 1px dashed rgba(123,79,46,.2);
+}
+.ch-intro-row .ch-bead-sp {
+  border-radius: 50%;   /* cercles pour les prières d'intro */
+  width: 13px; height: 13px;
+  margin-top: 0;
+}
 .ch-bead {
   width: 13px; height: 13px;
   border-radius: 50%;
@@ -2079,7 +2090,7 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   transition: background .2s, transform .2s, box-shadow .2s;
 }
 .ch-bead.ch-bead-sp {
-  border-radius: 4px;       /* carré pour Notre Père & Gloria */
+  border-radius: 4px;       /* carré pour Notre Père & Gloria dans les décades */
   width: 11px; height: 11px;
   margin-top: 1px;
 }

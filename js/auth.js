@@ -3,6 +3,15 @@
    Modes : login · signup · reset-request · reset-password
 ═══════════════════════════════════════════════ */
 
+// ── Credentials Supabase ──────────────────────
+// Sur Vercel : définir SUPABASE_URL et SUPABASE_ANON_KEY dans
+//   Settings → Environment Variables (le /api/config les injecte automatiquement).
+// Pour test local (sans serveur Vercel) : coller ici les valeurs du dashboard Supabase
+//   Project Settings → API → Project URL  et  anon / public key
+const _SB_URL_LOCAL  = '';   // ex : 'https://xxxxxxxxxxxx.supabase.co'
+const _SB_KEY_LOCAL  = '';   // ex : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+// ─────────────────────────────────────────────
+
 // ── Helpers ──
 function $id(id) { return document.getElementById(id); }
 
@@ -364,17 +373,30 @@ async function initAuth() {
   initAuthUI();
 
   // Ensuite on tente d'initialiser Supabase
+  // Priorité : /api/config (Vercel env vars) → _SB_*_LOCAL (fallback local)
+  let supabaseUrl = '', supabaseAnon = '';
   try {
     const res = await fetch('/api/config');
-    if (!res.ok) throw new Error('config fetch failed');
-    const { supabaseUrl, supabaseAnon } = await res.json();
-    if (!supabaseUrl || !supabaseAnon) {
-      console.info('[PrionsEnLigne] Supabase non configuré (variables d\'environnement manquantes).');
-      return;
+    if (res.ok) {
+      const cfg = await res.json();
+      supabaseUrl  = cfg.supabaseUrl  || '';
+      supabaseAnon = cfg.supabaseAnon || '';
     }
+  } catch (_) { /* hors Vercel – ignoré */ }
+
+  // Fallback : credentials locaux définis en haut du fichier
+  if (!supabaseUrl)  supabaseUrl  = _SB_URL_LOCAL;
+  if (!supabaseAnon) supabaseAnon = _SB_KEY_LOCAL;
+
+  if (!supabaseUrl || !supabaseAnon) {
+    console.info('[PrionsEnLigne] Supabase non configuré — voir les instructions en haut de auth.js.');
+    return;
+  }
+
+  try {
     _sb = window.supabase?.createClient(supabaseUrl, supabaseAnon);
   } catch (err) {
-    console.info('[PrionsEnLigne] Config Supabase indisponible :', err.message);
+    console.info('[PrionsEnLigne] Erreur création client Supabase :', err.message);
     return;
   }
 

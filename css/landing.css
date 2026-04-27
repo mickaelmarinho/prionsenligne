@@ -267,7 +267,7 @@ h1, h2, h3, .lp-logo-name { font-family: 'Cormorant Garamond', serif; }
   border-radius: 16px;
   padding: 28px 24px;
   border: 1px solid rgba(30,28,24,.07);
-  transition: box-shadow .2s, transform .2s;
+  transition: box-shadow .2s, transform .2s, border-color .2s;
 }
 .lp-feat-card:hover {
   box-shadow: 0 8px 28px rgba(0,0,0,.08);
@@ -287,6 +287,46 @@ h1, h2, h3, .lp-logo-name { font-family: 'Cormorant Garamond', serif; }
 .lp-feat-icon.chapelet { background: rgba(123,79,46,.12);  color: #7B4F2E; }
 .lp-feat-icon.vepres   { background: rgba(24,95,165,.1);   color: #185FA5; }
 .lp-feat-icon.calendar { background: rgba(26,39,68,.1);    color: var(--navy); }
+
+/* Cartes cliquables (liens vers l'app) */
+.lp-feat-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+.lp-feat-link:hover {
+  box-shadow: 0 8px 28px rgba(0,0,0,.08);
+  transform: translateY(-3px);
+  border-color: rgba(201,168,76,.3);
+}
+.lp-feat-link:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+.lp-feat-link:hover .lp-feat-see {
+  color: var(--gold);
+  gap: 8px;
+}
+.lp-feat-link:hover .lp-feat-see i {
+  transform: translateX(2px);
+}
+
+.lp-feat-see {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-soft);
+  letter-spacing: .02em;
+  transition: color .2s, gap .2s;
+}
+.lp-feat-see i {
+  font-size: 10px;
+  transition: transform .2s;
+}
 
 .lp-feat-card h3 {
   font-size: 17px;

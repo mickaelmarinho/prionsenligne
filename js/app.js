@@ -81,6 +81,25 @@ function initDate() {
   const label  = `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
   const el = document.getElementById('js-date');
   if (el) el.textContent = label;
+
+  // Highlight dynamique du jour courant dans le calendrier du mois affiché
+  // + mise à jour de la fête du jour et de la légende du calendrier
+  const todayNum = now.getDate();
+  const typeLabels = { ordinaire: 'Temps ordinaire', memoire: 'Mémoire', fete: 'Fête liturgique', solennite: 'Solennité' };
+  document.querySelectorAll('.cal-day:not(.other)').forEach(day => {
+    const numEl = day.querySelector('.cal-num');
+    if (!numEl) return;
+    const isToday = parseInt(numEl.textContent) === todayNum;
+    day.classList.toggle('today', isToday);
+    if (isToday) {
+      const saintEl  = document.getElementById('js-feast');
+      const typeEl   = document.getElementById('js-feast-type');
+      const legendEl = document.querySelector('.today-legend');
+      if (saintEl)  saintEl.textContent  = day.dataset.saint || '';
+      if (typeEl)   typeEl.textContent   = typeLabels[day.dataset.type] || '';
+      if (legendEl) { legendEl.dataset.day = String(todayNum); legendEl.textContent = ' Aujourd’hui'; }
+    }
+  });
 }
 
 
@@ -672,12 +691,21 @@ function initChapelet() {
 
   const mystery = MYST[DOW_KEY[getParisDate().getDay()]];
 
-  // Séquence : 5 décades × 12 pas (Notre Père + 10 JvsM + Gloire au Père)
+  // Séquence : intro (6 pas) + 5 décades × 12 pas = 66 pas au total
+  //   Intro : Je crois en Dieu · Notre Père · JvsM ×3 · Gloire au Père
+  //   Décades : Notre Père + 10 Je vous salue Marie + Gloire au Père
+  const INTRO = 6;
   let step = 0;
-  const TOTAL = 60;
+  const TOTAL = INTRO + 60; // 66
 
   function getPrayer(s) {
-    const b = s % 12;
+    if (s === 0) return 'Je crois en Dieu';
+    if (s === 1) return 'Notre Père';
+    if (s === 2) return 'Je vous salue Marie · 1/3';
+    if (s === 3) return 'Je vous salue Marie · 2/3';
+    if (s === 4) return 'Je vous salue Marie · 3/3';
+    if (s === 5) return 'Gloire au Père';
+    const b = (s - INTRO) % 12;
     if (b === 0)  return 'Notre Père';
     if (b === 11) return 'Gloire au Père';
     return `Je vous salue Marie · ${b}/10`;
@@ -687,6 +715,16 @@ function initChapelet() {
     const c = document.getElementById('ch-beads');
     if (!c) return;
     c.innerHTML = '';
+    // Rangée d'intro (6 perles) visuellement séparée des décades
+    const introRow = document.createElement('div');
+    introRow.className = 'ch-decade-dots ch-intro-row';
+    for (let b = 0; b < INTRO; b++) {
+      const bead = document.createElement('div');
+      bead.className = 'ch-bead ch-bead-sp';
+      introRow.appendChild(bead);
+    }
+    c.appendChild(introRow);
+    // 5 décades
     for (let d = 0; d < 5; d++) {
       const row = document.createElement('div');
       row.className = 'ch-decade-dots';
@@ -700,12 +738,18 @@ function initChapelet() {
   }
 
   function render() {
-    const decade = Math.floor(step / 12);
     const el = id => document.getElementById(id);
-    el('ch-mystery')?.textContent && (el('ch-mystery').textContent = mystery.name);
-    if (el('ch-mystery'))    el('ch-mystery').textContent    = mystery.name;
-    if (el('ch-myst-name'))  el('ch-myst-name').textContent  = mystery.list[Math.min(decade, 4)];
-    if (el('ch-decade-num')) el('ch-decade-num').textContent = `${decade + 1}ᵉ mystère`;
+    if (el('ch-mystery')) el('ch-mystery').textContent = mystery.name;
+
+    if (step < INTRO) {
+      if (el('ch-decade-num')) el('ch-decade-num').textContent = 'Introduction';
+      if (el('ch-myst-name'))  el('ch-myst-name').textContent  = '';
+    } else {
+      const decade = Math.floor((step - INTRO) / 12);
+      if (el('ch-decade-num')) el('ch-decade-num').textContent = `${decade + 1}ᵉ mystère`;
+      if (el('ch-myst-name'))  el('ch-myst-name').textContent  = mystery.list[Math.min(decade, 4)];
+    }
+
     if (el('ch-prayer-txt')) el('ch-prayer-txt').textContent = getPrayer(step);
     if (el('ch-progress'))   el('ch-progress').textContent   = `${step + 1} / ${TOTAL}`;
 
@@ -838,152 +882,207 @@ const SOURCES = {
 const WEEK_SCHEDULE = {
 
   // Lun / Mar / Jeu — jours ordinaires
+  // Sources RM : Vêpres 17h40, Complies 22h, Chapelet 8h30 + 18h (confirmés radiomaria.fr)
+  // Sources ND : Vêpres 18h (N-D des Victoires mar-ven), Complies 21h
   ordinary: [
-    { type: 'laudes',   label: 'Laudes',           entries: [
+    { type: 'chapelet', label: 'Chapelet de minuit',  entries: [
+      { t: '0:00',  tl: '0h00',  srcs: ['rm'] },
+    ]},
+    { type: 'chapelet', label: 'Chapelet en latin',   entries: [
+      { t: '5:30',  tl: '5h30',  srcs: ['rm'] },
+    ]},
+    { type: 'laudes',   label: 'Laudes',             entries: [
       { t: '7:00',  tl: '7h00',  srcs: ['rm', 'nd'] },
     ]},
-    { type: 'matin',    label: 'Prière du matin',  entries: [
+    { type: 'matin',    label: 'Prière du matin',    entries: [
       { t: '7:30',  tl: '7h30',  srcs: ['rcf'] },
-      { t: '8:00',  tl: '8h00',  srcs: ['esp'] },
+      { t: '8:00',  tl: '8h00',  srcs: ['rm', 'esp'] },
     ]},
-    { type: 'messe',    label: 'Sainte Messe',     entries: [
-      { t: '9:00',  tl: '9h00',  srcs: ['rm'] },
+    { type: 'chapelet', label: 'Chapelet du matin',  entries: [
+      { t: '8:30',  tl: '8h30',  srcs: ['rm'] },
+    ]},
+    { type: 'messe',    label: 'Sainte Messe',       entries: [
       { t: '9:15',  tl: '9h15',  srcs: ['lou'] },
       { t: '10:00', tl: '10h00', srcs: ['nd'] },
       { t: '11:00', tl: '11h00', srcs: ['kto'] },
     ]},
-    { type: 'chapelet', label: 'Chapelet de Midi', entries: [
+    { type: 'chapelet', label: 'Chapelet de Midi',   entries: [
       { t: '12:00', tl: '12h00', srcs: ['rm'] },
     ]},
-    { type: 'chapelet', label: 'Chapelet',         entries: [
-      { t: '15:00', tl: '15h00', srcs: ['rm', 'lou'] },
-      { t: '15:30', tl: '15h30', srcs: ['nd'] },
+    { type: 'chapelet', label: 'Chapelet',            entries: [
+      { t: '15:00', tl: '15h00', srcs: ['rm'] },
+      { t: '15:30', tl: '15h30', srcs: ['rm', 'lou'] },
     ]},
-    { type: 'vepres',   label: 'Vêpres',           entries: [
-      { t: '19:00', tl: '19h00', srcs: ['rm'] },
-      { t: '19:30', tl: '19h30', srcs: ['nd'] },
+    { type: 'vepres',   label: 'Vêpres',             entries: [
+      { t: '17:40', tl: '17h40', srcs: ['rm'] },
+      { t: '18:00', tl: '18h00', srcs: ['nd'] },
     ]},
-    { type: 'complies', label: 'Complies',         entries: [
-      { t: '21:30', tl: '21h30', srcs: ['rm'] },
-      { t: '22:00', tl: '22h00', srcs: ['nd', 'esp'] },
+    { type: 'chapelet', label: 'Chapelet du soir',   entries: [
+      { t: '18:00', tl: '18h00', srcs: ['rm'] },
+    ]},
+    { type: 'complies', label: 'Complies',            entries: [
+      { t: '21:00', tl: '21h00', srcs: ['nd'] },
+      { t: '22:00', tl: '22h00', srcs: ['rm', 'esp'] },
     ]},
   ],
 
   // Mercredi — Audience papale à Rome
   3: [
-    { type: 'laudes',   label: 'Laudes',           entries: [
+    { type: 'chapelet', label: 'Chapelet de minuit',  entries: [
+      { t: '0:00',  tl: '0h00',  srcs: ['rm'] },
+    ]},
+    { type: 'chapelet', label: 'Chapelet en latin',   entries: [
+      { t: '5:30',  tl: '5h30',  srcs: ['rm'] },
+    ]},
+    { type: 'laudes',   label: 'Laudes',             entries: [
       { t: '7:00',  tl: '7h00',  srcs: ['rm', 'nd'] },
     ]},
-    { type: 'matin',    label: 'Prière du matin',  entries: [
+    { type: 'matin',    label: 'Prière du matin',    entries: [
       { t: '7:30',  tl: '7h30',  srcs: ['rcf'] },
-      { t: '8:00',  tl: '8h00',  srcs: ['esp'] },
+      { t: '8:00',  tl: '8h00',  srcs: ['rm', 'esp'] },
     ]},
-    { type: 'messe',    label: 'Sainte Messe',     entries: [
-      { t: '9:00',  tl: '9h00',  srcs: ['rm'] },
+    { type: 'chapelet', label: 'Chapelet du matin',  entries: [
+      { t: '8:30',  tl: '8h30',  srcs: ['rm'] },
+    ]},
+    { type: 'messe',    label: 'Sainte Messe',       entries: [
       { t: '9:15',  tl: '9h15',  srcs: ['lou'] },
       { t: '10:00', tl: '10h00', srcs: ['nd'] },
     ]},
-    { type: 'messe',    label: 'Audience papale',  entries: [
+    { type: 'messe',    label: 'Audience papale',    entries: [
       { t: '10:30', tl: '10h30', srcs: ['vat', 'kto'] },
     ]},
-    { type: 'chapelet', label: 'Chapelet de Midi', entries: [
+    { type: 'chapelet', label: 'Chapelet de Midi',   entries: [
       { t: '12:00', tl: '12h00', srcs: ['rm'] },
     ]},
-    { type: 'chapelet', label: 'Chapelet',         entries: [
-      { t: '15:00', tl: '15h00', srcs: ['rm', 'lou'] },
-      { t: '15:30', tl: '15h30', srcs: ['nd'] },
+    { type: 'chapelet', label: 'Chapelet',            entries: [
+      { t: '15:00', tl: '15h00', srcs: ['rm'] },
+      { t: '15:30', tl: '15h30', srcs: ['rm', 'lou'] },
     ]},
-    { type: 'vepres',   label: 'Vêpres',           entries: [
-      { t: '19:00', tl: '19h00', srcs: ['rm'] },
-      { t: '19:30', tl: '19h30', srcs: ['nd'] },
+    { type: 'vepres',   label: 'Vêpres',             entries: [
+      { t: '17:40', tl: '17h40', srcs: ['rm'] },
+      { t: '18:00', tl: '18h00', srcs: ['nd'] },
     ]},
-    { type: 'complies', label: 'Complies',         entries: [
-      { t: '21:30', tl: '21h30', srcs: ['rm'] },
-      { t: '22:00', tl: '22h00', srcs: ['nd', 'esp'] },
+    { type: 'chapelet', label: 'Chapelet du soir',   entries: [
+      { t: '18:00', tl: '18h00', srcs: ['rm'] },
+    ]},
+    { type: 'complies', label: 'Complies',            entries: [
+      { t: '21:00', tl: '21h00', srcs: ['nd'] },
+      { t: '22:00', tl: '22h00', srcs: ['rm', 'esp'] },
     ]},
   ],
 
   // Vendredi — Chapelet de la Miséricorde (15h)
   5: [
-    { type: 'laudes',   label: 'Laudes',                        entries: [
+    { type: 'chapelet', label: 'Chapelet de minuit',              entries: [
+      { t: '0:00',  tl: '0h00',  srcs: ['rm'] },
+    ]},
+    { type: 'chapelet', label: 'Chapelet en latin',               entries: [
+      { t: '5:30',  tl: '5h30',  srcs: ['rm'] },
+    ]},
+    { type: 'laudes',   label: 'Laudes',                         entries: [
       { t: '7:00',  tl: '7h00',  srcs: ['rm', 'nd'] },
     ]},
-    { type: 'matin',    label: 'Prière du matin',               entries: [
+    { type: 'matin',    label: 'Prière du matin',                entries: [
       { t: '7:30',  tl: '7h30',  srcs: ['rcf'] },
-      { t: '8:00',  tl: '8h00',  srcs: ['esp'] },
+      { t: '8:00',  tl: '8h00',  srcs: ['rm', 'esp'] },
     ]},
-    { type: 'messe',    label: 'Sainte Messe',                  entries: [
-      { t: '9:00',  tl: '9h00',  srcs: ['rm'] },
+    { type: 'chapelet', label: 'Chapelet du matin',              entries: [
+      { t: '8:30',  tl: '8h30',  srcs: ['rm'] },
+    ]},
+    { type: 'messe',    label: 'Sainte Messe',                   entries: [
       { t: '9:15',  tl: '9h15',  srcs: ['lou'] },
       { t: '10:00', tl: '10h00', srcs: ['nd'] },
       { t: '11:00', tl: '11h00', srcs: ['kto'] },
     ]},
-    { type: 'chapelet', label: 'Chapelet de Midi',              entries: [
+    { type: 'chapelet', label: 'Chapelet de Midi',               entries: [
       { t: '12:00', tl: '12h00', srcs: ['rm'] },
     ]},
-    { type: 'chapelet', label: 'Chapelet de la Miséricorde',    entries: [
-      { t: '15:00', tl: '15h00', srcs: ['rm', 'lou', 'fid'] },
-      { t: '15:30', tl: '15h30', srcs: ['nd'] },
+    { type: 'chapelet', label: 'Chapelet de la Miséricorde',     entries: [
+      { t: '15:00', tl: '15h00', srcs: ['rm', 'fid'] },
+      { t: '15:30', tl: '15h30', srcs: ['rm', 'lou'] },
     ]},
-    { type: 'vepres',   label: 'Vêpres',                        entries: [
-      { t: '19:00', tl: '19h00', srcs: ['rm'] },
-      { t: '19:30', tl: '19h30', srcs: ['nd'] },
+    { type: 'vepres',   label: 'Vêpres',                         entries: [
+      { t: '17:40', tl: '17h40', srcs: ['rm'] },
+      { t: '18:00', tl: '18h00', srcs: ['nd'] },
     ]},
-    { type: 'complies', label: 'Complies',                      entries: [
-      { t: '21:30', tl: '21h30', srcs: ['rm'] },
-      { t: '22:00', tl: '22h00', srcs: ['nd', 'esp', 'fid'] },
+    { type: 'chapelet', label: 'Chapelet du soir',               entries: [
+      { t: '18:00', tl: '18h00', srcs: ['rm'] },
+    ]},
+    { type: 'complies', label: 'Complies',                       entries: [
+      { t: '21:00', tl: '21h00', srcs: ['nd'] },
+      { t: '22:00', tl: '22h00', srcs: ['rm', 'esp', 'fid'] },
     ]},
   ],
 
   // Samedi — Jour marial, Vêpres du dimanche anticipées
+  // ND : Vêpres anticipées 17h (N-D des Victoires samedi)
   6: [
+    { type: 'chapelet', label: 'Chapelet de minuit',   entries: [
+      { t: '0:00',  tl: '0h00',  srcs: ['rm'] },
+    ]},
+    { type: 'chapelet', label: 'Chapelet en latin',    entries: [
+      { t: '5:30',  tl: '5h30',  srcs: ['rm'] },
+    ]},
     { type: 'laudes',   label: 'Laudes',              entries: [
       { t: '7:00',  tl: '7h00',  srcs: ['rm', 'nd'] },
     ]},
+    { type: 'chapelet', label: 'Chapelet du matin',   entries: [
+      { t: '8:30',  tl: '8h30',  srcs: ['rm'] },
+    ]},
     { type: 'messe',    label: 'Sainte Messe',        entries: [
-      { t: '9:00',  tl: '9h00',  srcs: ['rm'] },
       { t: '10:00', tl: '10h00', srcs: ['nd'] },
       { t: '11:00', tl: '11h00', srcs: ['kto', 'ars'] },
     ]},
     { type: 'chapelet', label: 'Chapelet marial',     entries: [
       { t: '12:00', tl: '12h00', srcs: ['rm'] },
-      { t: '15:00', tl: '15h00', srcs: ['rm', 'lou', 'fid'] },
-      { t: '15:30', tl: '15h30', srcs: ['nd'] },
+      { t: '15:00', tl: '15h00', srcs: ['rm', 'fid'] },
+      { t: '15:30', tl: '15h30', srcs: ['rm', 'lou'] },
     ]},
     { type: 'vepres',   label: 'Vêpres du dimanche', entries: [
+      { t: '17:00', tl: '17h00', srcs: ['nd'] },
+      { t: '17:40', tl: '17h40', srcs: ['rm'] },
+    ]},
+    { type: 'chapelet', label: 'Chapelet du soir',    entries: [
       { t: '18:00', tl: '18h00', srcs: ['rm'] },
-      { t: '18:30', tl: '18h30', srcs: ['nd'] },
     ]},
     { type: 'complies', label: 'Complies',            entries: [
-      { t: '21:30', tl: '21h30', srcs: ['rm'] },
-      { t: '22:00', tl: '22h00', srcs: ['nd', 'esp'] },
+      { t: '21:00', tl: '21h00', srcs: ['nd'] },
+      { t: '22:00', tl: '22h00', srcs: ['rm', 'esp'] },
     ]},
   ],
 
   // Dimanche — Cœur de la semaine liturgique
   0: [
-    { type: 'laudes',   label: 'Laudes dominicales',  entries: [
+    { type: 'chapelet', label: 'Chapelet de minuit',  entries: [
+      { t: '0:00',  tl: '0h00',  srcs: ['rm'] },
+    ]},
+    { type: 'chapelet', label: 'Chapelet en latin',   entries: [
+      { t: '5:30',  tl: '5h30',  srcs: ['rm'] },
+    ]},
+    { type: 'laudes',   label: 'Laudes dominicales', entries: [
       { t: '8:00',  tl: '8h00',  srcs: ['rm', 'nd', 'rcf'] },
     ]},
-    { type: 'messe',    label: "Grand'Messe",          entries: [
+    { type: 'messe',    label: "Grand'Messe",         entries: [
       { t: '10:00', tl: '10h00', srcs: ['nd', 'ndp'] },
       { t: '10:30', tl: '10h30', srcs: ['rm', 'lou'] },
       { t: '11:00', tl: '11h00', srcs: ['kto'] },
     ]},
-    { type: 'chapelet', label: 'Angélus',              entries: [
+    { type: 'chapelet', label: 'Angélus',             entries: [
       { t: '12:00', tl: '12h00', srcs: ['vat', 'kto', 'nd'] },
     ]},
-    { type: 'chapelet', label: 'Chapelet du Rosaire',  entries: [
+    { type: 'chapelet', label: 'Chapelet du Rosaire', entries: [
       { t: '15:00', tl: '15h00', srcs: ['rm', 'lou', 'nd'] },
     ]},
-    { type: 'vepres',   label: 'Vêpres solennelles',  entries: [
+    { type: 'vepres',   label: 'Vêpres solennelles', entries: [
       { t: '17:30', tl: '17h30', srcs: ['ndp'] },
+      { t: '17:40', tl: '17h40', srcs: ['rm'] },
       { t: '18:00', tl: '18h00', srcs: ['nd'] },
-      { t: '19:00', tl: '19h00', srcs: ['rm'] },
     ]},
-    { type: 'complies', label: 'Complies',             entries: [
-      { t: '21:30', tl: '21h30', srcs: ['rm'] },
-      { t: '22:00', tl: '22h00', srcs: ['nd', 'esp', 'rcf'] },
+    { type: 'chapelet', label: 'Chapelet du soir',   entries: [
+      { t: '18:00', tl: '18h00', srcs: ['rm'] },
+    ]},
+    { type: 'complies', label: 'Complies',            entries: [
+      { t: '22:00', tl: '22h00', srcs: ['rm', 'nd', 'esp', 'rcf'] },
     ]},
   ],
 };
@@ -1212,6 +1311,32 @@ function initBadges() {
 
 
 /* ────────────────────────────────────────────
+   11. DEEP-LINK — lecture du hash à l'arrivée
+   Utilisé par les cartes de la landing page :
+     app.html#laudes  → filtre Laudes (onglet Aujourd'hui)
+     app.html#messe   → filtre Messe
+     app.html#chapelet→ filtre Chapelet
+     app.html#semaine → onglet Semaine
+     app.html#mois    → onglet Mois / Calendrier
+     app.html#sources → onglet Sources
+──────────────────────────────────────────────*/
+function handleDeepLink() {
+  const hash = location.hash.replace('#', '').toLowerCase();
+  if (!hash) return;
+
+  // Onglets dédiés
+  if (['semaine', 'mois', 'sources'].includes(hash)) {
+    document.querySelector(`.nav-tab[data-tab="${hash}"]`)?.click();
+    return;
+  }
+
+  // Filtre sur l'onglet Aujourd'hui (déjà actif par défaut)
+  const pf = document.querySelector(`.pf[data-filter="${hash}"]`);
+  if (pf) pf.click();
+}
+
+
+/* ────────────────────────────────────────────
    10. INIT GLOBAL
 ──────────────────────────────────────────────*/
 document.addEventListener('DOMContentLoaded', () => {
@@ -1229,4 +1354,5 @@ document.addEventListener('DOMContentLoaded', () => {
   initWelcome();
   initNextOffice();
   initChapelet();
+  handleDeepLink();      // applique le filtre/onglet issu du hash URL (landing page)
 });
