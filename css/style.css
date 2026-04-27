@@ -26,6 +26,7 @@
   --messe:     #854F0B;
   --chapelet:  #993556;
   --vepres:    #185FA5;
+  --soiree:    #9E4A1F;
   --complies:  #444441;
 
   --r-md: 8px;
@@ -293,6 +294,7 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
 .pf-messe.active   { background: var(--messe); }
 .pf-chapelet.active{ background: var(--chapelet); }
 .pf-vepres.active  { background: var(--vepres); }
+.pf-soiree.active  { background: var(--soiree); }
 .pf-complies.active{ background: var(--complies); }
 
 /* Timeline */
@@ -316,6 +318,7 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
 .tl-item[data-type="messe"]    { border-left-color: var(--messe); }
 .tl-item[data-type="chapelet"] { border-left-color: var(--chapelet); }
 .tl-item[data-type="vepres"]   { border-left-color: var(--vepres); }
+.tl-item[data-type="soiree"]   { border-left-color: var(--soiree); }
 .tl-item[data-type="complies"] { border-left-color: var(--complies); }
 
 .tl-time {
@@ -339,6 +342,7 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
 .tl-marker.messe    { background: var(--messe); }
 .tl-marker.chapelet { background: var(--chapelet); }
 .tl-marker.vepres   { background: var(--vepres); }
+.tl-marker.soiree   { background: var(--soiree); }
 .tl-marker.complies { background: var(--complies); }
 
 .tl-body { flex: 1; min-width: 0; }
@@ -478,6 +482,7 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
 .leg.messe::before    { background: var(--messe); }
 .leg.chapelet::before { background: var(--chapelet); }
 .leg.vepres::before   { background: var(--vepres); }
+.leg.soiree::before   { background: var(--soiree); }
 .leg.complies::before { background: var(--complies); }
 
 
@@ -571,6 +576,7 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
 .wc-slot.messe    { background: rgba(133,79,11,.09); }
 .wc-slot.chapelet { background: rgba(153,53,86,.09); }
 .wc-slot.vepres   { background: rgba(24,95,165,.09); }
+.wc-slot.soiree   { background: rgba(158,74,31,.09); }
 .wc-slot.complies { background: rgba(68,68,65,.09); }
 
 /* ── Titre du slot (ex : "Laudes", "Sainte Messe") ── */
@@ -586,6 +592,7 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
 .wc-slot.messe    .wc-slot-label { color: var(--messe); }
 .wc-slot.chapelet .wc-slot-label { color: var(--chapelet); }
 .wc-slot.vepres   .wc-slot-label { color: var(--vepres); }
+.wc-slot.soiree   .wc-slot-label { color: var(--soiree); }
 .wc-slot.complies .wc-slot-label { color: var(--complies); }
 
 /* ── Ligne horaire : heure + boutons sources ── */
@@ -869,6 +876,7 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
 .stag.messe    { background: var(--messe); }
 .stag.chapelet { background: var(--chapelet); }
 .stag.vepres   { background: var(--vepres); }
+.stag.soiree   { background: var(--soiree); }
 .stag.complies { background: var(--complies); }
 
 .src-add {
