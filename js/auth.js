@@ -337,13 +337,19 @@ function initAuthUI() {
       if (password.length < 6) { showAuthError('Le mot de passe doit comporter au moins 6 caractères.'); return; }
       if (password !== confirm) { showAuthError('Les mots de passe ne correspondent pas.'); return; }
       setAuthLoading(true);
-      const { error } = await _sb.auth.signUp({
+      const { data: signUpData, error } = await _sb.auth.signUp({
         email, password,
         options: { data: { name: name || email.split('@')[0] } },
       });
       setAuthLoading(false);
       if (error) { showAuthError(translateSupabaseError(error)); return; }
-      showConfirmation();
+      // Si la confirmation email est désactivée → session immédiate → on ferme le modal
+      // Sinon → email de confirmation envoyé → on affiche l'écran de confirmation
+      if (signUpData?.session) {
+        closeAuthModal();
+      } else {
+        showConfirmation();
+      }
     }
 
     // DEMANDE RESET
