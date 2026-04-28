@@ -166,31 +166,36 @@ const CALENDAR_DATA = {
     31: { saint: 'Mardi Saint', type: 'ordinaire', desc: 'Semaine Sainte.', minor: '' },
   }},
   '2026-04': { days: {
-    1:  { saint: 'Mercredi Saint', type: 'ordinaire', desc: 'Semaine Sainte.', minor: 'Ste Valérie' },
+    1:  { saint: 'Mercredi Saint', type: 'ordinaire', desc: 'Semaine Sainte — dernier mercredi avant Pâques.', minor: 'Ste Valérie' },
     2:  { saint: 'Jeudi Saint — Cène du Seigneur', type: 'solennite', desc: "Jésus institue l'Eucharistie et le sacerdoce, lave les pieds de ses Apôtres. Début du Triduum Pascal.", minor: 'St François de Paule' },
     3:  { saint: 'Vendredi Saint — Passion du Seigneur', type: 'solennite', desc: "Le Christ est crucifié et meurt sur la Croix. Jour de jeûne et d'abstinence, le seul sans messe de l'année.", minor: 'Ste Agape' },
     4:  { saint: 'Samedi Saint — Vigile pascale', type: 'fete', desc: "Le grand silence du Samedi Saint. La Vigile pascale est la 'mère de toutes les veilles'.", minor: 'St Isidore de Séville' },
-    5:  { saint: 'Pâques — Résurrection du Seigneur', type: 'solennite', desc: "'Il n'est pas ici, il est ressuscite !' La plus grande fête de l'Église catholique. Alleluia !", minor: '' },
+    5:  { saint: 'Pâques — Résurrection du Seigneur', type: 'solennite', desc: "'Il n'est pas ici, il est ressuscité !' La plus grande fête de l'Église catholique. Alléluia !", minor: '' },
     6:  { saint: 'Lundi de Pâques', type: 'solennite', desc: "Dans l'octave de Pâques, chaque jour est célébré comme Pâques lui-même.", minor: 'St Marcellin' },
-    7:  { saint: 'Saint Jean-Baptiste de la Salle', type: 'memoire', desc: "Fondateur des Frères des Écoles Chrétiennes au XVIIe siècle. Patron des éducateurs.", minor: '' },
-    11: { saint: 'Saint Stanislas', type: 'memoire', desc: "Évêque de Cracovie et martyr en 1079. Patron de la Pologne.", minor: '' },
-    12: { saint: 'Dimanche de la Miséricorde Divine', type: 'fete', desc: "Instituée par Jean-Paul II. Jésus dit à sainte Faustine : 'Je veux que la fête de la Miséricorde soit le refuge de toutes les âmes.'", minor: '' },
-    13: { saint: 'Saint Martin Ier', type: 'memoire', desc: "Pape et martyr du VIIe siècle.", minor: '' },
-    14: { saint: 'Sainte Lidwine', type: 'ordinaire', desc: "Mystique néerlandaise du XVe siècle, patronne des malades.", minor: '' },
-    17: { saint: 'Saint Anicet', type: 'ordinaire', desc: "Pape et martyr du IIe siècle.", minor: '' },
-    18: { saint: 'Saint Parfait', type: 'fete', desc: "Prêtre de Cordoue, martyrisé en 850 pour avoir refusé de renier sa foi.", minor: '' },
-    19: { saint: '3e dimanche de Pâques', type: 'ordinaire', desc: 'Temps pascal.', minor: '' },
-    20: { saint: 'Sainte Odette', type: 'ordinaire', desc: "Vierge, patronne des aveugles.", minor: '' },
-    21: { saint: 'Saint Anselme', type: 'memoire', desc: "Archevêque de Cantorbéry et Docteur de l'Église. Auteur de la preuve ontologique de l'existence de Dieu.", minor: '' },
-    22: { saint: 'Saint Alexandre', type: 'ordinaire', desc: "Pape et martyr au IIe siècle.", minor: '' },
-    23: { saint: 'Saint Georges', type: 'fete', desc: "Martyr légendaire, patron de l'Angleterre et des soldats.", minor: '' },
-    24: { saint: 'Saint Fidèle de Sigmaringen', type: 'memoire', desc: "Premier martyr capucin, missionnaire en Suisse.", minor: '' },
-    25: { saint: 'Saint Marc, évangéliste', type: 'fete', desc: "Auteur du 2e Évangile. Compagnon de Pierre à Rome, premier évêque d'Alexandrie.", minor: '' },
-    26: { saint: '4e dimanche de Pâques — Bon Pasteur', type: 'fete', desc: "Dimanche du Bon Pasteur. Journée mondiale de prière pour les vocations.", minor: 'St Clet · St Marcellin' },
-    27: { saint: 'Sainte Zita', type: 'ordinaire', desc: "Patronne des domestiques et des servantes.", minor: '' },
-    28: { saint: 'Saint Pierre Chanel', type: 'memoire', desc: "Prêtre mariste, premier martyr d'Océanie.", minor: 'St Louis-Marie Grignion de Montfort' },
-    29: { saint: 'Sainte Catherine de Sienne', type: 'fete', desc: "Docteure de l'Église, co-patronne de l'Europe. Mystique dominicaine.", minor: '' },
-    30: { saint: 'Saint Pie V', type: 'memoire', desc: "Pape dominicain (1566-1572), promoteur du saint Rosaire.", minor: '' },
+    7:  { saint: 'Saint Jean-Baptiste de la Salle', type: 'memoire', desc: "Fondateur des Frères des Écoles Chrétiennes au XVIIe siècle. Patron des éducateurs.", minor: 'St Hermann Joseph' },
+    8:  { saint: 'Saint Gautier de Pontoise', type: 'ordinaire', desc: "Abbé bénédictin du XIe siècle, fondateur du prieuré de Pontoise. Connu pour sa douceur et sa persévérance.", minor: 'Ste Maxime' },
+    9:  { saint: 'Sainte Marie Clotilde', type: 'ordinaire', desc: "Reine des Francs (470-545), épouse de Clovis. Sa foi contribua à la conversion du roi et à la christianisation des Francs.", minor: 'St Hugues de Rouen' },
+    10: { saint: 'Saint Fulbert de Chartres', type: 'ordinaire', desc: "Évêque de Chartres au XIe siècle, initiateur de la construction de la cathédrale. Grand théologien et musicien sacré.", minor: 'St Macaire' },
+    11: { saint: 'Saint Stanislas', type: 'memoire', desc: "Évêque de Cracovie et martyr en 1079. Patron de la Pologne.", minor: 'St Gemme Galgani' },
+    12: { saint: 'Dimanche de la Miséricorde Divine', type: 'fete', desc: "Instituée par Jean-Paul II. Jésus dit à sainte Faustine : 'Je veux que la fête de la Miséricorde soit le refuge de toutes les âmes.'", minor: 'St Jules Ier' },
+    13: { saint: 'Saint Martin Ier', type: 'memoire', desc: "Pape et martyr du VIIe siècle, défenseur de la foi contre le monothélisme.", minor: 'Ste Ida' },
+    14: { saint: 'Sainte Lidwine de Schiedam', type: 'ordinaire', desc: "Mystique néerlandaise du XVe siècle. Paralysée après une chute sur la glace à 15 ans, elle offrit ses souffrances pour les âmes.", minor: 'St Tiburce · Ste Valérie' },
+    15: { saint: 'Sainte Anastasie', type: 'ordinaire', desc: "Martyre du IVe siècle, vénérée en Orient. Décapitée sous Dioclétien pour avoir refusé d'abjurer sa foi.", minor: 'Ste Paterne' },
+    16: { saint: 'Sainte Bernadette Soubirous', type: 'ordinaire', desc: "Voyante de Lourdes (1844-1879), elle mourut ce jour dans sa cellule à Nevers. Sa dépouille repose incorruptible à Saint-Gildard.", minor: 'St Benoît-Joseph Labre' },
+    17: { saint: 'Saint Anicet', type: 'ordinaire', desc: "Pape et martyr du IIe siècle, il gouverna l'Église vers 155-166.", minor: 'St Innocent · Ste Martine' },
+    18: { saint: 'Saint Parfait', type: 'fete', desc: "Prêtre de Cordoue, martyrisé en 850 pour avoir refusé de renier sa foi.", minor: 'Ste Apollonie' },
+    19: { saint: '3e dimanche de Pâques', type: 'ordinaire', desc: 'Temps pascal. Le Christ ressuscité se révèle aux disciples sur le chemin d'Emmaüs.', minor: 'St Léon IX' },
+    20: { saint: 'Sainte Odette', type: 'ordinaire', desc: "Vierge du IVe siècle, patronne des aveugles. Elle aurait recouvré la vue au baptême pour mieux contempler le Christ.", minor: 'St Marcellin de Paris' },
+    21: { saint: 'Saint Anselme', type: 'memoire', desc: "Archevêque de Cantorbéry et Docteur de l'Église. Auteur de la preuve ontologique de l'existence de Dieu.", minor: 'St Conrad de Plaisance' },
+    22: { saint: 'Saint Alexandre Ier', type: 'ordinaire', desc: "Pape et martyr au IIe siècle, il gouverna l'Église vers 107-115.", minor: 'St Léonide · Ste Opportune' },
+    23: { saint: 'Saint Georges', type: 'fete', desc: "Martyr légendaire du IIIe siècle, patron de l'Angleterre, de la chevalerie et des soldats.", minor: 'St Adalbert de Prague' },
+    24: { saint: 'Saint Fidèle de Sigmaringen', type: 'memoire', desc: "Premier martyr capucin, missionnaire en Suisse, tué en 1622.", minor: 'St Mellite' },
+    25: { saint: 'Saint Marc, évangéliste', type: 'fete', desc: "Auteur du 2e Évangile, le plus bref. Compagnon de Pierre à Rome, premier évêque d'Alexandrie. Son symbole est le lion ailé.", minor: '' },
+    26: { saint: '4e dimanche de Pâques — Bon Pasteur', type: 'fete', desc: "Dimanche du Bon Pasteur. Journée mondiale de prière pour les vocations sacerdotales et religieuses.", minor: 'St Clet · St Marcellin' },
+    27: { saint: 'Sainte Zita', type: 'ordinaire', desc: "Servante lucquoise du XIIIe siècle, patronne des domestiques et des gens de maison. Modèle de charité discrète.", minor: 'St Pierre Canisius' },
+    28: { saint: 'Saint Pierre Chanel', type: 'memoire', desc: "Prêtre mariste, premier martyr d'Océanie, tué aux îles Futuna en 1841.", minor: 'St Louis-Marie Grignion de Montfort' },
+    29: { saint: 'Sainte Catherine de Sienne', type: 'fete', desc: "Docteure de l'Église, co-patronne de l'Europe. Mystique dominicaine qui reçut les stigmates et convainquit le pape de rentrer à Rome.", minor: 'St Robert Bellarmin' },
+    30: { saint: 'Saint Pie V', type: 'memoire', desc: "Pape dominicain (1566-1572), promoteur du saint Rosaire et réformateur de la liturgie tridentine.", minor: 'Ste Marie de la Providence' },
   }},
   '2026-05': { days: {
     1:  { saint: 'Saint Joseph Travailleur', type: 'memoire', desc: "Mémoire de Joseph artisan. Promulguée par Pie XII en 1955.", minor: '' },
@@ -1893,6 +1898,13 @@ function initBadges() {
 
       badgeEl.textContent = label;
       badgeEl.className   = `tl-badge ${cls}`;
+
+      // ── Bouton chat : visible 30 min avant → 30 min après la fin ──
+      const chatBtn = item.querySelector('.tl-chat-btn');
+      if (chatBtn) {
+        const chatActive = nowMin >= (startMin - 30) && nowMin <= (endMin + 30);
+        chatBtn.style.display = chatActive ? '' : 'none';
+      }
     });
   }
 
