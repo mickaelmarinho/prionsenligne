@@ -1407,7 +1407,7 @@ const WEEK_SCHEDULE = {
       { t: '7:30',  tl: '7h30',  srcs: ['rcf'] },
       { t: '8:00',  tl: '8h00',  srcs: ['rm', 'esp'] },
     ]},
-    { type: 'chapelet', label: 'Chapelet du matin (avec internautes)',  entries: [
+    { type: 'chapelet', label: 'Chapelet du matin (avec un internaute)',  entries: [
       { t: '8:30',  tl: '8h30',  srcs: ['rm'] },
     ]},
     { type: 'messe',    label: 'Sainte Messe',       entries: [
@@ -1427,7 +1427,7 @@ const WEEK_SCHEDULE = {
       { t: '17:40', tl: '17h40', srcs: ['rm'] },
       { t: '18:00', tl: '18h00', srcs: ['nd'] },
     ]},
-    { type: 'chapelet', label: 'Chapelet du soir (avec auditeurs)',   entries: [
+    { type: 'chapelet', label: 'Chapelet du soir (avec un internaute)',   entries: [
       { t: '18:00', tl: '18h00', srcs: ['rm'] },
     ]},
     { type: 'complies', label: 'Complies',            entries: [
@@ -1454,7 +1454,7 @@ const WEEK_SCHEDULE = {
       { t: '7:30',  tl: '7h30',  srcs: ['rcf'] },
       { t: '8:00',  tl: '8h00',  srcs: ['rm', 'esp'] },
     ]},
-    { type: 'chapelet', label: 'Chapelet du matin (avec internautes)',  entries: [
+    { type: 'chapelet', label: 'Chapelet du matin (avec un internaute)',  entries: [
       { t: '8:30',  tl: '8h30',  srcs: ['rm'] },
     ]},
     { type: 'messe',    label: 'Sainte Messe',       entries: [
@@ -1477,7 +1477,7 @@ const WEEK_SCHEDULE = {
       { t: '17:40', tl: '17h40', srcs: ['rm'] },
       { t: '18:00', tl: '18h00', srcs: ['nd'] },
     ]},
-    { type: 'chapelet', label: 'Chapelet du soir (avec auditeurs)',   entries: [
+    { type: 'chapelet', label: 'Chapelet du soir (avec un internaute)',   entries: [
       { t: '18:00', tl: '18h00', srcs: ['rm'] },
     ]},
     { type: 'complies', label: 'Complies',            entries: [
@@ -1504,7 +1504,7 @@ const WEEK_SCHEDULE = {
       { t: '7:30',  tl: '7h30',  srcs: ['rcf'] },
       { t: '8:00',  tl: '8h00',  srcs: ['rm', 'esp'] },
     ]},
-    { type: 'chapelet', label: 'Chapelet du matin (avec internautes)',              entries: [
+    { type: 'chapelet', label: 'Chapelet du matin (avec un internaute)',              entries: [
       { t: '8:30',  tl: '8h30',  srcs: ['rm'] },
     ]},
     { type: 'messe',    label: 'Sainte Messe',                   entries: [
@@ -1524,7 +1524,7 @@ const WEEK_SCHEDULE = {
       { t: '17:40', tl: '17h40', srcs: ['rm'] },
       { t: '18:00', tl: '18h00', srcs: ['nd'] },
     ]},
-    { type: 'chapelet', label: 'Chapelet du soir (avec auditeurs)',               entries: [
+    { type: 'chapelet', label: 'Chapelet du soir (avec un internaute)',               entries: [
       { t: '18:00', tl: '18h00', srcs: ['rm'] },
     ]},
     { type: 'complies', label: 'Complies',                       entries: [
@@ -1548,7 +1548,7 @@ const WEEK_SCHEDULE = {
     { type: 'laudes',   label: 'Laudes',              entries: [
       { t: '7:00',  tl: '7h00',  srcs: ['rm', 'nd'] },
     ]},
-    { type: 'chapelet', label: 'Chapelet du matin (avec internautes)',   entries: [
+    { type: 'chapelet', label: 'Chapelet du matin (avec un internaute)',   entries: [
       { t: '8:30',  tl: '8h30',  srcs: ['rm'] },
     ]},
     { type: 'messe',    label: 'Sainte Messe',        entries: [
@@ -1567,7 +1567,7 @@ const WEEK_SCHEDULE = {
       { t: '17:00', tl: '17h00', srcs: ['nd'] },
       { t: '17:40', tl: '17h40', srcs: ['rm'] },
     ]},
-    { type: 'chapelet', label: 'Chapelet du soir (avec auditeurs)',    entries: [
+    { type: 'chapelet', label: 'Chapelet du soir (avec un internaute)',    entries: [
       { t: '18:00', tl: '18h00', srcs: ['rm'] },
     ]},
     { type: 'complies', label: 'Complies',            entries: [
@@ -1594,7 +1594,7 @@ const WEEK_SCHEDULE = {
       { t: '7:30',  tl: '7h30',  srcs: ['rcf'] },
       { t: '8:00',  tl: '8h00',  srcs: ['rm', 'esp'] },
     ]},
-    { type: 'chapelet', label: 'Chapelet du matin (avec internautes)',  entries: [
+    { type: 'chapelet', label: 'Chapelet du matin (avec un internaute)',  entries: [
       { t: '8:30',  tl: '8h30',  srcs: ['rm'] },
     ]},
     { type: 'messe',    label: 'Sainte Messe',       entries: [
@@ -1614,7 +1614,7 @@ const WEEK_SCHEDULE = {
       { t: '17:40', tl: '17h40', srcs: ['rm'] },
       { t: '18:00', tl: '18h00', srcs: ['nd'] },
     ]},
-    { type: 'chapelet', label: 'Chapelet du soir (avec auditeurs)',   entries: [
+    { type: 'chapelet', label: 'Chapelet du soir (avec un internaute)',   entries: [
       { t: '18:00', tl: '18h00', srcs: ['rm'] },
     ]},
     { type: 'messe',    label: 'Messe Notre-Dame de Boulogne', entries: [
@@ -1658,7 +1658,7 @@ const WEEK_SCHEDULE = {
       { t: '17:40', tl: '17h40', srcs: ['rm'] },
       { t: '18:00', tl: '18h00', srcs: ['nd'] },
     ]},
-    { type: 'chapelet', label: 'Chapelet du soir (avec auditeurs)',   entries: [
+    { type: 'chapelet', label: 'Chapelet du soir (avec un internaute)',   entries: [
       { t: '18:00', tl: '18h00', srcs: ['rm'] },
     ]},
     { type: 'complies', label: 'Complies',            entries: [
