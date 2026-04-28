@@ -1,4 +1,4 @@
-/* ═══════════════════════════════════════════════
+﻿/* ═══════════════════════════════════════════════
    PRIONSENLIGNE — app.js
    Navigation, filtres prières, bréviaire AELF, calendrier, lecteur radio
 ═══════════════════════════════════════════════ */
@@ -104,74 +104,388 @@ function initDate() {
   const label  = `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
   const el = document.getElementById('js-date');
   if (el) el.textContent = label;
-
-  // Highlight dynamique du jour courant dans le calendrier du mois affiché
-  // + mise à jour de la fête du jour et de la légende du calendrier
-  const todayNum = now.getDate();
-  const typeLabels = { ordinaire: 'Temps ordinaire', memoire: 'Mémoire', fete: 'Fête liturgique', solennite: 'Solennité' };
-  document.querySelectorAll('.cal-day:not(.other)').forEach(day => {
-    const numEl = day.querySelector('.cal-num');
-    if (!numEl) return;
-    const isToday = parseInt(numEl.textContent) === todayNum;
-    day.classList.toggle('today', isToday);
-    if (isToday) {
-      const saintEl  = document.getElementById('js-feast');
-      const typeEl   = document.getElementById('js-feast-type');
-      const legendEl = document.querySelector('.today-legend');
-      if (saintEl)  saintEl.textContent  = day.dataset.saint || '';
-      if (typeEl)   typeEl.textContent   = typeLabels[day.dataset.type] || '';
-      if (legendEl) { legendEl.dataset.day = String(todayNum); legendEl.textContent = ' Aujourd’hui'; }
-    }
-  });
+  // Feast display handled by initCalendar() → renderCalendar()
 }
+
 
 
 /* ────────────────────────────────────────────
    4. CALENDRIER — clic sur un jour
 ──────────────────────────────────────────────*/
+/* ────────────────────────────────────────────
+   CALENDAR DATA — Saints & fêtes liturgiques 2026
+   Structure : { 'YYYY-MM': { days: { [d]: { saint, type, desc, minor } } } }
+   type : 'ordinaire' | 'memoire' | 'fete' | 'solennite'
+   minor : saints secondaires du même jour (affiché dans le panneau détail)
+──────────────────────────────────────────────*/
+const CALENDAR_DATA = {
+  '2026-01': { days: {
+    1:  { saint: 'Sainte Marie, Mère de Dieu', type: 'solennite', desc: "Solennité mariale ouvrant l'année civile. Journée mondiale de la Paix.", minor: '' },
+    2:  { saint: 'Saints Basile et Grégoire de Nazianze', type: 'memoire', desc: "Deux grands Pères de l'Église du IVe siècle, défenseurs de la foi trinitaire.", minor: '' },
+    6:  { saint: 'Épiphanie du Seigneur', type: 'solennite', desc: "Manifestation du Christ aux nations représentées par les Mages d'Orient.", minor: '' },
+    11: { saint: 'Baptême du Seigneur', type: 'fete', desc: "Jésus est baptisé par Jean dans le Jourdain. Le Père proclame : 'Celui-ci est mon Fils bien-aimé.'", minor: '' },
+    17: { saint: 'Saint Antoine, abbé', type: 'memoire', desc: "Père du monachisme chrétien en Égypte au IIIe siècle. Patron des animaux.", minor: '' },
+    20: { saint: 'Saint Sébastien', type: 'memoire', desc: "Officier romain martyrisé sous Dioclétien. Patron des soldats.", minor: 'St Fabien, pape' },
+    21: { saint: 'Sainte Agnès', type: 'memoire', desc: "Jeune martyre romaine du IVe siècle, patronne des jeunes filles.", minor: '' },
+    22: { saint: 'Saint Vincent', type: 'memoire', desc: "Diacre et martyr espagnol du IVe siècle. Patron des vignerons.", minor: '' },
+    24: { saint: 'Saint François de Sales', type: 'memoire', desc: "Évêque de Genève et Docteur de l'Église. Fondateur de l'Ordre de la Visitation.", minor: '' },
+    25: { saint: 'Conversion de saint Paul', type: 'fete', desc: "Sur le chemin de Damas, Saul est renversé et entend la voix du Christ ressuscité.", minor: '' },
+    26: { saint: 'Saints Timothée et Tite', type: 'memoire', desc: "Disciples de saint Paul, premiers évêques d'Éphèse et de Crète.", minor: '' },
+    28: { saint: 'Saint Thomas d\'Aquin', type: 'memoire', desc: "Dominicain du XIIIe siècle, Docteur de l'Église, prince de la scolastique.", minor: '' },
+    31: { saint: 'Saint Jean Bosco', type: 'memoire', desc: "Prêtre turinois, fondateur des Salésiens. Patron des jeunes et des éducateurs.", minor: '' },
+  }},
+  '2026-02': { days: {
+    2:  { saint: 'Présentation du Seigneur — Chandeleur', type: 'fete', desc: "Quarante jours après Noël, Jésus est présenté au Temple par Marie et Joseph.", minor: '' },
+    3:  { saint: 'Saint Blaise', type: 'memoire', desc: "Évêque et martyr arménien. Patron des gorges malades.", minor: 'St Anschaire' },
+    5:  { saint: 'Sainte Agathe', type: 'memoire', desc: "Vierge et martyre sicilienne du IIIe siècle. Patronne des infirmières.", minor: '' },
+    6:  { saint: 'Saints Paul Miki et compagnons', type: 'memoire', desc: "26 martyrs crucifiés à Nagasaki en 1597, premiers martyrs d'Extrême-Orient.", minor: '' },
+    8:  { saint: 'Sainte Joséphine Bakhita', type: 'memoire', desc: "Ancienne esclave soudanaise devenue religieuse canossienne.", minor: '' },
+    10: { saint: 'Sainte Scholastique', type: 'memoire', desc: "Sœur de saint Benoît, fondatrice du monachisme féminin occidental.", minor: '' },
+    11: { saint: 'Notre-Dame de Lourdes', type: 'memoire', desc: "Apparitions de l'Immaculée à Bernadette Soubirous (11 fév. 1858). Journée des malades.", minor: '' },
+    14: { saint: 'Saints Cyrille et Méthode', type: 'fete', desc: "Frères évangélisateurs des Slaves, créateurs de l'alphabet cyrillique. Co-patrons de l'Europe.", minor: 'St Valentin' },
+    17: { saint: 'Sept fondateurs des Servites de Marie', type: 'memoire', desc: "Sept marchands florentins qui fondèrent l'ordre des Servites au XIIIe siècle.", minor: '' },
+    18: { saint: 'Mercredi des Cendres', type: 'fete', desc: "Début du Carême. Le prêtre impose des cendres : 'Souviens-toi que tu es poussière...'", minor: '' },
+    22: { saint: 'Chaire de saint Pierre', type: 'fete', desc: "Fête du ministère pétrinien, fondement de l'unité de l'Église.", minor: '' },
+    23: { saint: 'Saint Polycarpe', type: 'memoire', desc: "Évêque de Smyrne et martyr au IIe siècle, disciple de saint Jean.", minor: '' },
+  }},
+  '2026-03': { days: {
+    1:  { saint: '2e dimanche de Carême', type: 'ordinaire', desc: 'Deuxième dimanche du Carême.', minor: 'St Aubin' },
+    4:  { saint: 'Saint Casimir', type: 'memoire', desc: "Prince de Pologne et de Lituanie, mort à 25 ans. Patron de la Pologne et de la Lituanie.", minor: '' },
+    7:  { saint: 'Saintes Félicité et Perpétue', type: 'memoire', desc: "Martyres à Carthage en 203. Leurs actes de martyre comptent parmi les plus anciens documents chrétiens.", minor: '' },
+    8:  { saint: '3e dimanche de Carême', type: 'ordinaire', desc: 'Troisième dimanche du Carême.', minor: 'St Jean de Dieu' },
+    9:  { saint: 'Sainte Françoise Romaine', type: 'memoire', desc: "Épouse, mère et religieuse du XVe siècle. Fondatrice des Oblates Bénédictines. Patronne des automobilistes.", minor: '' },
+    15: { saint: '4e dimanche de Carême — Laetare', type: 'fete', desc: "Dimanche de la joie au cœur du Carême. La liturgie revêt la couleur rose.", minor: '' },
+    17: { saint: 'Saint Patrick', type: 'memoire', desc: "Évangélisateur de l'Irlande au Ve siècle. Patron de l'Irlande.", minor: '' },
+    18: { saint: 'Saint Cyrille de Jérusalem', type: 'memoire', desc: "Évêque de Jérusalem et Docteur de l'Église au IVe siècle.", minor: '' },
+    19: { saint: 'Saint Joseph, époux de la Vierge Marie', type: 'solennite', desc: "Patron de l'Église universelle, des pères de famille, des travailleurs et de la Bonne Mort.", minor: '' },
+    22: { saint: '5e dimanche de Carême', type: 'ordinaire', desc: 'Cinquième dimanche du Carême — dimanche de la Passion.', minor: 'Ste Léa' },
+    23: { saint: 'Saint Turibio de Mogrovejo', type: 'memoire', desc: "Archevêque de Lima, évangélisateur des Amériques espagnoles au XVIe siècle.", minor: '' },
+    25: { saint: 'Annonciation du Seigneur', type: 'solennite', desc: "L'archange Gabriel annonce à Marie qu'elle concevra le Fils de Dieu. Neuf mois avant Noël.", minor: '' },
+    29: { saint: 'Dimanche des Rameaux et de la Passion', type: 'solennite', desc: "Entrée triomphale de Jésus à Jérusalem. Début de la Semaine Sainte.", minor: '' },
+    30: { saint: 'Lundi Saint', type: 'ordinaire', desc: 'Semaine Sainte.', minor: '' },
+    31: { saint: 'Mardi Saint', type: 'ordinaire', desc: 'Semaine Sainte.', minor: '' },
+  }},
+  '2026-04': { days: {
+    1:  { saint: 'Mercredi Saint', type: 'ordinaire', desc: 'Semaine Sainte.', minor: 'Ste Valérie' },
+    2:  { saint: 'Jeudi Saint — Cène du Seigneur', type: 'solennite', desc: "Jésus institue l'Eucharistie et le sacerdoce, lave les pieds de ses Apôtres. Début du Triduum Pascal.", minor: 'St François de Paule' },
+    3:  { saint: 'Vendredi Saint — Passion du Seigneur', type: 'solennite', desc: "Le Christ est crucifié et meurt sur la Croix. Jour de jeûne et d'abstinence, le seul sans messe de l'année.", minor: 'Ste Agape' },
+    4:  { saint: 'Samedi Saint — Vigile pascale', type: 'fete', desc: "Le grand silence du Samedi Saint. La Vigile pascale est la 'mère de toutes les veilles'.", minor: 'St Isidore de Séville' },
+    5:  { saint: 'Pâques — Résurrection du Seigneur', type: 'solennite', desc: "'Il n'est pas ici, il est ressuscite !' La plus grande fête de l'Église catholique. Alleluia !", minor: '' },
+    6:  { saint: 'Lundi de Pâques', type: 'solennite', desc: "Dans l'octave de Pâques, chaque jour est célébré comme Pâques lui-même.", minor: 'St Marcellin' },
+    7:  { saint: 'Saint Jean-Baptiste de la Salle', type: 'memoire', desc: "Fondateur des Frères des Écoles Chrétiennes au XVIIe siècle. Patron des éducateurs.", minor: '' },
+    11: { saint: 'Saint Stanislas', type: 'memoire', desc: "Évêque de Cracovie et martyr en 1079. Patron de la Pologne.", minor: '' },
+    12: { saint: 'Dimanche de la Miséricorde Divine', type: 'fete', desc: "Instituée par Jean-Paul II. Jésus dit à sainte Faustine : 'Je veux que la fête de la Miséricorde soit le refuge de toutes les âmes.'", minor: '' },
+    13: { saint: 'Saint Martin Ier', type: 'memoire', desc: "Pape et martyr du VIIe siècle.", minor: '' },
+    14: { saint: 'Sainte Lidwine', type: 'ordinaire', desc: "Mystique néerlandaise du XVe siècle, patronne des malades.", minor: '' },
+    17: { saint: 'Saint Anicet', type: 'ordinaire', desc: "Pape et martyr du IIe siècle.", minor: '' },
+    18: { saint: 'Saint Parfait', type: 'fete', desc: "Prêtre de Cordoue, martyrisé en 850 pour avoir refusé de renier sa foi.", minor: '' },
+    19: { saint: '3e dimanche de Pâques', type: 'ordinaire', desc: 'Temps pascal.', minor: '' },
+    20: { saint: 'Sainte Odette', type: 'ordinaire', desc: "Vierge, patronne des aveugles.", minor: '' },
+    21: { saint: 'Saint Anselme', type: 'memoire', desc: "Archevêque de Cantorbéry et Docteur de l'Église. Auteur de la preuve ontologique de l'existence de Dieu.", minor: '' },
+    22: { saint: 'Saint Alexandre', type: 'ordinaire', desc: "Pape et martyr au IIe siècle.", minor: '' },
+    23: { saint: 'Saint Georges', type: 'fete', desc: "Martyr légendaire, patron de l'Angleterre et des soldats.", minor: '' },
+    24: { saint: 'Saint Fidèle de Sigmaringen', type: 'memoire', desc: "Premier martyr capucin, missionnaire en Suisse.", minor: '' },
+    25: { saint: 'Saint Marc, évangéliste', type: 'fete', desc: "Auteur du 2e Évangile. Compagnon de Pierre à Rome, premier évêque d'Alexandrie.", minor: '' },
+    26: { saint: '4e dimanche de Pâques — Bon Pasteur', type: 'fete', desc: "Dimanche du Bon Pasteur. Journée mondiale de prière pour les vocations.", minor: 'St Clet · St Marcellin' },
+    27: { saint: 'Sainte Zita', type: 'ordinaire', desc: "Patronne des domestiques et des servantes.", minor: '' },
+    28: { saint: 'Saint Pierre Chanel', type: 'memoire', desc: "Prêtre mariste, premier martyr d'Océanie.", minor: 'St Louis-Marie Grignion de Montfort' },
+    29: { saint: 'Sainte Catherine de Sienne', type: 'fete', desc: "Docteure de l'Église, co-patronne de l'Europe. Mystique dominicaine.", minor: '' },
+    30: { saint: 'Saint Pie V', type: 'memoire', desc: "Pape dominicain (1566-1572), promoteur du saint Rosaire.", minor: '' },
+  }},
+  '2026-05': { days: {
+    1:  { saint: 'Saint Joseph Travailleur', type: 'memoire', desc: "Mémoire de Joseph artisan. Promulguée par Pie XII en 1955.", minor: '' },
+    2:  { saint: 'Saint Athanase', type: 'memoire', desc: "Évêque d'Alexandrie et Docteur de l'Église, surnommé 'Athanase contre le monde'.", minor: '' },
+    3:  { saint: 'Saints Philippe et Jacques', type: 'fete', desc: "Deux des Douze Apôtres : Philippe de Bethsaïde et Jacques le Mineur, premier évêque de Jérusalem.", minor: '' },
+    10: { saint: 'Saint Jean d\'Avila', type: 'memoire', desc: "Docteur de l'Église, maître spirituel espagnol du XVIe siècle.", minor: 'Ste Solange' },
+    12: { saint: 'Saints Nérée et Achillée', type: 'memoire', desc: "Soldats romains martyrisés au Ier siècle pour avoir refusé de persécuter des chrétiens.", minor: 'St Pancrace' },
+    13: { saint: 'Notre-Dame de Fatima', type: 'memoire', desc: "Apparitions de la Vierge aux trois pastoureaux de Fatima (1917). 'Priez le Rosaire chaque jour.'", minor: '' },
+    14: { saint: 'Ascension du Seigneur', type: 'solennite', desc: "Quarante jours après la Résurrection, Jésus monte au ciel à la droite du Père.", minor: '' },
+    15: { saint: 'Saint Isidore le Laboureur', type: 'memoire', desc: "Agriculteur madrilène du XIIe siècle, patron des paysans.", minor: 'St Matthias' },
+    18: { saint: 'Saint Jean Ier', type: 'memoire', desc: "Pape martyr mort en 526 en captivité sous Théodoric le Grand.", minor: '' },
+    19: { saint: 'Saint Yves', type: 'fete', desc: "Prêtre breton et juge, patron des avocats, de la Bretagne et des hommes de loi.", minor: '' },
+    20: { saint: 'Saint Bernardin de Sienne', type: 'memoire', desc: "Franciscain du XVe siècle, grand prédicateur. Diffuseur de la dévotion au Nom de Jésus (IHS).", minor: '' },
+    21: { saint: 'Saint Christophe Magallanes', type: 'memoire', desc: "Prêtre mexicain et ses compagnons, martyrs de la persécution cristero (1927).", minor: '' },
+    22: { saint: 'Sainte Rita de Cascia', type: 'memoire', desc: "Veuve et religieuse du XVe siècle. Patronne des causes désespérées, elle reçut les stigmates.", minor: '' },
+    24: { saint: 'Pentecôte', type: 'solennite', desc: "Cinquante jours après Pâques, l'Esprit Saint descend sur les Apôtres et Marie réunis dans le Cénacle. Naissance de l'Église.", minor: '' },
+    25: { saint: 'Saint Bède le Vénérable', type: 'memoire', desc: "Moine bénédictin anglo-saxon, Docteur de l'Église, père de l'historiographie anglaise.", minor: 'St Grégoire VII · Ste Marie-Madeleine de Pazzi' },
+    26: { saint: 'Saint Philippe Néri', type: 'memoire', desc: "Prêtre romain du XVIe siècle, fondateur de l'Oratoire, 'apôtre de Rome'.", minor: '' },
+    27: { saint: 'Saint Augustin de Cantorbéry', type: 'memoire', desc: "Envoyé par Grégoire le Grand pour évangéliser l'Angleterre. Premier archevêque de Cantorbéry.", minor: '' },
+    31: { saint: 'Visitation de la Vierge Marie', type: 'fete', desc: "Marie rend visite à sa cousine Élisabeth, enceinte de Jean-Baptiste.", minor: '' },
+  }},
+  '2026-06': { days: {
+    1:  { saint: 'Saint Justin', type: 'memoire', desc: "Philosophe converti et martyr du IIe siècle. Ses Apologies sont parmi les premiers textes de théologie chrétienne.", minor: '' },
+    2:  { saint: 'Saints Marcellin et Pierre', type: 'memoire', desc: "Prêtre et exorciste romains, martyrisés sous Dioclétien vers 304.", minor: '' },
+    3:  { saint: 'Saint Charles Lwanga et compagnons', type: 'memoire', desc: "22 jeunes ougandais martyrisés en 1886 pour avoir refusé de se soumettre au roi Mwanga.", minor: '' },
+    5:  { saint: 'Saint Boniface', type: 'memoire', desc: "Archevêque et martyr du VIIIe siècle, apôtre de la Germanie.", minor: '' },
+    7:  { saint: 'Fête-Dieu — Corps et Sang du Christ', type: 'solennite', desc: "Célébration de la présence réelle du Christ dans l'Eucharistie. Procession solennelle du Saint-Sacrement.", minor: '' },
+    9:  { saint: 'Saint Éphrem', type: 'memoire', desc: "Diacre syrien et Docteur de l'Église du IVe siècle. Grand poète de la théologie.", minor: '' },
+    11: { saint: 'Saint Barnabé', type: 'memoire', desc: "Compagnon de saint Paul dans ses voyages. Lévite de Chypre, un des premiers disciples.", minor: '' },
+    12: { saint: 'Sacré-Cœur de Jésus', type: 'solennite', desc: "Célébration de l'amour infini de Dieu manifesté dans le Cœur transpercé du Christ. Journée des prêtres.", minor: '' },
+    13: { saint: 'Saint Antoine de Padoue', type: 'memoire', desc: "Franciscain et Docteur de l'Église. Prédicateur exceptionnel, patron des objets perdus.", minor: '' },
+    14: { saint: 'Immaculé Cœur de Marie', type: 'fete', desc: "Fête du Cœur pur de Marie, célébrée le samedi après le Sacré-Cœur. Liée aux apparitions de Fatima.", minor: '' },
+    19: { saint: 'Saint Romuald', type: 'memoire', desc: "Fondateur de la congrégation camaldule, réformateur du monachisme bénédictin.", minor: '' },
+    21: { saint: 'Saint Louis de Gonzague', type: 'memoire', desc: "Jésuite mort à 23 ans en soignant les pestiférés. Patron de la jeunesse chrétienne.", minor: '' },
+    22: { saint: 'Saints Thomas More et Jean Fisher', type: 'memoire', desc: "Martyrs anglais sous Henri VIII (1535), morts pour défendre la primauté du Pape.", minor: 'St Paulin de Nole' },
+    24: { saint: 'Nativité de saint Jean-Baptiste', type: 'solennite', desc: "Unique saint dont la naissance est célébrée comme fête. 'Il y eut un homme envoyé de Dieu, du nom de Jean.'", minor: '' },
+    27: { saint: 'Saint Cyrille d\'Alexandrie', type: 'memoire', desc: "Évêque et Docteur de l'Église, défenseur de la maternité divine de Marie au Concile d'Éphèse.", minor: '' },
+    28: { saint: 'Saint Irénée de Lyon', type: 'fete', desc: "Évêque de Lyon et Docteur de l'Église du IIe siècle, pionnier de la théologie.", minor: '' },
+    29: { saint: 'Saints Pierre et Paul, Apôtres', type: 'solennite', desc: "Double solennité des deux colonnes de l'Église : Pierre le pêcheur devenu roc, et Paul l'apôtre des nations.", minor: '' },
+    30: { saint: 'Premiers Martyrs de l\'Église de Rome', type: 'memoire', desc: "Chrétiens suppliciés par Néron après l'incendie de Rome en 64.", minor: '' },
+  }},
+  '2026-07': { days: {
+    3:  { saint: 'Saint Thomas, Apôtre', type: 'fete', desc: "'Mon Seigneur et mon Dieu !' Thomas, l'apôtre du doute devenu celui de la foi, évangélisa l'Inde.", minor: '' },
+    11: { saint: 'Saint Benoît', type: 'fete', desc: "Père du monachisme occidental, fondateur de l'ordre bénédictin. Patron de l'Europe.", minor: '' },
+    14: { saint: 'Saint Camille de Lellis', type: 'memoire', desc: "Fondateur des Camilliens, patron des malades et du personnel soignant.", minor: '' },
+    15: { saint: 'Saint Bonaventure', type: 'memoire', desc: "Cardinal franciscain et Docteur de l'Église. Auteur de l'Itinéraire de l'âme vers Dieu.", minor: '' },
+    16: { saint: 'Notre-Dame du Mont-Carmel', type: 'memoire', desc: "Fête patronale de l'ordre du Carmel. Commémoration de la scapulaire de saint Simon Stock.", minor: '' },
+    22: { saint: 'Sainte Marie-Madeleine', type: 'fete', desc: "'Apôtre des Apôtres', première témoin de la Résurrection.", minor: '' },
+    23: { saint: 'Sainte Brigitte de Suède', type: 'fete', desc: "Mystique suédoise du XIVe siècle, co-patronne de l'Europe.", minor: '' },
+    25: { saint: 'Saint Jacques, Apôtre', type: 'fete', desc: "Fils de Zébédée, premier Apôtre martyr. Patron de l'Espagne et des pèlerins de Compostelle.", minor: '' },
+    26: { saint: 'Saints Joachim et Anne', type: 'memoire', desc: "Parents de la Vierge Marie et grands-parents de Jésus. Patrons des familles.", minor: '' },
+    29: { saint: 'Saintes Marthe, Marie et Lazare', type: 'memoire', desc: "Les frère et sœurs de Béthanie, amis de Jésus. 'Lazare, viens dehors !'", minor: '' },
+    31: { saint: 'Saint Ignace de Loyola', type: 'memoire', desc: "Fondateur de la Compagnie de Jésus (jésuites). 'Pour la plus grande gloire de Dieu' (AMDG).", minor: '' },
+  }},
+  '2026-08': { days: {
+    1:  { saint: 'Saint Alphonse de Liguori', type: 'memoire', desc: "Fondateur des Rédemptoristes et Docteur de l'Église.", minor: '' },
+    4:  { saint: 'Saint Jean-Marie Vianney', type: 'memoire', desc: "Curé d'Ars, patron des prêtres. Passait jusqu'à 16h par jour au confessionnal.", minor: '' },
+    6:  { saint: 'Transfiguration du Seigneur', type: 'fete', desc: "Sur le mont Thabor, Jésus apparaît dans sa gloire divine. 'Celui-ci est mon Fils bien-aimé.'", minor: '' },
+    8:  { saint: 'Saint Dominique', type: 'memoire', desc: "Fondateur de l'Ordre des Prêcheurs (dominicains). Grand promoteur du saint Rosaire.", minor: '' },
+    10: { saint: 'Saint Laurent', type: 'fete', desc: "Diacre et martyr romain du IIIe siècle. Patron des bibliothécaires.", minor: '' },
+    11: { saint: 'Sainte Claire d\'Assise', type: 'memoire', desc: "Fondatrice des Clarisses, premier ordre féminin franciscain.", minor: '' },
+    14: { saint: 'Saint Maximilien Kolbe', type: 'memoire', desc: "Franciscain polonais mort à Auschwitz (1941) à la place d'un père de famille.", minor: '' },
+    15: { saint: 'Assomption de la Vierge Marie', type: 'solennite', desc: "Marie est élevée corps et âme dans la gloire céleste. Grande fête mariale de l'été.", minor: '' },
+    20: { saint: 'Saint Bernard', type: 'memoire', desc: "Abbé de Clairvaux et Docteur de l'Église au XIIe siècle. Réformateur cistercien.", minor: '' },
+    21: { saint: 'Saint Pie X', type: 'memoire', desc: "Pape (1903-1914), réformateur de la liturgie. Encourage la communion fréquente des enfants.", minor: '' },
+    22: { saint: 'Sainte Marie Reine', type: 'memoire', desc: "Fête de Marie comme Reine du ciel et de la terre, instituée par Pie XII (1954).", minor: '' },
+    24: { saint: 'Saint Barthélemy, Apôtre', type: 'fete', desc: "L'un des Douze, identifié à Nathanaël. Évangélisa l'Arménie et l'Inde.", minor: '' },
+    25: { saint: 'Saint Louis de France', type: 'memoire', desc: "Roi de France (1226-1270), modèle du souverain chrétien.", minor: '' },
+    27: { saint: 'Sainte Monique', type: 'memoire', desc: "Mère de saint Augustin, dont elle obtint la conversion par ses prières. Patronne des mères.", minor: '' },
+    28: { saint: 'Saint Augustin', type: 'memoire', desc: "Évêque d'Hippone et Docteur de l'Église. 'Notre cœur est sans repos tant qu'il ne repose pas en Toi.'", minor: '' },
+    29: { saint: 'Passion de saint Jean-Baptiste', type: 'memoire', desc: "Décapitation du précurseur sur ordre d'Hérode Antipas.", minor: '' },
+  }},
+  '2026-09': { days: {
+    3:  { saint: 'Saint Grégoire le Grand', type: 'memoire', desc: "Pape (590-604) et Docteur de l'Église. Réformateur du chant liturgique (grégorien).", minor: '' },
+    8:  { saint: 'Nativité de la Vierge Marie', type: 'fete', desc: "Naissance de Marie, préparée à être la Mère du Rédempteur.", minor: '' },
+    14: { saint: 'Exaltation de la Sainte-Croix', type: 'fete', desc: "Célébration de la Croix du Christ, instrument de notre salut.", minor: '' },
+    15: { saint: 'Notre-Dame des Douleurs', type: 'memoire', desc: "Commémoration des sept douleurs de Marie. 'Un glaive te transpercera l'âme.'", minor: '' },
+    21: { saint: 'Saint Matthieu, Apôtre et évangéliste', type: 'fete', desc: "Publicain converti par Jésus, auteur du premier Évangile.", minor: '' },
+    23: { saint: 'Saint Padre Pio de Pietrelcina', type: 'memoire', desc: "Capucin stigmatisé (1918-1968). 'Prie, espère et ne t'inquiète pas.'", minor: '' },
+    27: { saint: 'Saint Vincent de Paul', type: 'memoire', desc: "Fondateur des Lazaristes et des Filles de la Charité. Patron de la charité catholique.", minor: '' },
+    29: { saint: 'Saints Michel, Gabriel et Raphaël, Archanges', type: 'fete', desc: "Les trois archanges nommés dans l'Écriture : Michel, Gabriel et Raphaël.", minor: '' },
+    30: { saint: 'Saint Jérôme', type: 'memoire', desc: "Docteur de l'Église et traducteur de la Bible en latin (Vulgate).", minor: '' },
+  }},
+  '2026-10': { days: {
+    1:  { saint: 'Sainte Thérèse de l\'Enfant-Jésus', type: 'memoire', desc: "Carmélite du XIXe siècle, Docteure de l'Église. Sa 'petite voie' a révolutionné la spiritualité.", minor: '' },
+    2:  { saint: 'Saints Anges Gardiens', type: 'memoire', desc: "Fête des anges protecteurs envoyés par Dieu auprès de chaque être humain.", minor: '' },
+    4:  { saint: 'Saint François d\'Assise', type: 'memoire', desc: "Fondateur des franciscains. 'Ouvre-moi, Seigneur, aux trésors de ta bonté.'", minor: '' },
+    7:  { saint: 'Notre-Dame du Rosaire', type: 'memoire', desc: "Mois du Rosaire. Institué en mémoire de la victoire de Lépante (1571).", minor: '' },
+    15: { saint: 'Sainte Thérèse d\'Ávila', type: 'memoire', desc: "Première femme Docteure de l'Église. Réformatrice du Carmel, mystique extraordinaire.", minor: '' },
+    18: { saint: 'Saint Luc, évangéliste', type: 'fete', desc: "Médecin d'Antioche, compagnon de Paul. Auteur du 3e Évangile et des Actes des Apôtres.", minor: '' },
+    22: { saint: 'Saint Jean-Paul II', type: 'memoire', desc: "Pape (1978-2005), 'le Grand'. Évangélisateur infatigable, canonisé en 2014.", minor: '' },
+    28: { saint: 'Saints Simon et Jude, Apôtres', type: 'fete', desc: "Simon le Zélote et Jude Thaddée, deux des Douze. Saint Jude est patron des causes désespérées.", minor: '' },
+  }},
+  '2026-11': { days: {
+    1:  { saint: 'Toussaint', type: 'solennite', desc: "Célébration de tous les saints, connus et inconnus, qui règnent dans la gloire éternelle.", minor: '' },
+    2:  { saint: 'Commémoration des fidèles défunts', type: 'fete', desc: "Prière de l'Église pour tous les défunts. 'Je suis la résurrection et la vie.'", minor: '' },
+    4:  { saint: 'Saint Charles Borromée', type: 'memoire', desc: "Cardinal-archevêque de Milan, principal artisan de la réforme tridentine.", minor: '' },
+    9:  { saint: 'Dédicace de la basilique du Latran', type: 'fete', desc: "Cathédrale du Pape, évêque de Rome. La 'mère de toutes les Églises'.", minor: '' },
+    11: { saint: 'Saint Martin de Tours', type: 'memoire', desc: "Évêque de Tours du IVe siècle, premier grand saint de France. Patron des soldats.", minor: '' },
+    17: { saint: 'Sainte Élisabeth de Hongrie', type: 'memoire', desc: "Reine du XIIIe siècle qui consacra sa vie aux pauvres. Patronne de la charité chrétienne.", minor: '' },
+    21: { saint: 'Présentation de la Vierge Marie', type: 'memoire', desc: "Marie, enfant, présentée au Temple par ses parents.", minor: '' },
+    22: { saint: 'Sainte Cécile', type: 'memoire', desc: "Vierge et martyre du IIIe siècle. Patronne des musiciens et des chanteurs.", minor: '' },
+    29: { saint: '1er dimanche de l\'Avent', type: 'fete', desc: "Début de l'année liturgique. Temps d'attente et de préparation à la venue du Seigneur.", minor: '' },
+    30: { saint: 'Saint André, Apôtre', type: 'fete', desc: "Frère de Pierre, premier appelé par Jésus. Patron de l'Écosse et de la Russie.", minor: '' },
+  }},
+  '2026-12': { days: {
+    3:  { saint: 'Saint François Xavier', type: 'memoire', desc: "Jésuite espagnol du XVIe siècle, 'apôtre des Indes et du Japon'.", minor: '' },
+    6:  { saint: 'Saint Nicolas', type: 'memoire', desc: "Évêque de Myre au IVe siècle, patron des enfants, des marins et des voyageurs.", minor: '' },
+    7:  { saint: 'Saint Ambroise', type: 'memoire', desc: "Évêque de Milan et Docteur de l'Église. Baptisa saint Augustin.", minor: '' },
+    8:  { saint: 'Immaculée Conception de la Vierge Marie', type: 'solennite', desc: "Marie fut préservée du péché originel dès le premier instant de sa conception. Dogme défini par Pie IX en 1854.", minor: '' },
+    12: { saint: 'Notre-Dame de Guadalupe', type: 'fete', desc: "Apparition de la Vierge à Juan Diego au Mexique. Patronne des Amériques.", minor: '' },
+    13: { saint: 'Sainte Lucie', type: 'memoire', desc: "Vierge et martyre sicilienne du IVe siècle. Patronne des malvoyants et de la lumière.", minor: '' },
+    14: { saint: 'Saint Jean de la Croix', type: 'memoire', desc: "Carme et Docteur de l'Église. Sa Nuit obscure de l'âme est le sommet de la mystique chrétienne.", minor: '' },
+    24: { saint: 'Vigile de Noël', type: 'fete', desc: "Veille de la Nativité du Seigneur. La lumière du Christ entre dans les ténèbres.", minor: '' },
+    25: { saint: 'Noel — Nativite du Seigneur', type: 'solennite', desc: "'Le Verbe s'est fait chair et il a habite parmi nous.' Gloire a Dieu au plus haut des cieux !", minor: '' },
+    26: { saint: 'Saint Étienne, premier martyr', type: 'fete', desc: "Premier martyr chrétien, lapidé à Jérusalem.", minor: '' },
+    27: { saint: 'Saint Jean, Apôtre et évangéliste', type: 'fete', desc: "L'apôtre bien-aimé, auteur du 4e Évangile. Seul Apôtre à ne pas mourir martyr.", minor: '' },
+    28: { saint: 'Saints Innocents, martyrs', type: 'fete', desc: "Enfants massacrés par Hérode à Bethléem. Premiers martyrs à mourir pour le Christ.", minor: '' },
+    31: { saint: 'Saint Sylvestre Ier', type: 'memoire', desc: "Pape (314-335) sous lequel le christianisme devint religion d'Empire après Constantin.", minor: '' },
+  }},
+};
+
 function initCalendar() {
-  const days   = document.querySelectorAll('.cal-day:not(.other)');
-  const detail = document.getElementById('day-detail');
-  const ddDate = document.getElementById('dd-date');
-  const ddType = document.getElementById('dd-type');
-  const ddSaint= document.getElementById('dd-saint');
-  const ddDesc = document.getElementById('dd-desc');
-
-  if (!detail) return;
-
-  const typeLabels = {
+  const MONTH_NAMES = [
+    'Janvier','Fevrier','Mars','Avril','Mai','Juin',
+    'Juillet','Aout','Septembre','Octobre','Novembre','Decembre'
+  ];
+  const MONTH_FR = [
+    'janvier','fevrier','mars','avril','mai','juin',
+    'juillet','aout','septembre','octobre','novembre','decembre'
+  ];
+  const DOW_FR = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  const TYPE_LABELS = {
     ordinaire: 'Temps ordinaire',
-    memoire:   'Mémoire',
-    fete:      'Fête liturgique',
-    solennite: 'Solennité',
+    memoire:   'Memoire',
+    fete:      'Fete liturgique',
+    solennite: 'Solennite',
   };
 
-  function selectDay(day) {
-    ddDate.textContent  = day.dataset.date  || '';
-    ddType.textContent  = typeLabels[day.dataset.type] || day.dataset.type || '';
-    ddType.className    = 'dd-type ' + (day.dataset.type || 'ordinaire');
-    ddSaint.textContent = day.dataset.saint || '';
-    ddDesc.textContent  = day.dataset.desc  || '';
+  const now = getParisDate();
+  let viewYear  = now.getFullYear();
+  let viewMonth = now.getMonth() + 1; // 1-12
 
+  const detail  = document.getElementById('day-detail');
+  const ddDate  = document.getElementById('dd-date');
+  const ddType  = document.getElementById('dd-type');
+  const ddSaint = document.getElementById('dd-saint');
+  const ddDesc  = document.getElementById('dd-desc');
+  const ddMinor = document.getElementById('dd-minor');
+  const grid    = document.querySelector('.cal-grid');
+  const titleEl = document.querySelector('.month-title');
+  const legend  = document.querySelector('.month-legend');
+
+  if (!grid || !detail) return;
+
+  function getDayData(year, month, d) {
+    const key = `${year}-${String(month).padStart(2,'0')}`;
+    return CALENDAR_DATA[key]?.days?.[d] || null;
+  }
+
+  function selectDay(dayEl) {
+    const date  = dayEl.dataset.date  || '';
+    const type  = dayEl.dataset.type  || 'ordinaire';
+    const saint = dayEl.dataset.saint || '';
+    const desc  = dayEl.dataset.desc  || '';
+    const minor = dayEl.dataset.minor || '';
+
+    if (ddDate)  ddDate.textContent  = date;
+    if (ddType) { ddType.textContent = TYPE_LABELS[type] || type; ddType.className = 'dd-type ' + type; }
+    if (ddSaint) ddSaint.textContent = saint;
+    if (ddDesc)  ddDesc.textContent  = desc;
+    if (ddMinor) {
+      if (minor) { ddMinor.textContent = 'Aussi celebres : ' + minor; ddMinor.style.display = ''; }
+      else { ddMinor.style.display = 'none'; }
+    }
     detail.classList.remove('hidden');
     detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-    days.forEach(d => d.style.outline = '');
-    day.style.outline = '2px solid #c9a84c';
+    grid.querySelectorAll('.cal-day:not(.other)').forEach(d => d.style.outline = '');
+    dayEl.style.outline = '2px solid #c9a84c';
   }
 
-  days.forEach(day => day.addEventListener('click', () => selectDay(day)));
+  function renderCalendar(year, month) {
+    // Title
+    if (titleEl) titleEl.textContent = MONTH_NAMES[month - 1] + ' ' + year;
 
-  // Auto-sélectionne le saint du jour à chaque fois que l'onglet Calendrier est ouvert
+    // First day of month: JS 0=Sun…6=Sat → Mon-based: 0=Mon…6=Sun
+    const firstDow  = new Date(year, month - 1, 1).getDay();
+    const startCol  = (firstDow + 6) % 7;
+    const daysInMonth     = new Date(year, month, 0).getDate();
+    const daysInPrevMonth = new Date(year, month - 1, 0).getDate();
+
+    const todayDate  = getParisDate();
+    const isThisMonth = year === todayDate.getFullYear() && month === todayDate.getMonth() + 1;
+    const todayDay   = todayDate.getDate();
+
+    // Rebuild grid — keep header cells
+    const headers = Array.from(grid.querySelectorAll('.cal-head')).map(h => h.cloneNode(true));
+    grid.innerHTML = '';
+    headers.forEach(h => grid.appendChild(h));
+
+    // Leading "other" cells
+    for (let i = 0; i < startCol; i++) {
+      const div = document.createElement('div');
+      div.className = 'cal-day other';
+      div.innerHTML = '<span class="cal-num">' + (daysInPrevMonth - startCol + 1 + i) + '</span>';
+      grid.appendChild(div);
+    }
+
+    // Days of current month
+    for (let d = 1; d <= daysInMonth; d++) {
+      const data   = getDayData(year, month, d);
+      const saint  = data?.saint || '';
+      const type   = data?.type  || 'ordinaire';
+      const desc   = data?.desc  || '';
+      const minor  = data?.minor || '';
+      const isToday = isThisMonth && d === todayDay;
+
+      const dow       = new Date(year, month - 1, d).getDay();
+      const dateLabel = DOW_FR[dow] + ' ' + d + ' ' + MONTH_FR[month - 1] + ' ' + year;
+      const shortSaint = saint.replace(/^(Saint|Sainte|Ss|Ste|St)\s+/i, '').replace(/,.*$/, '').substring(0, 13);
+
+      let dotHtml = '';
+      if (type === 'solennite' || type === 'fete') dotHtml = '<div class="cal-dot gold"></div>';
+      else if (type === 'memoire')                  dotHtml = '<div class="cal-dot purple"></div>';
+
+      const div = document.createElement('div');
+      div.className = 'cal-day' + (type !== 'ordinaire' ? ' ' + type : '') + (isToday ? ' today' : '');
+      div.dataset.date  = dateLabel;
+      div.dataset.type  = type;
+      div.dataset.saint = saint;
+      div.dataset.desc  = desc;
+      div.dataset.minor = minor;
+      div.innerHTML = '<span class="cal-num">' + d + '</span>' +
+        (saint ? '<span class="cal-saint">' + shortSaint + '</span>' : '') + dotHtml;
+      div.addEventListener('click', () => selectDay(div));
+      grid.appendChild(div);
+
+      // Update feast banner for today
+      if (isToday) {
+        const saintEl = document.getElementById('js-feast');
+        const typeEl  = document.getElementById('js-feast-type');
+        if (saintEl) saintEl.textContent = saint || '—';
+        if (typeEl)  typeEl.textContent  = TYPE_LABELS[type] || '—';
+      }
+    }
+
+    // Trailing "other" cells
+    const total    = startCol + daysInMonth;
+    const trailing = total % 7 === 0 ? 0 : 7 - (total % 7);
+    for (let i = 1; i <= trailing; i++) {
+      const div = document.createElement('div');
+      div.className = 'cal-day other';
+      div.innerHTML = '<span class="cal-num">' + i + '</span>';
+      grid.appendChild(div);
+    }
+
+    // Legend
+    if (legend) {
+      const todayLegend = legend.querySelector('.today-legend');
+      if (todayLegend) todayLegend.textContent = isThisMonth ? ' Aujourd\'hui' : '';
+    }
+
+    // Update nav button labels
+    const prevM = month === 1 ? 12 : month - 1;
+    const nextM = month === 12 ? 1 : month + 1;
+    const btns  = document.querySelectorAll('.month-nav .month-btn');
+    if (btns[0]) btns[0].textContent = '‹ ' + MONTH_NAMES[prevM - 1];
+    if (btns[1]) btns[1].textContent = MONTH_NAMES[nextM - 1] + ' ›';
+
+    // Reset detail panel
+    detail.classList.add('hidden');
+    if (ddMinor) ddMinor.style.display = 'none';
+  }
+
+  // Wire nav buttons
+  const navBtns = document.querySelectorAll('.month-nav .month-btn');
+  navBtns[0]?.addEventListener('click', () => {
+    if (viewMonth === 1) { viewYear--; viewMonth = 12; } else { viewMonth--; }
+    renderCalendar(viewYear, viewMonth);
+  });
+  navBtns[1]?.addEventListener('click', () => {
+    if (viewMonth === 12) { viewYear++; viewMonth = 1; } else { viewMonth++; }
+    renderCalendar(viewYear, viewMonth);
+  });
+
+  // Initial render
+  renderCalendar(viewYear, viewMonth);
+
+  // Auto-select today
   function autoSelectToday() {
-    const todayCell = document.querySelector('.cal-day.today');
+    const todayCell = grid.querySelector('.cal-day.today');
     if (todayCell) selectDay(todayCell);
   }
-
   document.querySelector('.nav-tab[data-tab="mois"]')
     ?.addEventListener('click', () => setTimeout(autoSelectToday, 60));
-
-  // Aussi déclenché si on arrive directement sur l'onglet mois (deep link géré après)
   window._calAutoSelectToday = autoSelectToday;
 }
 
@@ -1304,7 +1618,7 @@ const WEEK_SCHEDULE = {
       { t: '18:00', tl: '18h00', srcs: ['rm'] },
     ]},
     { type: 'messe',    label: 'Messe Notre-Dame de Boulogne', entries: [
-      { t: '19:40', tl: '19h40', srcs: ['rm'] },
+      { t: '19:00', tl: '19h00', srcs: ['rm'] },
     ]},
     { type: 'soiree',   label: 'Prière du soir avec enfants', entries: [
       { t: '19:40', tl: '19h40', srcs: ['rm'] },
@@ -1488,6 +1802,14 @@ function initTodayTimeline() {
          </button>`
       : '';
 
+    // Identifiant unique pour cet office (type + heure)
+    const officeId   = slot.type + '_' + entry.t.replace(':', '');
+    const officeName = slot.label + ' — ' + entry.tl;
+    const chatHtml   = `<button class="tl-chat-btn" data-action="chat"
+        data-office-id="${officeId}" data-office-name="${officeName}">
+        <i class="fa-solid fa-dove"></i> Intentions
+      </button>`;
+
     const art = document.createElement('article');
     art.className        = 'tl-item';
     art.dataset.type     = slot.type;
@@ -1503,6 +1825,7 @@ function initTodayTimeline() {
       <div class="tl-actions">
         <span class="tl-badge">—</span>
         ${brevHtml}
+        ${chatHtml}
       </div>`;
     container.appendChild(art);
   });
@@ -1625,6 +1948,234 @@ function handleDeepLink() {
 
 
 /* ────────────────────────────────────────────
+   12. CHAT — INTENTIONS DE PRIÈRES
+   Panneau latéral ouvert depuis chaque item de la timeline.
+   Nécessite Supabase (window._sbClient) et l'auth (window._pelUser).
+   Table SQL requise :
+     CREATE TABLE prayer_intentions (
+       id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+       office_id  text NOT NULL,
+       user_id    uuid REFERENCES auth.users NOT NULL,
+       user_name  text NOT NULL DEFAULT 'Anonyme',
+       message    text NOT NULL CHECK (char_length(message) BETWEEN 1 AND 280),
+       created_at timestamptz DEFAULT now()
+     );
+     ALTER TABLE prayer_intentions ENABLE ROW LEVEL SECURITY;
+     CREATE POLICY "Lecture pour tous"  ON prayer_intentions FOR SELECT USING (true);
+     CREATE POLICY "Ecriture connecte" ON prayer_intentions FOR INSERT
+       WITH CHECK (auth.uid() = user_id);
+──────────────────────────────────────────────*/
+function initChat() {
+  const panel     = document.getElementById('chat-panel');
+  const overlay   = document.getElementById('chat-overlay');
+  const closeBtn  = document.getElementById('chat-close');
+  const msgsEl    = document.getElementById('chat-messages');
+  const emptyEl   = document.getElementById('chat-empty');
+  const nameEl    = document.getElementById('chat-office-name');
+  const formWrap  = document.getElementById('chat-form-wrap');
+  const loginProm = document.getElementById('chat-login-prompt');
+  const loginBtn  = document.getElementById('chat-login-btn');
+  const form      = document.getElementById('chat-form');
+  const input     = document.getElementById('chat-input');
+
+  if (!panel) return;
+
+  let currentOfficeId   = null;
+  let realtimeChannel   = null;
+
+  // ── Helpers ──────────────────────────────────────────────
+  function formatTime(iso) {
+    const d = new Date(iso);
+    return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function buildBubble(msg) {
+    const userId = window._pelUser?.id;
+    const isOwn  = userId && msg.user_id === userId;
+    const div    = document.createElement('div');
+    div.className = 'chat-msg' + (isOwn ? ' own' : '');
+    div.dataset.id = msg.id;
+    div.innerHTML = `
+      <div class="chat-msg-meta">
+        <span class="chat-msg-author">${escHtml(msg.user_name)}</span>
+        <span class="chat-msg-time">${formatTime(msg.created_at)}</span>
+      </div>
+      <div class="chat-msg-text">${escHtml(msg.message)}</div>`;
+    return div;
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function scrollBottom() {
+    msgsEl.scrollTop = msgsEl.scrollHeight;
+  }
+
+  // ── Charger les messages ──────────────────────────────────
+  async function loadMessages(officeId) {
+    const sb = window._sbClient;
+    if (!sb) return;
+
+    msgsEl.innerHTML = '';
+    msgsEl.appendChild(emptyEl);
+
+    const { data, error } = await sb
+      .from('prayer_intentions')
+      .select('*')
+      .eq('office_id', officeId)
+      .order('created_at', { ascending: true })
+      .limit(200);
+
+    if (error || !data || data.length === 0) {
+      emptyEl.style.display = '';
+      return;
+    }
+
+    emptyEl.style.display = 'none';
+    data.forEach(msg => msgsEl.appendChild(buildBubble(msg)));
+    scrollBottom();
+  }
+
+  // ── Temps réel ───────────────────────────────────────────
+  function subscribeRealtime(officeId) {
+    const sb = window._sbClient;
+    if (!sb) return;
+
+    // Désabonner l'ancien canal
+    if (realtimeChannel) { sb.removeChannel(realtimeChannel); realtimeChannel = null; }
+
+    realtimeChannel = sb.channel('chat_' + officeId)
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'prayer_intentions',
+        filter: 'office_id=eq.' + officeId,
+      }, payload => {
+        const msg = payload.new;
+        if (!msg) return;
+        const existing = msgsEl.querySelector('[data-id="' + msg.id + '"]');
+        if (existing) return; // déjà affiché (optimistic)
+        emptyEl.style.display = 'none';
+        msgsEl.appendChild(buildBubble(msg));
+        scrollBottom();
+      })
+      .subscribe();
+  }
+
+  // ── Ouvrir le panneau ─────────────────────────────────────
+  function openChat(officeId, officeName) {
+    currentOfficeId = officeId;
+    if (nameEl) nameEl.textContent = officeName;
+
+    // Afficher formulaire ou invitation
+    const user = window._pelUser;
+    if (user) {
+      if (formWrap)  formWrap.style.display  = '';
+      if (loginProm) loginProm.style.display  = 'none';
+    } else {
+      if (formWrap)  formWrap.style.display  = 'none';
+      if (loginProm) loginProm.style.display  = '';
+    }
+
+    panel.classList.remove('hidden');
+    overlay.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    loadMessages(officeId);
+    subscribeRealtime(officeId);
+    if (input) setTimeout(() => input.focus(), 320);
+  }
+
+  // ── Fermer le panneau ─────────────────────────────────────
+  function closeChat() {
+    panel.classList.add('hidden');
+    overlay.classList.add('hidden');
+    document.body.style.overflow = '';
+    currentOfficeId = null;
+
+    const sb = window._sbClient;
+    if (sb && realtimeChannel) { sb.removeChannel(realtimeChannel); realtimeChannel = null; }
+  }
+
+  // ── Envoi d'un message ────────────────────────────────────
+  async function sendMessage(text) {
+    const sb   = window._sbClient;
+    const user = window._pelUser;
+    if (!sb || !user || !currentOfficeId || !text.trim()) return;
+
+    const userName = user.user_metadata?.prenom || user.email?.split('@')[0] || 'Pèlerin';
+
+    // Optimistic UI
+    const optimistic = {
+      id: 'tmp_' + Date.now(),
+      office_id: currentOfficeId,
+      user_id: user.id,
+      user_name: userName,
+      message: text.trim(),
+      created_at: new Date().toISOString(),
+    };
+    emptyEl.style.display = 'none';
+    const bubble = buildBubble(optimistic);
+    msgsEl.appendChild(bubble);
+    scrollBottom();
+
+    const { data, error } = await sb.from('prayer_intentions').insert({
+      office_id: currentOfficeId,
+      user_id:   user.id,
+      user_name: userName,
+      message:   text.trim(),
+    }).select().single();
+
+    if (error) {
+      bubble.remove();
+      // Si la bulle optimiste était la seule, ré-afficher empty
+      if (!msgsEl.querySelector('.chat-msg')) emptyEl.style.display = '';
+    } else if (data) {
+      // Remplace l'ID temporaire par l'ID réel
+      bubble.dataset.id = data.id;
+    }
+  }
+
+  // ── Événements ───────────────────────────────────────────
+  // Délégation — ouvre le chat depuis n'importe quel bouton .tl-chat-btn
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('[data-action="chat"]');
+    if (!btn) return;
+    openChat(btn.dataset.officeId, btn.dataset.officeName);
+  });
+
+  if (closeBtn) closeBtn.addEventListener('click', closeChat);
+  if (overlay)  overlay.addEventListener('click', closeChat);
+
+  if (form) {
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      const text = input?.value?.trim();
+      if (!text) return;
+      if (input) input.value = '';
+      await sendMessage(text);
+    });
+  }
+
+  // Bouton connexion dans l'invite
+  if (loginBtn) {
+    loginBtn.addEventListener('click', () => {
+      closeChat();
+      document.getElementById('header-btn-login')?.click();
+    });
+  }
+
+  // Fermer avec Échap
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !panel.classList.contains('hidden')) closeChat();
+  });
+}
+
+
+/* ────────────────────────────────────────────
    10. INIT GLOBAL
 ──────────────────────────────────────────────*/
 document.addEventListener('DOMContentLoaded', () => {
@@ -1642,5 +2193,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initWelcome();
   initNextOffice();
   initChapelet();
+  initChat();
   handleDeepLink();      // applique le filtre/onglet issu du hash URL (landing page)
 });

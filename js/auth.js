@@ -25,6 +25,7 @@ let _formMode    = 'login';
 ═════════════════════════════════════════════*/
 function updateHeaderUI(user) {
   _currentUser = user;
+  window._pelUser = user; // Exposé pour app.js (chat)
   const btn         = $id('hamburger-btn');
   const signoutItem = $id('hm-signout');
   const logoutBtn   = $id('header-btn-logout');
@@ -367,7 +368,7 @@ function initAuthUI() {
       if (!email) { showAuthError('Veuillez entrer votre adresse e-mail.'); return; }
       setAuthLoading(true);
       const { error } = await _sb.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + '/app.html',
+        redirectTo: window.location.origin + '/agenda',
       });
       setAuthLoading(false);
       if (error) { showAuthError(translateSupabaseError(error)); return; }
@@ -442,4 +443,7 @@ async function initAuth() {
       updateHeaderUI(sess?.user || null);
     }
   });
+
+  // Expose le client Supabase pour app.js
+  window._sbClient = _sb;
 }

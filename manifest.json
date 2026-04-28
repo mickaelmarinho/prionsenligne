@@ -1,0 +1,39 @@
+{
+  "name": "PrionsEnLigne",
+  "short_name": "PrionsEnLigne",
+  "description": "Agenda liturgique catholique — offices, messes, chapelet et calendrier des saints",
+  "start_url": "/agenda",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f5f0e8",
+  "theme_color": "#1a2744",
+  "lang": "fr",
+  "categories": ["lifestyle", "religion"],
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Aujourd'hui",
+      "url": "/agenda",
+      "description": "Agenda du jour"
+    },
+    {
+      "name": "Chapelet",
+      "url": "/agenda#open-chapelet",
+      "description": "Chapelet numérique"
+    }
+  ]
+}

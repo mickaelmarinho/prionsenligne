@@ -7,6 +7,12 @@
   <meta name="description" content="Offices du bréviaire, messes en direct, chapelet et calendrier liturgique. Priez en communion avec l'Église catholique, chaque jour, gratuitement.">
   <meta name="robots" content="index, follow" />
   <link rel="canonical" href="https://prionsenligne.fr/" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#1a2744" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="PrionsEnLigne" />
+  <link rel="apple-touch-icon" href="/icons/icon.svg" />
 
   <!-- Open Graph (réseaux sociaux) -->
   <meta property="og:type"        content="website" />
@@ -37,7 +43,7 @@
     <div class="lp-glow lp-glow-2"></div>
 
     <!-- Logo / nav minimaliste -->
-    <a href="app.html" class="lp-nav" aria-label="Accéder à PrionsEnLigne">
+    <a href="/agenda" class="lp-nav" aria-label="Accéder à PrionsEnLigne">
       <span class="lp-logo-cross" aria-hidden="true"></span>
       <span class="lp-logo-name">PrionsEnLigne</span>
     </a>
@@ -55,11 +61,11 @@
         Laudes, Messe, Vêpres, Chapelet… retrouvez tous les offices du jour sur les radios et chaînes catholiques françaises, au bon moment, sans chercher.
       </p>
 
-      <a href="app.html" class="lp-cta" id="lp-cta-main">
+      <a href="/agenda" class="lp-cta" id="lp-cta-main">
         <i class="fa-solid fa-hands-praying"></i> Commencer à prier
       </a>
 
-      <a href="app.html" class="lp-signin-link">J'ai déjà un compte → me connecter</a>
+      <a href="/agenda" class="lp-signin-link">J'ai déjà un compte → me connecter</a>
     </div>
 
     <div class="lp-scroll-hint" aria-hidden="true">
@@ -81,42 +87,42 @@
 
       <div class="lp-feat-grid">
 
-        <a href="app.html#breviaire" class="lp-feat-card lp-feat-link">
+        <a href="/agenda#breviaire" class="lp-feat-card lp-feat-link">
           <div class="lp-feat-icon laudes"><i class="fa-solid fa-sun"></i></div>
           <h3>Offices du bréviaire</h3>
           <p>Laudes, Vêpres et Complies à l'heure juste — avec les radios qui les diffusent en direct et les textes officiels de l'AELF.</p>
           <span class="lp-feat-see">Voir les offices du jour <i class="fa-solid fa-arrow-right"></i></span>
         </a>
 
-        <a href="app.html#messe" class="lp-feat-card lp-feat-link">
+        <a href="/agenda#messe" class="lp-feat-card lp-feat-link">
           <div class="lp-feat-icon messe"><i class="fa-solid fa-church"></i></div>
           <h3>Messe en direct</h3>
           <p>Radio Maria, Radio Notre-Dame, KTO, Lourdes, Vatican News… chaque messe du jour, à son heure réelle, en un clic.</p>
           <span class="lp-feat-see">Voir les messes du jour <i class="fa-solid fa-arrow-right"></i></span>
         </a>
 
-        <a href="app.html#open-chapelet" class="lp-feat-card lp-feat-link">
+        <a href="/agenda#open-chapelet" class="lp-feat-card lp-feat-link">
           <div class="lp-feat-icon chapelet"><i class="fa-solid fa-circle-dot"></i></div>
           <h3>Chapelet numérique</h3>
           <p>Un guide interactif pas à pas, avec les mystères du jour selon la tradition catholique. En 6 langues.</p>
           <span class="lp-feat-see">Ouvrir le chapelet <i class="fa-solid fa-arrow-right"></i></span>
         </a>
 
-        <a href="app.html#chapelet" class="lp-feat-card lp-feat-link">
+        <a href="/agenda#chapelet" class="lp-feat-card lp-feat-link">
           <div class="lp-feat-icon breviary"><i class="fa-solid fa-circle-dot"></i></div>
           <h3>Chapelet</h3>
           <p>Tous les chapelets du jour en un coup d'œil — Divine Miséricorde, Lourdes, chapelet du matin et du soir.</p>
           <span class="lp-feat-see">Voir les chapelets du jour <i class="fa-solid fa-arrow-right"></i></span>
         </a>
 
-        <a href="app.html#semaine" class="lp-feat-card lp-feat-link">
+        <a href="/agenda#semaine" class="lp-feat-card lp-feat-link">
           <div class="lp-feat-icon vepres"><i class="fa-solid fa-calendar-week"></i></div>
           <h3>Vue semaine complète</h3>
           <p>Consultez l'agenda de toute la semaine liturgique — offices, messes et chapelets avec leurs sources et horaires exacts.</p>
           <span class="lp-feat-see">Voir la semaine <i class="fa-solid fa-arrow-right"></i></span>
         </a>
 
-        <a href="app.html#mois" class="lp-feat-card lp-feat-link">
+        <a href="/agenda#mois" class="lp-feat-card lp-feat-link">
           <div class="lp-feat-icon calendar"><i class="fa-solid fa-calendar"></i></div>
           <h3>Calendrier des saints</h3>
           <p>Fêtes, mémoires et solennités du mois en cours — le saint du jour est affiché automatiquement à l'ouverture.</p>
@@ -171,11 +177,47 @@
     <div class="lp-final-inner">
       <h2>Commencez dès aujourd'hui</h2>
       <p>Gratuit, sans publicité, sans application à installer. PrionsEnLigne s'ouvre directement dans votre navigateur, sur mobile comme sur ordinateur.</p>
-      <a href="app.html" class="lp-cta" id="lp-cta-final">
+      <a href="/agenda" class="lp-cta" id="lp-cta-final">
         <i class="fa-solid fa-arrow-right"></i> Accéder au site
       </a>
+
+      <!-- Raccourci sur l'écran d'accueil / bureau -->
+      <div class="lp-install-wrap" id="lp-install-wrap">
+        <p class="lp-install-label">Ajouter un raccourci sur votre écran</p>
+        <div class="lp-install-btns">
+          <!-- Android / Desktop Chrome : bouton natif capturé par JS -->
+          <button class="lp-install-btn hidden" id="lp-btn-native" title="Installer l'application">
+            <i class="fa-brands fa-android"></i>
+            <span>Android</span>
+          </button>
+          <!-- iOS : instructions manuelles -->
+          <button class="lp-install-btn hidden" id="lp-btn-ios" title="Ajouter sur iPhone / iPad">
+            <i class="fa-brands fa-apple"></i>
+            <span>iPhone / iPad</span>
+          </button>
+          <!-- Desktop Chrome / Edge : affiché si pas encore installé -->
+          <button class="lp-install-btn hidden" id="lp-btn-desktop" title="Installer sur l'ordinateur">
+            <i class="fa-solid fa-desktop"></i>
+            <span>Ordinateur</span>
+          </button>
+        </div>
+        <!-- Modale iOS -->
+        <div class="lp-ios-modal hidden" id="lp-ios-modal">
+          <div class="lp-ios-card">
+            <button class="lp-ios-close" id="lp-ios-close">✕</button>
+            <p class="lp-ios-title"><i class="fa-brands fa-apple"></i> Ajouter à l'écran d'accueil</p>
+            <ol class="lp-ios-steps">
+              <li>Appuyez sur <strong>le bouton Partager</strong> <span class="lp-ios-icon">⬆</span> en bas de Safari</li>
+              <li>Faites défiler et appuyez sur <strong>« Sur l'écran d'accueil »</strong></li>
+              <li>Confirmez en appuyant sur <strong>« Ajouter »</strong></li>
+            </ol>
+            <p class="lp-ios-note">L'icône PrionsEnLigne apparaîtra sur votre écran comme une vraie appli.</p>
+          </div>
+        </div>
+      </div>
+
       <br>
-      <a href="app.html" class="lp-cta-secondary">Créer un compte gratuitement →</a>
+      <a href="/agenda" class="lp-cta-secondary">Créer un compte gratuitement →</a>
     </div>
   </section>
 
@@ -209,11 +251,87 @@
   </button>
 
   <script>
-    // Tous les liens vers app.html (CTA et cartes de fonctionnalités) marquent
-    // la visite pour éviter l'affichage du bloc de bienvenue dans app.html.
-    document.querySelectorAll('[href^="app.html"]').forEach(el => {
+    // ── Service Worker ────────────────────────────────────────
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      });
+    }
+
+    // ── Marquage visite → pas de bloc bienvenue dans /agenda ─
+    document.querySelectorAll('[href^="/agenda"],[href^="app.html"]').forEach(el => {
       el.addEventListener('click', () => localStorage.setItem('pel_welcomed', '1'));
     });
+
+    // ── PWA Install Prompt ────────────────────────────────────
+    (function () {
+      let deferredPrompt = null;
+      const btnNative  = document.getElementById('lp-btn-native');
+      const btnDesktop = document.getElementById('lp-btn-desktop');
+      const btnIos     = document.getElementById('lp-btn-ios');
+      const iosModal   = document.getElementById('lp-ios-modal');
+      const iosClose   = document.getElementById('lp-ios-close');
+
+      // Détection iOS
+      const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches
+        || window.navigator.standalone === true;
+
+      if (isIos && !isInStandaloneMode && btnIos) {
+        btnIos.classList.remove('hidden');
+      }
+
+      // Capture beforeinstallprompt (Android / desktop Chrome/Edge)
+      window.addEventListener('beforeinstallprompt', e => {
+        e.preventDefault();
+        deferredPrompt = e;
+        const isMobile = /android/i.test(navigator.userAgent);
+        if (isMobile && btnNative) {
+          btnNative.classList.remove('hidden');
+          if (btnDesktop) btnDesktop.classList.add('hidden');
+        } else if (btnDesktop) {
+          btnDesktop.classList.remove('hidden');
+          if (btnNative) btnNative.classList.add('hidden');
+        }
+      });
+
+      async function triggerInstall() {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        if (outcome === 'accepted') {
+          if (btnNative)  btnNative.classList.add('hidden');
+          if (btnDesktop) btnDesktop.classList.add('hidden');
+        }
+      }
+
+      if (btnNative)  btnNative.addEventListener('click',  triggerInstall);
+      if (btnDesktop) btnDesktop.addEventListener('click', triggerInstall);
+
+      // iOS modal
+      if (btnIos) {
+        btnIos.addEventListener('click', () => {
+          if (iosModal) iosModal.classList.remove('hidden');
+        });
+      }
+      if (iosClose) {
+        iosClose.addEventListener('click', () => {
+          if (iosModal) iosModal.classList.add('hidden');
+        });
+      }
+      if (iosModal) {
+        iosModal.addEventListener('click', e => {
+          if (e.target === iosModal) iosModal.classList.add('hidden');
+        });
+      }
+
+      // Masquer si déjà installé
+      window.addEventListener('appinstalled', () => {
+        [btnNative, btnDesktop, btnIos].forEach(b => b && b.classList.add('hidden'));
+        deferredPrompt = null;
+      });
+    })();
 
     // ── Lecteur grégorien opt-in ──────────────────────────────
     (function () {
@@ -236,13 +354,9 @@
       function showError() {
         errored = true;
         setPlaying(false);
-        label.textContent = 'Indisponible';
-        btn.style.opacity = '0.5';
-        setTimeout(() => {
-          label.textContent = 'Grégorien';
-          btn.style.opacity = '';
-          errored = false;
-        }, 3000);
+        label.innerHTML = '<a href="https://www.radiogregorien.com" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;font-size:10px">Écouter →</a>';
+        btn.style.opacity = '0.7';
+        // Pas de reset auto — le lien reste visible
       }
 
       btn.addEventListener('click', () => {
@@ -258,7 +372,7 @@
         }
       });
 
-      audio.addEventListener('error', () => showError());
+      audio.addEventListener('error', () => { if (playing || audio.readyState === 0) showError(); });
     })();
   </script>
 

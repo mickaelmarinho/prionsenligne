@@ -1,0 +1,15 @@
+{
+  "redirects": [
+    {
+      "source": "/app.html",
+      "destination": "/agenda",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/agenda",
+      "destination": "/app.html"
+    }
+  ]
+}
