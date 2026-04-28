@@ -184,7 +184,7 @@ const CALENDAR_DATA = {
     16: { saint: 'Sainte Bernadette Soubirous', type: 'ordinaire', desc: "Voyante de Lourdes (1844-1879), elle mourut ce jour dans sa cellule à Nevers. Sa dépouille repose incorruptible à Saint-Gildard.", minor: 'St Benoît-Joseph Labre' },
     17: { saint: 'Saint Anicet', type: 'ordinaire', desc: "Pape et martyr du IIe siècle, il gouverna l'Église vers 155-166.", minor: 'St Innocent · Ste Martine' },
     18: { saint: 'Saint Parfait', type: 'fete', desc: "Prêtre de Cordoue, martyrisé en 850 pour avoir refusé de renier sa foi.", minor: 'Ste Apollonie' },
-    19: { saint: '3e dimanche de Pâques', type: 'ordinaire', desc: 'Temps pascal. Le Christ ressuscité se révèle aux disciples sur le chemin d'Emmaüs.', minor: 'St Léon IX' },
+    19: { saint: '3e dimanche de Pâques', type: 'ordinaire', desc: "Temps pascal. Le Christ ressuscité se révèle aux disciples sur le chemin d'Emmaüs.", minor: 'St Léon IX' },
     20: { saint: 'Sainte Odette', type: 'ordinaire', desc: "Vierge du IVe siècle, patronne des aveugles. Elle aurait recouvré la vue au baptême pour mieux contempler le Christ.", minor: 'St Marcellin de Paris' },
     21: { saint: 'Saint Anselme', type: 'memoire', desc: "Archevêque de Cantorbéry et Docteur de l'Église. Auteur de la preuve ontologique de l'existence de Dieu.", minor: 'St Conrad de Plaisance' },
     22: { saint: 'Saint Alexandre Ier', type: 'ordinaire', desc: "Pape et martyr au IIe siècle, il gouverna l'Église vers 107-115.", minor: 'St Léonide · Ste Opportune' },
