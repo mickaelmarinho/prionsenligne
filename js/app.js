@@ -949,6 +949,48 @@ function initHamburger() {
       closeMenu();
     }
   });
+
+  // ── À propos
+  document.getElementById('hm-about')?.addEventListener('click', () => {
+    closeMenu();
+    if (window._openAbout) window._openAbout();
+    else {
+      document.getElementById('about-overlay')?.classList.remove('hidden');
+      document.getElementById('about-modal')?.classList.remove('hidden');
+    }
+  });
+
+  // ── Ajouter à l'écran d'accueil (Android/Desktop)
+  const hmInstall = document.getElementById('hm-install');
+  if (hmInstall) {
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+    if (isIOS) {
+      // iOS : toujours montrer l'option (instructions manuelles)
+      hmInstall.style.display = '';
+      hmInstall.addEventListener('click', () => {
+        closeMenu();
+        // Ouvre la modale À propos avec la section install visible
+        document.getElementById('about-overlay')?.classList.remove('hidden');
+        const modal = document.getElementById('about-modal');
+        modal?.classList.remove('hidden');
+        const wrap = document.getElementById('about-install-wrap');
+        if (wrap) wrap.style.display = '';
+        const note = document.getElementById('about-install-note');
+        if (note) note.textContent = 'Sur iPhone/iPad : appuyez sur 📤 Partager puis « Sur l’écran d’accueil ».';
+      });
+    } else {
+      // Android/Desktop : montré par beforeinstallprompt, déclenche directement le prompt
+      hmInstall.addEventListener('click', async () => {
+        closeMenu();
+        if (_installPrompt) {
+          await _installPrompt.prompt();
+          _installPrompt = null;
+          hmInstall.style.display = 'none';
+        }
+      });
+      window.addEventListener('appinstalled', () => { hmInstall.style.display = 'none'; });
+    }
+  }
 }
 
 
@@ -1675,73 +1717,120 @@ const WEEK_SCHEDULE = {
 };
 
 function initWeek() {
-  const container = document.getElementById('week-cards');
-  if (!container) return;
+  const wrap = document.getElementById('week-cards');
+  if (!wrap) return;
 
   const today    = getParisDate();
-  const todayDow = today.getDay();                          // 0=Dim … 6=Sam
-  const moOffset = todayDow === 0 ? -6 : 1 - todayDow;    // France : semaine Lun→Dim
+  const todayDow = today.getDay();
+  const moOffset = todayDow === 0 ? -6 : 1 - todayDow;
   const monday   = new Date(today);
   monday.setDate(today.getDate() + moOffset);
 
-  const SHORT_DAYS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
-  container.innerHTML = '';
+  const SHORT_DAYS = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  const LONG_DAYS  = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  const MONTHS_FR  = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  const TYPE_ICON  = {
+    laudes:'fa-sun', matin:'fa-mug-hot', messe:'fa-church',
+    chapelet:'fa-circle-dot', vepres:'fa-cloud-sun',
+    complies:'fa-moon', soiree:'fa-hands-praying',
+  };
 
+  // Construire les données des 7 jours
+  const days = [];
   for (let i = 0; i < 7; i++) {
     const date = new Date(monday);
     date.setDate(monday.getDate() + i);
     const dow     = date.getDay();
-    const isToday = date.getDate()     === today.getDate()  &&
-                    date.getMonth()    === today.getMonth()  &&
-                    date.getFullYear() === today.getFullYear();
+    const isToday = date.toDateString() === today.toDateString();
+    days.push({ date, dow, isToday });
+  }
 
-    const daySlots = WEEK_SCHEDULE[dow] ?? WEEK_SCHEDULE.ordinary;
+  // Onglets de jours
+  let tabsHtml = '<div class="wk-tabs" role="tablist">';
+  days.forEach(({ date, dow, isToday }, i) => {
+    tabsHtml += `<button class="wk-tab${isToday ? ' active' : ''}" data-day="${i}" role="tab" aria-selected="${isToday}">
+      <span class="wk-tab-name">${SHORT_DAYS[dow]}</span>
+      <span class="wk-tab-num">${date.getDate()}</span>
+    </button>`;
+  });
+  tabsHtml += '</div>';
 
+  // Panneaux par jour
+  let panelsHtml = '<div class="wk-panels">';
+  days.forEach(({ date, dow, isToday }, i) => {
+    const slots = WEEK_SCHEDULE[dow] ?? WEEK_SCHEDULE.ordinary;
+
+    // Dédupliquer les slots identiques (même type + même heure)
     let slotsHtml = '';
-    for (const slot of daySlots) {
-      let entriesHtml = '';
+    for (const slot of slots) {
+      const icon = TYPE_ICON[slot.type] || 'fa-circle';
+      const firstEntry = slot.entries[0];
+      const allTimes = slot.entries.map(e => e.tl).join(' · ');
+
+      // Sources (tous les entries fusionnés)
+      let srcsHtml = '';
       for (const entry of slot.entries) {
-        let btnsHtml = '';
         for (const key of entry.srcs) {
           const src = SOURCES[key];
           if (!src) continue;
           if (src.s) {
-            // Flux audio direct → bouton lecture intégrée
-            btnsHtml += `<button class="wc-src-btn wc-radio" data-action="radio"
+            srcsHtml += `<button class="wc-src-btn wc-radio" data-action="radio"
               data-stream="${src.s}" data-web="${src.w}"
-              data-name="${src.n}" data-prayer="${slot.label}" data-time="${entry.tl}"
-              title="Écouter ${src.n}">
+              data-name="${src.n}" data-prayer="${slot.label}" data-time="${entry.tl}">
               <i class="fa-solid fa-play"></i>${src.n}
             </button>`;
           } else {
-            // Pas de flux → lien vers le site dans un nouvel onglet
-            btnsHtml += `<a class="wc-src-btn wc-link" href="${src.w}"
-              target="_blank" rel="noopener" title="Ouvrir ${src.n}">
+            srcsHtml += `<a class="wc-src-btn wc-link" href="${src.w}" target="_blank" rel="noopener">
               <i class="fa-solid fa-arrow-up-right-from-square"></i>${src.n}
             </a>`;
           }
         }
-        entriesHtml += `<div class="wc-entry">
-          <span class="wc-etime">${entry.tl}</span>
-          <div class="wc-src-list">${btnsHtml}</div>
-        </div>`;
       }
-      slotsHtml += `<div class="wc-slot ${slot.type}">
-        <div class="wc-slot-label">${slot.label}</div>
-        ${entriesHtml}
+
+      slotsHtml += `<div class="wk-row ${slot.type}">
+        <div class="wk-row-main" ${srcsHtml ? 'data-expandable' : ''}>
+          <span class="wk-row-time">${allTimes}</span>
+          <i class="fa-solid ${icon} wk-row-icon"></i>
+          <span class="wk-row-label">${slot.label}</span>
+          ${srcsHtml ? '<i class="fa-solid fa-chevron-right wk-row-arrow"></i>' : ''}
+        </div>
+        ${srcsHtml ? `<div class="wk-row-srcs hidden">${srcsHtml}</div>` : ''}
       </div>`;
     }
 
-    const card = document.createElement('div');
-    card.className = `wc-day${isToday ? ' today-day' : ''}`;
-    card.innerHTML = `
-      <div class="wc-head">
-        <span class="wc-dayname">${SHORT_DAYS[dow]}</span>
-        <span class="wc-daynum">${date.getDate()}</span>
-      </div>
-      <div class="wc-slots">${slotsHtml}</div>`;
-    container.appendChild(card);
-  }
+    const dateLabel = `${LONG_DAYS[dow]} ${date.getDate()} ${MONTHS_FR[date.getMonth()]}`;
+    panelsHtml += `<div class="wk-panel${isToday ? ' active' : ''}" data-day="${i}" role="tabpanel">
+      <div class="wk-panel-date">${dateLabel}</div>
+      <div class="wk-rows">${slotsHtml}</div>
+    </div>`;
+  });
+  panelsHtml += '</div>';
+
+  wrap.innerHTML = tabsHtml + panelsHtml;
+
+  // Switcher d'onglets
+  wrap.querySelectorAll('.wk-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const day = tab.dataset.day;
+      wrap.querySelectorAll('.wk-tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected','false'); });
+      wrap.querySelectorAll('.wk-panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      tab.setAttribute('aria-selected','true');
+      wrap.querySelector(`.wk-panel[data-day="${day}"]`).classList.add('active');
+    });
+  });
+
+  // Expand/collapse sources au clic sur une ligne
+  wrap.addEventListener('click', e => {
+    const main = e.target.closest('[data-expandable]');
+    if (!main) return;
+    const row    = main.closest('.wk-row');
+    const srcs   = row.querySelector('.wk-row-srcs');
+    const arrow  = main.querySelector('.wk-row-arrow');
+    if (!srcs) return;
+    srcs.classList.toggle('hidden');
+    if (arrow) arrow.style.transform = srcs.classList.contains('hidden') ? '' : 'rotate(90deg)';
+  });
 }
 
 
@@ -2190,6 +2279,81 @@ function initChat() {
 
 
 /* ────────────────────────────────────────────
+   13. MODAL À PROPOS + PWA INSTALL
+──────────────────────────────────────────────*/
+
+// Capture le prompt natif Android/Desktop
+let _installPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  _installPrompt = e;
+
+  // Affiche le bouton dans le menu burger
+  const hmInstall = document.getElementById('hm-install');
+  if (hmInstall) hmInstall.style.display = '';
+
+  // Affiche le bloc install dans la modale À propos
+  const wrap = document.getElementById('about-install-wrap');
+  if (wrap) wrap.style.display = '';
+  const note = document.getElementById('about-install-note');
+  if (note) note.textContent = 'Installez l\'application pour un accès rapide depuis votre écran d\'accueil.';
+});
+
+window.addEventListener('appinstalled', () => {
+  _installPrompt = null;
+  const hmInstall = document.getElementById('hm-install');
+  if (hmInstall) hmInstall.style.display = 'none';
+  const wrap = document.getElementById('about-install-wrap');
+  if (wrap) wrap.style.display = 'none';
+});
+
+function initAbout() {
+  const overlay = document.getElementById('about-overlay');
+  const modal   = document.getElementById('about-modal');
+  const closeBtn = document.getElementById('about-close');
+  if (!modal) return;
+
+  function openAbout() {
+    overlay?.classList.remove('hidden');
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeAbout() {
+    overlay?.classList.add('hidden');
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  closeBtn?.addEventListener('click', closeAbout);
+  overlay?.addEventListener('click', closeAbout);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeAbout();
+  });
+
+  // Bouton install dans la modale
+  document.getElementById('about-install-btn')?.addEventListener('click', async () => {
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+    if (isIOS) {
+      const note = document.getElementById('about-install-note');
+      if (note) note.textContent = 'Sur iPhone/iPad : appuyez sur 📤 Partager puis « Sur l’écran d’accueil ».';
+      return;
+    }
+    if (_installPrompt) {
+      const result = await _installPrompt.prompt();
+      if (result?.outcome === 'accepted') {
+        _installPrompt = null;
+        closeAbout();
+      }
+    }
+  });
+
+  // Exposer openAbout globalement (utilisé par initHamburger)
+  window._openAbout = openAbout;
+}
+
+
+/* ────────────────────────────────────────────
    10. INIT GLOBAL
 ──────────────────────────────────────────────*/
 document.addEventListener('DOMContentLoaded', () => {
@@ -2208,5 +2372,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initNextOffice();
   initChapelet();
   initChat();
+  initAbout();
   handleDeepLink();      // applique le filtre/onglet issu du hash URL (landing page)
 });

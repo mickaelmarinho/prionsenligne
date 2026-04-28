@@ -33,10 +33,7 @@
   <header class="site-header">
     <div class="header-inner">
       <div class="logo">
-        <div class="logo-cross">
-          <span class="cross-v"></span>
-          <span class="cross-h"></span>
-        </div>
+        <img src="/icons/icon.svg" alt="" class="logo-img" width="34" height="34" aria-hidden="true">
         <span class="logo-name">PrionsEnLigne</span>
       </div>
       <nav class="main-nav">
@@ -72,9 +69,9 @@
         <div class="hm-item hm-nav-item" data-tab="sources"><i class="fa-solid fa-tower-broadcast"></i> Sources</div>
         <div class="hm-divider hm-nav-divider"></div>
         <div class="hm-item" id="hm-signout" style="display:none"><i class="fa-solid fa-right-from-bracket"></i> Se déconnecter</div>
-        <div class="hm-item"><i class="fa-solid fa-bell"></i> Notifications</div>
+        <div class="hm-item" id="hm-install" style="display:none"><i class="fa-solid fa-download"></i> Ajouter à l'écran d'accueil</div>
         <div class="hm-divider"></div>
-        <div class="hm-item"><i class="fa-solid fa-circle-info"></i> À propos</div>
+        <div class="hm-item" id="hm-about"><i class="fa-solid fa-circle-info"></i> À propos</div>
         <div class="hm-divider" id="hm-auth-sep"></div>
         <div class="hm-item" id="hm-login-item"><i class="fa-solid fa-right-to-bracket"></i> Se connecter</div>
         <div class="hm-item hm-join" id="hm-signup-item"><i class="fa-solid fa-hands-praying"></i> Rejoindre</div>
@@ -164,9 +161,7 @@
 
     <!-- ──────────── SEMAINE ──────────── -->
     <section id="tab-semaine" class="tab-section">
-      <div class="week-cards-wrap">
-        <div class="week-cards" id="week-cards"><!-- généré par initWeek() --></div>
-      </div>
+      <div id="week-cards"><!-- généré par initWeek() --></div>
     </section><!-- /semaine -->
 
 
@@ -317,7 +312,7 @@
     <div class="footer-inner">
       <div class="footer-brand">
         <div class="logo">
-          <div class="logo-cross"><span class="cross-v"></span><span class="cross-h"></span></div>
+          <img src="/icons/icon.svg" alt="" class="logo-img" width="30" height="30" aria-hidden="true">
           <span class="logo-name">PrionsEnLigne</span>
         </div>
         <p class="footer-tagline">Prier ensemble, chaque jour</p>
@@ -543,6 +538,50 @@
       <div class="ch-footer">
         <span class="ch-progress" id="ch-progress">1 / 60</span>
         <button class="ch-reset" id="ch-reset">Recommencer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       MODAL À PROPOS
+  ═══════════════════════════════════════════ -->
+  <div id="about-overlay" class="auth-overlay hidden"></div>
+  <div id="about-modal" class="about-modal hidden" role="dialog" aria-modal="true" aria-label="À propos de PrionsEnLigne">
+    <div class="about-panel">
+      <button class="auth-close" id="about-close" aria-label="Fermer"><i class="fa-solid fa-xmark"></i></button>
+      <div class="about-logo">
+        <img src="/icons/icon.svg" alt="PrionsEnLigne" width="64" height="64">
+        <h2 class="about-title">PrionsEnLigne</h2>
+        <p class="about-tagline">Prier ensemble, chaque jour</p>
+      </div>
+      <div class="about-body">
+        <p>PrionsEnLigne rassemble les offices du bréviaire, les messes en direct, le chapelet et le calendrier liturgique catholique en un seul endroit — gratuitement, sans publicité.</p>
+
+        <div class="about-section">
+          <h3><i class="fa-solid fa-book-open"></i> Textes liturgiques</h3>
+          <p>Les textes des offices (Laudes, Vêpres, Complies…) sont fournis par l'<a href="https://www.aelf.org" target="_blank" rel="noopener">AELF</a> — Association Épiscopale Liturgique Francophone.</p>
+        </div>
+
+        <div class="about-section">
+          <h3><i class="fa-solid fa-tower-broadcast"></i> Sources audio &amp; vidéo</h3>
+          <p>Radio Maria France · Radio Notre-Dame · RCF · Radio Espérance · Radio Fidélité · KTO · Sanctuaire de Lourdes · Vatican News · Notre-Dame de Paris · Sanctuaire d'Ars</p>
+        </div>
+
+        <div class="about-section">
+          <h3><i class="fa-solid fa-shield-halved"></i> Confidentialité</h3>
+          <p>Aucune donnée personnelle n'est collectée sans votre consentement. La création de compte est optionnelle et sert uniquement à accéder au chat de prière.</p>
+        </div>
+
+        <div class="about-install" id="about-install-wrap" style="display:none">
+          <button class="about-install-btn" id="about-install-btn">
+            <i class="fa-solid fa-download"></i> Ajouter à l'écran d'accueil
+          </button>
+          <p class="about-install-note" id="about-install-note"></p>
+        </div>
+      </div>
+      <div class="about-footer">
+        <span>© 2026 PrionsEnLigne</span>
+        <a href="mailto:contact@prionsenligne.fr">contact@prionsenligne.fr</a>
       </div>
     </div>
   </div>

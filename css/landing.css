@@ -110,6 +110,13 @@ h1, h2, h3, .lp-logo-name { font-family: 'Cormorant Garamond', serif; }
   background: var(--gold);
   border-radius: 2px;
 }
+.lp-logo-img {
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  flex-shrink: 0;
+  display: block;
+}
 .lp-logo-name {
   font-size: 16px;
   font-weight: 400;
