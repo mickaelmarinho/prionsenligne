@@ -417,14 +417,16 @@ function initCalendar() {
       else if (type === 'memoire')                  dotHtml = '<div class="cal-dot purple"></div>';
 
       const div = document.createElement('div');
-      div.className = 'cal-day' + (type !== 'ordinaire' ? ' ' + type : '') + (isToday ? ' today' : '');
+      div.className = 'cal-day' + (type !== 'ordinaire' ? ' ' + type : '') + (isToday ? ' today' : '') + (minor ? ' has-minor' : '');
       div.dataset.date  = dateLabel;
       div.dataset.type  = type;
       div.dataset.saint = saint;
       div.dataset.desc  = desc;
       div.dataset.minor = minor;
+      // Petit tag discret pour les saints mineurs, visible dans la case
+      const minorTag = minor ? '<span class="cal-minor-hint" title="' + minor + '">+</span>' : '';
       div.innerHTML = '<span class="cal-num">' + d + '</span>' +
-        (saint ? '<span class="cal-saint">' + shortSaint + '</span>' : '') + dotHtml;
+        (saint ? '<span class="cal-saint">' + shortSaint + '</span>' : '') + dotHtml + minorTag;
       div.addEventListener('click', () => selectDay(div));
       grid.appendChild(div);
 
