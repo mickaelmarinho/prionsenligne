@@ -236,8 +236,9 @@
   <!-- ═══════════════════════════════════════════
        BOUTON MUSIQUE GRÉGORIENNE (opt-in)
   ═══════════════════════════════════════════ -->
-  <audio id="lp-chant" preload="none" loop>
-    <source src="https://radiogregorienfr.ice.infomaniak.ch/radiogregorienfr-high.mp3" type="audio/mpeg">
+  <!-- Flux de secours : Radio Silence (chant grégorien / prière) -->
+  <audio id="lp-chant" preload="none" loop crossorigin="anonymous">
+    <source src="https://stream.radiosilence.fr/radiosilence-128.mp3" type="audio/mpeg">
     <source src="https://radiogregorienfr.ice.infomaniak.ch/radiogregorienfr-low.mp3"  type="audio/mpeg">
   </audio>
 
@@ -339,10 +340,12 @@
       const audio = document.getElementById('lp-chant');
       const label = document.getElementById('lp-music-label');
       let playing = false;
-      let errored = false;
+      let failed  = false;
+      let loadTimer = null;
 
       const ICON_MUSIC = '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>';
       const ICON_PAUSE = '<line x1="6" y1="4" x2="6" y2="20"/><line x1="18" y1="4" x2="18" y2="20"/>';
+      const ICON_EXT   = '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>';
 
       function setPlaying(state) {
         playing = state;
@@ -351,28 +354,53 @@
         btn.querySelector('.lp-music-icon').innerHTML = state ? ICON_PAUSE : ICON_MUSIC;
       }
 
-      function showError() {
-        errored = true;
-        setPlaying(false);
-        label.innerHTML = '<a href="https://www.radiogregorien.com" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;font-size:10px">Écouter →</a>';
-        btn.style.opacity = '0.7';
-        // Pas de reset auto — le lien reste visible
+      function showFallback() {
+        // Stream indisponible → transforme le bouton en lien externe
+        failed = true;
+        audio.pause();
+        playing = false;
+        btn.classList.remove('lp-music-playing');
+        btn.querySelector('.lp-music-icon').innerHTML = ICON_EXT;
+        label.textContent = 'Chant grégorien';
+        btn.title = 'Écouter du chant grégorien (lien externe)';
+        // Remplace le comportement du bouton par un lien
+        btn.onclick = () => window.open('https://www.radiomaria.fr', '_blank', 'noopener');
       }
 
       btn.addEventListener('click', () => {
-        if (errored) return;
+        if (failed) return; // géré par onclick remplacé
         if (!playing) {
+          btn.querySelector('.lp-music-icon').innerHTML =
+            '<circle cx="12" cy="12" r="9" stroke-dasharray="2 3"/>';
+          label.textContent = '…';
           audio.volume = 0.4;
+          // Timeout : si pas de lecture après 4s → fallback
+          loadTimer = setTimeout(showFallback, 4000);
           audio.play()
-            .then(() => setPlaying(true))
-            .catch(() => showError());
+            .then(() => { clearTimeout(loadTimer); setPlaying(true); })
+            .catch(() => { clearTimeout(loadTimer); showFallback(); });
         } else {
+          clearTimeout(loadTimer);
           audio.pause();
           setPlaying(false);
         }
       });
 
-      audio.addEventListener('error', () => { if (playing || audio.readyState === 0) showError(); });
+      audio.addEventListener('error',  () => { clearTimeout(loadTimer); showFallback(); });
+      audio.addEventListener('playing', () => { clearTimeout(loadTimer); setPlaying(true); });
+    })();
+
+    // ── Bouton musique : remonte au-dessus du footer ──────────
+    (function () {
+      const musicBtn = document.getElementById('lp-music-btn');
+      const footer   = document.querySelector('.lp-footer');
+      if (!musicBtn || !footer || !('IntersectionObserver' in window)) return;
+      const obs = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          musicBtn.classList.toggle('lp-music-raised', entry.isIntersecting);
+        });
+      }, { threshold: 0.01 });
+      obs.observe(footer);
     })();
   </script>
 

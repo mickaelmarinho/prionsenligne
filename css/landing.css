@@ -512,6 +512,12 @@ h1, h2, h3, .lp-logo-name { font-family: 'Cormorant Garamond', serif; }
   transition: color .2s;
 }
 
+/* Remonte au-dessus du footer quand celui-ci est visible */
+.lp-music-btn.lp-music-raised {
+  bottom: 80px;
+  transition: bottom .25s ease, background .2s, border-color .2s, color .2s, box-shadow .2s;
+}
+
 /* État lecture : gold + légère pulsation */
 .lp-music-btn.lp-music-playing {
   border-color: rgba(201,168,76,.6);
