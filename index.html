@@ -236,10 +236,9 @@
   <!-- ═══════════════════════════════════════════
        BOUTON MUSIQUE GRÉGORIENNE (opt-in)
   ═══════════════════════════════════════════ -->
-  <!-- Flux de secours : Radio Silence (chant grégorien / prière) -->
-  <audio id="lp-chant" preload="none" loop crossorigin="anonymous">
-    <source src="https://stream.radiosilence.fr/radiosilence-128.mp3" type="audio/mpeg">
-    <source src="https://radiogregorienfr.ice.infomaniak.ch/radiogregorienfr-low.mp3"  type="audio/mpeg">
+  <!-- Radio Espérance — flux dédié chant grégorien, HTTPS natif -->
+  <audio id="lp-chant" preload="none" loop>
+    <source src="https://esperance.streamakaci.com/gregorien.mp3" type="audio/mpeg">
   </audio>
 
   <button class="lp-music-btn" id="lp-music-btn" title="Musique grégorienne" aria-label="Écouter du chant grégorien">
@@ -364,7 +363,7 @@
         label.textContent = 'Chant grégorien';
         btn.title = 'Écouter du chant grégorien (lien externe)';
         // Remplace le comportement du bouton par un lien
-        btn.onclick = () => window.open('https://www.radiomaria.fr', '_blank', 'noopener');
+        btn.onclick = () => window.open('https://radio-esperance.fr', '_blank', 'noopener');
       }
 
       btn.addEventListener('click', () => {
