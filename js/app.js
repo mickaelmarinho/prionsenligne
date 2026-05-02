@@ -960,38 +960,38 @@ function initHamburger() {
     }
   });
 
-  // ── Ajouter à l’écran d’accueil — toujours visible dans le menu ──
-  const hmInstall = document.getElementById(‘hm-install’);
+  // ── Ajouter à l'écran d'accueil — toujours visible dans le menu ──
+  const hmInstall = document.getElementById('hm-install');
   if (hmInstall) {
-    // Toujours montrer l’entrée (on la cache uniquement après installation confirmée)
-    hmInstall.style.display = ‘’;
+    // Toujours montrer l'entrée (on la cache uniquement après installation confirmée)
+    hmInstall.style.display = '';
 
-    hmInstall.addEventListener(‘click’, async () => {
+    hmInstall.addEventListener('click', async () => {
       closeMenu();
       const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
 
       if (_installPrompt) {
         // Android / Chrome desktop : prompt natif disponible
         const res = await _installPrompt.prompt();
-        if (res?.outcome === ‘accepted’) {
+        if (res?.outcome === 'accepted') {
           _installPrompt = null;
-          hmInstall.style.display = ‘none’;
+          hmInstall.style.display = 'none';
         }
       } else {
         // iOS ou prompt déjà utilisé → ouvrir la modale À propos avec instructions
         if (window._openAbout) window._openAbout();
-        const wrap = document.getElementById(‘about-install-wrap’);
-        if (wrap) wrap.style.display = ‘’;
-        const note = document.getElementById(‘about-install-note’);
+        const wrap = document.getElementById('about-install-wrap');
+        if (wrap) wrap.style.display = '';
+        const note = document.getElementById('about-install-note');
         if (note) {
           note.textContent = isIOS
-            ? ‘Sur iPhone/iPad : appuyez sur 📤 Partager puis « Sur l\’écran d\’accueil ».’
-            : ‘Ouvrez ce site dans Chrome ou Edge, puis utilisez le menu du navigateur → « Installer ».’;
+            ? 'Sur iPhone/iPad : appuyez sur 📤 Partager puis « Sur l\'écran d\'accueil ».'
+            : 'Ouvrez ce site dans Chrome ou Edge, puis utilisez le menu du navigateur → « Installer ».';
         }
       }
     });
 
-    window.addEventListener(‘appinstalled’, () => { hmInstall.style.display = ‘none’; });
+    window.addEventListener('appinstalled', () => { hmInstall.style.display = 'none'; });
   }
 }
 
@@ -2358,42 +2358,42 @@ function initAbout() {
     if (e.key === 'Escape') closeAbout();
   });
 
-  // Met à jour le bloc install selon l’environnement
+  // Met à jour le bloc install selon l'environnement
   function _updateInstallBlock() {
-    const wrap = document.getElementById(‘about-install-wrap’);
-    const btn  = document.getElementById(‘about-install-btn’);
-    const note = document.getElementById(‘about-install-note’);
+    const wrap = document.getElementById('about-install-wrap');
+    const btn  = document.getElementById('about-install-btn');
+    const note = document.getElementById('about-install-note');
     if (!wrap) return;
 
     const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
-    const isStandalone = window.matchMedia(‘(display-mode: standalone)’).matches
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
                       || window.navigator.standalone === true;
 
     if (isStandalone) {
       // Déjà installé → masquer le bloc
-      wrap.style.display = ‘none’;
+      wrap.style.display = 'none';
       return;
     }
 
-    wrap.style.display = ‘’;
+    wrap.style.display = '';
 
     if (isIOS) {
-      if (btn) btn.textContent = ‘📤 Comment installer’;
-      if (note) note.textContent = ‘Appuyez sur le bouton Partager en bas de Safari, puis choisissez « Sur l\’écran d\’accueil ».’;
+      if (btn) btn.textContent = '📤 Comment installer';
+      if (note) note.textContent = 'Appuyez sur le bouton Partager en bas de Safari, puis choisissez « Sur l\'écran d\'accueil ».';
     } else if (_installPrompt) {
-      if (btn) { btn.innerHTML = ‘<i class="fa-solid fa-download"></i> Ajouter à l\’écran d\’accueil’; }
-      if (note) note.textContent = ‘Accès rapide depuis votre téléphone ou bureau, sans passer par le navigateur.’;
+      if (btn) { btn.innerHTML = '<i class="fa-solid fa-download"></i> Ajouter à l\'écran d\'accueil'; }
+      if (note) note.textContent = 'Accès rapide depuis votre téléphone ou bureau, sans passer par le navigateur.';
     } else {
-      if (btn) btn.innerHTML = ‘<i class="fa-solid fa-download"></i> Installer l\’application’;
-      if (note) note.textContent = ‘Dans Chrome ou Edge : menu ⋮ → « Installer l\’application » ou « Ajouter à l\’écran d\’accueil ».’;
+      if (btn) btn.innerHTML = '<i class="fa-solid fa-download"></i> Installer l\'application';
+      if (note) note.textContent = 'Dans Chrome ou Edge : menu ⋮ → « Installer l\'application » ou « Ajouter à l\'écran d\'accueil ».';
     }
   }
 
   // Bouton install dans la modale
-  document.getElementById(‘about-install-btn’)?.addEventListener(‘click’, async () => {
+  document.getElementById('about-install-btn')?.addEventListener('click', async () => {
     if (_installPrompt) {
       const result = await _installPrompt.prompt();
-      if (result?.outcome === ‘accepted’) {
+      if (result?.outcome === 'accepted') {
         _installPrompt = null;
         closeAbout();
       }
