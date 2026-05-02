@@ -647,6 +647,64 @@
     </div>
   </div>
 
+  <!-- ═══════════════════════════════════════════
+       CONTENU STATIQUE — indexation Google
+       Masqué visuellement, lisible par les moteurs
+  ═══════════════════════════════════════════ -->
+  <noscript>
+    <div style="max-width:700px;margin:40px auto;padding:20px;font-family:sans-serif;color:#1e1c18">
+      <h1>PrionsEnLigne — Agenda des prières du jour</h1>
+      <p>PrionsEnLigne réunit les offices du bréviaire catholique, les messes en direct, le chapelet numérique et le calendrier liturgique en un seul endroit, gratuitement et sans publicité.</p>
+      <h2>Offices proposés chaque jour</h2>
+      <ul>
+        <li><strong>Laudes</strong> — prière du matin, diffusée sur Radio Maria et Radio Notre-Dame</li>
+        <li><strong>Sainte Messe</strong> — en direct depuis Radio Maria, Radio Notre-Dame, KTO, Lourdes, Vatican News, Notre-Dame de Paris</li>
+        <li><strong>Chapelet</strong> — guidé selon les mystères du jour, en 6 langues</li>
+        <li><strong>Vêpres</strong> — prière du soir</li>
+        <li><strong>Complies</strong> — prière de la nuit</li>
+      </ul>
+      <h2>Sources</h2>
+      <p>Radio Maria France, Radio Notre-Dame, RCF, Radio Espérance, Radio Fidélité, KTO Télévision, Sanctuaire de Lourdes, Vatican News, Notre-Dame de Paris, Sanctuaire d'Ars.</p>
+      <h2>Textes liturgiques</h2>
+      <p>Les textes officiels (Laudes, Vêpres, Complies, Messes) sont fournis par l'AELF — Association Épiscopale Liturgique Francophone.</p>
+      <p><a href="https://prionsenligne.fr/">Retour à l'accueil</a></p>
+    </div>
+  </noscript>
+
+  <!-- Données structurées JSON-LD — Google Rich Results -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "PrionsEnLigne",
+    "url": "https://prionsenligne.fr/agenda",
+    "description": "Agenda liturgique catholique : Laudes, Messe, Chapelet, Vêpres et Complies chaque jour en direct depuis les radios et chaînes catholiques françaises.",
+    "applicationCategory": "LifestyleApplication",
+    "operatingSystem": "Web",
+    "inLanguage": "fr",
+    "isAccessibleForFree": true,
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "EUR"
+    },
+    "provider": {
+      "@type": "Organization",
+      "name": "PrionsEnLigne",
+      "url": "https://prionsenligne.fr"
+    },
+    "featureList": [
+      "Laudes en direct",
+      "Messe catholique en direct",
+      "Chapelet numérique guidé",
+      "Vêpres",
+      "Complies",
+      "Calendrier liturgique des saints",
+      "Textes de l'AELF"
+    ]
+  }
+  </script>
+
   <script src="js/app.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/auth.js"></script>

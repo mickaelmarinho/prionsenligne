@@ -670,8 +670,9 @@ function openBreviary(prayerKey) {
     messe:    'messes',
     vepres:   'vepres',
     complies: 'complies',
-    matin:    null,
-    chapelet: null,
+    soiree:   'vepres',    // Prière du soir → endpoint vêpres AELF
+    matin:    'laudes',    // Prière du matin → endpoint laudes AELF
+    chapelet: null,        // Pas d'endpoint AELF pour le chapelet
   };
 
   const aelfOffice = aelfMap[prayerKey];
