@@ -768,13 +768,70 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
 .tl-chat-btn:hover { background: rgba(201,168,76,.15); border-color: var(--gold); color: var(--navy); }
 .tl-chat-btn i { font-size: 11px; }
 
+/* Wrapper chat : bouton + minuteur + barre */
+.tl-chat-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+}
+
+/* Zone minuteur + barre */
+.tl-chat-time-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+  width: 100%;
+}
+
+/* Texte countdown */
+.tl-chat-timer {
+  font-size: 10px;
+  white-space: nowrap;
+  color: var(--text-soft);
+  min-height: 13px;
+  line-height: 1.2;
+}
+.tl-chat-timer--open {
+  color: var(--gold);
+  font-weight: 600;
+}
+.tl-chat-timer--soon {
+  color: var(--text-soft);
+}
+
+/* Barre de progression fine */
+.tl-chat-bar {
+  width: 100%;
+  height: 3px;
+  background: var(--border-mid);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.tl-chat-bar-fill {
+  height: 100%;
+  background: var(--gold);
+  border-radius: 2px;
+  width: 0%;
+  transition: width 60s linear; /* s'aligne sur l'intervalle de 1 min */
+}
+
+/* Bouton ouvert : bordure dorée + légère teinte */
+.tl-chat-btn:not(.inactive) {
+  background: rgba(201,168,76,.08);
+  border-color: var(--gold);
+  color: var(--navy);
+  box-shadow: 0 0 0 2px rgba(201,168,76,.15);
+}
+
 /* État discret hors fenêtre de 30 min */
 .tl-chat-btn.inactive {
   background: transparent;
   border-color: var(--border-mid);
   color: var(--text-soft);
   opacity: .55;
-  pointer-events: none; /* pas cliquable hors fenêtre */
+  pointer-events: none;
 }
 
 /* Bandeau teaser "Créez un compte pour accéder au chat" */

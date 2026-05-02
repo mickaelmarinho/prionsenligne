@@ -1904,10 +1904,16 @@ function initTodayTimeline() {
     // Identifiant unique pour cet office (type + heure)
     const officeId   = slot.type + '_' + entry.t.replace(':', '');
     const officeName = slot.label + ' — ' + entry.tl;
-    const chatHtml   = `<button class="tl-chat-btn" data-action="chat"
-        data-office-id="${officeId}" data-office-name="${officeName}">
-        <i class="fa-solid fa-dove"></i> Intentions
-      </button>`;
+    const chatHtml   = `<div class="tl-chat-wrap">
+        <button class="tl-chat-btn" data-action="chat"
+          data-office-id="${officeId}" data-office-name="${officeName}">
+          <i class="fa-solid fa-dove"></i> Intentions
+        </button>
+        <div class="tl-chat-time-info">
+          <span class="tl-chat-timer"></span>
+          <div class="tl-chat-bar"><div class="tl-chat-bar-fill"></div></div>
+        </div>
+      </div>`;
 
     const art = document.createElement('article');
     art.className        = 'tl-item';
@@ -2026,13 +2032,51 @@ function initBadges() {
       badgeEl.textContent = label;
       badgeEl.className   = `tl-badge ${cls}`;
 
-      // ── Bouton chat : toujours visible, mais discret hors fenêtre ──
-      const chatBtn = item.querySelector('.tl-chat-btn');
+      // ── Bouton chat : minuteur + barre de progression ──
+      const chatBtn      = item.querySelector('.tl-chat-btn');
+      const chatTimer    = item.querySelector('.tl-chat-timer');
+      const chatBarFill  = item.querySelector('.tl-chat-bar-fill');
+      const chatBar      = item.querySelector('.tl-chat-bar');
+
       if (chatBtn) {
-        const chatActive = nowMin >= (startMin - 30) && nowMin <= (endMin + 30);
+        const winStart   = startMin - 30;
+        const winEnd     = endMin + 30;
+        const winDur     = winEnd - winStart;
+        const chatActive = nowMin >= winStart && nowMin <= winEnd;
+
         chatBtn.classList.toggle('inactive', !chatActive);
-        // Rendre cliquable uniquement dans la fenêtre
         chatBtn.style.pointerEvents = chatActive ? '' : 'none';
+
+        if (chatActive) {
+          // Fenêtre ouverte — compte à rebours + barre qui avance
+          const remaining = winEnd - nowMin;
+          const pct       = Math.min(100, Math.round((nowMin - winStart) / winDur * 100));
+
+          if (chatTimer) {
+            chatTimer.textContent = remaining <= 1
+              ? 'Ferme dans 1 min'
+              : `Ferme dans ${remaining} min`;
+            chatTimer.className = 'tl-chat-timer tl-chat-timer--open';
+          }
+          if (chatBar)     chatBar.style.display     = '';
+          if (chatBarFill) chatBarFill.style.width   = pct + '%';
+
+        } else if (nowMin < winStart) {
+          // Fenêtre pas encore ouverte
+          const minutesToOpen = winStart - nowMin;
+          if (chatTimer) {
+            chatTimer.textContent = minutesToOpen <= 90
+              ? `Ouvre dans ${minutesToOpen} min`
+              : '';
+            chatTimer.className = 'tl-chat-timer tl-chat-timer--soon';
+          }
+          if (chatBar) chatBar.style.display = 'none';
+
+        } else {
+          // Fenêtre fermée
+          if (chatTimer) { chatTimer.textContent = ''; chatTimer.className = 'tl-chat-timer'; }
+          if (chatBar)   chatBar.style.display = 'none';
+        }
       }
     });
   }
