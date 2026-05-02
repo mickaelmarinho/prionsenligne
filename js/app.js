@@ -697,72 +697,192 @@ function openBreviary(prayerKey) {
 }
 
 function renderAelfData(data, prayerKey, bodyEl) {
+  try {
+    let html = '';
+
+    if (prayerKey === 'messe') {
+      // Les messes AELF sont un tableau
+      const messes = data.messes;
+      if (!messes || !Array.isArray(messes) || messes.length === 0) {
+        renderFallback(prayerKey, bodyEl); return;
+      }
+      html = renderMesseContent(messes);
+    } else {
+      // Laudes, vêpres, complies (et leurs alias matin / soiree)
+      const key = prayerKey === 'soiree' ? 'vepres'
+                : prayerKey === 'matin'  ? 'laudes'
+                : prayerKey;
+      const office = data[key];
+      if (!office) { renderFallback(prayerKey, bodyEl); return; }
+      html = renderOfficeContent(office);
+    }
+
+    if (!html.trim()) { renderFallback(prayerKey, bodyEl); return; }
+
+    html += `<p class="brev-aelf-credit">Textes fournis par <a href="https://www.aelf.org" target="_blank" rel="noopener">l'AELF</a><br><small>Association Épiscopale Liturgique Francophone</small></p>`;
+    bodyEl.innerHTML = html;
+  } catch(e) {
+    console.error('Erreur rendu AELF', e);
+    renderFallback(prayerKey, bodyEl);
+  }
+}
+
+// ── Office des heures (laudes, vêpres, complies) ─────────────────────────────
+function renderOfficeContent(office) {
   let html = '';
 
-  const office = data.laudes || data.messes || data.vepres || data.complies || null;
-
-  if (!office || !office.informations) {
-    renderFallback(prayerKey, bodyEl);
-    return;
+  // En-tête liturgique
+  const info = office.informations || {};
+  if (info.jour_liturgique_nom || info.couleur) {
+    html += `<div class="brev-day-header">`;
+    if (info.jour_liturgique_nom) {
+      html += `<span class="brev-day-name">${info.jour_liturgique_nom}</span>`;
+    }
+    if (info.couleur) {
+      html += `<span class="brev-color-badge brev-color-${info.couleur}">${info.couleur}</span>`;
+    }
+    html += `</div>`;
   }
 
-  const info = office.informations;
-  if (info.jour_liturgique_nom) {
-    html += `<div class="brev-section">
-      <div class="brev-section-title">Aujourd'hui</div>
-      <div class="brev-text"><p>${info.jour_liturgique_nom}</p></div>
-    </div>`;
-  }
+  // Psaumes, hymne, cantiques, benedictus, magnificat…
+  const psaumes = office.psaumes || [];
+  psaumes.forEach(ps => {
+    const type    = (ps.type || '').toLowerCase();
+    const isHymne = type === 'hymne';
+    const titre   = ps.titre || '';
 
-  const lectures = office.messes || office.laudes || office.vepres || office.complies || [];
-  const sections = Array.isArray(lectures) ? lectures : Object.values(lectures);
+    html += `<div class="brev-section${isHymne ? ' brev-section--hymne' : ''}">`;
+    if (titre) html += `<div class="brev-section-title">${titre}</div>`;
+    if (ps.refs) html += `<span class="brev-ref">${ps.refs}</span>`;
 
-  sections.forEach(section => {
-    if (!section || typeof section !== 'object') return;
-    const titre = section.titre || section.type || '';
-    const texte = section.texte || '';
-    const ref   = section.ref   || '';
+    // Antienne (avant)
+    if (ps.antienne) {
+      html += `<div class="brev-antienne"><em class="brev-antienne-label">Ant.</em> ${ps.antienne}</div>`;
+    }
 
-    if (!texte) return;
+    // Versets du psaume
+    if (ps.versets && ps.versets.length) {
+      html += `<div class="brev-text">`;
+      ps.versets.forEach(v => {
+        const vClass = (v.type === 'gloria') ? ' class="brev-gloria"' : '';
+        html += `<p${vClass}>${(v.verset || '').replace(/\n/g, '<br>')}</p>`;
+      });
+      html += `</div>`;
+    }
 
-    html += `<div class="brev-section">
-      ${titre ? `<div class="brev-section-title">${titre}</div>` : ''}
-      <div class="brev-text">${texte.replace(/\n/g, '<br>')}</div>
-      ${ref ? `<span class="brev-ref">${ref}</span>` : ''}
-    </div>`;
+    // Antienne (répétition après)
+    if (ps.antienne) {
+      html += `<div class="brev-antienne brev-antienne--after"><em class="brev-antienne-label">Ant.</em> ${ps.antienne}</div>`;
+    }
+
+    html += `</div>`;
   });
 
-  if (!html) {
-    renderFallback(prayerKey, bodyEl);
-    return;
+  // Lectures courtes / longues
+  const lectures = office.lectures || [];
+  lectures.forEach(lect => {
+    html += `<div class="brev-section">`;
+    if (lect.titre)   html += `<div class="brev-section-title">${lect.titre}</div>`;
+    if (lect.ref)     html += `<span class="brev-ref">${lect.ref}</span>`;
+    if (lect.contenu) html += `<div class="brev-text">${(lect.contenu).replace(/\n/g, '<br>')}</div>`;
+    html += `</div>`;
+  });
+
+  // Répons
+  const repons = office.repons || [];
+  repons.forEach(rep => {
+    if (rep.contenu) {
+      html += `<div class="brev-section brev-section--repons">
+        <div class="brev-section-title">Répons</div>
+        <div class="brev-text brev-repons">${rep.contenu.replace(/\n/g, '<br>')}</div>
+      </div>`;
+    }
+  });
+
+  // Oraison finale
+  if (office.oraison && office.oraison.contenu) {
+    html += `<div class="brev-section brev-section--oraison">
+      <div class="brev-section-title">Oraison</div>
+      <div class="brev-text brev-oraison">${office.oraison.contenu.replace(/\n/g, '<br>')}</div>
+    </div>`;
   }
 
-  html += `<p class="brev-aelf-link">Textes fournis par <a href="https://www.aelf.org" target="_blank" rel="noopener">l'AELF</a> — Association Épiscopale Liturgique Francophone</p>`;
-  bodyEl.innerHTML = html;
+  return html;
+}
+
+// ── Messe ─────────────────────────────────────────────────────────────────────
+function renderMesseContent(messes) {
+  let html = '';
+
+  messes.forEach((messe, idx) => {
+    const info = messe.informations || {};
+
+    // En-tête
+    const nomMesse = messe.nom || info.jour_liturgique_nom || '';
+    if (nomMesse || info.couleur) {
+      html += `<div class="brev-day-header">`;
+      if (nomMesse) html += `<span class="brev-day-name">${nomMesse}</span>`;
+      if (info.couleur) html += `<span class="brev-color-badge brev-color-${info.couleur}">${info.couleur}</span>`;
+      html += `</div>`;
+    }
+
+    const lectures = messe.lectures || [];
+    lectures.forEach(lect => {
+      const type       = (lect.type || '').toLowerCase();
+      const isEvangile = type === 'evangile';
+      const isPsaume   = type === 'psaume';
+      const isAlleluia = type === 'verset_alleluia';
+
+      let secClass = 'brev-section';
+      if (isEvangile) secClass += ' brev-section--evangile';
+      if (isPsaume)   secClass += ' brev-section--psaume';
+
+      html += `<div class="${secClass}">`;
+      if (lect.titre) html += `<div class="brev-section-title">${lect.titre}</div>`;
+      if (lect.ref)   html += `<span class="brev-ref">${lect.ref}</span>`;
+      if (lect.contenu) {
+        if (isAlleluia) {
+          html += `<div class="brev-text brev-alleluia">${lect.contenu.replace(/\n/g, '<br>')}</div>`;
+        } else if (isEvangile) {
+          html += `<div class="brev-text brev-evangile">${lect.contenu.replace(/\n/g, '<br>')}</div>`;
+        } else {
+          html += `<div class="brev-text">${lect.contenu.replace(/\n/g, '<br>')}</div>`;
+        }
+      }
+      html += `</div>`;
+    });
+
+    if (idx < messes.length - 1) {
+      html += `<hr class="brev-separator">`;
+    }
+  });
+
+  return html;
 }
 
 function renderFallback(prayerKey, bodyEl) {
-  const data = FALLBACK_TEXTS[prayerKey];
-  if (!data) { bodyEl.innerHTML = '<p style="padding:20px;color:#7a756e;">Textes non disponibles.</p>'; return; }
+  const names = {
+    laudes:   'Laudes — Prière du matin',
+    matin:    'Prière du matin',
+    messe:    'Messe du jour',
+    vepres:   'Vêpres — Prière du soir',
+    soiree:   'Prière du soir',
+    complies: 'Complies — Prière de la nuit',
+    chapelet: 'Le Saint Rosaire',
+  };
+  const nom = names[prayerKey] || 'Prière';
 
-  let html = `<div class="brev-section">
-    <div class="brev-section-title">${data.title}</div>
-  </div>`;
-
-  data.sections.forEach(s => {
-    html += `<div class="brev-section">
-      <div class="brev-section-title">${s.heading}</div>
-      <div class="brev-text"><p>${s.text.replace(/\n/g, '<br>')}</p></div>
-      ${s.ref ? `<span class="brev-ref">${s.ref}</span>` : ''}
-    </div>`;
-  });
-
-  html += `<p class="brev-aelf-link">
-    Texte d'exemple. Les textes officiels du jour seront disponibles<br>
-    après autorisation de <a href="https://www.aelf.org/abonnement" target="_blank" rel="noopener">l'AELF</a>.
-  </p>`;
-
-  bodyEl.innerHTML = html;
+  bodyEl.innerHTML = `
+    <div class="brev-section">
+      <div class="brev-section-title">${nom}</div>
+      <div class="brev-text">
+        <p>Les textes du jour sont temporairement indisponibles.</p>
+        <p>Vous pouvez les retrouver directement sur :</p>
+        <p><a href="https://www.aelf.org" target="_blank" rel="noopener"
+              style="color:var(--gold);font-weight:600;">www.aelf.org</a></p>
+      </div>
+    </div>
+  `;
 }
 
 function closeBreviary() {

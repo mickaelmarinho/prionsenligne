@@ -1408,6 +1408,136 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
 .brev-aelf-link a { color: var(--gold); text-decoration: none; }
 .brev-aelf-link a:hover { text-decoration: underline; }
 
+/* ── Nouvelles classes AELF ─────────────────────────────────────────── */
+
+/* En-tête du jour liturgique */
+.brev-day-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  flex-wrap: wrap;
+}
+.brev-day-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px;
+  font-style: italic;
+  color: var(--text);
+  flex: 1;
+  line-height: 1.4;
+}
+
+/* Badge couleur liturgique */
+.brev-color-badge {
+  font-size: 11px;
+  font-family: 'Outfit', sans-serif;
+  text-transform: capitalize;
+  letter-spacing: 0.06em;
+  padding: 2px 9px;
+  border-radius: 20px;
+  background: rgba(255,255,255,0.12);
+  color: var(--text-soft);
+  white-space: nowrap;
+}
+.brev-color-vert   { background: rgba(76,175,80,0.25);   color: #81c784; }
+.brev-color-rouge  { background: rgba(229,57,53,0.25);   color: #ef9a9a; }
+.brev-color-blanc  { background: rgba(255,255,255,0.18); color: #e0e0e0; }
+.brev-color-violet { background: rgba(156,39,176,0.25);  color: #ce93d8; }
+.brev-color-rose   { background: rgba(233,30,99,0.22);   color: #f48fb1; }
+.brev-color-or     { background: rgba(255,193,7,0.22);   color: var(--gold); }
+
+/* Antienne */
+.brev-antienne {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 15px;
+  font-style: italic;
+  color: var(--gold);
+  background: rgba(197,160,82,0.08);
+  border-left: 3px solid var(--gold);
+  padding: 8px 14px;
+  margin: 10px 0;
+  border-radius: 0 6px 6px 0;
+  line-height: 1.5;
+}
+.brev-antienne--after {
+  margin-top: 12px;
+  opacity: 0.85;
+}
+.brev-antienne-label {
+  font-style: normal;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-right: 6px;
+  color: var(--gold);
+}
+
+/* Gloria Patri */
+.brev-gloria {
+  font-style: italic;
+  color: var(--text-soft);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding-top: 8px;
+  margin-top: 8px;
+}
+
+/* Hymne */
+.brev-section--hymne .brev-text { font-style: italic; }
+
+/* Répons */
+.brev-repons { font-style: italic; color: var(--text-soft); }
+
+/* Oraison */
+.brev-oraison {
+  font-style: italic;
+  color: var(--text);
+  border-top: 1px solid rgba(255,255,255,0.1);
+  padding-top: 12px;
+}
+.brev-section--oraison .brev-section-title { color: var(--gold); }
+
+/* Évangile */
+.brev-section--evangile {
+  background: rgba(197,160,82,0.06);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.brev-evangile { font-size: 16.5px; }
+.brev-section--evangile .brev-section-title { color: var(--gold); }
+
+/* Alleluia */
+.brev-alleluia {
+  text-align: center;
+  font-style: italic;
+  color: var(--gold);
+  font-size: 15px;
+  letter-spacing: 0.04em;
+}
+
+/* Séparateur entre plusieurs messes */
+.brev-separator {
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.12);
+  margin: 28px 0;
+}
+
+/* Crédit AELF en bas du panneau */
+.brev-aelf-credit {
+  display: block;
+  text-align: center;
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  font-size: 12px;
+  color: var(--text-soft);
+  line-height: 1.7;
+}
+.brev-aelf-credit a { color: var(--gold); text-decoration: none; }
+.brev-aelf-credit a:hover { text-decoration: underline; }
+
 
 /* ══════════════════════════════════════════════
    LECTEUR RADIO
