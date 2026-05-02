@@ -682,7 +682,7 @@ function openBreviary(prayerKey) {
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, '0');
     const j = String(d.getDate()).padStart(2, '0');
-    const url = `https://api.aelf.org/v1/${aelfOffice}/${y}/${m}/${j}/france`;
+    const url = `/api/aelf?office=${aelfOffice}&y=${y}&m=${m}&d=${j}`;
 
     fetch(url)
       .then(r => {
