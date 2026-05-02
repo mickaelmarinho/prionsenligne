@@ -1948,7 +1948,10 @@ function initTodayTimeline() {
         Créez un compte gratuit pour partager vos intentions avec la communauté lors de chaque office.
       </span>
       <button class="tl-chat-teaser-btn" id="tl-teaser-cta">Rejoindre</button>`;
-    container.after(div);
+    // Insérer APRÈS .today-main (pas après #timeline qui est dans un flex row)
+    const todayMain = container.closest('.today-main');
+    if (todayMain) todayMain.after(div);
+    else container.after(div);
 
     div.querySelector('#tl-teaser-cta')?.addEventListener('click', () => {
       document.getElementById('header-btn-signup')?.click();

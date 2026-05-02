@@ -764,11 +764,12 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin: 4px 16px 12px;
-  padding: 11px 14px;
+  margin: 0 0 16px;
+  padding: 13px 18px;
   background: var(--navy);
   border-radius: var(--r-lg);
   color: rgba(245,240,232,.75);
+  width: 100%;
   font-size: 12.5px;
   line-height: 1.45;
   animation: fadeIn .3s ease;
