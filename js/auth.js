@@ -202,6 +202,8 @@ function translateSupabaseError(err) {
     return 'Le mot de passe doit comporter au moins 6 caractères.';
   if (m.includes('rate limit') || m.includes('too many'))
     return 'Trop de tentatives. Réessayez dans quelques minutes.';
+  if (m.includes('sending confirmation') || m.includes('sending email') || m.includes('email') && m.includes('send'))
+    return 'Impossible d\'envoyer l\'email de confirmation. Réessayez dans quelques instants ou contactez-nous.';
   if (m.includes('signup') && (m.includes('disabled') || m.includes('not allowed')))
     return 'Les inscriptions sont temporairement désactivées.';
   if (m.includes('email') && m.includes('invalid'))

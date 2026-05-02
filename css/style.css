@@ -48,6 +48,7 @@ body {
   background: var(--cream);
   padding-bottom: 80px;
   font-size: 15px; /* base accessible pour personnes âgées */
+  overflow-x: hidden; /* empêche tout débordement horizontal */
 }
 
 /* Styles de focus pour la navigation clavier */
@@ -85,7 +86,12 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
 }
 
 /* Logo */
-.logo { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.logo {
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+  text-decoration: none; /* quand utilisé comme <a> */
+  cursor: pointer;
+}
+.logo:hover .logo-img { opacity: 0.8; transition: opacity .18s; }
 
 .logo-cross {
   width: 20px;
@@ -2160,11 +2166,14 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
   .today-main { flex-direction: column; gap: 0; }
   /* Filtres en rangée scrollable horizontalement */
   .prayer-filters {
+    width: 100%;          /* contraint au parent — évite le débordement */
+    max-width: 100%;
     overflow-x: auto;
     flex-wrap: nowrap;
     padding-bottom: 4px;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    flex-shrink: 1;       /* autorise le rétrécissement dans la colonne */
   }
   .prayer-filters::-webkit-scrollbar { display: none; }
   .pf { flex-shrink: 0; }

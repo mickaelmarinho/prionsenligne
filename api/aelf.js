@@ -6,9 +6,9 @@
   Retourne le JSON de https://api.aelf.org/v1/{office}/{y}/{m}/{d}/france
 */
 
-import https from 'https';
+const https = require('https');
 
-export default function handler(req, res) {
+module.exports = function handler(req, res) {
   const origin = req.headers.origin || '*';
   res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -38,12 +38,10 @@ export default function handler(req, res) {
 
   https.get(url, options, (apiRes) => {
     let body = '';
-
     apiRes.on('data', chunk => { body += chunk; });
-
     apiRes.on('end', () => {
       if (apiRes.statusCode !== 200) {
-        res.status(apiRes.statusCode).json({ error: `AELF API: ${apiRes.statusCode}` });
+        res.status(apiRes.statusCode).json({ error: `AELF: ${apiRes.statusCode}` });
         return;
       }
       try {
@@ -57,4 +55,4 @@ export default function handler(req, res) {
     console.error('Erreur proxy AELF:', err.message);
     res.status(502).json({ error: 'Impossible de contacter l\'API AELF.' });
   });
-}
+};
