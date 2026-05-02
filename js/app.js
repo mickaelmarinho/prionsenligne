@@ -685,20 +685,19 @@ function openBreviary(prayerKey) {
     const url = `/api/aelf?office=${aelfOffice}&y=${y}&m=${m}&d=${j}`;
 
     fetch(url)
-      .then(r => {
-        if (!r.ok) throw new Error(`HTTP ${r.status} — ${url}`);
-        return r.json();
-      })
-      .then(data => {
-        console.log('[AELF] réponse reçue pour', prayerKey, Object.keys(data));
+      .then(async r => {
+        if (r.status === 404) { renderFallback(prayerKey, bodyEl, 'unavailable'); return; }
+        if (!r.ok) { renderFallback(prayerKey, bodyEl, 'error'); return; }
+        const data = await r.json();
+        console.log('[AELF] reçu pour', prayerKey, Object.keys(data));
         renderAelfData(data, prayerKey, bodyEl);
       })
       .catch(err => {
-        console.error('[AELF] erreur fetch:', err.message);
-        renderFallback(prayerKey, bodyEl);
+        console.error('[AELF] erreur réseau:', err.message);
+        renderFallback(prayerKey, bodyEl, 'error');
       });
   } else {
-    setTimeout(() => renderFallback(prayerKey, bodyEl), 600);
+    setTimeout(() => renderFallback(prayerKey, bodyEl, 'none'), 600);
   }
 }
 
@@ -876,7 +875,7 @@ function renderMesseContent(messes) {
   return html;
 }
 
-function renderFallback(prayerKey, bodyEl) {
+function renderFallback(prayerKey, bodyEl, reason) {
   const names = {
     laudes:   'Laudes — Prière du matin',
     matin:    'Prière du matin',
@@ -888,14 +887,32 @@ function renderFallback(prayerKey, bodyEl) {
   };
   const nom = names[prayerKey] || 'Prière';
 
+  let icon, msg;
+  if (reason === 'unavailable') {
+    // AELF ne publie pas cet office pour aujourd'hui (404)
+    icon = '<i class="fa-solid fa-moon" style="color:var(--gold);font-size:28px;margin-bottom:12px;display:block"></i>';
+    msg  = `<p>Les textes de cet office ne sont pas publiés par l'AELF pour aujourd'hui.</p>
+            <p>Vous pouvez prier les textes habituels des Complies directement sur :</p>`;
+  } else if (reason === 'error') {
+    icon = '<i class="fa-solid fa-wifi" style="color:var(--text-soft);font-size:28px;margin-bottom:12px;display:block"></i>';
+    msg  = `<p>Les textes du jour sont temporairement indisponibles.</p>
+            <p>Vérifiez votre connexion ou retrouvez-les sur :</p>`;
+  } else {
+    // chapelet ou office sans endpoint AELF
+    icon = '';
+    msg  = `<p>Les textes de cette prière sont disponibles sur :</p>`;
+  }
+
   bodyEl.innerHTML = `
-    <div class="brev-section">
+    <div class="brev-section" style="text-align:center;padding-top:16px;">
+      ${icon}
       <div class="brev-section-title">${nom}</div>
-      <div class="brev-text">
-        <p>Les textes du jour sont temporairement indisponibles.</p>
-        <p>Vous pouvez les retrouver directement sur :</p>
-        <p><a href="https://www.aelf.org" target="_blank" rel="noopener"
-              style="color:var(--gold);font-weight:600;">www.aelf.org</a></p>
+      <div class="brev-text" style="text-align:left;margin-top:12px;">
+        ${msg}
+        <p style="text-align:center;margin-top:16px;">
+          <a href="https://www.aelf.org" target="_blank" rel="noopener"
+             style="color:var(--gold);font-weight:600;font-size:17px;">www.aelf.org</a>
+        </p>
       </div>
     </div>
   `;
