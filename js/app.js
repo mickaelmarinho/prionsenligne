@@ -960,36 +960,38 @@ function initHamburger() {
     }
   });
 
-  // ── Ajouter à l'écran d'accueil (Android/Desktop)
-  const hmInstall = document.getElementById('hm-install');
+  // ── Ajouter à l’écran d’accueil — toujours visible dans le menu ──
+  const hmInstall = document.getElementById(‘hm-install’);
   if (hmInstall) {
-    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
-    if (isIOS) {
-      // iOS : toujours montrer l'option (instructions manuelles)
-      hmInstall.style.display = '';
-      hmInstall.addEventListener('click', () => {
-        closeMenu();
-        // Ouvre la modale À propos avec la section install visible
-        document.getElementById('about-overlay')?.classList.remove('hidden');
-        const modal = document.getElementById('about-modal');
-        modal?.classList.remove('hidden');
-        const wrap = document.getElementById('about-install-wrap');
-        if (wrap) wrap.style.display = '';
-        const note = document.getElementById('about-install-note');
-        if (note) note.textContent = 'Sur iPhone/iPad : appuyez sur 📤 Partager puis « Sur l’écran d’accueil ».';
-      });
-    } else {
-      // Android/Desktop : montré par beforeinstallprompt, déclenche directement le prompt
-      hmInstall.addEventListener('click', async () => {
-        closeMenu();
-        if (_installPrompt) {
-          await _installPrompt.prompt();
+    // Toujours montrer l’entrée (on la cache uniquement après installation confirmée)
+    hmInstall.style.display = ‘’;
+
+    hmInstall.addEventListener(‘click’, async () => {
+      closeMenu();
+      const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+
+      if (_installPrompt) {
+        // Android / Chrome desktop : prompt natif disponible
+        const res = await _installPrompt.prompt();
+        if (res?.outcome === ‘accepted’) {
           _installPrompt = null;
-          hmInstall.style.display = 'none';
+          hmInstall.style.display = ‘none’;
         }
-      });
-      window.addEventListener('appinstalled', () => { hmInstall.style.display = 'none'; });
-    }
+      } else {
+        // iOS ou prompt déjà utilisé → ouvrir la modale À propos avec instructions
+        if (window._openAbout) window._openAbout();
+        const wrap = document.getElementById(‘about-install-wrap’);
+        if (wrap) wrap.style.display = ‘’;
+        const note = document.getElementById(‘about-install-note’);
+        if (note) {
+          note.textContent = isIOS
+            ? ‘Sur iPhone/iPad : appuyez sur 📤 Partager puis « Sur l\’écran d\’accueil ».’
+            : ‘Ouvrez ce site dans Chrome ou Edge, puis utilisez le menu du navigateur → « Installer ».’;
+        }
+      }
+    });
+
+    window.addEventListener(‘appinstalled’, () => { hmInstall.style.display = ‘none’; });
   }
 }
 
@@ -1925,6 +1927,38 @@ function initTodayTimeline() {
       </div>`;
     container.appendChild(art);
   });
+
+  // ── Teaser chat pour les visiteurs non connectés ──────────────
+  // Affiché sous la timeline si l'utilisateur n'est pas encore connecté.
+  // Disparaît automatiquement à la connexion.
+  function renderChatTeaser() {
+    const existing = document.getElementById('tl-chat-teaser');
+    if (window._pelUser) {
+      existing?.remove();
+      return;
+    }
+    if (existing) return; // déjà présent
+    const div = document.createElement('div');
+    div.id = 'tl-chat-teaser';
+    div.className = 'tl-chat-teaser';
+    div.innerHTML = `
+      <i class="fa-solid fa-dove"></i>
+      <span class="tl-chat-teaser-text">
+        <strong>Intentions de prière</strong><br>
+        Créez un compte gratuit pour partager vos intentions avec la communauté lors de chaque office.
+      </span>
+      <button class="tl-chat-teaser-btn" id="tl-teaser-cta">Rejoindre</button>`;
+    container.after(div);
+
+    div.querySelector('#tl-teaser-cta')?.addEventListener('click', () => {
+      document.getElementById('header-btn-signup')?.click();
+    });
+  }
+
+  renderChatTeaser();
+
+  // Re-évaluer quand la session change (connexion / déconnexion)
+  window.addEventListener('pel-auth-change', renderChatTeaser);
 }
 
 
@@ -1988,11 +2022,13 @@ function initBadges() {
       badgeEl.textContent = label;
       badgeEl.className   = `tl-badge ${cls}`;
 
-      // ── Bouton chat : visible 30 min avant → 30 min après la fin ──
+      // ── Bouton chat : toujours visible, mais discret hors fenêtre ──
       const chatBtn = item.querySelector('.tl-chat-btn');
       if (chatBtn) {
         const chatActive = nowMin >= (startMin - 30) && nowMin <= (endMin + 30);
-        chatBtn.style.display = chatActive ? '' : 'none';
+        chatBtn.classList.toggle('inactive', !chatActive);
+        // Rendre cliquable uniquement dans la fenêtre
+        chatBtn.style.pointerEvents = chatActive ? '' : 'none';
       }
     });
   }
@@ -2287,24 +2323,13 @@ let _installPrompt = null;
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
   _installPrompt = e;
-
-  // Affiche le bouton dans le menu burger
-  const hmInstall = document.getElementById('hm-install');
-  if (hmInstall) hmInstall.style.display = '';
-
-  // Affiche le bloc install dans la modale À propos
-  const wrap = document.getElementById('about-install-wrap');
-  if (wrap) wrap.style.display = '';
-  const note = document.getElementById('about-install-note');
-  if (note) note.textContent = 'Installez l\'application pour un accès rapide depuis votre écran d\'accueil.';
 });
 
 window.addEventListener('appinstalled', () => {
   _installPrompt = null;
+  // Cache l'entrée install du hamburger après installation réussie
   const hmInstall = document.getElementById('hm-install');
   if (hmInstall) hmInstall.style.display = 'none';
-  const wrap = document.getElementById('about-install-wrap');
-  if (wrap) wrap.style.display = 'none';
 });
 
 function initAbout() {
@@ -2317,6 +2342,8 @@ function initAbout() {
     overlay?.classList.remove('hidden');
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+    // Met à jour dynamiquement le bloc install à chaque ouverture
+    _updateInstallBlock();
   }
 
   function closeAbout() {
@@ -2331,21 +2358,47 @@ function initAbout() {
     if (e.key === 'Escape') closeAbout();
   });
 
-  // Bouton install dans la modale
-  document.getElementById('about-install-btn')?.addEventListener('click', async () => {
+  // Met à jour le bloc install selon l’environnement
+  function _updateInstallBlock() {
+    const wrap = document.getElementById(‘about-install-wrap’);
+    const btn  = document.getElementById(‘about-install-btn’);
+    const note = document.getElementById(‘about-install-note’);
+    if (!wrap) return;
+
     const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
-    if (isIOS) {
-      const note = document.getElementById('about-install-note');
-      if (note) note.textContent = 'Sur iPhone/iPad : appuyez sur 📤 Partager puis « Sur l’écran d’accueil ».';
+    const isStandalone = window.matchMedia(‘(display-mode: standalone)’).matches
+                      || window.navigator.standalone === true;
+
+    if (isStandalone) {
+      // Déjà installé → masquer le bloc
+      wrap.style.display = ‘none’;
       return;
     }
+
+    wrap.style.display = ‘’;
+
+    if (isIOS) {
+      if (btn) btn.textContent = ‘📤 Comment installer’;
+      if (note) note.textContent = ‘Appuyez sur le bouton Partager en bas de Safari, puis choisissez « Sur l\’écran d\’accueil ».’;
+    } else if (_installPrompt) {
+      if (btn) { btn.innerHTML = ‘<i class="fa-solid fa-download"></i> Ajouter à l\’écran d\’accueil’; }
+      if (note) note.textContent = ‘Accès rapide depuis votre téléphone ou bureau, sans passer par le navigateur.’;
+    } else {
+      if (btn) btn.innerHTML = ‘<i class="fa-solid fa-download"></i> Installer l\’application’;
+      if (note) note.textContent = ‘Dans Chrome ou Edge : menu ⋮ → « Installer l\’application » ou « Ajouter à l\’écran d\’accueil ».’;
+    }
+  }
+
+  // Bouton install dans la modale
+  document.getElementById(‘about-install-btn’)?.addEventListener(‘click’, async () => {
     if (_installPrompt) {
       const result = await _installPrompt.prompt();
-      if (result?.outcome === 'accepted') {
+      if (result?.outcome === ‘accepted’) {
         _installPrompt = null;
         closeAbout();
       }
     }
+    // iOS : le texte explicatif est déjà affiché par _updateInstallBlock
   });
 
   // Exposer openAbout globalement (utilisé par initHamburger)
