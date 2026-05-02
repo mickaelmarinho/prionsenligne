@@ -2335,6 +2335,56 @@ window.addEventListener('appinstalled', () => {
   if (hmInstall) hmInstall.style.display = 'none';
 });
 
+/* ────────────────────────────────────────────
+   BANNIÈRE INSTALL — bas de la vue Aujourd'hui
+   Apparaît quand beforeinstallprompt se déclenche (Android/Desktop)
+   ou immédiatement sur iOS (hors standalone).
+──────────────────────────────────────────────*/
+function initInstallBanner() {
+  const bar = document.getElementById('today-install-bar');
+  if (!bar) return;
+
+  // Déjà installé ? On ne montre rien.
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+    || window.navigator.standalone === true;
+  if (isStandalone) return;
+
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+
+  function showBar() {
+    bar.style.display = '';
+    bar.removeAttribute('aria-hidden');
+  }
+
+  // iOS : on affiche toujours (pas de beforeinstallprompt sur Safari)
+  if (isIOS) showBar();
+
+  // Android / Desktop Chrome / Edge / Opera : attend le prompt natif
+  window.addEventListener('beforeinstallprompt', () => showBar());
+
+  // Si le prompt a déjà été capturé avant l'init (peu probable mais sécurisé)
+  if (_installPrompt) showBar();
+
+  const btn = document.getElementById('tib-btn');
+  if (!btn) return;
+
+  btn.addEventListener('click', async () => {
+    if (_installPrompt) {
+      const res = await _installPrompt.prompt();
+      if (res?.outcome === 'accepted') {
+        _installPrompt = null;
+        bar.style.display = 'none';
+      }
+    } else {
+      // iOS ou fallback : ouvre la modale À propos avec instructions
+      if (window._openAbout) window._openAbout();
+    }
+  });
+
+  // Masquer si installé depuis un autre point d'entrée
+  window.addEventListener('appinstalled', () => { bar.style.display = 'none'; });
+}
+
 function initAbout() {
   const overlay = document.getElementById('about-overlay');
   const modal   = document.getElementById('about-modal');
@@ -2428,6 +2478,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initNextOffice();
   initChapelet();
   initChat();
+  initInstallBanner();
   initAbout();
   handleDeepLink();      // applique le filtre/onglet issu du hash URL (landing page)
 });

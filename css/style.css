@@ -797,6 +797,50 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
 }
 .tl-chat-teaser-btn:hover { background: #d4af5a; }
 
+/* ── Bannière install bas de Aujourd'hui ── */
+.today-install-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0 8px;
+  padding: 13px 16px;
+  background: var(--navy);
+  border-radius: var(--r-lg);
+  animation: fadeIn .35s ease;
+}
+.tib-icon { border-radius: 8px; flex-shrink: 0; }
+.tib-text {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.35;
+}
+.tib-text strong {
+  display: block;
+  font-size: .82rem;
+  color: var(--cream);
+  font-weight: 500;
+}
+.tib-text span {
+  font-size: .75rem;
+  color: rgba(245,240,232,.6);
+}
+.tib-btn {
+  flex-shrink: 0;
+  padding: 7px 15px;
+  background: var(--gold);
+  color: var(--navy);
+  border: none;
+  border-radius: 20px;
+  font-size: .8rem;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s, transform .1s;
+}
+.tib-btn:hover { background: #d4af5a; }
+.tib-btn:active { transform: scale(.96); }
+
 .chat-panel {
   position: fixed;
   top: 0; right: 0;
