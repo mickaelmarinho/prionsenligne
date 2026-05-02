@@ -727,6 +727,15 @@ function renderAelfData(data, prayerKey, bodyEl) {
   }
 }
 
+// ── Helper : rend le contenu AELF (HTML ou texte brut) ───────────────────────
+function aelfHtml(str) {
+  if (!str) return '';
+  // Si le contenu contient déjà des balises HTML, l'utiliser directement
+  if (/<[a-z][\s\S]*>/i.test(str)) return str;
+  // Sinon : double saut de ligne = nouveau paragraphe, simple saut = <br>
+  return str.split(/\n{2,}/).map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
+}
+
 // ── Office des heures (laudes, vêpres, complies) ─────────────────────────────
 function renderOfficeContent(office) {
   let html = '';
@@ -769,6 +778,7 @@ function renderOfficeContent(office) {
       });
       html += `</div>`;
     }
+    // NB : on garde .replace(\n) pour les versets (texte brut AELF)
 
     // Antienne (répétition après)
     if (ps.antienne) {
@@ -784,7 +794,7 @@ function renderOfficeContent(office) {
     html += `<div class="brev-section">`;
     if (lect.titre)   html += `<div class="brev-section-title">${lect.titre}</div>`;
     if (lect.ref)     html += `<span class="brev-ref">${lect.ref}</span>`;
-    if (lect.contenu) html += `<div class="brev-text">${(lect.contenu).replace(/\n/g, '<br>')}</div>`;
+    if (lect.contenu) html += `<div class="brev-text">${aelfHtml(lect.contenu)}</div>`;
     html += `</div>`;
   });
 
@@ -794,7 +804,7 @@ function renderOfficeContent(office) {
     if (rep.contenu) {
       html += `<div class="brev-section brev-section--repons">
         <div class="brev-section-title">Répons</div>
-        <div class="brev-text brev-repons">${rep.contenu.replace(/\n/g, '<br>')}</div>
+        <div class="brev-text brev-repons">${aelfHtml(rep.contenu)}</div>
       </div>`;
     }
   });
@@ -803,7 +813,7 @@ function renderOfficeContent(office) {
   if (office.oraison && office.oraison.contenu) {
     html += `<div class="brev-section brev-section--oraison">
       <div class="brev-section-title">Oraison</div>
-      <div class="brev-text brev-oraison">${office.oraison.contenu.replace(/\n/g, '<br>')}</div>
+      <div class="brev-text brev-oraison">${aelfHtml(office.oraison.contenu)}</div>
     </div>`;
   }
 
@@ -842,11 +852,11 @@ function renderMesseContent(messes) {
       if (lect.ref)   html += `<span class="brev-ref">${lect.ref}</span>`;
       if (lect.contenu) {
         if (isAlleluia) {
-          html += `<div class="brev-text brev-alleluia">${lect.contenu.replace(/\n/g, '<br>')}</div>`;
+          html += `<div class="brev-text brev-alleluia">${aelfHtml(lect.contenu)}</div>`;
         } else if (isEvangile) {
-          html += `<div class="brev-text brev-evangile">${lect.contenu.replace(/\n/g, '<br>')}</div>`;
+          html += `<div class="brev-text brev-evangile">${aelfHtml(lect.contenu)}</div>`;
         } else {
-          html += `<div class="brev-text">${lect.contenu.replace(/\n/g, '<br>')}</div>`;
+          html += `<div class="brev-text">${aelfHtml(lect.contenu)}</div>`;
         }
       }
       html += `</div>`;
@@ -2516,21 +2526,23 @@ function initInstallBanner() {
 
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
 
+  // Sur iOS, Apple bloque l'installation programmatique → pas de bannière ici.
+  // L'accès à l'option d'installation iOS reste disponible via le menu burger.
+  if (isIOS) return;
+
+  const btn = document.getElementById('tib-btn');
+
   function showBar() {
     bar.style.display = '';
     bar.removeAttribute('aria-hidden');
   }
 
-  // iOS : on affiche toujours (pas de beforeinstallprompt sur Safari)
-  if (isIOS) showBar();
-
   // Android / Desktop Chrome / Edge / Opera : attend le prompt natif
   window.addEventListener('beforeinstallprompt', () => showBar());
 
-  // Si le prompt a déjà été capturé avant l'init (peu probable mais sécurisé)
+  // Si le prompt a déjà été capturé avant l'init
   if (_installPrompt) showBar();
 
-  const btn = document.getElementById('tib-btn');
   if (!btn) return;
 
   btn.addEventListener('click', async () => {
@@ -2540,9 +2552,6 @@ function initInstallBanner() {
         _installPrompt = null;
         bar.style.display = 'none';
       }
-    } else {
-      // iOS ou fallback : ouvre la modale À propos avec instructions
-      if (window._openAbout) window._openAbout();
     }
   });
 

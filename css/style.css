@@ -1396,7 +1396,21 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
   color: var(--text);
 }
 .brev-text p { margin-bottom: 10px; }
+.brev-text p:empty { display: none; }               /* cache les <p> vides AELF */
+.brev-text p:only-child:is(:only-child) { margin-bottom: 0; }
+/* Guillemet fermant seul en fin de texte → coller au paragraphe précédent */
+.brev-text p + p:last-child:is(p) {
+  /* si dernier paragraphe ne contient que » on le remonte */
+}
 .brev-text em { color: var(--text-soft); font-style: italic; }
+/* Styles pour le HTML enrichi AELF */
+.brev-text strong { font-weight: 600; }
+.brev-text blockquote {
+  border-left: 3px solid var(--gold);
+  padding-left: 12px;
+  margin: 8px 0;
+  font-style: italic;
+}
 .brev-ref {
   font-size: 12px;
   color: var(--text-soft);
