@@ -686,11 +686,17 @@ function openBreviary(prayerKey) {
 
     fetch(url)
       .then(r => {
-        if (!r.ok) throw new Error('API AELF non disponible');
+        if (!r.ok) throw new Error(`HTTP ${r.status} — ${url}`);
         return r.json();
       })
-      .then(data => renderAelfData(data, prayerKey, bodyEl))
-      .catch(() => renderFallback(prayerKey, bodyEl));
+      .then(data => {
+        console.log('[AELF] réponse reçue pour', prayerKey, Object.keys(data));
+        renderAelfData(data, prayerKey, bodyEl);
+      })
+      .catch(err => {
+        console.error('[AELF] erreur fetch:', err.message);
+        renderFallback(prayerKey, bodyEl);
+      });
   } else {
     setTimeout(() => renderFallback(prayerKey, bodyEl), 600);
   }
