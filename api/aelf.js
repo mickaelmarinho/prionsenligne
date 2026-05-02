@@ -3,11 +3,12 @@
   Proxy vers l'API AELF pour éviter les restrictions CORS navigateur.
 
   Usage : GET /api/aelf?office=laudes&y=2026&m=05&d=02
-  Retourne le JSON brut de https://api.aelf.org/v1/{office}/{y}/{m}/{d}/france
+  Retourne le JSON de https://api.aelf.org/v1/{office}/{y}/{m}/{d}/france
 */
 
-export default async function handler(req, res) {
-  // CORS : autorise uniquement le même domaine
+import https from 'https';
+
+export default function handler(req, res) {
   const origin = req.headers.origin || '*';
   res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -20,36 +21,40 @@ export default async function handler(req, res) {
 
   const { office, y, m, d } = req.query;
 
-  // Validation basique
   const validOffices = ['laudes', 'messes', 'vepres', 'complies'];
-  if (!office || !validOffices.includes(office)) {
-    res.status(400).json({ error: 'Paramètre office invalide.' });
-    return;
-  }
-  if (!y || !m || !d) {
-    res.status(400).json({ error: 'Paramètres de date manquants.' });
+  if (!office || !validOffices.includes(office) || !y || !m || !d) {
+    res.status(400).json({ error: 'Paramètres invalides.' });
     return;
   }
 
   const url = `https://api.aelf.org/v1/${office}/${y}/${m}/${d}/france`;
 
-  try {
-    const response = await fetch(url, {
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'prionsenligne.fr/1.0',
-      },
+  const options = {
+    headers: {
+      'Accept': 'application/json',
+      'User-Agent': 'prionsenligne.fr/1.0',
+    },
+  };
+
+  https.get(url, options, (apiRes) => {
+    let body = '';
+
+    apiRes.on('data', chunk => { body += chunk; });
+
+    apiRes.on('end', () => {
+      if (apiRes.statusCode !== 200) {
+        res.status(apiRes.statusCode).json({ error: `AELF API: ${apiRes.statusCode}` });
+        return;
+      }
+      try {
+        const data = JSON.parse(body);
+        res.status(200).json(data);
+      } catch (e) {
+        res.status(502).json({ error: 'Réponse AELF invalide.' });
+      }
     });
-
-    if (!response.ok) {
-      res.status(response.status).json({ error: `AELF API error: ${response.status}` });
-      return;
-    }
-
-    const data = await response.json();
-    res.status(200).json(data);
-  } catch (err) {
-    console.error('Erreur proxy AELF:', err);
+  }).on('error', (err) => {
+    console.error('Erreur proxy AELF:', err.message);
     res.status(502).json({ error: 'Impossible de contacter l\'API AELF.' });
-  }
+  });
 }
