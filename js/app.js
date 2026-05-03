@@ -732,6 +732,284 @@ function renderAelfData(data, prayerKey, bodyEl) {
   }
 }
 
+// ── Lien AELF direct pour la date du jour ─────────────────────────────────────
+function aelfDayUrl(office) {
+  const d = getParisDate();
+  const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  return `https://www.aelf.org/${ds}/france/${office}`;
+}
+
+// ── Laudes locales (fallback hebdomadaire) ─────────────────────────────────────
+function renderLaudesLocal(bodyEl) {
+  const dow = getParisDate().getDay();
+
+  const PSAUMES = [
+    { titre:'Psaume 63 — Soif de Dieu', ref:'Ps 63', ant:'Mon âme a soif de toi, Seigneur mon Dieu.',
+      texte:`Dieu, tu es mon Dieu, je te cherche dès l'aube :\nmon âme a soif de toi,\nma chair brûle pour toi\ndans une terre aride, desséchée, sans eau.\n\nC'est ainsi que je t'ai contemplé au sanctuaire,\nvoyant ta force et ta gloire.\nTon amour vaut mieux que la vie,\nmes lèvres proclament ta louange !\n\nJe veux te bénir ma vie entière,\nlever les mains en invoquant ton nom.\nJe suis rassasié, comme par un festin de viandes grasses ;\nla joie sur les lèvres, je te loue !\n\nDans la nuit je me souviens de toi\net je reste des heures à te penser :\ncar tu as été mon secours,\nà l'ombre de tes ailes je crie de joie.\n\nMon âme s'attache à toi,\nta main droite me soutient.`},
+    { titre:'Psaume 5 — Prière du matin', ref:'Ps 5', ant:'Seigneur, à l\'aurore tu entends ma voix.',
+      texte:`Écoute mes paroles, Seigneur,\nentends ma plainte.\nSois attentif à ma voix qui crie vers toi,\nmon Roi et mon Dieu.\n\nC'est vers toi que je prie ;\ndès le matin, Seigneur, tu entends ma voix.\nDès le matin, je me prépare pour toi,\nje reste en attente.\n\nMoi, par ton grand amour,\nje peux entrer dans ta maison,\nje me prosterne vers ton temple saint\ndans la crainte que tu m'inspires.\n\nSeigneur, guide-moi dans ta justice\nà cause de mes ennemis ;\naplanis devant moi ta route.\n\nQue se réjouissent tous ceux qui s'abritent en toi ;\nqu'ils crient leur joie à jamais !\nTu les abrites, et ils t'exultent,\neux qui aiment ton nom.`},
+    { titre:'Psaume 24 — Le bon chemin', ref:'Ps 24', ant:'Vers toi, Seigneur, j\'élève mon âme.',
+      texte:`Vers toi, Seigneur, j'élève mon âme,\nmon Dieu, en toi je me confie.\n\nFais-moi connaître tes voies, Seigneur,\nenseigne-moi tes sentiers.\nFais-moi marcher selon ta vérité,\nenseigne-moi,\ncar tu es le Dieu de mon salut.\n\nRappelle-toi, Seigneur, ta tendresse,\nton amour qui est de toujours.\nN'évoque pas les fautes de ma jeunesse,\nmais souviens-toi de moi dans ton amour.\n\nIl est droit, il est bon, le Seigneur :\nil montre aux pécheurs le chemin.\nSa voie est justice pour les humbles,\nil enseigne aux humbles son chemin.`},
+    { titre:'Psaume 36 — Confiance en Dieu', ref:'Ps 36, 1-11', ant:'Les humbles possèderont la terre.',
+      texte:`Ne t'irrite pas contre les méchants,\nne jalouse pas les fauteurs d'injustice.\nComme l'herbe ils se dessèchent vite,\nils tombent comme la verdure.\n\nFie-toi au Seigneur et fais le bien,\nhabite la terre et reste fidèle.\nFais du Seigneur ta seule joie,\nil comblera les désirs de ton cœur.\n\nConfie au Seigneur ta destinée,\nmets en lui ta foi, il agira.\nIl fera paraître ton bon droit comme le jour,\nta justice comme le soleil de midi.\n\nLes humbles posséderont la terre,\nils jouiront d'une paix sans fin.`},
+    { titre:'Psaume 57 — Appel à la justice', ref:'Ps 57', ant:'Levez-vous dès l\'aurore, cherchez Dieu.',
+      texte:`Prononcez-vous vraiment selon la justice ?\nJugez-vous les fils des hommes avec droiture ?\n\nDieu, brise leurs dents dans leur bouche,\narrache les crocs des lionceaux.\nQu'ils s'écoulent comme l'eau qui ruisselle ;\nque l'homme juste se réjouisse\nen voyant la vengeance.\n\nLe juste se réjouira de voir le châtiment,\nil baignera ses pieds dans le sang des méchants.\nOn dira : "Vraiment, le juste a sa récompense,\nvraiment, il est un Dieu qui juge sur la terre."` },
+    { titre:'Psaume 51 — Le miserere', ref:'Ps 51', ant:'Pitié pour moi, mon Dieu, dans ton amour.',
+      texte:`Pitié pour moi, mon Dieu, dans ton amour,\nselon ta grande miséricorde, efface mon péché.\nLave-moi tout entier de ma faute,\npurifie-moi de mon offense.\n\nMon péché est devant moi sans cesse.\nContre toi, et toi seul, j'ai péché,\nce qui est mal à tes yeux, je l'ai fait.\n\nCrée en moi un cœur pur, ô mon Dieu,\nrenouvelle et raffermis au fond de moi mon esprit.\nNe me chasse pas loin de ta face,\nne me reprends pas ton esprit saint.\n\nRends-moi la joie d'être sauvé ;\nque l'esprit généreux me soutienne.\nSeigneur, ouvre mes lèvres,\net ma bouche annoncera ta louange.`},
+    { titre:'Psaume 119 — L\'aurore et la Parole', ref:'Ps 119, 145-152', ant:'Seigneur, j\'ai crié vers toi dès l\'aurore.',
+      texte:`De tout mon cœur je t'appelle, réponds-moi, Seigneur !\nJe veux garder tes commandements.\nJe t'appelle, sauve-moi,\nque je garde tes exigences !\n\nJ'ai devancé l'aurore, j'ai crié,\nj'espère en tes paroles.\nMes yeux ont devancé la nuit\npour méditer ta promesse.\n\nEntends ma voix dans ton amour, Seigneur ;\ndonne-moi la vie selon ton droit.\nCeux qui me persécutent sont proches,\nilssont loin de ta loi.\n\nTu es proche, Seigneur,\net tous tes commandements sont vérité.`},
+  ];
+
+  const LECTURES = [
+    { ref:'Is 55, 1-3', texte:'Vous tous qui avez soif, venez, voici de l\'eau ! Vous qui n\'avez pas d\'argent, venez quand même. Écoutez et vous vivrez. Je ferai avec vous une alliance éternelle, les bienfaits assurés à David.' },
+    { ref:'Sg 16, 28', texte:'Cela t\'apprend que l\'on doit devancer le soleil pour te rendre grâce, et te prier dès les premières lueurs.' },
+    { ref:'Za 8, 8', texte:'Je les ramènerai, ils habiteront au milieu de Jérusalem, ils seront mon peuple et moi je serai leur Dieu dans la fidélité et la justice.' },
+    { ref:'Ez 36, 25-26', texte:'Je répandrai sur vous une eau pure et vous serez purifiés. Je mettrai en vous un esprit nouveau, j\'enlèverai de votre corps le cœur de pierre, je vous donnerai un cœur de chair.' },
+    { ref:'Rm 13, 12', texte:'La nuit est avancée, le jour approche. Rejetons les œuvres des ténèbres, revêtons les armes de la lumière.' },
+    { ref:'Lm 3, 22-23', texte:'L\'amour du Seigneur ne s\'est pas épuisé, sa tendresse ne s\'est pas tarie. Elle se renouvelle chaque matin. Grande est ta fidélité !' },
+    { ref:'Ap 7, 12', texte:'Amen ! Louange, gloire, sagesse, action de grâces, honneur, puissance et force à notre Dieu, pour les siècles des siècles ! Amen.' },
+  ];
+
+  const ps   = PSAUMES[dow];
+  const lect = LECTURES[dow];
+  const ant  = dow === 0 ? 'Alléluia, alléluia, alléluia !' : 'Béni soit le Seigneur, le Dieu d\'Israël.';
+
+  let html = `<div class="brev-day-header"><span class="brev-day-name">Laudes — Prière du matin</span></div>`;
+
+  // Hymne
+  html += `<div class="brev-section brev-section--hymne">
+    <div class="brev-section-title">Hymne</div>
+    <div class="brev-text">
+      <p>Lumière joyeuse, gloire du Père immortel,<br>céleste, saint, bienheureux, ô Jésus-Christ !</p>
+      <p>Arrivés au coucher du soleil,<br>voyant la lumière du soir,<br>nous chantons Dieu : Père, Fils et Saint-Esprit.</p>
+      <p>Tu es digne en tout temps d'être chanté par des voix pures,<br>ô Fils de Dieu qui donnes la vie ;<br>le monde entier te rend gloire.</p>
+    </div>
+  </div>`;
+
+  // Psaume du jour
+  html += `<div class="brev-section">
+    <div class="brev-section-title">${ps.titre}</div>
+    <span class="brev-ref">${ps.ref}</span>
+    <div class="brev-antienne"><em class="brev-antienne-label">Ant.</em> ${ps.ant}</div>
+    <div class="brev-text">${ps.texte.replace(/\n/g,'<br>')}</div>
+    <div class="brev-antienne brev-antienne--after"><em class="brev-antienne-label">Ant.</em> ${ps.ant}</div>
+  </div>`;
+
+  // Lecture brève
+  html += `<div class="brev-section">
+    <div class="brev-section-title">Lecture brève</div>
+    <span class="brev-ref">${lect.ref}</span>
+    <div class="brev-text"><p>${lect.texte}</p></div>
+  </div>`;
+
+  // Benedictus — fixe chaque matin
+  html += `<div class="brev-section">
+    <div class="brev-section-title">Cantique de Zacharie — Benedictus</div>
+    <span class="brev-ref">Lc 1, 68-79</span>
+    <div class="brev-antienne"><em class="brev-antienne-label">Ant.</em> ${ant}</div>
+    <div class="brev-text">
+      <p>Béni soit le Seigneur, le Dieu d'Israël,<br>qui visite et rachète son peuple.</p>
+      <p>Il nous a donné un puissant Sauveur<br>dans la maison de David, son serviteur,<br>comme il l'avait dit par la bouche de ses saints prophètes.</p>
+      <p>C'est le salut qui nous arrache à l'ennemi<br>et à la main de tous nos oppresseurs,<br>pour montrer sa miséricorde envers nos pères,<br>et se souvenir de sa sainte alliance.</p>
+      <p>Serment qu'il a juré à notre père Abraham<br>de nous rendre sans crainte,<br>afin que délivrés de la main des ennemis,<br>nous le servions dans la justice et la sainteté,<br>en sa présence, tout au long de nos jours.</p>
+      <p>Et toi, petit enfant, tu seras appelé prophète du Très-Haut ;<br>tu marcheras devant, à la face du Seigneur,<br>et tu prépareras ses chemins<br>pour donner à son peuple de connaître le salut.</p>
+      <p>Par le pardon de ses péchés,<br>grâce à la tendresse, à l'amour de notre Dieu,<br>quand nous visite l'astre d'en haut<br>pour illuminer ceux qui habitent les ténèbres<br>et l'ombre de la mort,<br>pour conduire nos pas au chemin de la paix.</p>
+    </div>
+    <div class="brev-antienne brev-antienne--after"><em class="brev-antienne-label">Ant.</em> ${ant}</div>
+  </div>`;
+
+  // Oraison
+  html += `<div class="brev-section brev-section--oraison">
+    <div class="brev-section-title">Oraison</div>
+    <div class="brev-text brev-oraison">
+      <p>Seigneur notre Dieu, en commençant ce jour sous le signe de ta lumière,<br>
+      nous te demandons de nous aider à marcher dans tes voies,<br>
+      à travailler pour ta gloire et le service de nos frères.<br>
+      Par Jésus-Christ, notre Seigneur. Amen.</p>
+    </div>
+  </div>`;
+
+  html += `<p class="brev-aelf-credit">Textes liturgiques — Liturgie des Heures<br>
+    <small>Cycle hebdomadaire des Laudes · <a href="${aelfDayUrl('laudes')}" target="_blank" rel="noopener" style="color:var(--gold)">Textes du jour sur aelf.org →</a></small></p>`;
+  bodyEl.innerHTML = html;
+}
+
+// ── Vêpres locales (fallback hebdomadaire) ────────────────────────────────────
+function renderVepresLocal(bodyEl) {
+  const dow = getParisDate().getDay();
+
+  const PSAUMES = [
+    [{ titre:'Psaume 110 — La royauté du Messie', ref:'Ps 110', ant:'Le Seigneur dit à mon Seigneur : siège à ma droite.',
+       texte:`Oracle du Seigneur à mon Seigneur :\n« Siège à ma droite,\net je ferai de tes ennemis\nl'escabeau de tes pieds. »\n\nLe Seigneur tend depuis Sion\nle sceptre de ta puissance :\n« Règne sur tes ennemis tout proches ! »\n\nLe jour de ta victoire, sur les monts saints,\ndans l'aurore du matin,\ncomme la rosée, je t'ai engendré.\n\nLe Seigneur l'a juré, il ne s'en repentira pas :\n« Tu es prêtre pour toujours\nselon l'ordre de Melkisédek. »`},
+     { titre:'Psaume 111 — Le bonheur du juste', ref:'Ps 111', ant:'Heureux l\'homme qui craint le Seigneur.',
+       texte:`Heureux l'homme qui craint le Seigneur\net qui aime ses commandements !\n\nSa postérité sera puissante sur la terre,\nla génération des hommes droits sera bénie ;\nil y a dans sa maison richesse et abondance,\nsa justice demeure à jamais.\n\nIl est pour les ténèbres une lumière qui se lève,\ncet homme de bien, cet homme de pitié, ce juste.\n\nBien heureux l'homme plein de pitié qui prête ;\nil mène ses affaires avec droiture.\n\nIl n'est pas ébranlé ; éternellement\non se souvient du juste.\nSon cœur est sûr, il ne craint pas.\nSa justice demeure à jamais.`}],
+    [{ titre:'Psaume 116 — Louange universelle', ref:'Ps 116', ant:'Allez par le monde entier, proclamez l\'Évangile.',
+       texte:`Louez le Seigneur, vous toutes les nations,\nfêtez-le, vous tous les peuples !\n\nSon amour pour nous est immense,\nla fidélité du Seigneur est éternelle.`},
+     { titre:'Psaume 117 — Action de grâces', ref:'Ps 117', ant:'Rendez grâce au Seigneur car il est bon.',
+       texte:`Rendez grâce au Seigneur car il est bon,\néternel est son amour !\n\nQue le dise Israël :\néternel est son amour !\n\nDans ma détresse, j'ai crié vers le Seigneur,\nil m'a répondu, le Seigneur.\n\nLe Seigneur est pour moi, je ne crains rien :\nque peut me faire un homme ?\n\nMieux vaut s'appuyer sur le Seigneur\nque de compter sur les hommes.\n\nTu es mon Dieu, je te rends grâce ;\nmon Dieu, je t'exalte.\nRendez grâce au Seigneur car il est bon ;\néternel est son amour !`}],
+    [{ titre:'Psaume 120 — Le Seigneur protège', ref:'Ps 120', ant:'Mon secours vient du Seigneur.',
+       texte:`Je lève les yeux vers les montagnes :\nd'où le secours me viendra-t-il ?\nLe secours me vient du Seigneur\nqui a fait le ciel et la terre.\n\nIl ne permettra pas que ton pied chancelle ;\nton gardien ne sommeille pas.\nNon, il ne sommeille pas, il ne dort pas,\nle gardien d'Israël.\n\nLe Seigneur est ton gardien,\nle Seigneur est ton ombrage près de toi.\nLe jour, le soleil ne te frappera pas,\nni la lune dans la nuit.\n\nLe Seigneur te gardera de tout mal,\nil gardera ta vie.\nLe Seigneur gardera ton départ et ton arrivée,\ndès maintenant et pour toujours.`},
+     { titre:'Psaume 121 — Joie du pèlerin', ref:'Ps 121', ant:'Allons à la maison du Seigneur.',
+       texte:`Quelle joie quand on m'a dit :\n« Nous allons à la maison du Seigneur ! »\nNos pieds s'arrêtent, Jérusalem,\ndans tes portes !\n\nPrie pour la paix de Jérusalem :\nque vivent dans la paix ceux qui t'aiment !\nQue la paix règne dans tes murs,\ndans tes palais la tranquillité !\n\nA cause de mes frères et de mes proches,\nje dirai : « Paix sur toi ! »\nA cause de la maison du Seigneur notre Dieu,\nje prierai pour ton bonheur.`}],
+    [{ titre:'Psaume 126 — Tout vient de Dieu', ref:'Ps 126', ant:'Si le Seigneur ne bâtit la maison, les bâtisseurs travaillent en vain.',
+       texte:`Si le Seigneur ne bâtit la maison,\nles bâtisseurs travaillent pour rien.\nSi le Seigneur ne garde la ville,\nc'est pour rien que veillent les gardes.\n\nPour rien vous levez-vous dès l'aurore,\nvous couchez tard, vous mangez un pain de douleur :\nDieu en donne autant à ses bien-aimés\ndurant leur sommeil.\n\nOui, les fils sont un don du Seigneur,\nle fruit du sein une récompense.\nComme les flèches d'un guerrier,\ntels sont les fils de la jeunesse.\n\nHeureux l'homme qui en a garni son carquois !`},
+     { titre:'Psaume 127 — La famille bénie', ref:'Ps 127', ant:'Heureux ceux qui craignent le Seigneur.',
+       texte:`Heureux qui craint le Seigneur\net marche dans ses voies !\nTu te nourriras du travail de tes mains,\nheureux es-tu, à toi le bonheur !\n\nTa femme est une vigne féconde\nau fond de ta maison.\nTes fils, autour de ta table,\ndes plants d'olivier.\n\nVoilà comment est béni\nl'homme qui craint le Seigneur.\n\nQue le Seigneur te bénisse depuis Sion,\nque tu voies le bonheur de Jérusalem\ntous les jours de ta vie !`}],
+    [{ titre:'Psaume 130 — Abandon à Dieu', ref:'Ps 130', ant:'Mon âme s\'appuie sur le Seigneur.',
+       texte:`Seigneur, mon cœur n'est pas fier,\nni mon regard hautain ;\nje ne poursuis ni grands projets\nni merveilles qui me dépassent.\n\nNon, je tiens mon âme\négale et silencieuse ;\nmon âme est en moi comme un enfant,\ncomme un petit enfant contre sa mère.\n\nAttends le Seigneur, Israël,\nmaintenant et pour toujours.`},
+     { titre:'Psaume 131 — L\'arche du Seigneur', ref:'Ps 131', ant:'Lève-toi, Seigneur, viens à ton lieu de repos.',
+       texte:`Souviens-toi, Seigneur, de David,\net de toutes ses peines.\nIl avait juré au Seigneur,\nfait un vœu au Puissant de Jacob.\n\nNous avons appris qu'elle était à Ephrata,\nnous l'avons trouvée dans les plaines de Yahar.\nEntrons dans sa demeure,\nprosternons-nous à l'endroit où ses pieds se posent.\n\nCar le Seigneur a choisi Sion,\nil a désiré cette demeure.\nC'est ici mon lieu de repos pour toujours ;\nj'y habiterai, car je l'ai désiré.`}],
+    [{ titre:'Psaume 135 — Litanie de la création', ref:'Ps 135, 1-9.13-14', ant:'Rendez grâce au Dieu des dieux.',
+       texte:`Rendez grâce au Seigneur car il est bon,\néternel est son amour !\nRendez grâce au Dieu des dieux,\néternel est son amour !\nRendez grâce au Seigneur des seigneurs,\néternel est son amour !\n\nLui seul accomplit de grandes merveilles,\néternel est son amour !\nIl a fait les cieux avec sagesse,\néternel est son amour !\nIl a étendu la terre sur les eaux,\néternel est son amour !\nIl a fait les grands luminaires,\néternel est son amour !\nLe soleil pour régir le jour,\néternel est son amour !\nLa lune et les étoiles pour régir la nuit,\néternel est son amour !`},
+     { titre:'Psaume 136 — Mémoire du salut', ref:'Ps 136, 1-6', ant:'Près des fleuves de Babylone, nous pleurions.',
+       texte:`Près des fleuves de Babylone,\nnous étions assis et nous pleurions,\nnous souvenant de Sion.\n\nAux saules de ces rives\nnous avions pendu nos harpes.\n\nCeux qui nous avaient déportés\nnous demandaient des cantiques,\nnos bourreaux voulaient qu'on leur chante,\nen chantant : « Un cantique de Sion ! »\n\nComment chanterions-nous le chant du Seigneur\nsur une terre étrangère ?\n\nSi je t'oublie, Jérusalem,\nque ma main droite m'oublie !\nQue ma langue colle à mon palais\nsi je perds ton souvenir,\nsi je ne mets Jérusalem au sommet de ma joie !`}],
+    [{ titre:'Psaume 138 — Dieu connaît tout', ref:'Ps 138', ant:'Seigneur, tu me scrutes et tu me connais.',
+       texte:`Seigneur, tu me scrutes et tu me connais,\nque je me lève ou m'asseye, tu le sais,\nde loin tu discernes mes projets.\n\nQue je marche ou m'étende, tu le vois ;\ntoutes mes routes te sont familières.\n\nSans que la parole soit sur ma langue,\ndéjà, Seigneur, tu la connais entièrement.\n\nTu m'enserres de toutes parts,\ntu m'as mis la main dessus.\n\nUne telle science me dépasse,\nso élévation m'échappe.\n\nOù aller, loin de ton esprit ?\nOù fuir, loin de ta face ?\n\nSi je gravis les cieux, tu es là ;\nqu'au shéol je m'étende, te voilà.\n\nJe gravis les ailes de l'aurore,\nm'établis à l'extrême mer :\nLà encore, ta main me conduit,\nta droite me saisit.`},
+     { titre:'Psaume 139 — Contre la violence', ref:'Ps 139, 1-6', ant:'Délivre-moi, Seigneur, des méchants.',
+       texte:`Arrache-moi, Seigneur, aux gens de violence,\nprotège-moi contre les hommes de violence,\nceux qui méditent le mal dans leur cœur\net excitent chaque jour des conflits.\n\nLeur langue est venin de serpent,\nsous leurs lèvres un venin de vipère.\n\nSeigneur, garde-moi des mains des méchants,\nprotège-moi contre les hommes de violence,\nceux qui méditent ma chute.\n\nC'est toi, Seigneur, mon Dieu et ma force,\nentends, Seigneur, ma voix qui crie.`}],
+  ];
+
+  const LECTURES = [
+    { ref:'Ap 19, 5-7', texte:'Une voix venait du trône : « Louez notre Dieu, vous tous ses serviteurs, vous qui le craignez, petits et grands ! » Et j\'entendis comme la clameur d\'une foule immense : « Alléluia ! Le Seigneur notre Dieu a pris possession de son règne. »' },
+    { ref:'1 Pi 1, 3-5', texte:'Béni soit Dieu, le Père de notre Seigneur Jésus Christ : dans sa grande miséricorde, il nous a engendrés de nouveau pour une espérance vivante, par la résurrection de Jésus Christ d\'entre les morts.' },
+    { ref:'Ep 3, 20-21', texte:'À Dieu qui, par sa puissance agissant en nous, est capable de faire bien au-delà de tout ce que nous demandons et imaginons, à lui la gloire dans l\'Église et en Jésus Christ, pour tous les âges et tous les siècles ! Amen.' },
+    { ref:'Col 3, 16', texte:'Que la parole du Christ, en toute sa richesse, habite parmi vous : instruisez-vous en vous réciproquement avec sagesse ; chantez à Dieu de tout votre cœur avec reconnaissance des psaumes, des hymnes et des cantiques inspirés.' },
+    { ref:'Ph 4, 4-5', texte:'Soyez toujours dans la joie du Seigneur ; je le dis encore, soyez dans la joie. Que votre bienveillance soit connue de tous les hommes. Le Seigneur est proche.' },
+    { ref:'1 Jn 4, 16', texte:'Nous avons reconnu l\'amour que Dieu a pour nous, et nous y avons cru. Dieu est amour : celui qui demeure dans l\'amour demeure en Dieu, et Dieu demeure en lui.' },
+    { ref:'Tb 13, 1-2', texte:'Béni soit Dieu qui vit à jamais et dont le règne dure à travers tous les âges ! Car il châtie et fait grâce, il fait descendre jusqu\'au séjour des morts et il en fait remonter. Rien n\'échappe à sa main.' },
+  ];
+
+  const psPair = PSAUMES[dow];
+  const lect   = LECTURES[dow];
+  const ant    = dow === 0 ? 'Alléluia, alléluia, alléluia !' : 'Ma bouche redira tes louanges, Seigneur.';
+
+  let html = `<div class="brev-day-header"><span class="brev-day-name">Vêpres — Prière du soir</span></div>`;
+
+  html += `<div class="brev-section brev-section--hymne">
+    <div class="brev-section-title">Hymne</div>
+    <div class="brev-text">
+      <p>Avant que s'achève ce jour,<br>nous t'en supplions, Créateur du monde :<br>dans ta miséricorde, garde-nous<br>et protège-nous par ta grâce.</p>
+      <p>Ô toi qui illumines la nuit,<br>toi qui sépares la nuit du jour,<br>avant que la lumière décline,<br>entends la voix de ceux qui prient.</p>
+    </div>
+  </div>`;
+
+  psPair.forEach(ps => {
+    html += `<div class="brev-section">
+      <div class="brev-section-title">${ps.titre}</div>
+      <span class="brev-ref">${ps.ref}</span>
+      <div class="brev-antienne"><em class="brev-antienne-label">Ant.</em> ${ps.ant}</div>
+      <div class="brev-text">${ps.texte.replace(/\n/g,'<br>')}</div>
+      <div class="brev-antienne brev-antienne--after"><em class="brev-antienne-label">Ant.</em> ${ps.ant}</div>
+    </div>`;
+  });
+
+  html += `<div class="brev-section">
+    <div class="brev-section-title">Lecture brève</div>
+    <span class="brev-ref">${lect.ref}</span>
+    <div class="brev-text"><p>${lect.texte}</p></div>
+  </div>`;
+
+  // Magnificat — fixe chaque soir
+  html += `<div class="brev-section">
+    <div class="brev-section-title">Cantique de Marie — Magnificat</div>
+    <span class="brev-ref">Lc 1, 46-55</span>
+    <div class="brev-antienne"><em class="brev-antienne-label">Ant.</em> ${ant}</div>
+    <div class="brev-text">
+      <p>Mon âme exalte le Seigneur,<br>exulte mon esprit en Dieu, mon Sauveur !</p>
+      <p>Il s'est penché sur son humble servante ;<br>désormais tous les âges me diront bienheureuse.</p>
+      <p>Le Puissant fit pour moi des merveilles ;<br>Saint est son nom !<br>Son amour s'étend d'âge en âge<br>sur ceux qui le craignent.</p>
+      <p>Déployant la force de son bras,<br>il disperse les superbes.<br>Il renverse les puissants de leurs trônes,<br>il élève les humbles.</p>
+      <p>Il comble de biens les affamés,<br>renvoie les riches les mains vides.</p>
+      <p>Il relève Israël, son serviteur ;<br>il se souvient de son amour,<br>de la promesse faite à nos pères,<br>en faveur d'Abraham et de sa race à jamais.</p>
+    </div>
+    <div class="brev-antienne brev-antienne--after"><em class="brev-antienne-label">Ant.</em> ${ant}</div>
+  </div>`;
+
+  html += `<div class="brev-section brev-section--oraison">
+    <div class="brev-section-title">Oraison</div>
+    <div class="brev-text brev-oraison">
+      <p>Seigneur notre Dieu, au déclin de ce jour,<br>
+      nous te rendons grâce pour les bienfaits reçus.<br>
+      Que ta présence éclaire notre nuit,<br>
+      et que ton amour nous garde dans la paix.<br>
+      Par Jésus-Christ, notre Seigneur. Amen.</p>
+    </div>
+  </div>`;
+
+  html += `<p class="brev-aelf-credit">Textes liturgiques — Liturgie des Heures<br>
+    <small>Cycle hebdomadaire des Vêpres · <a href="${aelfDayUrl('vepres')}" target="_blank" rel="noopener" style="color:var(--gold)">Textes du jour sur aelf.org →</a></small></p>`;
+  bodyEl.innerHTML = html;
+}
+
+// ── Messe locale (textes invariables + lien lectures du jour) ─────────────────
+function renderMesseLocal(bodyEl) {
+  const url = aelfDayUrl('messe');
+  let html = `<div class="brev-day-header"><span class="brev-day-name">Messe du jour</span></div>`;
+
+  // Lien direct vers les lectures
+  html += `<div class="brev-section" style="background:rgba(197,160,82,0.08);border-radius:10px;padding:16px;">
+    <div class="brev-section-title" style="color:var(--gold)">Lectures du jour</div>
+    <div class="brev-text">
+      <p>Les lectures Scripture changent chaque jour selon le calendrier liturgique.<br>
+      Retrouvez-les directement sur l'AELF :</p>
+      <p style="text-align:center;margin:14px 0">
+        <a href="${url}" target="_blank" rel="noopener"
+           style="color:var(--gold);font-weight:600;font-size:17px;text-decoration:none">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> Lectures du jour sur aelf.org
+        </a>
+      </p>
+    </div>
+  </div>`;
+
+  // Gloria
+  html += `<div class="brev-section brev-section--hymne">
+    <div class="brev-section-title">Gloria</div>
+    <div class="brev-text">
+      <p>Gloire à Dieu au plus haut des cieux,<br>et paix sur la terre aux hommes qu'il aime.</p>
+      <p>Nous te louons, nous te bénissons,<br>nous t'adorons, nous te glorifions,<br>nous te rendons grâce, pour ton immense gloire.</p>
+      <p>Seigneur Dieu, Roi du ciel,<br>Dieu le Père tout-puissant.<br>Seigneur, Fils unique, Jésus-Christ,<br>Seigneur Dieu, Agneau de Dieu, le Fils du Père.</p>
+      <p>Toi qui enlèves le péché du monde,<br>prends pitié de nous.<br>Toi qui enlèves le péché du monde,<br>reçois notre prière.<br>Toi qui es assis à la droite du Père,<br>prends pitié de nous.</p>
+      <p>Car toi seul es saint,<br>toi seul es Seigneur,<br>toi seul es le Très-Haut, Jésus-Christ,<br>avec le Saint-Esprit,<br>dans la gloire de Dieu le Père. Amen.</p>
+    </div>
+  </div>`;
+
+  // Credo
+  html += `<div class="brev-section">
+    <div class="brev-section-title">Credo</div>
+    <div class="brev-text">
+      <p>Je crois en un seul Dieu, le Père tout-puissant,<br>Créateur du ciel et de la terre,<br>de l'univers visible et invisible.</p>
+      <p>Je crois en un seul Seigneur, Jésus-Christ,<br>le Fils unique de Dieu,<br>né du Père avant tous les siècles :<br>Il est Dieu, né de Dieu,<br>lumière, née de la lumière,<br>vrai Dieu, né du vrai Dieu.</p>
+      <p>Engendré, non pas créé,<br>de même nature que le Père ;<br>et par lui tout a été fait.<br>Pour nous les hommes,<br>et pour notre salut,<br>il descendit du ciel.</p>
+      <p>Par l'Esprit Saint, il a pris chair de la Vierge Marie,<br>et s'est fait homme.<br>Crucifié pour nous sous Ponce Pilate,<br>il souffrit sa passion et fut mis au tombeau.<br>Il ressuscita le troisième jour,<br>conformément aux Écritures.</p>
+      <p>Il monta au ciel ; il est assis à la droite du Père.<br>Il reviendra dans la gloire pour juger les vivants et les morts ;<br>et son règne n'aura pas de fin.</p>
+      <p>Je crois en l'Esprit Saint,<br>qui est Seigneur et qui donne la vie ;<br>il procède du Père et du Fils.<br>Avec le Père et le Fils, il reçoit même adoration et même gloire ;<br>il a parlé par les prophètes.</p>
+      <p>Je crois en l'Église, une, sainte, catholique et apostolique.<br>Je reconnais un seul baptême pour le pardon des péchés.<br>J'attends la résurrection des morts,<br>et la vie du monde à venir. Amen.</p>
+    </div>
+  </div>`;
+
+  // Sanctus
+  html += `<div class="brev-section brev-section--hymne">
+    <div class="brev-section-title">Sanctus</div>
+    <div class="brev-text">
+      <p>Saint ! Saint ! Saint, le Seigneur, Dieu de l'univers !<br>Le ciel et la terre sont remplis de ta gloire.<br>Hosanna au plus haut des cieux.</p>
+      <p>Béni soit celui qui vient au nom du Seigneur.<br>Hosanna au plus haut des cieux.</p>
+    </div>
+  </div>`;
+
+  // Notre Père
+  html += `<div class="brev-section">
+    <div class="brev-section-title">Notre Père</div>
+    <div class="brev-text">
+      <p>Notre Père, qui es aux cieux,<br>que ton nom soit sanctifié,<br>que ton règne vienne,<br>que ta volonté soit faite<br>sur la terre comme au ciel.</p>
+      <p>Donne-nous aujourd'hui notre pain de ce jour.<br>Pardonne-nous nos offenses,<br>comme nous pardonnons aussi<br>à ceux qui nous ont offensés.<br>Et ne nous soumets pas à la tentation,<br>mais délivre-nous du Mal. Amen.</p>
+    </div>
+  </div>`;
+
+  html += `<p class="brev-aelf-credit">Textes liturgiques — Missel romain<br>
+    <small><a href="${url}" target="_blank" rel="noopener" style="color:var(--gold)">Lectures complètes sur aelf.org →</a></small></p>`;
+  bodyEl.innerHTML = html;
+}
+
 // ── Helper : rend le contenu AELF (HTML ou texte brut) ───────────────────────
 function aelfHtml(str) {
   if (!str) return '';
@@ -1049,10 +1327,12 @@ function renderCompliesLocal(bodyEl) {
 }
 
 function renderFallback(prayerKey, bodyEl, reason) {
-  // Complies non disponibles sur AELF → textes locaux du cycle hebdomadaire
-  if (prayerKey === 'complies' && (reason === 'unavailable' || reason === 'error')) {
-    renderCompliesLocal(bodyEl);
-    return;
+  // Offices non disponibles sur AELF → textes locaux permanents
+  if (reason === 'unavailable' || reason === 'error') {
+    if (prayerKey === 'complies')                          { renderCompliesLocal(bodyEl); return; }
+    if (prayerKey === 'laudes' || prayerKey === 'matin')   { renderLaudesLocal(bodyEl);   return; }
+    if (prayerKey === 'vepres' || prayerKey === 'soiree')  { renderVepresLocal(bodyEl);   return; }
+    if (prayerKey === 'messe')                             { renderMesseLocal(bodyEl);    return; }
   }
 
   const names = {
