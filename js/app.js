@@ -2094,7 +2094,8 @@ const WEEK_SCHEDULE = {
     ]},
     { type: 'complies', label: 'Complies',            entries: [
       { t: '21:00', tl: '21h00', srcs: ['nd'] },
-      { t: '22:00', tl: '22h00', srcs: ['rm', 'esp'] },
+      { t: '22:00', tl: '22h00', srcs: ['rm'] },
+      { t: '22:05', tl: '22h05', srcs: ['esp'] },
     ]},
   ],
 
@@ -2144,7 +2145,8 @@ const WEEK_SCHEDULE = {
     ]},
     { type: 'complies', label: 'Complies',            entries: [
       { t: '21:00', tl: '21h00', srcs: ['nd'] },
-      { t: '22:00', tl: '22h00', srcs: ['rm', 'esp'] },
+      { t: '22:00', tl: '22h00', srcs: ['rm'] },
+      { t: '22:05', tl: '22h05', srcs: ['esp'] },
     ]},
   ],
 
@@ -2191,7 +2193,8 @@ const WEEK_SCHEDULE = {
     ]},
     { type: 'complies', label: 'Complies',                       entries: [
       { t: '21:00', tl: '21h00', srcs: ['nd'] },
-      { t: '22:00', tl: '22h00', srcs: ['rm', 'esp', 'fid'] },
+      { t: '22:00', tl: '22h00', srcs: ['rm', 'fid'] },
+      { t: '22:05', tl: '22h05', srcs: ['esp'] },
     ]},
   ],
 
@@ -2234,7 +2237,8 @@ const WEEK_SCHEDULE = {
     ]},
     { type: 'complies', label: 'Complies',            entries: [
       { t: '21:00', tl: '21h00', srcs: ['nd'] },
-      { t: '22:00', tl: '22h00', srcs: ['rm', 'esp'] },
+      { t: '22:00', tl: '22h00', srcs: ['rm'] },
+      { t: '22:05', tl: '22h05', srcs: ['esp'] },
     ]},
   ],
 
@@ -2287,7 +2291,8 @@ const WEEK_SCHEDULE = {
     ]},
     { type: 'complies', label: 'Complies',            entries: [
       { t: '21:00', tl: '21h00', srcs: ['nd'] },
-      { t: '22:00', tl: '22h00', srcs: ['rm', 'esp'] },
+      { t: '22:00', tl: '22h00', srcs: ['rm'] },
+      { t: '22:05', tl: '22h05', srcs: ['esp'] },
     ]},
   ],
 
@@ -2324,7 +2329,8 @@ const WEEK_SCHEDULE = {
       { t: '18:00', tl: '18h00', srcs: ['rm'] },
     ]},
     { type: 'complies', label: 'Complies',            entries: [
-      { t: '22:00', tl: '22h00', srcs: ['rm', 'esp'] },  // nd et rcf ne diffusent pas les complies le dimanche
+      { t: '22:00', tl: '22h00', srcs: ['rm'] },
+      { t: '22:05', tl: '22h05', srcs: ['esp'] },  // nd et rcf ne diffusent pas les complies le dimanche
     ]},
   ],
 };
