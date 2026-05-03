@@ -875,7 +875,186 @@ function renderMesseContent(messes) {
   return html;
 }
 
+// ── Complies locales — cycle hebdomadaire (fallback quand AELF indisponible) ──
+function renderCompliesLocal(bodyEl) {
+  const dow = getParisDate().getDay(); // 0=dim … 6=sam
+
+  // ── Psaumes selon le jour ────────────────────────────────────────────────
+  const PSAUMES = {
+    0: [{ // Dimanche
+      titre: 'Psaume 91 — La sécurité du juste',
+      ref: 'Ps 91',
+      ant: 'Tu ne craindras pas les terreurs de la nuit.',
+      texte: `Il habite à l'abri du Très-Haut,\ngîte à l'ombre du Tout-Puissant.\nJe dis au Seigneur : « Mon refuge, mon rempart,\nmon Dieu, en qui je m'appuie ! »\n\nC'est lui qui te libère du filet du chasseur,\nde la mort qui frappe dans les ténèbres.\nDe son plumage il te couvre,\net sous ses ailes tu trouves refuge :\nsa vérité est bouclier et armure.\n\nTu ne craindras ni les terreurs de la nuit,\nni la flèche qui vole de jour,\nni la mort qui rôde dans les ténèbres,\nni le fléau qui dévaste à midi.\n\nQu'il en tombe mille à tes côtés,\ndix mille à ta droite,\ntoi, tu restes hors d'atteinte.\n\nCar tu as dit : « Le Seigneur est mon refuge ! »\nEt tu as fait du Très-Haut ta demeure.\nAucun malheur ne peut t'atteindre,\naucun fléau n'approche de ta tente.\n\nCar il donne mission à ses anges\nde te garder sur tous tes chemins.\nIls te porteront sur leurs mains\npour que ton pied ne heurte une pierre.\n\n« Puisqu'il s'attache à moi, je le libère ;\nje le protège, car il connaît mon nom.\nIl m'appelle, et moi, je lui réponds ;\nje suis avec lui dans le malheur ;\nje le délivre et le glorifie.\nJe le rassasie de longs jours,\net je lui fais voir mon salut. »`,
+    }],
+    1: [{ // Lundi
+      titre: 'Psaume 86 — Sion, mère de tous les peuples',
+      ref: 'Ps 86',
+      ant: 'Le Seigneur aime les portes de Sion.',
+      texte: `Sa fondation est sur les monts saints :\nle Seigneur aime les portes de Sion\nplus que toutes les demeures de Jacob.\n\nOn dit de toi des choses glorieuses,\ncité de Dieu !\n\nJe compte Rahab et Babylone\nparmi ceux qui me connaissent ;\nvois Philistie, Tyr, avec l'Éthiopie :\ntel est né là-bas.\n\nMais de Sion on dit : « Chacun y est né » ;\net c'est lui, le Très-Haut, qui l'affermit.\n\nLe Seigneur inscrit au registre des peuples :\n« C'est là qu'il est né. »\n\nEt les danseurs diront : « Toutes mes sources sont en toi. »`,
+    }, {
+      titre: 'Psaume 143 — Prière du soir',
+      ref: 'Ps 143, 1-11',
+      ant: 'Exauce-moi, Seigneur, ne te détourne pas de moi.',
+      texte: `Seigneur, écoute ma prière,\nentends ma supplication ;\npar ta fidélité, réponds-moi,\npar ta justice.\n\nN'entre pas en jugement avec ton serviteur :\ndevant toi, aucun vivant n'est juste.\n\nL'ennemi pourchasse mon âme,\nil écrase ma vie contre terre ;\nil me relègue dans les ténèbres,\ncomme les morts depuis toujours.\n\nMon esprit s'abat en moi,\nmon cœur se glace en dedans.\n\nJe me souviens du passé,\nje réfléchis à toutes tes œuvres,\nj'évoque les actions de tes mains.\n\nVers toi j'étends les mains,\nmon âme est comme une terre assoiffée.\n\nSeigneur, répondez vite ; mon souffle s'épuise.\nNe me cache pas ton visage,\nje serais comme ceux qui descendent dans la fosse.\n\nFais-moi entendre au matin ton amour,\ncar en toi j'ai confiance ;\nfais-moi connaître la route à prendre,\ncar vers toi j'élève mon âme.\n\nApprends-moi à faire ta volonté,\ncar tu es mon Dieu ;\nque ton bon esprit me conduise\nsur une terre unie.`,
+    }],
+    2: [{ // Mardi
+      titre: 'Psaume 31 — Confiance en Dieu',
+      ref: 'Ps 31, 1-6',
+      ant: 'En toi, Seigneur, j\'ai mon refuge.',
+      texte: `En toi, Seigneur, j'ai mon refuge ;\nque jamais je ne sois déçu !\nDans ta justice, délivre-moi.\n\nTends vers moi l'oreille,\nviens vite à mon secours ;\nsois pour moi le rocher de refuge,\nla forteresse qui me sauve.\n\nTu es mon rocher, ma forteresse ;\npour l'honneur de ton nom, tu me guides, tu me mènes.\n\nTu me dégageras du filet qu'ils m'ont tendu,\ncar tu es mon soutien.\n\nEn tes mains je remets mon esprit ;\nje t'appartiens, Seigneur,\nDieu de vérité.`,
+    }, {
+      titre: 'Psaume 130 — L\'humilité devant Dieu',
+      ref: 'Ps 130',
+      ant: 'Mon âme s\'appuie sur le Seigneur.',
+      texte: `Seigneur, mon cœur n'est pas fier,\nni mon regard hautain ;\nje ne poursuis ni grands projets\nni merveilles qui me dépassent.\n\nNon, je tiens mon âme\négale et silencieuse ;\nmon âme est en moi comme un enfant,\ncomme un petit enfant contre sa mère.\n\nAttends le Seigneur, Israël,\nmaintenant et pour toujours.`,
+    }],
+    3: [{ // Mercredi
+      titre: 'Psaume 16 — Sous la garde de Dieu',
+      ref: 'Ps 16',
+      ant: 'Garde-moi, Seigneur, à l\'ombre de tes ailes.',
+      texte: `Seigneur, entends ma juste cause,\nsois attentif à ma plainte ;\nprête l'oreille à ma prière :\nmes lèvres ne trompent pas.\n\nQue ta sentence vienne de ta face ;\nque tes yeux voient ce qui est droit.\n\nTu sondes mon cœur, tu le visites la nuit ;\ntu m'éprouves, tu ne trouves rien ;\nma bouche ne transgresse pas.\n\nMoi, je marcherai dans la justice ;\nquand tu te révèles, je me rassasierai de ton image.\n\nMoi, dans la justice, je verrai ta face\net je me rassasierai, à mon réveil, de ta présence.`,
+    }],
+    4: [{ // Jeudi
+      titre: 'Psaume 16 — Sous la garde de Dieu',
+      ref: 'Ps 16',
+      ant: 'À l\'abri de tes ailes, protège-moi.',
+      texte: `Seigneur, entends ma juste cause,\nsois attentif à ma plainte ;\nprête l'oreille à ma prière :\nmes lèvres ne trompent pas.\n\nQue ta sentence vienne de ta face ;\nque tes yeux voient ce qui est droit.\n\nTu sondes mon cœur, tu le visites la nuit ;\ntu m'éprouves, tu ne trouves rien ;\nma bouche ne transgresse pas.\n\nJe t'appelle, toi qui me réponds, mon Dieu ;\ntends l'oreille vers moi, entends mes paroles.\n\nMontre tes grands actes d'amour,\ntoi qui sauves des assaillants\nceux qui s'abritent à ta droite.\n\nGarde-moi comme la prunelle de tes yeux ;\nà l'ombre de tes ailes, cache-moi.`,
+    }],
+    5: [{ // Vendredi
+      titre: 'Psaume 4 — Prière du soir',
+      ref: 'Ps 4',
+      ant: 'Le Seigneur m\'entend quand je crie vers lui.',
+      texte: `Quand je crie, réponds-moi,\nDieu, ma justice !\nToi qui me libérais dans la détresse,\nprends pitié de moi, écoute ma prière !\n\nFils des hommes, jusqu'où allez-vous\nmépriser ma gloire,\naimer le néant et courir au mensonge ?\n\nSachez que le Seigneur met à part\ncelui qui lui est fidèle :\nle Seigneur m'entend quand je crie vers lui.\n\nTremblez, ne péchez pas :\nsur vos couches, en silence, demeurez recueillis.\n\nOffrez le sacrifice de justice\net confiez-vous au Seigneur.\n\nBeaucoup demandent : « Qui nous fera voir le bonheur ? »\nQue sur nous brille la lumière de ta face, Seigneur !\n\nTu mets dans mon cœur plus de joie\nqu'en leur saison d'abondance, blé et vin.\n\nOui, je me couche et m'endors en paix,\ncar toi seul, Seigneur, tu m'établis en sécurité.`,
+    }],
+    6: [{ // Samedi
+      titre: 'Psaume 4 — Prière du soir',
+      ref: 'Ps 4',
+      ant: 'Je me couche et m\'endors en paix.',
+      texte: `Quand je crie, réponds-moi,\nDieu, ma justice !\nToi qui me libérais dans la détresse,\nprends pitié de moi, écoute ma prière !\n\nFils des hommes, jusqu'où allez-vous\nmépriser ma gloire,\naimer le néant et courir au mensonge ?\n\nSachez que le Seigneur met à part\ncelui qui lui est fidèle :\nle Seigneur m'entend quand je crie vers lui.\n\nTremblez, ne péchez pas :\nsur vos couches, en silence, demeurez recueillis.\n\nOffrez le sacrifice de justice\net confiez-vous au Seigneur.\n\nTu mets dans mon cœur plus de joie\nqu'en leur saison d'abondance, blé et vin.\n\nOui, je me couche et m'endors en paix,\ncar toi seul, Seigneur, tu m'établis en sécurité.`,
+    }, {
+      titre: 'Psaume 134 — Louange nocturne',
+      ref: 'Ps 134',
+      ant: 'Pendant la nuit, levez les mains vers le sanctuaire.',
+      texte: `Louez le nom du Seigneur,\nlouez-le, vous ses serviteurs,\nvous qui vous tenez dans la maison du Seigneur,\ndans les parvis de la maison de notre Dieu.\n\nLouez le Seigneur, car il est bon,\nchantez son nom, car il est beau.\nCar le Seigneur s'est choisi Jacob,\nIsraël comme son trésor.\n\nQue Sion bénisse le Seigneur,\nlui qui habite à Jérusalem !`,
+    }],
+  };
+
+  // ── Lectures brèves (rotation sur 7) ────────────────────────────────────
+  const LECTURES = [
+    { ref: '1 Th 5, 23', texte: 'Que le Dieu de la paix lui-même vous sanctifie totalement, et que votre être entier — l\'esprit, l\'âme et le corps — soit gardé sans reproche à l\'avènement de notre Seigneur Jésus-Christ.' },
+    { ref: '1 Pi 5, 8-9', texte: 'Soyez sobres et vigilants. Votre adversaire, le diable, rôde comme un lion rugissant, cherchant quelqu\'un à dévorer. Résistez-lui avec la force de la foi.' },
+    { ref: 'Jr 14, 9', texte: 'Toi qui es au milieu de nous, Seigneur, ton nom a été invoqué sur nous, ne nous abandonne pas !' },
+    { ref: 'Ap 22, 4-5', texte: 'Les serviteurs de Dieu verront sa face. Il n\'y aura plus de nuit, et ils n\'auront besoin ni de lampe ni de lumière, car le Seigneur Dieu les illuminera, et ils régneront pour les siècles des siècles.' },
+    { ref: 'Dt 6, 4-7', texte: 'Écoute, Israël : le Seigneur notre Dieu est le Seigneur Un. Tu aimeras le Seigneur ton Dieu de tout ton cœur, de toute ton âme et de toute ta force.' },
+    { ref: 'Rm 8, 38-39', texte: 'J\'ai la certitude que ni la mort ni la vie, ni les anges ni les dominations, ni le présent ni l\'avenir, ni les puissances, ni aucune créature ne pourra nous séparer de l\'amour de Dieu qui est en Jésus-Christ notre Seigneur.' },
+    { ref: 'Ps 31, 5', texte: 'En tes mains je remets mon esprit. Tu me rachètes, Seigneur, Dieu de vérité.' },
+  ];
+
+  const psaumes = PSAUMES[dow] || PSAUMES[5];
+  const lect    = LECTURES[dow];
+
+  let html = '';
+
+  // En-tête
+  html += `<div class="brev-day-header">
+    <span class="brev-day-name">Complies — Prière de la nuit</span>
+  </div>`;
+
+  // Hymne
+  html += `<div class="brev-section brev-section--hymne">
+    <div class="brev-section-title">Hymne</div>
+    <div class="brev-text">
+      <p>Avant que s'achève ce jour,<br>
+      nous t'en supplions, Créateur du monde :<br>
+      dans ta miséricorde, garde-nous<br>
+      et protège-nous par ta grâce.</p>
+      <p>Éloigne de nous les rêves mauvais<br>
+      et les fantômes de la nuit ;<br>
+      tiens en lisière notre ennemi<br>
+      et garde nos corps sans souillure.</p>
+    </div>
+  </div>`;
+
+  // Psaume(s)
+  psaumes.forEach(ps => {
+    html += `<div class="brev-section">
+      <div class="brev-section-title">${ps.titre}</div>
+      <span class="brev-ref">${ps.ref}</span>
+      <div class="brev-antienne"><em class="brev-antienne-label">Ant.</em> ${ps.ant}</div>
+      <div class="brev-text">${ps.texte.replace(/\n/g, '<br>')}</div>
+      <div class="brev-antienne brev-antienne--after"><em class="brev-antienne-label">Ant.</em> ${ps.ant}</div>
+    </div>`;
+  });
+
+  // Lecture brève
+  html += `<div class="brev-section">
+    <div class="brev-section-title">Lecture brève</div>
+    <span class="brev-ref">${lect.ref}</span>
+    <div class="brev-text"><p>${lect.texte}</p></div>
+  </div>`;
+
+  // Cantique de Syméon (Nunc Dimittis) — fixe chaque soir
+  html += `<div class="brev-section">
+    <div class="brev-section-title">Cantique de Syméon</div>
+    <span class="brev-ref">Lc 2, 29-32</span>
+    <div class="brev-antienne"><em class="brev-antienne-label">Ant.</em> Protège-nous, Seigneur, pendant notre veille ; garde-nous dans la paix de ton repos.</div>
+    <div class="brev-text">
+      <p>Maintenant, ô Maître souverain,<br>
+      tu peux laisser ton serviteur s'en aller en paix,<br>
+      selon ta parole.</p>
+      <p>Car mes yeux ont vu ton salut<br>
+      que tu préparais à la face des peuples :<br>
+      lumière pour éclairer les nations,<br>
+      et gloire d'Israël ton peuple.</p>
+    </div>
+    <div class="brev-antienne brev-antienne--after"><em class="brev-antienne-label">Ant.</em> Protège-nous, Seigneur, pendant notre veille ; garde-nous dans la paix de ton repos.</div>
+  </div>`;
+
+  // Oraison
+  html += `<div class="brev-section brev-section--oraison">
+    <div class="brev-section-title">Oraison</div>
+    <div class="brev-text brev-oraison">
+      <p>Visitez, Seigneur, cette demeure,<br>
+      et repoussez loin d'elle toutes les embûches de l'ennemi ;<br>
+      que vos saints anges y habitent<br>
+      pour nous garder dans la paix,<br>
+      et que votre bénédiction soit toujours sur nous.<br>
+      Par Jésus-Christ, notre Seigneur. Amen.</p>
+    </div>
+  </div>`;
+
+  // Salve Regina
+  html += `<div class="brev-section">
+    <div class="brev-section-title">Salve Regina</div>
+    <div class="brev-text" style="font-style:italic">
+      <p>Salut, ô Reine, Mère de miséricorde,<br>
+      notre vie, notre douceur et notre espoir, salut !<br>
+      Vers toi nous crions, pauvres enfants d'Ève en exil ;<br>
+      vers toi nous soupirons, gémissant et pleurant<br>
+      dans cette vallée de larmes.</p>
+      <p>Ô toi, notre avocate, tourne vers nous<br>
+      tes regards miséricordieux,<br>
+      et après cet exil, montre-nous Jésus,<br>
+      le fruit béni de tes entrailles.<br>
+      Ô clémente, ô pieuse,<br>
+      ô douce Vierge Marie !</p>
+    </div>
+  </div>`;
+
+  html += `<p class="brev-aelf-credit">Textes liturgiques — Liturgie des Heures<br>
+    <small>Rite romain · Cycle hebdomadaire des Complies</small></p>`;
+
+  bodyEl.innerHTML = html;
+}
+
 function renderFallback(prayerKey, bodyEl, reason) {
+  // Complies non disponibles sur AELF → textes locaux du cycle hebdomadaire
+  if (prayerKey === 'complies' && (reason === 'unavailable' || reason === 'error')) {
+    renderCompliesLocal(bodyEl);
+    return;
+  }
+
   const names = {
     laudes:   'Laudes — Prière du matin',
     matin:    'Prière du matin',
@@ -889,16 +1068,14 @@ function renderFallback(prayerKey, bodyEl, reason) {
 
   let icon, msg;
   if (reason === 'unavailable') {
-    // AELF ne publie pas cet office pour aujourd'hui (404)
-    icon = '<i class="fa-solid fa-moon" style="color:var(--gold);font-size:28px;margin-bottom:12px;display:block"></i>';
+    icon = '<i class="fa-solid fa-calendar-xmark" style="color:var(--gold);font-size:28px;margin-bottom:12px;display:block"></i>';
     msg  = `<p>Les textes de cet office ne sont pas publiés par l'AELF pour aujourd'hui.</p>
-            <p>Vous pouvez prier les textes habituels des Complies directement sur :</p>`;
+            <p>Retrouvez-les directement sur :</p>`;
   } else if (reason === 'error') {
     icon = '<i class="fa-solid fa-wifi" style="color:var(--text-soft);font-size:28px;margin-bottom:12px;display:block"></i>';
     msg  = `<p>Les textes du jour sont temporairement indisponibles.</p>
             <p>Vérifiez votre connexion ou retrouvez-les sur :</p>`;
   } else {
-    // chapelet ou office sans endpoint AELF
     icon = '';
     msg  = `<p>Les textes de cette prière sont disponibles sur :</p>`;
   }
