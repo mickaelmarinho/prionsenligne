@@ -2029,7 +2029,7 @@ function initDailyPrayer() {
 const SOURCES = {
   // Radio Maria : flux bloqué par CORS sur HTTPS → traité comme lien externe
   rm:  { n: 'Radio Maria',      s: '', w: 'https://www.radiomaria.fr' },
-  nd:  { n: 'Radio N-Dame',     s: 'https://windu.radionotredame.net/RadioNotreDame-Fm.mp3', w: 'https://www.radionotredame.net' },
+  nd:  { n: 'Radio N-Dame',     s: 'https://windu.radionotredame.net/RadioNotreDame-Fm.mp3', w: 'https://www.rcf.fr/radio-notre-dame' },
   rcf: { n: 'RCF',              s: '', w: 'https://rcf.fr/radios/ecouter-rcf' },
   esp: { n: 'Espérance',        s: '', w: 'https://radio-esperance.fr' },
   fid: { n: 'Fidélité',         s: '', w: 'https://www.radiofidelite.fr/player/' },
@@ -2324,7 +2324,7 @@ const WEEK_SCHEDULE = {
       { t: '18:00', tl: '18h00', srcs: ['rm'] },
     ]},
     { type: 'complies', label: 'Complies',            entries: [
-      { t: '22:00', tl: '22h00', srcs: ['rm', 'nd', 'esp', 'rcf'] },
+      { t: '22:00', tl: '22h00', srcs: ['rm', 'esp'] },  // nd et rcf ne diffusent pas les complies le dimanche
     ]},
   ],
 };
