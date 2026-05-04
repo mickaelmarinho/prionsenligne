@@ -2210,6 +2210,9 @@ const WEEK_SCHEDULE = {
     { type: 'chapelet', label: 'Chapelet de Midi',   entries: [
       { t: '12:00', tl: '12h00', srcs: ['rm'] },
     ]},
+    { type: 'chapelet', label: 'Chapelet aux intentions des auditeurs', entries: [
+      { t: '14:30', tl: '14h30', srcs: ['nd'] },
+    ]},
     { type: 'chapelet', label: 'Chapelet de la Divine Miséricorde', entries: [
       { t: '15:00', tl: '15h00', srcs: ['rm'] },
     ]},
@@ -2261,6 +2264,9 @@ const WEEK_SCHEDULE = {
     { type: 'chapelet', label: 'Chapelet de Midi',   entries: [
       { t: '12:00', tl: '12h00', srcs: ['rm'] },
     ]},
+    { type: 'chapelet', label: 'Chapelet aux intentions des auditeurs', entries: [
+      { t: '14:30', tl: '14h30', srcs: ['nd'] },
+    ]},
     { type: 'chapelet', label: 'Chapelet de la Divine Miséricorde', entries: [
       { t: '15:00', tl: '15h00', srcs: ['rm'] },
     ]},
@@ -2309,6 +2315,9 @@ const WEEK_SCHEDULE = {
     { type: 'chapelet', label: 'Chapelet de Midi',               entries: [
       { t: '12:00', tl: '12h00', srcs: ['rm'] },
     ]},
+    { type: 'chapelet', label: 'Chapelet aux intentions des auditeurs', entries: [
+      { t: '14:30', tl: '14h30', srcs: ['nd'] },
+    ]},
     { type: 'chapelet', label: 'Chapelet de la Divine Miséricorde',     entries: [
       { t: '15:00', tl: '15h00', srcs: ['rm', 'fid'] },
     ]},
@@ -2352,6 +2361,9 @@ const WEEK_SCHEDULE = {
     ]},
     { type: 'chapelet', label: 'Chapelet marial',     entries: [
       { t: '12:00', tl: '12h00', srcs: ['rm'] },
+    ]},
+    { type: 'chapelet', label: 'Chapelet aux intentions des auditeurs', entries: [
+      { t: '14:30', tl: '14h30', srcs: ['nd'] },
     ]},
     { type: 'chapelet', label: 'Chapelet de la Divine Miséricorde', entries: [
       { t: '15:00', tl: '15h00', srcs: ['rm', 'fid'] },
@@ -2447,6 +2459,9 @@ const WEEK_SCHEDULE = {
     ]},
     { type: 'chapelet', label: 'Angélus',             entries: [
       { t: '12:00', tl: '12h00', srcs: ['vat', 'kto', 'nd'] },
+    ]},
+    { type: 'chapelet', label: 'Chapelet aux intentions des auditeurs', entries: [
+      { t: '14:30', tl: '14h30', srcs: ['nd'] },
     ]},
     { type: 'chapelet', label: 'Chapelet de la Divine Miséricorde', entries: [
       { t: '15:00', tl: '15h00', srcs: ['rm', 'lou', 'nd'] },
