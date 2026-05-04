@@ -734,36 +734,29 @@ async function initAuth() {
   // Les listeners UI sont attachés IMMÉDIATEMENT
   initAuthUI();
 
-  // Ensuite on tente d'initialiser Supabase
-  // Priorité : /api/config (Vercel env vars) → _SB_*_LOCAL (fallback local)
-  let supabaseUrl = '', supabaseAnon = '';
-  try {
-    const res = await fetch('/api/config');
-    if (res.ok) {
-      const cfg = await res.json();
-      supabaseUrl  = cfg.supabaseUrl  || '';
-      supabaseAnon = cfg.supabaseAnon || '';
-    }
-  } catch (_) { /* hors Vercel – ignoré */ }
-
-  // Fallback : credentials locaux définis en haut du fichier
-  if (!supabaseUrl)  supabaseUrl  = _SB_URL_LOCAL;
-  if (!supabaseAnon) supabaseAnon = _SB_KEY_LOCAL;
-
-  if (!supabaseUrl || !supabaseAnon) {
-    console.info('[PrionsEnLigne] Supabase non configuré — voir les instructions en haut de auth.js.');
-    return;
+  // ── 1. Init synchrone avec les credentials embarqués (disponible tout de suite) ──
+  // Le SDK Supabase est chargé en UMD : window.supabase.createClient
+  const sbLib = window.supabase || window.Supabase;
+  if (sbLib?.createClient && _SB_URL_LOCAL && _SB_KEY_LOCAL) {
+    try { _sb = sbLib.createClient(_SB_URL_LOCAL, _SB_KEY_LOCAL); } catch (_) {}
   }
 
-  try {
-    _sb = window.supabase?.createClient(supabaseUrl, supabaseAnon);
-  } catch (err) {
-    console.info('[PrionsEnLigne] Erreur création client Supabase :', err.message);
-    return;
-  }
+  // ── 2. Tenter de récupérer les credentials Vercel (variables d'env) ──
+  // Si différents des locaux, réinitialise le client. Fait en arrière-plan.
+  (async () => {
+    try {
+      const res = await fetch('/api/config');
+      if (!res.ok) return;
+      const { supabaseUrl, supabaseAnon } = await res.json();
+      if (!supabaseUrl || !supabaseAnon) return;
+      if (supabaseUrl === _SB_URL_LOCAL && supabaseAnon === _SB_KEY_LOCAL) return; // identiques
+      const newClient = sbLib?.createClient(supabaseUrl, supabaseAnon);
+      if (newClient) _sb = newClient;
+    } catch (_) { /* ignoré hors Vercel */ }
+  })();
 
   if (!_sb) {
-    console.info('[PrionsEnLigne] Supabase SDK introuvable (CDN non chargé ?).');
+    console.warn('[PrionsEnLigne] Supabase SDK introuvable — auth désactivée.');
     return;
   }
 
