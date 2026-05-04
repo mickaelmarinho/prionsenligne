@@ -61,7 +61,12 @@
             <i class="fa-solid fa-hands-praying"></i> Rejoindre
           </button>
         </div>
-        <!-- Bouton déconnexion desktop — affiché uniquement quand connecté -->
+        <!-- Bouton compte desktop — affiché uniquement quand connecté -->
+        <button class="nav-account-btn hidden" id="header-btn-account" title="Mon profil">
+          <span class="header-acct-avatar" id="header-acct-avatar">?</span>
+          <span id="header-acct-name">Mon compte</span>
+        </button>
+        <!-- Bouton déconnexion desktop — affiché uniquement quand connecté (fallback) -->
         <button class="nav-auth-btn nav-logout-btn hidden" id="header-btn-logout">
           <i class="fa-solid fa-right-from-bracket"></i> Se déconnecter
         </button>
@@ -72,6 +77,16 @@
 
       <!-- Dropdown menu burger -->
       <div id="hamburger-menu" class="hamburger-menu hidden" role="menu">
+        <!-- Profil utilisateur (connecté) -->
+        <div class="hm-profile-row hidden" id="hm-profile-row">
+          <div class="hm-pr-avatar" id="hm-pr-avatar">?</div>
+          <div class="hm-pr-info">
+            <div class="hm-pr-name" id="hm-pr-name">—</div>
+            <div class="hm-pr-email" id="hm-pr-email">—</div>
+          </div>
+          <i class="fa-solid fa-chevron-right hm-pr-arrow"></i>
+        </div>
+        <div class="hm-divider hidden" id="hm-pr-divider"></div>
         <div class="hm-section-label hm-nav-label">Navigation</div>
         <div class="hm-item hm-nav-item" data-tab="aujourd"><i class="fa-solid fa-sun"></i> Aujourd'hui</div>
         <div class="hm-item hm-nav-item" data-tab="semaine"><i class="fa-solid fa-calendar-week"></i> Semaine</div>
@@ -461,6 +476,23 @@
 
 
   <!-- ═══════════════════════════════════════════
+       PANNEAU PROFIL
+  ═══════════════════════════════════════════ -->
+  <div id="profile-overlay" class="profile-overlay"></div>
+  <div id="profile-panel" class="profile-panel" aria-hidden="true" role="dialog" aria-label="Mon profil">
+    <div class="profile-header">
+      <span class="profile-header-title"><i class="fa-solid fa-hands-praying"></i> Mon profil</span>
+      <button class="profile-close" id="profile-close" aria-label="Fermer le profil">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="profile-body" id="profile-body">
+      <!-- Contenu chargé dynamiquement par auth.js -->
+    </div>
+  </div>
+
+
+  <!-- ═══════════════════════════════════════════
        LECTEUR RADIO
   ═══════════════════════════════════════════ -->
   <div id="radio-player" class="radio-player" role="region" aria-label="Lecteur radio">
@@ -503,6 +535,19 @@
       <i class="fa-solid fa-bars bn-icon"></i><span>Menu</span>
     </button>
   </nav>
+
+  <!-- ═══════════════════════════════════════════
+       CHANT GRÉGORIEN — Lecteur ambiant
+  ═══════════════════════════════════════════ -->
+  <audio id="greg-audio" preload="none"></audio>
+  <button id="greg-btn" class="greg-btn" title="Chant grégorien" aria-label="Chant grégorien ambiant">
+    <i class="fa-solid fa-music" id="greg-icon"></i>
+    <span class="greg-tooltip">
+      <span id="greg-title">Chant grégorien</span>
+      <span class="greg-tooltip-sub">Cliquez pour démarrer</span>
+    </span>
+  </button>
+
 
   <!-- ═══════════════════════════════════════════
        WIDGET — CHAPELET NUMÉRIQUE

@@ -21,6 +21,24 @@ let _currentUser = null;
 let _formMode    = 'login';
 
 /* ════════════════════════════════════════════
+   PROFIL — COULEUR AVATAR
+═════════════════════════════════════════════*/
+function avatarColor(str) {
+  const palette = [
+    { bg: '#1a2744', fg: '#c9a84c' },
+    { bg: '#534AB7', fg: '#fff'    },
+    { bg: '#0F6E56', fg: '#fff'    },
+    { bg: '#854F0B', fg: '#fff'    },
+    { bg: '#993556', fg: '#fff'    },
+    { bg: '#185FA5', fg: '#fff'    },
+    { bg: '#444441', fg: '#e8d89a' },
+  ];
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
+  return palette[h % palette.length];
+}
+
+/* ════════════════════════════════════════════
    UI HEADER
 ═════════════════════════════════════════════*/
 function updateHeaderUI(user) {
@@ -29,29 +47,302 @@ function updateHeaderUI(user) {
   const btn         = $id('hamburger-btn');
   const signoutItem = $id('hm-signout');
   const logoutBtn   = $id('header-btn-logout');
+  const accountBtn  = $id('header-btn-account');
   const headerUser  = $id('header-user');
   const hmAuthSep   = $id('hm-auth-sep');
   const hmLogin     = $id('hm-login-item');
   const hmSignup    = $id('hm-signup-item');
+  const hmProfileRow = $id('hm-profile-row');
+  const hmPrDivider  = $id('hm-pr-divider');
 
   if (user) {
-    const name    = user.user_metadata?.name || user.email;
+    const name    = user.user_metadata?.name || user.email.split('@')[0];
+    const email   = user.email || '';
     const initial = name.charAt(0).toUpperCase();
+    const col     = avatarColor(name);
+
+    // Hamburger btn → avatar stylé
     if (btn) btn.innerHTML = `<span class="hamburger-avatar" title="${name}">${initial}</span>`;
     headerUser?.classList.add('user-logged-in');
+
+    // Bouton compte desktop
+    if (accountBtn) {
+      accountBtn.classList.remove('hidden');
+      const avatarSpan = $id('header-acct-avatar');
+      const nameSpan   = $id('header-acct-name');
+      if (avatarSpan) {
+        avatarSpan.textContent = initial;
+        avatarSpan.style.background = col.bg;
+        avatarSpan.style.color      = col.fg;
+      }
+      if (nameSpan) nameSpan.textContent = name;
+    }
+
+    // Ligne profil dans le menu burger
+    if (hmProfileRow) {
+      hmProfileRow.classList.remove('hidden');
+      const av = $id('hm-pr-avatar');
+      const nm = $id('hm-pr-name');
+      const em = $id('hm-pr-email');
+      if (av) { av.textContent = initial; av.style.background = col.bg; av.style.color = col.fg; }
+      if (nm) nm.textContent = name;
+      if (em) em.textContent = email;
+    }
+    if (hmPrDivider) hmPrDivider.classList.remove('hidden');
+
     if (hmAuthSep) hmAuthSep.style.display = 'none';
     if (hmLogin)   hmLogin.style.display   = 'none';
     if (hmSignup)  hmSignup.style.display  = 'none';
-    logoutBtn?.classList.remove('hidden');
+    logoutBtn?.classList.add('hidden'); // signout est désormais dans le panneau profil
   } else {
     if (btn) btn.innerHTML = '<i class="fa-solid fa-bars"></i>';
     headerUser?.classList.remove('user-logged-in');
+    accountBtn?.classList.add('hidden');
+    if (hmProfileRow) hmProfileRow.classList.add('hidden');
+    if (hmPrDivider)  hmPrDivider.classList.add('hidden');
     if (hmAuthSep) hmAuthSep.style.display = '';
     if (hmLogin)   hmLogin.style.display   = '';
     if (hmSignup)  hmSignup.style.display  = '';
     logoutBtn?.classList.add('hidden');
   }
   if (signoutItem) signoutItem.style.display = user ? '' : 'none';
+}
+
+/* ════════════════════════════════════════════
+   PROFIL — PANNEAU LATÉRAL
+═════════════════════════════════════════════*/
+function openProfilePanel() {
+  const panel   = $id('profile-panel');
+  const overlay = $id('profile-overlay');
+  if (!panel) return;
+  $id('hamburger-menu')?.classList.add('hidden');
+  loadProfileContent();
+  panel.classList.add('open');
+  panel.setAttribute('aria-hidden', 'false');
+  overlay?.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeProfilePanel() {
+  $id('profile-panel')?.classList.remove('open');
+  $id('profile-panel')?.setAttribute('aria-hidden', 'true');
+  $id('profile-overlay')?.classList.remove('show');
+  document.body.style.overflow = '';
+}
+
+function _esc(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function loadProfileContent() {
+  const user = _currentUser;
+  if (!user) return;
+
+  const bodyEl = $id('profile-body');
+  if (!bodyEl) return;
+
+  const name    = user.user_metadata?.name || user.email.split('@')[0];
+  const email   = user.email || '';
+  const initial = name.charAt(0).toUpperCase();
+  const col     = avatarColor(name);
+
+  const since  = user.created_at ? new Date(user.created_at) : null;
+  const sinceStr = since
+    ? since.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })
+    : '';
+
+  // Squelette immédiat (sans attendre Supabase)
+  bodyEl.innerHTML = `
+    <div class="prof-hero">
+      <div class="prof-avatar" style="background:${col.bg};color:${col.fg}">${_esc(initial)}</div>
+      <div class="prof-name" id="prof-display-name">${_esc(name)}</div>
+      <div class="prof-email">${_esc(email)}</div>
+      ${sinceStr ? `<div class="prof-since"><i class="fa-solid fa-cross"></i> Membre depuis le ${sinceStr}</div>` : ''}
+    </div>
+
+    <div class="prof-stats">
+      <div class="prof-stat-card prof-stat-intentions">
+        <div class="prof-stat-value" id="prof-stat-int">…</div>
+        <div class="prof-stat-label"><i class="fa-solid fa-hands-praying"></i> Intentions de prière</div>
+      </div>
+    </div>
+
+    <div class="prof-section">
+      <div class="prof-section-title">Modifier mon prénom</div>
+      <div class="prof-name-form">
+        <input type="text" id="prof-name-input" class="prof-input"
+               value="${_esc(name)}" placeholder="Votre prénom"
+               maxlength="40" autocomplete="given-name">
+        <button class="prof-save-btn" id="prof-name-save">
+          <i class="fa-solid fa-check"></i> Enregistrer
+        </button>
+      </div>
+      <div class="prof-feedback hidden" id="prof-name-feedback"></div>
+    </div>
+
+    <div class="prof-section">
+      <div class="prof-section-title">Sécurité</div>
+      <button class="prof-action-btn" id="prof-change-pw-btn">
+        <i class="fa-solid fa-lock"></i> Changer mon mot de passe
+        <i class="fa-solid fa-chevron-down prof-action-chevron" id="prof-pw-chevron"></i>
+      </button>
+      <div class="prof-pw-form hidden" id="prof-pw-form">
+        <div class="prof-pw-group">
+          <input type="password" id="prof-pw-new" class="prof-input"
+                 placeholder="Nouveau mot de passe" minlength="6" autocomplete="new-password">
+        </div>
+        <div class="prof-pw-group">
+          <input type="password" id="prof-pw-confirm" class="prof-input"
+                 placeholder="Confirmer le mot de passe" minlength="6" autocomplete="new-password">
+        </div>
+        <div class="prof-feedback hidden" id="prof-pw-feedback"></div>
+        <button class="prof-save-btn" id="prof-pw-save">
+          <i class="fa-solid fa-check"></i> Enregistrer le mot de passe
+        </button>
+      </div>
+    </div>
+
+    <div class="prof-section prof-section--danger">
+      <button class="prof-signout-btn" id="prof-signout-btn">
+        <i class="fa-solid fa-right-from-bracket"></i> Se déconnecter
+      </button>
+    </div>
+  `;
+
+  // Charger les stats en parallèle
+  if (_sb) {
+    _sb.from('prayer_intentions')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .then(({ count, error }) => {
+        const el = $id('prof-stat-int');
+        if (el) el.textContent = error ? '—' : (count ?? 0);
+      })
+      .catch(() => {
+        const el = $id('prof-stat-int');
+        if (el) el.textContent = '—';
+      });
+  } else {
+    const el = $id('prof-stat-int');
+    if (el) el.textContent = '—';
+  }
+
+  // Events
+  $id('prof-name-save')?.addEventListener('click', saveProfileName);
+
+  $id('prof-change-pw-btn')?.addEventListener('click', () => {
+    const form    = $id('prof-pw-form');
+    const chevron = $id('prof-pw-chevron');
+    const open    = form.classList.toggle('hidden') === false;
+    chevron?.classList.toggle('rotated', open);
+    if (open) $id('prof-pw-new')?.focus();
+  });
+
+  $id('prof-pw-save')?.addEventListener('click', saveProfilePassword);
+
+  $id('prof-signout-btn')?.addEventListener('click', async () => {
+    if (!_sb) return;
+    closeProfilePanel();
+    await _sb.auth.signOut();
+  });
+}
+
+async function saveProfileName() {
+  const input = $id('prof-name-input');
+  const fb    = $id('prof-name-feedback');
+  if (!input || !_sb) return;
+  const name = input.value.trim();
+  if (!name) { _showProfFeedback(fb, 'Veuillez entrer un prénom.', 'error'); return; }
+
+  const btn = $id('prof-name-save');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+  const { error } = await _sb.auth.updateUser({ data: { name } });
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fa-solid fa-check"></i> Enregistrer';
+
+  if (error) { _showProfFeedback(fb, translateSupabaseError(error), 'error'); return; }
+
+  _showProfFeedback(fb, '<i class="fa-solid fa-circle-check"></i> Prénom mis à jour !', 'success');
+
+  // Mettre à jour l'UI en direct
+  if (_currentUser) {
+    _currentUser = { ..._currentUser, user_metadata: { ..._currentUser.user_metadata, name } };
+    window._pelUser = _currentUser;
+    updateHeaderUI(_currentUser);
+  }
+  const dispEl   = $id('prof-display-name');
+  const avatarEl = document.querySelector('#profile-panel .prof-avatar');
+  if (dispEl) dispEl.textContent = name;
+  if (avatarEl) {
+    const col = avatarColor(name);
+    avatarEl.textContent       = name.charAt(0).toUpperCase();
+    avatarEl.style.background  = col.bg;
+    avatarEl.style.color       = col.fg;
+  }
+}
+
+async function saveProfilePassword() {
+  const pwEl = $id('prof-pw-new');
+  const cfEl = $id('prof-pw-confirm');
+  const fb   = $id('prof-pw-feedback');
+  if (!pwEl || !_sb) return;
+
+  const pw = pwEl.value;
+  const cf = cfEl.value;
+  if (!pw)          { _showProfFeedback(fb, 'Veuillez entrer un mot de passe.', 'error'); return; }
+  if (pw.length < 6) { _showProfFeedback(fb, 'Au moins 6 caractères requis.', 'error'); return; }
+  if (pw !== cf)    { _showProfFeedback(fb, 'Les mots de passe ne correspondent pas.', 'error'); return; }
+
+  const btn = $id('prof-pw-save');
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+  const { error } = await _sb.auth.updateUser({ password: pw });
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fa-solid fa-check"></i> Enregistrer le mot de passe';
+
+  if (error) { _showProfFeedback(fb, translateSupabaseError(error), 'error'); return; }
+
+  _showProfFeedback(fb, '<i class="fa-solid fa-circle-check"></i> Mot de passe mis à jour !', 'success');
+  pwEl.value = '';
+  cfEl.value = '';
+  setTimeout(() => $id('prof-pw-form')?.classList.add('hidden'), 1800);
+}
+
+function _showProfFeedback(el, html, type) {
+  if (!el) return;
+  el.innerHTML  = html;
+  el.className  = `prof-feedback prof-feedback--${type}`;
+  clearTimeout(el._feedbackTimer);
+  el._feedbackTimer = setTimeout(() => {
+    if (el) el.className = 'prof-feedback hidden';
+  }, 4000);
+}
+
+function initProfilePanel() {
+  $id('profile-close')?.addEventListener('click', closeProfilePanel);
+  $id('profile-overlay')?.addEventListener('click', closeProfilePanel);
+
+  // Ligne profil dans le menu burger
+  $id('hm-profile-row')?.addEventListener('click', () => {
+    $id('hamburger-menu')?.classList.add('hidden');
+    openProfilePanel();
+  });
+
+  // Bouton compte desktop
+  $id('header-btn-account')?.addEventListener('click', openProfilePanel);
+
+  // ESC ferme le panneau
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeProfilePanel();
+  });
+
+  // Exposé globalement pour que app.js (initHamburger) puisse l'appeler
+  window._openProfilePanel = openProfilePanel;
 }
 
 /* ════════════════════════════════════════════
@@ -315,6 +606,9 @@ function initAuthUI() {
     input.type     = hidden ? 'text' : 'password';
     icon.className = hidden ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
   });
+
+  // ── Panneau profil ──
+  initProfilePanel();
 
   // ── Soumission formulaire ──
   $id('auth-form')?.addEventListener('submit', async e => {

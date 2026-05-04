@@ -639,7 +639,7 @@ const FALLBACK_TEXTS = {
   },
 };
 
-function openBreviary(prayerKey) {
+function openBreviary(prayerKey, chapeletLabel) {
   const panel   = document.getElementById('breviary-panel');
   const overlay = document.getElementById('breviary-overlay');
   const nameEl  = document.getElementById('brev-prayer-name');
@@ -697,7 +697,7 @@ function openBreviary(prayerKey) {
         renderFallback(prayerKey, bodyEl, 'error');
       });
   } else {
-    setTimeout(() => renderFallback(prayerKey, bodyEl, 'none'), 600);
+    setTimeout(() => renderFallback(prayerKey, bodyEl, 'none', chapeletLabel || ''), 600);
   }
 }
 
@@ -1326,7 +1326,138 @@ function renderCompliesLocal(bodyEl) {
   bodyEl.innerHTML = html;
 }
 
-function renderFallback(prayerKey, bodyEl, reason) {
+/* ────────────────────────────────────────────
+   CHAPELET — textes locaux (mystères + prières)
+──────────────────────────────────────────────*/
+const CHAPELET_MYST = {
+  joyeux:     { name: 'Mystères Joyeux',     list: ["L'Annonciation","La Visitation","La Nativité de Jésus","La Présentation au Temple","Le Recouvrement au Temple"] },
+  douloureux: { name: 'Mystères Douloureux', list: ["L'Agonie à Gethsémani","La Flagellation","Le Couronnement d'épines","Le Portement de Croix","La Crucifixion et la Mort de Jésus"] },
+  lumineux:   { name: 'Mystères Lumineux',   list: ["Le Baptême de Jésus","Les Noces de Cana","L'Annonce du Royaume","La Transfiguration","L'Institution de l'Eucharistie"] },
+  glorieux:   { name: 'Mystères Glorieux',   list: ["La Résurrection","L'Ascension","La Pentecôte","L'Assomption de Marie","Le Couronnement de Marie"] },
+};
+const CHAPELET_DOW = { 0:'glorieux', 1:'joyeux', 2:'douloureux', 3:'glorieux', 4:'lumineux', 5:'douloureux', 6:'joyeux' };
+
+function renderChapeletLocal(bodyEl, label) {
+  const lc = (label || '').toLowerCase();
+
+  if (lc.includes('miséricorde') || lc.includes('misericorde')) {
+    renderDivineMercyLocal(bodyEl, label);
+    return;
+  }
+
+  // Rosaire classique
+  const key     = CHAPELET_DOW[getParisDate().getDay()];
+  const mystery = CHAPELET_MYST[key];
+  const isLatin = lc.includes('latin');
+
+  let html = `
+    <div class="brev-day-header">
+      <span class="brev-day-name">${label || 'Le Saint Rosaire'}</span>
+      ${isLatin ? '<span class="brev-color-badge" style="background:#185FA5">Latin</span>' : ''}
+    </div>
+
+    <div class="brev-section brev-section--hymne">
+      <div class="brev-section-title"><i class="fa-solid fa-star-of-david"></i> ${mystery.name}</div>
+      <p class="brev-text" style="font-style:italic;color:var(--text-soft);font-size:13px;margin-bottom:12px;">
+        Tradition catholique — ${['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'][getParisDate().getDay()]}
+      </p>
+      <ol class="chapelet-mystery-list">
+        ${mystery.list.map((m, i) => `<li><span class="ch-mystery-num">${i+1}</span><span>${m}</span></li>`).join('')}
+      </ol>
+    </div>
+
+    <div class="brev-section">
+      <div class="brev-section-title"><i class="fa-solid fa-hands-praying"></i> Séquence d'une décade</div>
+      <div class="brev-text">
+        <p><strong>Au début de chaque décade :</strong><br>Notre Père</p>
+        <p><strong>10 fois :</strong><br>${isLatin ? 'Ave Maria, gratia plena…' : 'Je vous salue Marie, pleine de grâce…'}</p>
+        <p><strong>À la fin :</strong><br>Gloire au Père, au Fils et au Saint-Esprit, comme il était au commencement, maintenant et toujours, dans les siècles des siècles. Amen.<br>
+        <em>Ô mon Jésus, pardonnez-nous nos péchés, préservez-nous du feu de l'enfer, conduisez au ciel toutes les âmes, surtout celles qui ont le plus besoin de votre miséricorde.</em></p>
+      </div>
+    </div>
+
+    <div class="brev-section">
+      <div class="brev-section-title"><i class="fa-solid fa-cross"></i> Prières de l'introduction</div>
+      <div class="brev-text">
+        <p><strong>Je crois en Dieu</strong> (Credo des Apôtres)</p>
+        <p><strong>Notre Père</strong></p>
+        <p><strong>3 × Je vous salue Marie</strong> (pour la foi, l'espérance, la charité)</p>
+        <p><strong>Gloire au Père</strong></p>
+      </div>
+    </div>
+
+    <div class="brev-section">
+      <div class="brev-section-title"><i class="fa-solid fa-radio"></i> Suivre sur les radios</div>
+      <div class="brev-text" style="font-size:13px;">
+        <p>Radio Maria · Radio Notre-Dame · Sanctuaire de Lourdes</p>
+        <p style="color:var(--text-soft)">Les sources radio proposées dans la timeline vous permettent de prier en communion avec les fidèles en direct.</p>
+      </div>
+    </div>
+
+    <p class="brev-aelf-credit">Le Saint Rosaire<br>
+      <small>Tradition bénédictine · Mystères selon le jour de la semaine</small></p>
+  `;
+  bodyEl.innerHTML = html;
+}
+
+function renderDivineMercyLocal(bodyEl, label) {
+  bodyEl.innerHTML = `
+    <div class="brev-day-header">
+      <span class="brev-day-name">${label || 'Chapelet de la Divine Miséricorde'}</span>
+      <span class="brev-color-badge" style="background:#993556">15h00</span>
+    </div>
+
+    <div class="brev-section brev-section--hymne">
+      <div class="brev-section-title"><i class="fa-solid fa-heart"></i> Introduction</div>
+      <div class="brev-text">
+        <p>Signe de Croix</p>
+        <p><strong>Prière d'ouverture</strong><br>
+        Ô Sang et Eau, qui avez jailli du Cœur de Jésus comme une source de miséricorde pour nous,
+        je me confie en Vous.</p>
+        <p><strong>Notre Père</strong></p>
+        <p><strong>Je vous salue Marie</strong></p>
+        <p><strong>Je crois en Dieu</strong></p>
+      </div>
+    </div>
+
+    <div class="brev-section">
+      <div class="brev-section-title"><i class="fa-solid fa-circle-dot"></i> Les 5 dizaines</div>
+      <div class="brev-text">
+        <p><strong>Sur les grandes perles (5×) :</strong></p>
+        <p class="brev-antienne">« Père éternel, j'offre le Corps et le Sang, l'Âme et la Divinité de votre Fils bien-aimé, Notre Seigneur Jésus-Christ, en réparation de nos péchés et ceux du monde entier. »</p>
+        <p><strong>Sur les petites perles (10× par dizaine) :</strong></p>
+        <p class="brev-antienne">« Pour sa douloureuse Passion, ayez pitié de nous et du monde entier. »</p>
+      </div>
+    </div>
+
+    <div class="brev-section">
+      <div class="brev-section-title"><i class="fa-solid fa-cross"></i> Conclusion (3 fois)</div>
+      <div class="brev-text">
+        <p class="brev-antienne">« Dieu Saint, Dieu Fort, Dieu Éternel, ayez pitié de nous et du monde entier. »</p>
+        <p style="margin-top:12px;"><strong>Prière finale :</strong><br>
+        Ô Sang et Eau qui avez jailli du Cœur de Jésus comme une source de miséricorde pour nous,
+        nous avons confiance en Vous !</p>
+      </div>
+    </div>
+
+    <div class="brev-section">
+      <div class="brev-section-title"><i class="fa-solid fa-book"></i> Histoire</div>
+      <div class="brev-text" style="font-size:13px;color:var(--text-soft);">
+        <p>Ce chapelet a été révélé à sainte Faustine Kowalska (1905–1938), religieuse polonaise,
+        qui en a consigné la forme dans son <em>Journal de la Miséricorde Divine</em>.
+        Il se prie traditionnellement à 15h00, l'heure de l'agonie de Notre Seigneur.</p>
+      </div>
+    </div>
+
+    <p class="brev-aelf-credit">Chapelet de la Divine Miséricorde<br>
+      <small>Révélé à sainte Faustine Kowalska · 1935</small></p>
+  `;
+}
+
+function renderFallback(prayerKey, bodyEl, reason, chapeletLabel) {
+  // Chapelet → toujours le rendu local enrichi (pas d'AELF pour le chapelet)
+  if (prayerKey === 'chapelet') { renderChapeletLocal(bodyEl, chapeletLabel || ''); return; }
+
   // Offices non disponibles sur AELF → textes locaux permanents
   if (reason === 'unavailable' || reason === 'error') {
     if (prayerKey === 'complies')                          { renderCompliesLocal(bodyEl); return; }
@@ -1389,7 +1520,7 @@ function initBreviary() {
   document.addEventListener('click', e => {
     const btn = e.target.closest('.tl-breviary-btn');
     if (!btn) return;
-    openBreviary(btn.dataset.prayer);
+    openBreviary(btn.dataset.prayer, btn.dataset.label || '');
   });
 
   const closeBtn = document.getElementById('brev-close');
@@ -1538,6 +1669,12 @@ function initHamburger() {
 
   function toggleMenu(e) {
     e.stopPropagation();
+    // Desktop + connecté → panneau profil directement (pas le menu burger)
+    if (window._pelUser && window.innerWidth >= 641 && window._openProfilePanel) {
+      closeMenu();
+      window._openProfilePanel();
+      return;
+    }
     menu.classList.contains('hidden') ? openMenu() : closeMenu();
   }
 
@@ -2512,7 +2649,7 @@ function initTodayTimeline() {
 
     const brevLabel = BREV_LABEL[slot.type];
     const brevHtml  = brevLabel
-      ? `<button class="tl-breviary-btn" data-prayer="${slot.type}">
+      ? `<button class="tl-breviary-btn" data-prayer="${slot.type}" data-label="${slot.label || ''}">
            <i class="fa-solid fa-book-open"></i> ${brevLabel}
          </button>`
       : '';
@@ -3120,7 +3257,59 @@ function initAbout() {
 
 
 /* ────────────────────────────────────────────
-   10. INIT GLOBAL
+   10. CHANT GRÉGORIEN — Lecteur ambiant
+──────────────────────────────────────────────*/
+function initGregorianPlayer() {
+  const audio = document.getElementById('greg-audio');
+  const btn   = document.getElementById('greg-btn');
+  const icon  = document.getElementById('greg-icon');
+  const title = document.getElementById('greg-title');
+  if (!audio || !btn) return;
+
+  // Flux Radio Espérance — chant grégorien 24h/24, HTTPS, fiable
+  const STREAM   = 'https://esperance.streamakaci.com/gregorien.mp3';
+  const FALLBACK = 'https://radio-esperance.fr';
+  let playing = false;
+  let failed  = false;
+
+  audio.src    = STREAM;
+  audio.volume = 0.22; // doux et ambiant
+
+  function setUI(on) {
+    playing = on;
+    btn.classList.toggle('greg-playing', on);
+    if (icon)  icon.className  = on ? 'fa-solid fa-pause' : 'fa-solid fa-music';
+    if (title) title.textContent = on ? 'En écoute…' : 'Chant grégorien';
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  }
+
+  function showFallback() {
+    failed = true;
+    setUI(false);
+    if (icon)  icon.className  = 'fa-solid fa-arrow-up-right-from-square';
+    if (title) title.textContent = 'Radio Espérance';
+    btn.onclick = () => window.open(FALLBACK, '_blank', 'noopener');
+    btn.title = 'Ouvrir Radio Espérance (chant grégorien)';
+  }
+
+  audio.addEventListener('error', showFallback);
+
+  btn.addEventListener('click', () => {
+    if (failed) { window.open(FALLBACK, '_blank', 'noopener'); return; }
+    if (playing) {
+      audio.pause();
+      setUI(false);
+    } else {
+      audio.play()
+        .then(() => setUI(true))
+        .catch(showFallback);
+    }
+  });
+}
+
+
+/* ────────────────────────────────────────────
+   11. INIT GLOBAL
 ──────────────────────────────────────────────*/
 document.addEventListener('DOMContentLoaded', () => {
   initTabs();
@@ -3140,5 +3329,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initChat();
   initInstallBanner();
   initAbout();
+  initGregorianPlayer();
   handleDeepLink();      // applique le filtre/onglet issu du hash URL (landing page)
 });
