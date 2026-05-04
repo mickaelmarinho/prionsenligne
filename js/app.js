@@ -1550,6 +1550,10 @@ function initRadioPlayer() {
 
   if (!player || !audio) return;
 
+  // Sécurité : le lecteur ne doit JAMAIS être visible au chargement de la page
+  player.classList.remove('visible');
+  document.body.classList.remove('player-open');
+
   audio.volume = 0.8;
 
   // On traque la source courante avec une variable dédiée
@@ -1589,7 +1593,19 @@ function initRadioPlayer() {
     }
   });
 
-  closeBtn.addEventListener('click', closePlayer);
+  // Bouton fermer — délégation forte : capture le clic même si on tape sur l'icône <i>
+  // (sur mobile certains navigateurs créent une zone tactile précise sur le SVG)
+  closeBtn.addEventListener('click', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    closePlayer();
+  });
+  // Fallback tactile : iOS/Safari peuvent retarder le click
+  closeBtn.addEventListener('touchend', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    closePlayer();
+  }, { passive: false });
 
   volSlider.addEventListener('input', () => {
     audio.volume = parseFloat(volSlider.value);

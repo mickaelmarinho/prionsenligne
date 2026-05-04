@@ -1705,6 +1705,9 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
   flex-shrink: 0;
 }
 .rp-btn-close:hover { background: rgba(255,255,255,.2); color: white; }
+/* L'icône à l'intérieur ne capture pas les clics — toujours géré par le bouton parent */
+.rp-btn-close i,
+.rp-btn-close svg { pointer-events: none; }
 
 
 /* ══════════════════════════════════════════════
@@ -4364,32 +4367,34 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   .bn { font-size: 10.5px; gap: 2px; padding: 3px 6px; min-width: 52px; }
   .bn-icon { font-size: 16px; }
 
-  /* Lecteur radio juste au-dessus de la bottom-nav */
+  /* Lecteur radio juste au-dessus de la bottom-nav, look complet conservé */
   .radio-player {
     bottom: calc(var(--bottom-nav-h) + var(--safe-bottom));
     left: 0; right: 0;
     border-radius: 0;
-    padding: 10px 12px;
+    padding: 10px 14px;
     gap: 10px;
   }
-  /* Volume slider masqué sur mobile (place limitée) — réglable via boutons système */
-  .rp-vol,
-  .rp-vol-icon { display: none; }
-  /* Contrôles compactés : juste play + close */
-  .rp-controls { gap: 6px; }
+  .rp-controls { gap: 8px; }
   .rp-btn-play {
-    width: 40px; height: 40px;
-    font-size: 15px;
+    width: 38px; height: 38px;
+    font-size: 14px;
   }
-  /* Bouton fermer : zone tactile élargie (≥44px) bien visible */
+  /* Slider volume conservé (plus compact sur mobile) */
+  .rp-vol-icon { font-size: 11px; }
+  .rp-vol { width: 60px; }
+  /* Bouton fermer : zone tactile élargie (≥40px) bien visible */
   .rp-btn-close {
-    width: 44px; height: 44px;
+    width: 40px; height: 40px;
+    min-width: 40px;
     background: rgba(255,255,255,.14);
     color: var(--cream);
-    font-size: 16px;
+    font-size: 14px;
+    z-index: 1;            /* sécurité contre tout overlap */
+    position: relative;
   }
-  .rp-btn-close:active { background: rgba(255,255,255,.28); }
-  .rp-name { max-width: none; font-size: 14px; }
+  .rp-btn-close:active { background: rgba(255,255,255,.28); transform: scale(.92); }
+  .rp-name { max-width: 110px; font-size: 13.5px; }
   .rp-sub  { font-size: 11px; opacity: .65; }
 
   /* FAB chapelet : au-dessus de la nav (et du player si ouvert) */
