@@ -1927,6 +1927,29 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
 }
 .auth-note i { color: var(--gold); margin-right: 4px; }
 
+/* Bouton secondaire "Renvoyer l'email de confirmation" */
+.auth-resend-btn {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  background: transparent;
+  border: 1.5px solid var(--border-mid);
+  border-radius: var(--r-md);
+  color: var(--text-mid);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: border-color .15s, color .15s, background .15s;
+}
+.auth-resend-btn:hover:not(:disabled) {
+  border-color: var(--gold);
+  color: var(--navy);
+  background: var(--cream-mid);
+}
+.auth-resend-btn:disabled { opacity: .5; cursor: not-allowed; }
+
 .auth-confirm {
   padding: 28px 24px 8px;
   text-align: center;

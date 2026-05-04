@@ -16,9 +16,10 @@ const _SB_KEY_LOCAL  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmF
 function $id(id) { return document.getElementById(id); }
 
 // ── État ──
-let _sb          = null;   // Client Supabase (initialisé de manière asynchrone)
-let _currentUser = null;
-let _formMode    = 'login';
+let _sb              = null;   // Client Supabase (initialisé de manière asynchrone)
+let _currentUser     = null;
+let _formMode        = 'login';
+let _lastSignupEmail = '';     // mémorisé pour pouvoir renvoyer l'email de confirmation
 
 /* ════════════════════════════════════════════
    PROFIL — COULEUR AVATAR
@@ -370,6 +371,8 @@ function closeAuthModal() {
     restoreFields();
     setMode('login');
     $id('auth-form')?.reset();
+    // Supprimer le bouton "Renvoyer" injecté dynamiquement pour éviter les doublons
+    $id('auth-success-screen')?.querySelector('.auth-resend-btn')?.remove();
   }, 300);
 }
 
@@ -524,14 +527,42 @@ function showSuccessScreen({ icon, title, desc, btnLabel, btnAction }) {
   if (btn) { btn.textContent = btnLabel; btn.onclick = btnAction; }
 }
 
-function showConfirmation() {
+/* ── Renvoyer l'email de confirmation ── */
+async function _resendConfirmEmail(btnEl) {
+  if (!_sb || !_lastSignupEmail) return;
+  btnEl.disabled = true;
+  btnEl.textContent = 'Envoi en cours…';
+  try {
+    const { error } = await _sb.auth.resend({ type: 'signup', email: _lastSignupEmail });
+    if (error) throw error;
+    btnEl.textContent = '✓ Email renvoyé !';
+    setTimeout(() => { btnEl.textContent = "Renvoyer l'email"; btnEl.disabled = false; }, 5000);
+  } catch (_) {
+    btnEl.textContent = 'Erreur — réessayez';
+    setTimeout(() => { btnEl.textContent = "Renvoyer l'email"; btnEl.disabled = false; }, 3000);
+  }
+}
+
+function showConfirmation(email) {
+  if (email) _lastSignupEmail = email;
   showSuccessScreen({
     icon:     'fa-envelope-circle-check',
     title:    'Vérifiez votre email',
-    desc:     'Un lien de confirmation a été envoyé à votre adresse.<br>Cliquez dessus pour activer votre compte.<br><small style="color:var(--text-soft)">Pensez à vérifier vos spams.</small>',
+    desc:     'Un lien de confirmation a été envoyé à votre adresse e-mail.<br>Cliquez dessus pour activer votre compte.<br><small style="color:var(--text-soft)">Pensez à vérifier vos spams si vous ne le recevez pas.</small>',
     btnLabel: 'Fermer',
     btnAction: closeAuthModal,
   });
+  // Injecter dynamiquement le bouton "Renvoyer"
+  const screen = $id('auth-success-screen');
+  if (screen && !screen.querySelector('.auth-resend-btn')) {
+    const resendBtn = document.createElement('button');
+    resendBtn.type = 'button';
+    resendBtn.className = 'auth-resend-btn';
+    resendBtn.textContent = "Renvoyer l'email de confirmation";
+    resendBtn.addEventListener('click', () => _resendConfirmEmail(resendBtn));
+    const closeBtn = $id('auth-success-btn');
+    if (closeBtn) closeBtn.before(resendBtn);
+  }
 }
 function showResetSent() {
   showSuccessScreen({
@@ -629,7 +660,16 @@ function initAuthUI() {
       setAuthLoading(true);
       const { error } = await _sb.auth.signInWithPassword({ email, password });
       setAuthLoading(false);
-      if (error) { showAuthError(translateSupabaseError(error)); return; }
+      if (error) {
+        // Cas particulier : email pas encore confirmé → afficher l'écran de renvoi
+        if ((error.message || '').toLowerCase().includes('email not confirmed')) {
+          _lastSignupEmail = email;
+          showConfirmation(email);
+        } else {
+          showAuthError(translateSupabaseError(error));
+        }
+        return;
+      }
       closeAuthModal();
     }
 
@@ -654,7 +694,7 @@ function initAuthUI() {
       if (signUpData?.session) {
         closeAuthModal();
       } else {
-        showConfirmation();
+        showConfirmation(email); // passe l'email pour pouvoir renvoyer si besoin
       }
     }
 
