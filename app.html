@@ -594,6 +594,24 @@
         </div>
         <button class="ch-close" id="ch-close" aria-label="Fermer"><i class="fa-solid fa-xmark"></i></button>
       </div>
+      <!-- Bascule de mode : tactile / audio -->
+      <div class="ch-mode-toggle" id="ch-mode-toggle" role="tablist" aria-label="Mode de prière">
+        <button class="ch-mode-btn active" data-mode="tap" type="button" role="tab" aria-selected="true">
+          <i class="fa-solid fa-hand-point-up"></i> Tactile
+        </button>
+        <button class="ch-mode-btn" data-mode="audio" type="button" role="tab" aria-selected="false">
+          <i class="fa-solid fa-volume-high"></i> Audio solo
+        </button>
+      </div>
+
+      <!-- Sélecteur de mystères -->
+      <div class="ch-myst-selector" id="ch-myst-selector" role="radiogroup" aria-label="Mystères du chapelet">
+        <button class="ch-myst-pill" data-myst="joyeux"     type="button" role="radio">Joyeux</button>
+        <button class="ch-myst-pill" data-myst="douloureux" type="button" role="radio">Douloureux</button>
+        <button class="ch-myst-pill" data-myst="lumineux"   type="button" role="radio">Lumineux</button>
+        <button class="ch-myst-pill" data-myst="glorieux"   type="button" role="radio">Glorieux</button>
+      </div>
+
       <div class="ch-mystery" id="ch-mystery">—</div>
       <div class="ch-decade-info">
         <span id="ch-decade-num">1ᵉ mystère</span>
@@ -605,6 +623,18 @@
       <button class="ch-tap" id="ch-tap">
         <i class="fa-solid fa-hand-point-up"></i> Suivant
       </button>
+
+      <!-- Contrôles audio (visibles en mode audio uniquement) -->
+      <div class="ch-audio-ctrls" id="ch-audio-ctrls" hidden>
+        <span class="ch-audio-label">Vitesse</span>
+        <div class="ch-speed-pills" id="ch-speed-pills">
+          <button class="ch-speed-pill" data-speed="0.85" type="button">0,85×</button>
+          <button class="ch-speed-pill active" data-speed="1" type="button">1×</button>
+          <button class="ch-speed-pill" data-speed="1.15" type="button">1,15×</button>
+        </div>
+        <span class="ch-audio-hint" id="ch-audio-hint" aria-live="polite"></span>
+      </div>
+
       <div class="ch-footer">
         <span class="ch-progress" id="ch-progress">1 / 60</span>
         <button class="ch-reset" id="ch-reset">Recommencer</button>

@@ -1936,22 +1936,77 @@ function initChapelet() {
 
   // Mystères selon le jour (tradition catholique)
   const DOW_KEY  = {0:'glorieux',1:'joyeux',2:'douloureux',3:'glorieux',4:'lumineux',5:'douloureux',6:'joyeux'};
-  const MYST = {
-    joyeux:    { name:'Mystères Joyeux',     list:["L'Annonciation","La Visitation","La Nativité","La Présentation au Temple","Le Recouvrement au Temple"] },
-    douloureux:{ name:'Mystères Douloureux', list:["L'Agonie à Gethsémani","La Flagellation","Le Couronnement d'épines","Le Portement de Croix","La Crucifixion et la Mort"] },
-    lumineux:  { name:'Mystères Lumineux',   list:["Le Baptême de Jésus","Les Noces de Cana","L'Annonce du Royaume","La Transfiguration","L'Institution de l'Eucharistie"] },
-    glorieux:  { name:'Mystères Glorieux',   list:["La Résurrection","L'Ascension","La Pentecôte","L'Assomption de Marie","Le Couronnement de Marie"] },
+  // Mystères multilingues — pour annonce audio dans la langue choisie
+  const MYST_DATA = {
+    fr: {
+      joyeux:    { name:'Mystères Joyeux',     list:["L'Annonciation","La Visitation","La Nativité","La Présentation au Temple","Le Recouvrement au Temple"] },
+      douloureux:{ name:'Mystères Douloureux', list:["L'Agonie à Gethsémani","La Flagellation","Le Couronnement d'épines","Le Portement de Croix","La Crucifixion et la Mort"] },
+      lumineux:  { name:'Mystères Lumineux',   list:["Le Baptême de Jésus","Les Noces de Cana","L'Annonce du Royaume","La Transfiguration","L'Institution de l'Eucharistie"] },
+      glorieux:  { name:'Mystères Glorieux',   list:["La Résurrection","L'Ascension","La Pentecôte","L'Assomption de Marie","Le Couronnement de Marie"] },
+    },
+    en: {
+      joyeux:    { name:'Joyful Mysteries',    list:['The Annunciation','The Visitation','The Nativity','The Presentation in the Temple','The Finding in the Temple'] },
+      douloureux:{ name:'Sorrowful Mysteries', list:['The Agony in the Garden','The Scourging at the Pillar','The Crowning with Thorns','The Carrying of the Cross','The Crucifixion'] },
+      lumineux:  { name:'Luminous Mysteries',  list:['The Baptism of Jesus','The Wedding at Cana','The Proclamation of the Kingdom','The Transfiguration','The Institution of the Eucharist'] },
+      glorieux:  { name:'Glorious Mysteries',  list:['The Resurrection','The Ascension','The Descent of the Holy Spirit','The Assumption of Mary','The Coronation of Mary'] },
+    },
+    es: {
+      joyeux:    { name:'Misterios Gozosos',    list:['La Anunciación','La Visitación','El Nacimiento','La Presentación en el Templo','El Niño perdido y hallado'] },
+      douloureux:{ name:'Misterios Dolorosos',  list:['La Oración en el Huerto','La Flagelación','La Coronación de espinas','La Cruz a cuestas','La Crucifixión'] },
+      lumineux:  { name:'Misterios Luminosos',  list:['El Bautismo del Señor','Las Bodas de Caná','El Anuncio del Reino','La Transfiguración','La Institución de la Eucaristía'] },
+      glorieux:  { name:'Misterios Gloriosos',  list:['La Resurrección','La Ascensión','Pentecostés','La Asunción','La Coronación de María'] },
+    },
+    it: {
+      joyeux:    { name:'Misteri Gaudiosi',     list:["L'Annunciazione","La Visitazione","La Nascita di Gesù","La Presentazione al Tempio","Il Ritrovamento al Tempio"] },
+      douloureux:{ name:'Misteri Dolorosi',     list:["L'Agonia nel Getsemani","La Flagellazione","La Coronazione di spine","La Salita al Calvario","La Crocifissione"] },
+      lumineux:  { name:'Misteri Luminosi',     list:['Il Battesimo di Gesù','Le Nozze di Cana','L\'Annuncio del Regno','La Trasfigurazione','L\'Istituzione dell\'Eucaristia'] },
+      glorieux:  { name:'Misteri Gloriosi',     list:['La Risurrezione','L\'Ascensione','La Pentecoste','L\'Assunzione di Maria','L\'Incoronazione di Maria'] },
+    },
+    pt: {
+      joyeux:    { name:'Mistérios Gozosos',    list:['A Anunciação','A Visitação','O Nascimento','A Apresentação no Templo','O Reencontro no Templo'] },
+      douloureux:{ name:'Mistérios Dolorosos',  list:['A Agonia no Horto','A Flagelação','A Coroação de espinhos','O Caminho do Calvário','A Crucificação'] },
+      lumineux:  { name:'Mistérios Luminosos',  list:['O Batismo de Jesus','As Bodas de Caná','O Anúncio do Reino','A Transfiguração','A Instituição da Eucaristia'] },
+      glorieux:  { name:'Mistérios Gloriosos',  list:['A Ressurreição','A Ascensão','Pentecostes','A Assunção de Maria','A Coroação de Maria'] },
+    },
+    la: {
+      joyeux:    { name:'Mysteria Gaudiosa',    list:['Annuntiatio','Visitatio','Nativitas','Praesentatio in Templo','Inventio in Templo'] },
+      douloureux:{ name:'Mysteria Dolorosa',    list:['Agonia in Horto','Flagellatio','Coronatio Spinis','Baiulatio Crucis','Crucifixio'] },
+      lumineux:  { name:'Mysteria Luminosa',    list:['Baptismus Christi','Nuptiae Canae','Annuntiatio Regni','Transfiguratio','Institutio Eucharistiae'] },
+      glorieux:  { name:'Mysteria Gloriosa',    list:['Resurrectio','Ascensio','Pentecostes','Assumptio','Coronatio Mariae'] },
+    },
   };
 
-  const mystery = MYST[DOW_KEY[getParisDate().getDay()]];
+  // Codes BCP-47 pour Web Speech API
+  const SPEECH_LANG = { fr: 'fr-FR', en: 'en-US', es: 'es-ES', it: 'it-IT', pt: 'pt-PT', la: 'it-IT' };
+  // Texte d'annonce de mystère selon la langue
+  const ANNOUNCE = {
+    fr: (i, m) => `${i+1}ᵉ mystère : ${m}.`,
+    en: (i, m) => `${i+1}${['st','nd','rd','th','th'][i]} mystery: ${m}.`,
+    es: (i, m) => `${i+1}º misterio: ${m}.`,
+    it: (i, m) => `${i+1}° mistero: ${m}.`,
+    pt: (i, m) => `${i+1}º mistério: ${m}.`,
+    la: (i, m) => `Mysterium ${['primum','secundum','tertium','quartum','quintum'][i]}: ${m}.`,
+  };
 
   // Séquence : intro (6 pas) + 5 décades × 12 pas = 66 pas au total
   const INTRO = 6;
   let step = 0;
   const TOTAL = INTRO + 60; // 66
 
-  // Langue courante — mémorisée en localStorage
-  let lang = localStorage.getItem('pel_ch_lang') || 'fr';
+  // Langue + mystère + mode audio — mémorisés en localStorage
+  let lang        = localStorage.getItem('pel_ch_lang') || 'fr';
+  const dayMystKey = DOW_KEY[getParisDate().getDay()];
+  let mystKey     = localStorage.getItem('pel_ch_myst') || dayMystKey;
+  if (!MYST_DATA.fr[mystKey]) mystKey = dayMystKey;
+  let audioMode   = localStorage.getItem('pel_ch_audio') === '1';
+  let speed       = parseFloat(localStorage.getItem('pel_ch_speed')) || 1;
+  let playing     = false;
+  let currentUtterance = null;
+
+  // Renvoie l'objet mystère dans la langue active (fallback fr)
+  function mystery() {
+    return (MYST_DATA[lang] || MYST_DATA.fr)[mystKey];
+  }
 
   // Retourne la clé de prière pour une étape donnée
   function getPrayerKey(s) {
@@ -2017,7 +2072,8 @@ function initChapelet() {
 
   function render() {
     const el = id => document.getElementById(id);
-    if (el('ch-mystery')) el('ch-mystery').textContent = mystery.name;
+    const myst = mystery();
+    if (el('ch-mystery')) el('ch-mystery').textContent = myst.name;
 
     if (step < INTRO) {
       if (el('ch-decade-num')) el('ch-decade-num').textContent = 'Introduction';
@@ -2025,7 +2081,7 @@ function initChapelet() {
     } else {
       const decade = Math.floor((step - INTRO) / 12);
       if (el('ch-decade-num')) el('ch-decade-num').textContent = `${decade + 1}ᵉ mystère`;
-      if (el('ch-myst-name'))  el('ch-myst-name').textContent  = mystery.list[Math.min(decade, 4)];
+      if (el('ch-myst-name'))  el('ch-myst-name').textContent  = myst.list[Math.min(decade, 4)];
     }
 
     if (el('ch-prayer-txt')) el('ch-prayer-txt').textContent = getPrayer(step);
@@ -2039,49 +2095,227 @@ function initChapelet() {
 
     if (tapBtn) {
       const done = step >= TOTAL - 1;
-      tapBtn.innerHTML = done
-        ? '<i class="fa-solid fa-check"></i> Chapelet terminé !'
-        : '<i class="fa-solid fa-hand-point-up"></i> Suivant';
-      tapBtn.disabled = done;
+      if (audioMode) {
+        tapBtn.innerHTML = done
+          ? '<i class="fa-solid fa-check"></i> Chapelet terminé !'
+          : (playing
+              ? '<i class="fa-solid fa-pause"></i> Pause'
+              : '<i class="fa-solid fa-play"></i> Lecture');
+        tapBtn.classList.toggle('audio-playing', playing && !done);
+        tapBtn.disabled = done;
+      } else {
+        tapBtn.innerHTML = done
+          ? '<i class="fa-solid fa-check"></i> Chapelet terminé !'
+          : '<i class="fa-solid fa-hand-point-up"></i> Suivant';
+        tapBtn.classList.remove('audio-playing');
+        tapBtn.disabled = done;
+      }
     }
   }
 
-  // Initialise l'état actif du sélecteur de langue
+  // Synchro de tous les boutons (langue, mystère, mode, vitesse)
   function syncLangBtns() {
     modal.querySelectorAll('.ch-lang-btn').forEach(b => {
       b.classList.toggle('active', b.dataset.lang === lang);
     });
   }
+  function syncMystBtns() {
+    modal.querySelectorAll('.ch-myst-pill').forEach(b => {
+      b.classList.toggle('active',     b.dataset.myst === mystKey);
+      b.classList.toggle('day-default', b.dataset.myst === dayMystKey);
+      b.setAttribute('aria-checked', b.dataset.myst === mystKey ? 'true' : 'false');
+    });
+  }
+  function syncModeBtns() {
+    modal.querySelectorAll('.ch-mode-btn').forEach(b => {
+      const isActive = (b.dataset.mode === 'audio') === audioMode;
+      b.classList.toggle('active', isActive);
+      b.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+    const ctrls = document.getElementById('ch-audio-ctrls');
+    if (ctrls) ctrls.hidden = !audioMode;
+  }
+  function syncSpeedBtns() {
+    modal.querySelectorAll('.ch-speed-pill').forEach(b => {
+      b.classList.toggle('active', parseFloat(b.dataset.speed) === speed);
+    });
+  }
 
+  /* ── AUDIO — Web Speech API ── */
+  const synth = window.speechSynthesis;
+  function speak(text, onEnd) {
+    if (!synth) { onEnd && onEnd(); return; }
+    try { synth.cancel(); } catch(_) {}
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang  = SPEECH_LANG[lang] || 'fr-FR';
+    u.rate  = speed;
+    u.pitch = 1;
+    u.volume = 1;
+    u.onend = () => { currentUtterance = null; onEnd && onEnd(); };
+    u.onerror = () => { currentUtterance = null; onEnd && onEnd(); };
+    currentUtterance = u;
+    synth.speak(u);
+  }
+
+  function speakStep() {
+    if (!audioMode || !playing) return;
+    const L     = CHAPELET_TEXTS[lang] || CHAPELET_TEXTS.fr;
+    const myst  = mystery();
+    const key   = getPrayerKey(step);
+    let text    = L.texts[key] || '';
+
+    // Au début de chaque décade (sauf intro), on annonce le mystère
+    if (step >= INTRO && (step - INTRO) % 12 === 0) {
+      const decade = Math.floor((step - INTRO) / 12);
+      const announce = (ANNOUNCE[lang] || ANNOUNCE.fr)(decade, myst.list[decade]);
+      text = announce + ' ' + text;
+      const hint = document.getElementById('ch-audio-hint');
+      if (hint) hint.textContent = `Mystère ${decade+1}/5 — ${myst.list[decade]}`;
+    } else {
+      const hint = document.getElementById('ch-audio-hint');
+      if (hint) hint.textContent = '';
+    }
+
+    speak(text, () => {
+      // Avance automatique au pas suivant
+      if (!playing) return;
+      if (step < TOTAL - 1) {
+        step++;
+        render();
+        // Petit délai pour respiration entre les prières
+        setTimeout(() => { if (playing) speakStep(); }, 280);
+      } else {
+        // Fin du chapelet
+        playing = false;
+        render();
+      }
+    });
+  }
+
+  function startAudio() {
+    if (!synth) {
+      const hint = document.getElementById('ch-audio-hint');
+      if (hint) hint.textContent = 'Audio non supporté par ce navigateur.';
+      return;
+    }
+    playing = true;
+    render();
+    speakStep();
+  }
+  function pauseAudio() {
+    playing = false;
+    try { synth.cancel(); } catch(_) {}
+    currentUtterance = null;
+    render();
+  }
+  function stopAudio() {
+    playing = false;
+    try { synth.cancel(); } catch(_) {}
+    currentUtterance = null;
+  }
+
+  /* ── Listeners UI ── */
   // Sélecteur de langue
   document.getElementById('ch-lang-bar')?.addEventListener('click', e => {
     const btn = e.target.closest('.ch-lang-btn');
     if (!btn) return;
+    const wasPlaying = playing;
+    if (wasPlaying) pauseAudio();
     lang = btn.dataset.lang;
     localStorage.setItem('pel_ch_lang', lang);
     syncLangBtns();
-    render(); // remet à jour nom + texte
+    render();
+    if (wasPlaying) setTimeout(startAudio, 200);
+  });
+
+  // Sélecteur de mystères
+  document.getElementById('ch-myst-selector')?.addEventListener('click', e => {
+    const btn = e.target.closest('.ch-myst-pill');
+    if (!btn || !MYST_DATA.fr[btn.dataset.myst]) return;
+    if (playing) pauseAudio();
+    mystKey = btn.dataset.myst;
+    localStorage.setItem('pel_ch_myst', mystKey);
+    step = 0;
+    syncMystBtns();
+    render();
+  });
+
+  // Bascule de mode (tactile / audio)
+  document.getElementById('ch-mode-toggle')?.addEventListener('click', e => {
+    const btn = e.target.closest('.ch-mode-btn');
+    if (!btn) return;
+    const newAudio = btn.dataset.mode === 'audio';
+    if (newAudio === audioMode) return;
+    audioMode = newAudio;
+    localStorage.setItem('pel_ch_audio', audioMode ? '1' : '0');
+    if (!audioMode && playing) pauseAudio();
+    syncModeBtns();
+    render();
+  });
+
+  // Sélecteur de vitesse
+  document.getElementById('ch-speed-pills')?.addEventListener('click', e => {
+    const btn = e.target.closest('.ch-speed-pill');
+    if (!btn) return;
+    const newSpeed = parseFloat(btn.dataset.speed);
+    if (!newSpeed) return;
+    const wasPlaying = playing;
+    if (wasPlaying) pauseAudio();
+    speed = newSpeed;
+    localStorage.setItem('pel_ch_speed', String(speed));
+    syncSpeedBtns();
+    if (wasPlaying) setTimeout(startAudio, 200);
   });
 
   fab.addEventListener('click', () => {
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
-    // Restaure la langue mémorisée
-    lang = localStorage.getItem('pel_ch_lang') || 'fr';
+    // Restaure préférences mémorisées
+    lang     = localStorage.getItem('pel_ch_lang')  || 'fr';
+    mystKey  = localStorage.getItem('pel_ch_myst')  || dayMystKey;
+    if (!MYST_DATA.fr[mystKey]) mystKey = dayMystKey;
+    audioMode = localStorage.getItem('pel_ch_audio') === '1';
+    speed    = parseFloat(localStorage.getItem('pel_ch_speed')) || 1;
     buildBeads();
     syncLangBtns();
+    syncMystBtns();
+    syncModeBtns();
+    syncSpeedBtns();
     render();
   });
 
   const closeModal = () => {
+    stopAudio();
     modal.classList.add('hidden');
     document.body.style.overflow = '';
   };
 
   closeBtn?.addEventListener('click', closeModal);
   modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
-  tapBtn?.addEventListener('click',  () => { if (step < TOTAL - 1) { step++; render(); } });
-  resetBtn?.addEventListener('click',() => { step = 0; render(); });
+
+  tapBtn?.addEventListener('click', () => {
+    if (audioMode) {
+      // Mode audio : play / pause
+      if (step >= TOTAL - 1) return;
+      if (playing) pauseAudio();
+      else         startAudio();
+    } else {
+      // Mode tactile : avance d'un cran
+      if (step < TOTAL - 1) { step++; render(); }
+    }
+  });
+
+  resetBtn?.addEventListener('click', () => {
+    stopAudio();
+    step = 0;
+    render();
+  });
+
+  // Si l'utilisateur ferme l'onglet ou navigue ailleurs, on coupe l'audio
+  window.addEventListener('beforeunload', stopAudio);
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && playing) pauseAudio();
+  });
 }
 
 
