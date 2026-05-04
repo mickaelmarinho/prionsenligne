@@ -93,6 +93,22 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
 }
 .logo:hover .logo-img { opacity: 0.8; transition: opacity .18s; }
 
+/* Nom du site à côté du logo (lien retour accueil) */
+.logo-site-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px;
+  font-weight: 400;
+  color: var(--cream);
+  letter-spacing: .02em;
+  opacity: .88;
+  transition: opacity .18s;
+  white-space: nowrap;
+}
+.logo-home-link:hover .logo-site-name { opacity: 1; }
+@media (max-width: 480px) {
+  .logo-site-name { display: none; } /* masqué sur petit mobile pour économiser l'espace */
+}
+
 .logo-cross {
   width: 20px;
   height: 20px;
@@ -233,6 +249,21 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
 .hm-item:hover { background: var(--cream-mid); color: var(--navy); }
 .hm-item i { color: var(--text-soft); width: 16px; text-align: center; font-size: 14px; }
 .hm-divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+/* Lien "Accueil" dans le menu burger — se comporte comme les autres items */
+a.hm-home-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  font-size: 14px;
+  color: var(--text);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background .15s;
+}
+a.hm-home-link:hover { background: var(--cream-mid); color: var(--navy); }
+a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; font-size: 14px; }
 
 
 /* ══════════════════════════════════════════════

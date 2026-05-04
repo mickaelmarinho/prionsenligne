@@ -124,6 +124,17 @@ h1, h2, h3, .lp-logo-name { font-family: 'Cormorant Garamond', serif; }
   letter-spacing: .02em;
 }
 
+/* Nom affiché dans la nav landing */
+.lp-nav-name {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 17px;
+  font-weight: 400;
+  color: rgba(245,240,232,.85);
+  letter-spacing: .03em;
+  transition: color .2s;
+}
+.lp-nav:hover .lp-nav-name { color: rgba(245,240,232,1); }
+
 /* Contenu centré hero */
 .lp-hero-content {
   position: relative;

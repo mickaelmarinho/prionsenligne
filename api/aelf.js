@@ -4,8 +4,22 @@
   Usage : GET /api/aelf?office=laudes&y=2025&m=05&d=03
 */
 
+// Origines autorisées : production + prévisualisations Vercel
+const ALLOWED_ORIGINS = [
+  'https://prionsenligne.fr',
+  'https://www.prionsenligne.fr',
+];
+
 export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin || '';
+  const isAllowed =
+    ALLOWED_ORIGINS.includes(origin) ||
+    /^https:\/\/prionsenligne(-[a-z0-9]+)?\.vercel\.app$/.test(origin);
+
+  if (isAllowed) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Vary', 'Origin');
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=600');
 
