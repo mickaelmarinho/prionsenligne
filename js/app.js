@@ -2162,7 +2162,7 @@ const SOURCES = {
   rm:  { n: 'Radio Maria',      s: '', w: 'https://www.radiomaria.fr' },
   nd:  { n: 'Radio N-Dame',     s: 'https://windu.radionotredame.net/RadioNotreDame-Fm.mp3', w: 'https://www.rcf.fr/radio-notre-dame' },
   rcf: { n: 'RCF',              s: '', w: 'https://rcf.fr/radios/ecouter-rcf' },
-  esp: { n: 'Espérance',        s: '', w: 'https://radio-esperance.fr' },
+  esp: { n: 'Espérance',        s: 'https://esperance.streamakaci.com/esperance.mp3', w: 'https://radio-esperance.fr' },
   fid: { n: 'Fidélité',         s: '', w: 'https://www.radiofidelite.fr/player/' },
   kto: { n: 'KTO',              s: '', w: 'https://www.ktotv.com' },
   lou: { n: 'Lourdes',          s: '', w: 'https://www.lourdes-france.com/lourdesplus/' },
