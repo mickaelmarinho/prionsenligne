@@ -1669,12 +1669,6 @@ function initHamburger() {
 
   function toggleMenu(e) {
     e.stopPropagation();
-    // Desktop + connecté → panneau profil directement (pas le menu burger)
-    if (window._pelUser && window.innerWidth >= 641 && window._openProfilePanel) {
-      closeMenu();
-      window._openProfilePanel();
-      return;
-    }
     menu.classList.contains('hidden') ? openMenu() : closeMenu();
   }
 

@@ -201,6 +201,12 @@ async function loadProfileContent() {
         <button class="prof-save-btn" id="prof-pw-save">
           <i class="fa-solid fa-check"></i> Enregistrer le mot de passe
         </button>
+        <div class="prof-forgot-wrap">
+          <button class="prof-forgot-btn" id="prof-forgot-btn" type="button">
+            <i class="fa-solid fa-envelope"></i> Mot de passe oublié ? Recevoir un lien par e-mail
+          </button>
+          <div class="prof-feedback hidden" id="prof-forgot-feedback"></div>
+        </div>
       </div>
     </div>
 
@@ -241,6 +247,24 @@ async function loadProfileContent() {
   });
 
   $id('prof-pw-save')?.addEventListener('click', saveProfilePassword);
+
+  $id('prof-forgot-btn')?.addEventListener('click', async () => {
+    const fb  = $id('prof-forgot-feedback');
+    const btn = $id('prof-forgot-btn');
+    if (!_sb || !_currentUser?.email) return;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Envoi…';
+    const { error } = await _sb.auth.resetPasswordForEmail(_currentUser.email, {
+      redirectTo: window.location.origin + '/agenda',
+    });
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-envelope"></i> Mot de passe oublié ? Recevoir un lien par e-mail';
+    if (error) {
+      _showProfFeedback(fb, translateSupabaseError(error), 'error');
+    } else {
+      _showProfFeedback(fb, `<i class="fa-solid fa-circle-check"></i> Lien envoyé à ${_esc(_currentUser.email)}`, 'success');
+    }
+  });
 
   $id('prof-signout-btn')?.addEventListener('click', async () => {
     if (!_sb) return;
