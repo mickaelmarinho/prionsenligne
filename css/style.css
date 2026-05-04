@@ -2403,30 +2403,6 @@ body:has(.chapelet-fab) .greg-btn { right: 84px; }
 }
 .prof-pw-form.hidden { display: none; }
 
-/* Mot de passe oublié */
-.prof-forgot-wrap {
-  border-top: 1px solid var(--border);
-  padding-top: 10px;
-  margin-top: 4px;
-}
-.prof-forgot-btn {
-  background: none;
-  border: none;
-  font-family: 'Outfit', sans-serif;
-  font-size: 12px;
-  color: var(--text-soft);
-  cursor: pointer;
-  padding: 4px 0;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  transition: color .15s;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.prof-forgot-btn:hover   { color: var(--navy); }
-.prof-forgot-btn:disabled { opacity: .6; cursor: not-allowed; }
-
 
 /* Zone danger */
 .prof-section--danger {
