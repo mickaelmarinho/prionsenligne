@@ -3262,49 +3262,71 @@ function initAbout() {
 function initGregorianPlayer() {
   const audio = document.getElementById('greg-audio');
   const btn   = document.getElementById('greg-btn');
-  const icon  = document.getElementById('greg-icon');
-  const title = document.getElementById('greg-title');
+  const svgEl = btn?.querySelector('.greg-svg');
+  const label = btn?.querySelector('.greg-label');
   if (!audio || !btn) return;
 
-  // Flux Radio Espérance — chant grégorien 24h/24, HTTPS, fiable
   const STREAM   = 'https://esperance.streamakaci.com/gregorien.mp3';
   const FALLBACK = 'https://radio-esperance.fr';
+  const LS_KEY   = 'pel_greg'; // partagé avec index.html
+
+  const SVG_MUSIC = '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>';
+  const SVG_PAUSE = '<line x1="6" y1="4" x2="6" y2="20"/><line x1="18" y1="4" x2="18" y2="20"/>';
+  const SVG_EXT   = '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>';
+
   let playing = false;
   let failed  = false;
+  let loadTimer = null;
 
   audio.src    = STREAM;
-  audio.volume = 0.22; // doux et ambiant
+  audio.volume = 0.28;
 
   function setUI(on) {
     playing = on;
+    localStorage.setItem(LS_KEY, on ? '1' : '0');
     btn.classList.toggle('greg-playing', on);
-    if (icon)  icon.className  = on ? 'fa-solid fa-pause' : 'fa-solid fa-music';
-    if (title) title.textContent = on ? 'En écoute…' : 'Chant grégorien';
+    if (svgEl) svgEl.innerHTML = on ? SVG_PAUSE : SVG_MUSIC;
+    if (label) label.textContent = on ? 'Pause' : 'Grégorien';
     btn.setAttribute('aria-pressed', on ? 'true' : 'false');
   }
 
   function showFallback() {
     failed = true;
-    setUI(false);
-    if (icon)  icon.className  = 'fa-solid fa-arrow-up-right-from-square';
-    if (title) title.textContent = 'Radio Espérance';
+    clearTimeout(loadTimer);
+    localStorage.setItem(LS_KEY, '0');
+    btn.classList.remove('greg-playing');
+    if (svgEl) svgEl.innerHTML = SVG_EXT;
+    if (label) label.textContent = 'Grégorien ↗';
+    btn.title = 'Ouvrir Radio Espérance';
     btn.onclick = () => window.open(FALLBACK, '_blank', 'noopener');
-    btn.title = 'Ouvrir Radio Espérance (chant grégorien)';
   }
 
-  audio.addEventListener('error', showFallback);
+  audio.addEventListener('error',   () => { clearTimeout(loadTimer); showFallback(); });
+  audio.addEventListener('playing', () => { clearTimeout(loadTimer); setUI(true); });
 
   btn.addEventListener('click', () => {
     if (failed) { window.open(FALLBACK, '_blank', 'noopener'); return; }
     if (playing) {
+      clearTimeout(loadTimer);
       audio.pause();
       setUI(false);
     } else {
-      audio.play()
-        .then(() => setUI(true))
-        .catch(showFallback);
+      if (svgEl) svgEl.innerHTML = '<circle cx="12" cy="12" r="9" stroke-dasharray="2 3"/>';
+      if (label) label.textContent = '…';
+      loadTimer = setTimeout(showFallback, 5000);
+      audio.play().catch(() => { clearTimeout(loadTimer); showFallback(); });
     }
   });
+
+  // ── Reprise automatique si lecture en cours sur l'autre page ──
+  if (localStorage.getItem(LS_KEY) === '1') {
+    audio.play()
+      .then(() => setUI(true))
+      .catch(() => {
+        // Navigateur a bloqué l'autoplay — on efface l'état pour ne pas boucler
+        localStorage.setItem(LS_KEY, '0');
+      });
+  }
 }
 
 

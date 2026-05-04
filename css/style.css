@@ -1992,48 +1992,43 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
 
 
 /* ══════════════════════════════════════════════
-   CHANT GRÉGORIEN — Bouton ambiant
+   CHANT GRÉGORIEN — Bouton ambiant (identique lp-music-btn)
 ══════════════════════════════════════════════ */
 .greg-btn {
   position: fixed;
   bottom: 28px;
-  left: 20px;
+  right: 24px;          /* même côté que la landing page */
   z-index: 150;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 0 14px 0 12px;
-  height: 42px;
+  gap: 7px;
+  padding: 0 14px 0 11px;
+  height: 40px;
   background: rgba(26,39,68,.82);
   border: 1px solid rgba(201,168,76,.35);
   border-radius: 22px;
   color: rgba(245,240,232,.75);
   font-family: 'Outfit', sans-serif;
   font-size: 12px;
+  font-weight: 400;
   cursor: pointer;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   transition: background .2s, border-color .2s, color .2s, box-shadow .2s;
   box-shadow: 0 2px 14px rgba(0,0,0,.22);
+  /* au-dessus de la bottom-nav sur mobile */
 }
 .greg-btn:hover {
   background: rgba(26,39,68,.95);
   border-color: rgba(201,168,76,.55);
   color: var(--gold);
+  box-shadow: 0 4px 20px rgba(201,168,76,.15);
 }
-.greg-btn #greg-icon {
-  font-size: 13px;
+.greg-svg {
+  width: 16px; height: 16px;
   flex-shrink: 0;
 }
-.greg-tooltip {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.2;
-}
-.greg-tooltip-sub {
-  font-size: 10px;
-  color: rgba(245,240,232,.4);
-}
+.greg-label { white-space: nowrap; }
 .greg-btn.greg-playing {
   border-color: rgba(201,168,76,.6);
   color: var(--gold);
@@ -2041,17 +2036,21 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
 }
 @keyframes gregPulse {
   0%, 100% { box-shadow: 0 2px 14px rgba(201,168,76,.2); }
-  50%       { box-shadow: 0 2px 24px rgba(201,168,76,.45); }
+  50%       { box-shadow: 0 4px 24px rgba(201,168,76,.45); }
 }
 /* Mobile : au-dessus de la bottom-nav */
 @media (max-width: 640px) {
-  .greg-btn { bottom: 84px; left: 12px; padding: 0 10px 0 10px; }
-  .greg-tooltip { display: none; }
+  .greg-btn { bottom: 84px; right: 14px; }
 }
 /* Quand le radio-player est ouvert */
 body.player-open .greg-btn { bottom: 80px; }
 @media (max-width: 640px) {
   body.player-open .greg-btn { bottom: 148px; }
+}
+/* Quand le chapelet FAB est présent (app.html) : on remonte le greg-btn */
+body:has(.chapelet-fab) .greg-btn { right: 84px; }
+@media (max-width: 640px) {
+  body:has(.chapelet-fab) .greg-btn { right: 80px; }
 }
 
 

@@ -349,8 +349,11 @@
       const ICON_PAUSE = '<line x1="6" y1="4" x2="6" y2="20"/><line x1="18" y1="4" x2="18" y2="20"/>';
       const ICON_EXT   = '<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>';
 
+      const LS_KEY = 'pel_greg'; // partagé avec /agenda
+
       function setPlaying(state) {
         playing = state;
+        localStorage.setItem(LS_KEY, state ? '1' : '0');
         btn.classList.toggle('lp-music-playing', state);
         label.textContent = state ? 'Pause' : 'Grégorien';
         btn.querySelector('.lp-music-icon').innerHTML = state ? ICON_PAUSE : ICON_MUSIC;
@@ -390,6 +393,14 @@
 
       audio.addEventListener('error',  () => { clearTimeout(loadTimer); showFallback(); });
       audio.addEventListener('playing', () => { clearTimeout(loadTimer); setPlaying(true); });
+
+      // ── Reprise automatique si en cours sur /agenda ───────────
+      if (localStorage.getItem(LS_KEY) === '1') {
+        audio.volume = 0.28;
+        audio.play()
+          .then(() => setPlaying(true))
+          .catch(() => localStorage.setItem(LS_KEY, '0'));
+      }
     })();
 
     // ── Bouton musique : remonte au-dessus du footer ──────────
