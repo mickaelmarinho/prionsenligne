@@ -1993,13 +1993,14 @@ function initChapelet() {
   let step = 0;
   const TOTAL = INTRO + 60; // 66
 
-  // Langue + mystère + mode audio — mémorisés en localStorage
+  // Langue + mystère + mode audio + voix — mémorisés en localStorage
   let lang        = localStorage.getItem('pel_ch_lang') || 'fr';
   const dayMystKey = DOW_KEY[getParisDate().getDay()];
   let mystKey     = localStorage.getItem('pel_ch_myst') || dayMystKey;
   if (!MYST_DATA.fr[mystKey]) mystKey = dayMystKey;
   let audioMode   = localStorage.getItem('pel_ch_audio') === '1';
   let speed       = parseFloat(localStorage.getItem('pel_ch_speed')) || 1;
+  let voiceURI    = localStorage.getItem('pel_ch_voice') || '';
   let playing     = false;
   let currentUtterance = null;
 
@@ -2143,11 +2144,121 @@ function initChapelet() {
 
   /* ── AUDIO — Web Speech API ── */
   const synth = window.speechSynthesis;
+  let availableVoices = [];
+
+  // Note de qualité d'une voix (plus = mieux). Fait remonter les voix
+  // premium/enhanced/natural (Apple, Microsoft Natural, Google Wavenet...)
+  function voiceQuality(v) {
+    const n = (v.name || '').toLowerCase();
+    let s = 0;
+    if (/(premium|enhanced|natural|neural|wavenet|studio)/.test(n)) s += 100;
+    if (n.includes('siri'))      s += 90;   // iOS Siri voices
+    if (n.includes('google'))    s += 50;
+    if (n.includes('microsoft')) s += 30;
+    if (v.localService === false) s += 25;  // voix réseau souvent meilleures
+    if (v.default)               s += 10;
+    return s;
+  }
+
+  // Affichage propre du nom de la voix (sans suffixes techniques)
+  function prettyVoiceName(v) {
+    let name = v.name || 'Voix';
+    // Retire les préfixes techniques courants
+    name = name
+      .replace(/^Microsoft\s+/i, '')
+      .replace(/\s+Online\s+\(Natural\)/i, ' (Natural)')
+      .replace(/^Google\s+/i, '')
+      .replace(/\s+\([A-Z][a-z]+\)$/, ''); // ex: " (France)"
+    return name;
+  }
+
+  // Liste les voix correspondant à la langue active, triées par qualité
+  function getMatchingVoices() {
+    if (!synth) return [];
+    if (!availableVoices.length) availableVoices = synth.getVoices();
+    const target = SPEECH_LANG[lang] || 'fr-FR';
+    const prefix = target.split('-')[0];   // 'fr', 'en', etc.
+    const matches = availableVoices.filter(v =>
+      v.lang === target || v.lang.startsWith(prefix + '-') || v.lang === prefix
+    );
+    matches.sort((a, b) => voiceQuality(b) - voiceQuality(a));
+    return matches;
+  }
+
+  // Remplit le <select> avec les voix disponibles (max 8 pour pas saturer)
+  function refreshVoiceList() {
+    const sel = document.getElementById('ch-voice-select');
+    if (!sel) return;
+    const voices = getMatchingVoices();
+    const previous = voiceURI;
+    sel.innerHTML = '';
+
+    // Option par défaut (laisse le navigateur choisir)
+    const optDefault = document.createElement('option');
+    optDefault.value = '';
+    optDefault.textContent = '— Voix par défaut du système —';
+    sel.appendChild(optDefault);
+
+    if (!voices.length) {
+      sel.disabled = true;
+      return;
+    }
+    sel.disabled = false;
+
+    // Top 8 voix par qualité
+    const top = voices.slice(0, 8);
+    // Sépare premium / standard pour visualisation
+    const premium = top.filter(v => voiceQuality(v) >= 60);
+    const others  = top.filter(v => voiceQuality(v) <  60);
+
+    function addGroup(label, list) {
+      if (!list.length) return;
+      const group = document.createElement('optgroup');
+      group.label = label;
+      list.forEach(v => {
+        const o = document.createElement('option');
+        o.value = v.voiceURI;
+        o.textContent = prettyVoiceName(v);
+        group.appendChild(o);
+      });
+      sel.appendChild(group);
+    }
+    addGroup('Voix recommandées', premium);
+    addGroup('Autres voix',       others);
+
+    // Restaure la sélection si possible
+    if (previous && [...sel.options].some(o => o.value === previous)) {
+      sel.value = previous;
+    } else {
+      sel.value = '';
+      voiceURI  = '';
+    }
+  }
+
+  // Voix sélectionnée actuellement (ou null)
+  function getSelectedVoice() {
+    if (!voiceURI || !availableVoices.length) return null;
+    return availableVoices.find(v => v.voiceURI === voiceURI) || null;
+  }
+
+  // Charge les voix dès qu'elles sont prêtes (Chrome les charge en async)
+  if (synth) {
+    availableVoices = synth.getVoices();
+    if (synth.onvoiceschanged !== undefined) {
+      synth.onvoiceschanged = () => {
+        availableVoices = synth.getVoices();
+        refreshVoiceList();
+      };
+    }
+  }
+
   function speak(text, onEnd) {
     if (!synth) { onEnd && onEnd(); return; }
     try { synth.cancel(); } catch(_) {}
     const u = new SpeechSynthesisUtterance(text);
-    u.lang  = SPEECH_LANG[lang] || 'fr-FR';
+    const v = getSelectedVoice();
+    u.lang  = (v && v.lang) || SPEECH_LANG[lang] || 'fr-FR';
+    if (v) u.voice = v;
     u.rate  = speed;
     u.pitch = 1;
     u.volume = 1;
@@ -2224,6 +2335,8 @@ function initChapelet() {
     lang = btn.dataset.lang;
     localStorage.setItem('pel_ch_lang', lang);
     syncLangBtns();
+    refreshVoiceList();   // peut conserver la voix si elle existe dans la nouvelle langue
+    localStorage.setItem('pel_ch_voice', voiceURI || '');
     render();
     if (wasPlaying) setTimeout(startAudio, 200);
   });
@@ -2267,6 +2380,15 @@ function initChapelet() {
     if (wasPlaying) setTimeout(startAudio, 200);
   });
 
+  // Sélecteur de voix
+  document.getElementById('ch-voice-select')?.addEventListener('change', e => {
+    const wasPlaying = playing;
+    if (wasPlaying) pauseAudio();
+    voiceURI = e.target.value || '';
+    localStorage.setItem('pel_ch_voice', voiceURI);
+    if (wasPlaying) setTimeout(startAudio, 200);
+  });
+
   fab.addEventListener('click', () => {
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
@@ -2276,11 +2398,13 @@ function initChapelet() {
     if (!MYST_DATA.fr[mystKey]) mystKey = dayMystKey;
     audioMode = localStorage.getItem('pel_ch_audio') === '1';
     speed    = parseFloat(localStorage.getItem('pel_ch_speed')) || 1;
+    voiceURI = localStorage.getItem('pel_ch_voice') || '';
     buildBeads();
     syncLangBtns();
     syncMystBtns();
     syncModeBtns();
     syncSpeedBtns();
+    refreshVoiceList();
     render();
   });
 

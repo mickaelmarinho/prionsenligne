@@ -604,12 +604,24 @@
         </button>
       </div>
 
-      <!-- Sélecteur de mystères -->
+      <!-- Sélecteur de mystères (jours indiqués en sous-titre) -->
       <div class="ch-myst-selector" id="ch-myst-selector" role="radiogroup" aria-label="Mystères du chapelet">
-        <button class="ch-myst-pill" data-myst="joyeux"     type="button" role="radio">Joyeux</button>
-        <button class="ch-myst-pill" data-myst="douloureux" type="button" role="radio">Douloureux</button>
-        <button class="ch-myst-pill" data-myst="lumineux"   type="button" role="radio">Lumineux</button>
-        <button class="ch-myst-pill" data-myst="glorieux"   type="button" role="radio">Glorieux</button>
+        <button class="ch-myst-pill" data-myst="joyeux"     type="button" role="radio">
+          <span class="ch-myst-name-main">Joyeux</span>
+          <span class="ch-myst-days">lun · sam</span>
+        </button>
+        <button class="ch-myst-pill" data-myst="douloureux" type="button" role="radio">
+          <span class="ch-myst-name-main">Douloureux</span>
+          <span class="ch-myst-days">mar · ven</span>
+        </button>
+        <button class="ch-myst-pill" data-myst="lumineux"   type="button" role="radio">
+          <span class="ch-myst-name-main">Lumineux</span>
+          <span class="ch-myst-days">jeu</span>
+        </button>
+        <button class="ch-myst-pill" data-myst="glorieux"   type="button" role="radio">
+          <span class="ch-myst-name-main">Glorieux</span>
+          <span class="ch-myst-days">mer · dim</span>
+        </button>
       </div>
 
       <div class="ch-mystery" id="ch-mystery">—</div>
@@ -626,11 +638,19 @@
 
       <!-- Contrôles audio (visibles en mode audio uniquement) -->
       <div class="ch-audio-ctrls" id="ch-audio-ctrls" hidden>
-        <span class="ch-audio-label">Vitesse</span>
-        <div class="ch-speed-pills" id="ch-speed-pills">
-          <button class="ch-speed-pill" data-speed="0.85" type="button">0,85×</button>
-          <button class="ch-speed-pill active" data-speed="1" type="button">1×</button>
-          <button class="ch-speed-pill" data-speed="1.15" type="button">1,15×</button>
+        <div class="ch-audio-row">
+          <span class="ch-audio-label"><i class="fa-solid fa-microphone"></i> Voix</span>
+          <select class="ch-voice-select" id="ch-voice-select" aria-label="Choix de la voix">
+            <option value="">Voix par défaut</option>
+          </select>
+        </div>
+        <div class="ch-audio-row">
+          <span class="ch-audio-label"><i class="fa-solid fa-gauge-high"></i> Vitesse</span>
+          <div class="ch-speed-pills" id="ch-speed-pills">
+            <button class="ch-speed-pill" data-speed="0.85" type="button">0,85×</button>
+            <button class="ch-speed-pill active" data-speed="1" type="button">1×</button>
+            <button class="ch-speed-pill" data-speed="1.15" type="button">1,15×</button>
+          </div>
         </div>
         <span class="ch-audio-hint" id="ch-audio-hint" aria-live="polite"></span>
       </div>
