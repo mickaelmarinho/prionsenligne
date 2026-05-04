@@ -4300,8 +4300,28 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
     bottom: calc(var(--bottom-nav-h) + var(--safe-bottom));
     left: 0; right: 0;
     border-radius: 0;
-    padding: 10px 14px;
+    padding: 10px 12px;
+    gap: 10px;
   }
+  /* Volume slider masqué sur mobile (place limitée) — réglable via boutons système */
+  .rp-vol,
+  .rp-vol-icon { display: none; }
+  /* Contrôles compactés : juste play + close */
+  .rp-controls { gap: 6px; }
+  .rp-btn-play {
+    width: 40px; height: 40px;
+    font-size: 15px;
+  }
+  /* Bouton fermer : zone tactile élargie (≥44px) bien visible */
+  .rp-btn-close {
+    width: 44px; height: 44px;
+    background: rgba(255,255,255,.14);
+    color: var(--cream);
+    font-size: 16px;
+  }
+  .rp-btn-close:active { background: rgba(255,255,255,.28); }
+  .rp-name { max-width: none; font-size: 14px; }
+  .rp-sub  { font-size: 11px; opacity: .65; }
 
   /* FAB chapelet : au-dessus de la nav (et du player si ouvert) */
   .chapelet-fab {
