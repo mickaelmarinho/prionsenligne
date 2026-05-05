@@ -134,6 +134,10 @@ h1, h2, h3, .lp-logo-name { font-family: 'Cormorant Garamond', serif; }
   transition: color .2s;
 }
 .lp-nav:hover .lp-nav-name { color: rgba(245,240,232,1); }
+/* Sur mobile : on garde uniquement l'icône ronde, pas de texte (gain de place) */
+@media (max-width: 640px) {
+  .lp-nav-name { display: none; }
+}
 
 /* Contenu centré hero */
 .lp-hero-content {

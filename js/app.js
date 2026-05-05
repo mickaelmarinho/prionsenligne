@@ -2281,16 +2281,27 @@ function initChapelet() {
     return s;
   }
 
-  // Affichage propre du nom de la voix (sans suffixes techniques)
+  // Affichage propre du nom de la voix : on garde uniquement le prénom
   function prettyVoiceName(v) {
     let name = v.name || 'Voix';
-    // Retire les préfixes techniques courants
     name = name
-      .replace(/^Microsoft\s+/i, '')
-      .replace(/\s+Online\s+\(Natural\)/i, ' (Natural)')
-      .replace(/^Google\s+/i, '')
-      .replace(/\s+\([A-Z][a-z]+\)$/, ''); // ex: " (France)"
-    return name;
+      .replace(/^Microsoft\s+/i, '')           // "Microsoft Hortense" → "Hortense"
+      .replace(/^Google\s+/i, '')              // "Google français" → "français"
+      .replace(/\s+Online\s+\(Natural\)/i, '') // "Hortense Online (Natural)" → "Hortense"
+      .replace(/\s+\(Natural\)/i, '')          // "(Natural)" tout court
+      .replace(/\s+Desktop$/i, '')             // "Hortense Desktop" → "Hortense"
+      .replace(/\s+Mobile$/i, '')              // idem
+      .replace(/\s+Compact$/i, '')             // "Marie Compact" → "Marie"
+      .replace(/\s+\([A-Z][a-zéèà]+\)$/, '')   // " (France)" / " (États-Unis)"
+      .replace(/\s+-\s+French.*$/i, '')        // " - French (France)" sur Apple
+      .replace(/\s+-\s+English.*$/i, '')
+      .replace(/\s+-\s+Spanish.*$/i, '')
+      .replace(/\s+-\s+Italian.*$/i, '')
+      .replace(/\s+-\s+Portuguese.*$/i, '')
+      .trim();
+    // Garder uniquement le 1er mot (prénom propre)
+    const firstWord = name.split(/\s+/)[0];
+    return firstWord || name;
   }
 
   // Liste les voix correspondant à la langue active, triées par qualité
@@ -2344,18 +2355,25 @@ function initChapelet() {
     }
     sel.disabled = false;
 
-    // Toutes les voix disponibles, triées par qualité, dans 3 catégories selon le score
-    const HIGH_THRESHOLD = 90;   // Premium / Natural / Siri / Apple connues
-    const MED_THRESHOLD  = 30;   // Microsoft connues, Google, voix réseau
-    const tierHigh = voices.filter(v => voiceQuality(v) >= HIGH_THRESHOLD);
-    const tierMed  = voices.filter(v => { const s = voiceQuality(v); return s < HIGH_THRESHOLD && s >= MED_THRESHOLD; });
-    const tierLow  = voices.filter(v => voiceQuality(v) <  MED_THRESHOLD);
+    // Dédoublonnage par prénom affiché : on garde la meilleure variante
+    // (ex: "Hortense" et "Hortense Desktop" → on ne garde que la mieux notée)
+    const seen = new Map();
+    for (const v of voices) {
+      const key = prettyVoiceName(v).toLowerCase() + '|' + (voiceGender(v) || '?');
+      if (!seen.has(key) || voiceQuality(v) > voiceQuality(seen.get(key))) {
+        seen.set(key, v);
+      }
+    }
+    const dedupedVoices = [...seen.values()].sort((a, b) => voiceQuality(b) - voiceQuality(a));
 
-    function addGroup(label, list) {
-      if (!list.length) return;
+    // Top 6 voix max — évite de noyer l'utilisateur sous le choix
+    const TOP_N = 6;
+    const top = dedupedVoices.slice(0, TOP_N);
+
+    if (top.length) {
       const group = document.createElement('optgroup');
-      group.label = label;
-      list.forEach(v => {
+      group.label = '★ Meilleures voix';
+      top.forEach(v => {
         const o = document.createElement('option');
         o.value = v.voiceURI;
         o.textContent = voiceLabel(v);
@@ -2363,9 +2381,6 @@ function initChapelet() {
       });
       sel.appendChild(group);
     }
-    addGroup('★ Voix recommandées', tierHigh);
-    addGroup('Voix standard',        tierMed);
-    addGroup('Autres voix',          tierLow);
 
     // Si filtrage actif et aucune voix précédente compatible, auto-sélectionne la meilleure
     if (voiceGenderFilter !== 'auto') {
