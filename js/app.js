@@ -2172,8 +2172,6 @@ function initChapelet() {
   let availableVoices = [];
 
   // Voix Apple connues comme étant de très bonne qualité (toutes langues)
-  // Source : voix système d'iOS/macOS — les "Enhanced/Premium" sont encore meilleures
-  // mais ces voix sont déjà excellentes par défaut.
   const APPLE_QUALITY_VOICES = new Set([
     // FR
     'aurélie','aurelie','marie','thomas','audrey','amélie','amelie','daniel',
@@ -2188,8 +2186,22 @@ function initChapelet() {
     'joana','luciana','catarina','joaquim','felipe','helena',
   ]);
 
+  // Voix Microsoft connues (Windows) — qualité variable mais toutes utilisables
+  const MS_QUALITY_VOICES = new Set([
+    // FR
+    'hortense','julie','paul','claude','denise',
+    // EN
+    'david','zira','mark','aria','jenny','guy','christopher','michelle','eric','amber',
+    // ES
+    'helena','pablo','laura','sabina','raul',
+    // IT
+    'elsa','cosimo','irma','isabella',
+    // PT
+    'fernanda','heloisa','helena','duarte','antonio',
+  ]);
+
   // Voix "novelty" Apple à exclure (drôles mais inutilisables pour prier)
-  const APPLE_NOVELTY = /(whisper|bad news|good news|cellos|bubbles|bahh|deranged|trinoids|zarvox|albert|hysterical|pipe organ|jester|organ|bells|boing|junior|kathy|ralph|princess)/i;
+  const APPLE_NOVELTY = /(whisper|bad news|good news|cellos|bubbles|bahh|deranged|trinoids|zarvox|albert|hysterical|pipe organ|jester|organ|bells|boing|junior|kathy|ralph|princess|bahh)/i;
 
   // Note de qualité d'une voix (plus = mieux).
   function voiceQuality(v) {
@@ -2202,8 +2214,12 @@ function initChapelet() {
     // Voix Siri (iOS 16+) — qualité quasi humaine
     if (n.includes('siri')) s += 100;
     // Voix Apple connues (system voices haute qualité)
-    const firstWord = nT.split(/[\s(]/)[0].toLowerCase();
+    // Récupère le premier mot ASCII (ignore "Microsoft", "Google" préfixes)
+    const cleaned = nT.replace(/^(Microsoft|Google)\s+/i, '');
+    const firstWord = cleaned.split(/[\s(]/)[0].toLowerCase();
     if (APPLE_QUALITY_VOICES.has(firstWord)) s += 70;
+    // Voix Microsoft connues (Windows) — qualité correcte
+    if (MS_QUALITY_VOICES.has(firstWord) && n.includes('microsoft')) s += 50;
     // Voix Google (network) — très bonnes pour fr / en / es / it / pt
     if (n.includes('google')) s += 60;
     // Voix Microsoft (souvent qualité correcte mais moins naturelle que Apple/Google)
@@ -2266,11 +2282,12 @@ function initChapelet() {
     }
     sel.disabled = false;
 
-    // Top 10 voix par qualité
-    const top = voices.slice(0, 10);
-    // Sépare premium / standard pour visualisation (Apple connues + premium + neural ≥ 70)
-    const premium = top.filter(v => voiceQuality(v) >= 70);
-    const others  = top.filter(v => voiceQuality(v) <  70);
+    // Toutes les voix disponibles, triées par qualité, dans 3 catégories selon le score
+    const HIGH_THRESHOLD = 90;   // Premium / Natural / Siri / Apple connues
+    const MED_THRESHOLD  = 30;   // Microsoft connues, Google, voix réseau
+    const tierHigh = voices.filter(v => voiceQuality(v) >= HIGH_THRESHOLD);
+    const tierMed  = voices.filter(v => { const s = voiceQuality(v); return s < HIGH_THRESHOLD && s >= MED_THRESHOLD; });
+    const tierLow  = voices.filter(v => voiceQuality(v) <  MED_THRESHOLD);
 
     function addGroup(label, list) {
       if (!list.length) return;
@@ -2284,8 +2301,9 @@ function initChapelet() {
       });
       sel.appendChild(group);
     }
-    addGroup('Voix recommandées', premium);
-    addGroup('Autres voix',       others);
+    addGroup('★ Voix recommandées', tierHigh);
+    addGroup('Voix standard',        tierMed);
+    addGroup('Autres voix',          tierLow);
 
     // Restaure la sélection si possible
     if (previous && [...sel.options].some(o => o.value === previous)) {
