@@ -4174,12 +4174,38 @@ function initContact() {
     const originalLabel = submitBtn.innerHTML;
     submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Envoi…';
 
+    // Helper : fallback mailto si l'API n'est pas configurée
+    const openMailto = () => {
+      const TYPE_LBL = { suggestion:'Suggestion', bug:'Bug', merci:'Remerciement', autre:'Message' };
+      const subject = encodeURIComponent(`[PrionsEnLigne] ${TYPE_LBL[payload.type] || 'Message'}`);
+      const body = encodeURIComponent(
+        payload.message +
+        '\n\n---\n' +
+        (payload.email ? `Email de retour : ${payload.email}\n` : '') +
+        `Page : ${payload.page}\n`
+      );
+      window.location.href = `mailto:contact@prionsenligne.fr?subject=${subject}&body=${body}`;
+    };
+
     try {
       const res = await fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
+
+      // Service non configuré → bascule sur mailto
+      if (res.status === 503) {
+        const data = await res.json().catch(() => ({}));
+        if (data.fallback === 'mailto') {
+          feedback.className = 'contact-feedback ok';
+          feedback.innerHTML = '<i class="fa-solid fa-envelope"></i> Ouverture de votre application mail…';
+          openMailto();
+          setTimeout(closeContact, 1500);
+          return;
+        }
+      }
+
       if (!res.ok) {
         const txt = await res.text().catch(() => '');
         throw new Error(txt || `HTTP ${res.status}`);
@@ -4191,8 +4217,10 @@ function initContact() {
       setTimeout(closeContact, 2500);
     } catch (err) {
       console.warn('[contact] erreur envoi:', err);
+      // En cas d'erreur réseau ou autre, on offre quand même le mailto
       feedback.className = 'contact-feedback err';
-      feedback.textContent = 'Envoi impossible pour le moment. Réessayez plus tard ou écrivez à contact@prionsenligne.fr';
+      feedback.innerHTML = 'Problème d\'envoi. <button type="button" id="contact-mailto-fallback" style="background:none;border:none;color:inherit;text-decoration:underline;cursor:pointer;padding:0;font:inherit;">Ouvrir votre app mail</button>';
+      document.getElementById('contact-mailto-fallback')?.addEventListener('click', openMailto);
     } finally {
       submitBtn.disabled = false;
       submitBtn.innerHTML = originalLabel;

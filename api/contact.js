@@ -109,10 +109,10 @@ export default async function handler(req, res) {
   const fromEmail = process.env.CONTACT_FROM_EMAIL || 'PrionsEnLigne <onboarding@resend.dev>';
 
   if (!apiKey) {
-    console.warn('[contact] RESEND_API_KEY non configurée — message non envoyé:', {
-      type, email: email || '(non fourni)', message: message.slice(0, 100),
-    });
-    res.status(500).json({ error: 'Service non configuré côté serveur.' });
+    // Service pas encore configuré côté Vercel. On renvoie un code spécial
+    // que le frontend reconnaît pour basculer sur un mailto:
+    console.warn('[contact] RESEND_API_KEY non configurée');
+    res.status(503).json({ error: 'not_configured', fallback: 'mailto' });
     return;
   }
 
