@@ -2798,309 +2798,577 @@ const SOURCES = {
 
 /*
   WEEK_SCHEDULE : grille horaire par type de jour liturgique.
-  Chaque slot → { type, label, entries: [{ t:'HH:MM', tl:'HHhMM', srcs:['clé',...] }] }
-  Les jours non définis (Lun=1, Mar=2, Jeu=4) utilisent `ordinary`.
+  Chaque slot → { type, label, desc?, mystByDow?, entries: [{ t:'HH:MM', tl:'HHhMM', dur?, srcs:['clé',...] }] }
+    - desc       : description courte affichée sous le titre (collapsible)
+    - mystByDow  : pour les chapelets, type de mystère selon le jour
+                   { 0:'lumineux', 1:'glorieux', ... } (0=dim, 6=sam)
+    - dur        : durée en minutes (affichée à côté de l'heure)
 */
+
+// ── Descriptions partagées (sources : radiomaria.fr) ────────────────────
+const RM_DESC = {
+  midnightCh:    "Le Rosaire est l'arme la plus puissante pour toucher le Cœur de Jésus, Notre Rédempteur, qui aime tellement sa Mère. (Saint Louis-Marie Grignion de Montfort)",
+  divineMercy3:  "Ne manquez pas le chapelet de la Divine Miséricorde en direct sur Radio Maria France. Inscription au 04 94 20 30 88 ou accueil@radiomaria.fr.",
+  divineMercy15: "Avec un auditeur. Le chapelet de la Divine Miséricorde en direct sur Radio Maria France. Inscription au 04 94 20 30 88.",
+  morningPrayer: "Credo, prière de consécration à l'Esprit-Saint, prière de Sainte Faustine, prière aux archanges, à Saint Joseph, prière d'intercession, prière de Saint Jean-Paul II pour Radio Maria, Acte de Consécration à Marie.",
+  morningCh830:  "En direct avec un auditeur du lundi au samedi. Aux intentions du Pape. Enregistré le dimanche.",
+  lourdesCh:     "Le chapelet en direct sur Radio Maria France en communion avec l'un des sanctuaires les plus appréciés des catholiques du monde entier.",
+  vespers:       "Venez nous rejoindre pour la prière du soir.",
+  kibeho:        "Priez avec tous les auditeurs francophones le chapelet de Notre-Dame des 7 Douleurs en communion avec Kibeho, Rwanda.",
+  eveningKids:   "« Pour vous les enfants » : un conte ou une histoire de saint pour aider les enfants à s'endormir le cœur en paix.",
+  complines:     "Terminez votre journée en prière avec l'Office des Complies tous les soirs.",
+  intentions14:  "Chapelet aux intentions des auditeurs sur Radio Notre-Dame.",
+};
+
+// ── Mystères selon le jour pour les 3 chapelets RM principaux ──────────
+const MYST_DOW = {
+  // Chapelet 0h00 — joyeux mar/ven, lumineux mer/dim, glorieux lun/jeu, douloureux sam
+  midnight:  { 0:'lumineux',   1:'glorieux',   2:'joyeux',     3:'lumineux',   4:'glorieux',   5:'joyeux',     6:'douloureux' },
+  // Chapelet en latin 5h30 — lumineux mar, douloureux mer/ven/dim, joyeux jeu, glorieux lun/sam
+  latin:     { 0:'douloureux', 1:'glorieux',   2:'lumineux',   3:'douloureux', 4:'joyeux',     5:'douloureux', 6:'glorieux' },
+  // Chapelet 8h30 (avec internaute) — douloureux mar, glorieux mer/dim, lumineux jeu/ven, joyeux lun/sam
+  morning830:{ 0:'glorieux',   1:'joyeux',     2:'douloureux', 3:'glorieux',   4:'lumineux',   5:'lumineux',   6:'joyeux' },
+  // Kibeho mardi 18h00 — toujours glorieux
+  kibeho:    { 2:'glorieux' },
+};
+
 const WEEK_SCHEDULE = {
 
-  // Mar / Jeu — jours ordinaires (Lun : voir clé 1)
-  // Sources RM : Vêpres 17h40, Complies 22h, Chapelet 8h30 + 18h (confirmés radiomaria.fr)
-  // Sources ND : Vêpres 18h (N-D des Victoires mar-ven), Complies 21h
+  // Jeudi (4) — fallback aussi pour tout jour non défini
+  // Sources RM confirmées : radiomaria.fr (Chapelets, Vêpres 17h40, Complies 22h)
   ordinary: [
-    { type: 'chapelet', label: 'Chapelet de minuit',  entries: [
-      { t: '0:00',  tl: '0h00',  srcs: ['rm'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet de nuit',    entries: [
-      { t: '3:00',  tl: '3h00',  srcs: ['rm'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet en latin',   entries: [
-      { t: '5:30',  tl: '5h30',  srcs: ['rm'] },
-    ]},
-    { type: 'laudes',   label: 'Laudes',             entries: [
-      { t: '7:00',  tl: '7h00',  srcs: ['rm', 'nd'] },
-    ]},
-    { type: 'matin',    label: 'Prière du matin',    entries: [
-      { t: '7:30',  tl: '7h30',  srcs: ['rcf'] },
-      { t: '8:00',  tl: '8h00',  srcs: ['rm', 'esp'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet du matin (avec un internaute)',  entries: [
-      { t: '8:30',  tl: '8h30',  srcs: ['rm'] },
-    ]},
-    { type: 'messe',    label: 'Sainte Messe',       entries: [
-      { t: '9:15',  tl: '9h15',  srcs: ['lou'] },
-      { t: '10:00', tl: '10h00', srcs: ['nd', 'kto'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet de Midi',   entries: [
-      { t: '12:00', tl: '12h00', srcs: ['rm'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet aux intentions des auditeurs', entries: [
-      { t: '14:30', tl: '14h30', srcs: ['nd'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet de la Divine Miséricorde', entries: [
-      { t: '15:00', tl: '15h00', srcs: ['rm'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet de Lourdes', entries: [
-      { t: '15:30', tl: '15h30', srcs: ['rm', 'lou'] },
-    ]},
-    { type: 'vepres',   label: 'Vêpres',             entries: [
-      { t: '17:40', tl: '17h40', srcs: ['rm'] },
-      { t: '18:00', tl: '18h00', srcs: ['nd'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet du soir (avec un internaute)',   entries: [
-      { t: '18:00', tl: '18h00', srcs: ['rm'] },
-    ]},
-    { type: 'complies', label: 'Complies',            entries: [
-      { t: '21:00', tl: '21h00', srcs: ['nd'] },
-      { t: '22:00', tl: '22h00', srcs: ['rm'] },
-      { t: '22:05', tl: '22h05', srcs: ['esp'] },
-    ]},
+    { type: 'chapelet', label: 'Chapelet de minuit',
+      desc: RM_DESC.midnightCh, mystByDow: MYST_DOW.midnight,
+      entries: [{ t: '0:00', tl: '0h00', dur: 30, srcs: ['rm'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet de la Divine Miséricorde',
+      desc: RM_DESC.divineMercy3,
+      entries: [{ t: '3:00', tl: '3h00', dur: 15, srcs: ['rm'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet en latin',
+      desc: 'Récité en latin, langue de la liturgie traditionnelle.', mystByDow: MYST_DOW.latin,
+      entries: [{ t: '5:30', tl: '5h30', dur: 30, srcs: ['rm'] }],
+    },
+    { type: 'laudes', label: 'Laudes',
+      desc: "Office du matin de l'Église — louange à Dieu au lever du jour.",
+      entries: [{ t: '7:00', tl: '7h00', dur: 30, srcs: ['rm', 'nd'] }],
+    },
+    { type: 'matin', label: 'Prière du matin',
+      desc: RM_DESC.morningPrayer,
+      entries: [
+        { t: '7:30', tl: '7h30', dur: 15, srcs: ['rcf'] },
+        { t: '8:00', tl: '8h00', dur: 15, srcs: ['rm', 'esp'] },
+      ],
+    },
+    { type: 'chapelet', label: 'Chapelet du matin (avec un internaute)',
+      desc: RM_DESC.morningCh830, mystByDow: MYST_DOW.morning830,
+      entries: [{ t: '8:30', tl: '8h30', dur: 40, srcs: ['rm'] }],
+    },
+    { type: 'messe', label: 'Sainte Messe',
+      entries: [
+        { t: '9:15',  tl: '9h15',  dur: 45, srcs: ['lou'] },
+        { t: '10:00', tl: '10h00', dur: 45, srcs: ['nd', 'kto'] },
+      ],
+    },
+    // JEUDI : Messe des malades (en direct studios RM ou paroisse ND de la Nativité, La Garde)
+    { type: 'messe', label: 'Messe des malades — ND de la Nativité (La Garde)',
+      desc: "Messe des malades en direct des studios de Radio Maria ou de la paroisse Notre-Dame de la Nativité, La Garde (83).",
+      entries: [{ t: '11:15', tl: '11h15', dur: 45, srcs: ['rm'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet de Midi',
+      entries: [{ t: '12:00', tl: '12h00', dur: 30, srcs: ['rm'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet aux intentions des auditeurs',
+      desc: RM_DESC.intentions14,
+      entries: [{ t: '14:30', tl: '14h30', dur: 30, srcs: ['nd'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet de la Divine Miséricorde (avec un auditeur)',
+      desc: RM_DESC.divineMercy15,
+      entries: [{ t: '15:00', tl: '15h00', dur: 15, srcs: ['rm'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet de Lourdes',
+      desc: RM_DESC.lourdesCh,
+      entries: [{ t: '15:30', tl: '15h30', dur: 40, srcs: ['rm', 'lou'] }],
+    },
+    { type: 'vepres', label: 'Vêpres',
+      desc: RM_DESC.vespers,
+      entries: [
+        { t: '17:40', tl: '17h40', dur: 20, srcs: ['rm'] },
+        { t: '18:00', tl: '18h00', dur: 30, srcs: ['nd'] },
+      ],
+    },
+    { type: 'chapelet', label: 'Chapelet du soir (avec un internaute)',
+      entries: [{ t: '18:00', tl: '18h00', dur: 30, srcs: ['rm'] }],
+    },
+    { type: 'soiree', label: 'Prière du soir — Pour vous les enfants',
+      desc: RM_DESC.eveningKids,
+      entries: [{ t: '19:40', tl: '19h40', dur: 20, srcs: ['rm'] }],
+    },
+    { type: 'complies', label: 'Complies',
+      desc: RM_DESC.complines,
+      entries: [
+        { t: '21:00', tl: '21h00', dur: 20, srcs: ['nd'] },
+        { t: '22:00', tl: '22h00', dur: 20, srcs: ['rm'] },
+        { t: '22:05', tl: '22h05', dur: 20, srcs: ['esp'] },
+      ],
+    },
   ],
 
-  // Mercredi — Audience papale à Rome
+  // Mardi (2) — Messe Pellevoisin 11h15 + Chapelet Kibeho 18h00
+  2: [
+    { type: 'chapelet', label: 'Chapelet de minuit',
+      desc: RM_DESC.midnightCh, mystByDow: MYST_DOW.midnight,
+      entries: [{ t: '0:00', tl: '0h00', dur: 30, srcs: ['rm'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet de la Divine Miséricorde',
+      desc: RM_DESC.divineMercy3,
+      entries: [{ t: '3:00', tl: '3h00', dur: 15, srcs: ['rm'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet en latin',
+      desc: 'Récité en latin, langue de la liturgie traditionnelle.', mystByDow: MYST_DOW.latin,
+      entries: [{ t: '5:30', tl: '5h30', dur: 30, srcs: ['rm'] }],
+    },
+    { type: 'laudes', label: 'Laudes',
+      desc: "Office du matin de l'Église — louange à Dieu au lever du jour.",
+      entries: [{ t: '7:00', tl: '7h00', dur: 30, srcs: ['rm', 'nd'] }],
+    },
+    { type: 'matin', label: 'Prière du matin',
+      desc: RM_DESC.morningPrayer,
+      entries: [
+        { t: '7:30', tl: '7h30', dur: 15, srcs: ['rcf'] },
+        { t: '8:00', tl: '8h00', dur: 15, srcs: ['rm', 'esp'] },
+      ],
+    },
+    { type: 'chapelet', label: 'Chapelet du matin (avec un internaute)',
+      desc: RM_DESC.morningCh830, mystByDow: MYST_DOW.morning830,
+      entries: [{ t: '8:30', tl: '8h30', dur: 40, srcs: ['rm'] }],
+    },
+    { type: 'messe', label: 'Sainte Messe',
+      entries: [
+        { t: '9:15',  tl: '9h15',  dur: 45, srcs: ['lou'] },
+        { t: '10:00', tl: '10h00', dur: 45, srcs: ['nd', 'kto'] },
+      ],
+    },
+    { type: 'messe', label: 'Messe — Sanctuaire ND de Pellevoisin',
+      desc: "Messe en direct du Sanctuaire Notre-Dame de Pellevoisin (Indre).",
+      entries: [{ t: '11:15', tl: '11h15', dur: 45, srcs: ['rm'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet de Midi',
+      entries: [{ t: '12:00', tl: '12h00', dur: 30, srcs: ['rm'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet aux intentions des auditeurs',
+      desc: RM_DESC.intentions14,
+      entries: [{ t: '14:30', tl: '14h30', dur: 30, srcs: ['nd'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet de la Divine Miséricorde (avec un auditeur)',
+      desc: RM_DESC.divineMercy15,
+      entries: [{ t: '15:00', tl: '15h00', dur: 15, srcs: ['rm'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet de Lourdes',
+      desc: RM_DESC.lourdesCh,
+      entries: [{ t: '15:30', tl: '15h30', dur: 40, srcs: ['rm', 'lou'] }],
+    },
+    { type: 'vepres', label: 'Vêpres',
+      desc: RM_DESC.vespers,
+      entries: [
+        { t: '17:40', tl: '17h40', dur: 20, srcs: ['rm'] },
+        { t: '18:00', tl: '18h00', dur: 30, srcs: ['nd'] },
+      ],
+    },
+    // SPÉCIFICITÉ MARDI : Chapelet ND des 7 Douleurs (Kibeho) au lieu du Chapelet du soir
+    { type: 'chapelet', label: 'Chapelet ND des 7 Douleurs (Kibeho)',
+      desc: RM_DESC.kibeho, mystByDow: MYST_DOW.kibeho,
+      entries: [{ t: '18:00', tl: '18h00', dur: 45, srcs: ['rm'] }],
+    },
+    { type: 'soiree', label: 'Prière du soir — Pour vous les enfants',
+      desc: RM_DESC.eveningKids,
+      entries: [{ t: '19:40', tl: '19h40', dur: 20, srcs: ['rm'] }],
+    },
+    { type: 'complies', label: 'Complies',
+      desc: RM_DESC.complines,
+      entries: [
+        { t: '21:00', tl: '21h00', dur: 20, srcs: ['nd'] },
+        { t: '22:00', tl: '22h00', dur: 20, srcs: ['rm'] },
+        { t: '22:05', tl: '22h05', dur: 20, srcs: ['esp'] },
+      ],
+    },
+  ],
+
+  // Mercredi (3) — Audience papale à Rome + Messe ND du Laus
   3: [
-    { type: 'chapelet', label: 'Chapelet de minuit',  entries: [
-      { t: '0:00',  tl: '0h00',  srcs: ['rm'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet de nuit',    entries: [
-      { t: '3:00',  tl: '3h00',  srcs: ['rm'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet en latin',   entries: [
-      { t: '5:30',  tl: '5h30',  srcs: ['rm'] },
-    ]},
-    { type: 'laudes',   label: 'Laudes',             entries: [
-      { t: '7:00',  tl: '7h00',  srcs: ['rm', 'nd'] },
-    ]},
-    { type: 'matin',    label: 'Prière du matin',    entries: [
-      { t: '7:30',  tl: '7h30',  srcs: ['rcf'] },
-      { t: '8:00',  tl: '8h00',  srcs: ['rm', 'esp'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet du matin (avec un internaute)',  entries: [
-      { t: '8:30',  tl: '8h30',  srcs: ['rm'] },
-    ]},
-    { type: 'messe',    label: 'Sainte Messe',       entries: [
-      { t: '9:15',  tl: '9h15',  srcs: ['lou'] },
-      { t: '10:00', tl: '10h00', srcs: ['nd'] },
-    ]},
-    { type: 'messe',    label: 'Audience papale',    entries: [
-      { t: '10:30', tl: '10h30', srcs: ['vat', 'kto'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet de Midi',   entries: [
-      { t: '12:00', tl: '12h00', srcs: ['rm'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet aux intentions des auditeurs', entries: [
-      { t: '14:30', tl: '14h30', srcs: ['nd'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet de la Divine Miséricorde', entries: [
-      { t: '15:00', tl: '15h00', srcs: ['rm'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet de Lourdes', entries: [
-      { t: '15:30', tl: '15h30', srcs: ['rm', 'lou'] },
-    ]},
-    { type: 'vepres',   label: 'Vêpres',             entries: [
-      { t: '17:40', tl: '17h40', srcs: ['rm'] },
-      { t: '18:00', tl: '18h00', srcs: ['nd'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet du soir (avec un internaute)',   entries: [
-      { t: '18:00', tl: '18h00', srcs: ['rm'] },
-    ]},
-    { type: 'complies', label: 'Complies',            entries: [
-      { t: '21:00', tl: '21h00', srcs: ['nd'] },
-      { t: '22:00', tl: '22h00', srcs: ['rm'] },
-      { t: '22:05', tl: '22h05', srcs: ['esp'] },
-    ]},
+    { type: 'chapelet', label: 'Chapelet de minuit',
+      desc: RM_DESC.midnightCh, mystByDow: MYST_DOW.midnight,
+      entries: [{ t: '0:00', tl: '0h00', dur: 30, srcs: ['rm'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet de la Divine Miséricorde',
+      desc: RM_DESC.divineMercy3,
+      entries: [{ t: '3:00', tl: '3h00', dur: 15, srcs: ['rm'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet en latin',
+      desc: 'Récité en latin, langue de la liturgie traditionnelle.', mystByDow: MYST_DOW.latin,
+      entries: [{ t: '5:30', tl: '5h30', dur: 30, srcs: ['rm'] }],
+    },
+    { type: 'laudes', label: 'Laudes',
+      desc: "Office du matin de l'Église — louange à Dieu au lever du jour.",
+      entries: [{ t: '7:00', tl: '7h00', dur: 30, srcs: ['rm', 'nd'] }],
+    },
+    { type: 'matin', label: 'Prière du matin',
+      desc: RM_DESC.morningPrayer,
+      entries: [
+        { t: '7:30', tl: '7h30', dur: 15, srcs: ['rcf'] },
+        { t: '8:00', tl: '8h00', dur: 15, srcs: ['rm', 'esp'] },
+      ],
+    },
+    { type: 'chapelet', label: 'Chapelet du matin (avec un internaute)',
+      desc: RM_DESC.morningCh830, mystByDow: MYST_DOW.morning830,
+      entries: [{ t: '8:30', tl: '8h30', dur: 40, srcs: ['rm'] }],
+    },
+    { type: 'messe', label: 'Sainte Messe',
+      entries: [
+        { t: '9:15',  tl: '9h15',  dur: 45, srcs: ['lou'] },
+        { t: '10:00', tl: '10h00', dur: 45, srcs: ['nd'] },
+      ],
+    },
+    { type: 'messe', label: 'Audience papale',
+      desc: "Audience générale du Pape, en direct depuis Rome.",
+      entries: [{ t: '10:30', tl: '10h30', dur: 90, srcs: ['vat', 'kto'] }],
+    },
+    { type: 'messe', label: 'Messe — Notre-Dame du Laus',
+      desc: "Messe en direct du Sanctuaire Notre-Dame du Laus (Hautes-Alpes).",
+      entries: [{ t: '11:15', tl: '11h15', dur: 45, srcs: ['rm'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet de Midi',
+      entries: [{ t: '12:00', tl: '12h00', dur: 30, srcs: ['rm'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet aux intentions des auditeurs',
+      desc: RM_DESC.intentions14,
+      entries: [{ t: '14:30', tl: '14h30', dur: 30, srcs: ['nd'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet de la Divine Miséricorde (avec un auditeur)',
+      desc: RM_DESC.divineMercy15,
+      entries: [{ t: '15:00', tl: '15h00', dur: 15, srcs: ['rm'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet de Lourdes',
+      desc: RM_DESC.lourdesCh,
+      entries: [{ t: '15:30', tl: '15h30', dur: 40, srcs: ['rm', 'lou'] }],
+    },
+    { type: 'vepres', label: 'Vêpres',
+      desc: RM_DESC.vespers,
+      entries: [
+        { t: '17:40', tl: '17h40', dur: 20, srcs: ['rm'] },
+        { t: '18:00', tl: '18h00', dur: 30, srcs: ['nd'] },
+      ],
+    },
+    { type: 'chapelet', label: 'Chapelet du soir (avec un internaute)',
+      entries: [{ t: '18:00', tl: '18h00', dur: 30, srcs: ['rm'] }],
+    },
+    { type: 'soiree', label: 'Prière du soir — Pour vous les enfants',
+      desc: RM_DESC.eveningKids,
+      entries: [{ t: '19:40', tl: '19h40', dur: 20, srcs: ['rm'] }],
+    },
+    { type: 'complies', label: 'Complies',
+      desc: RM_DESC.complines,
+      entries: [
+        { t: '21:00', tl: '21h00', dur: 20, srcs: ['nd'] },
+        { t: '22:00', tl: '22h00', dur: 20, srcs: ['rm'] },
+        { t: '22:05', tl: '22h05', dur: 20, srcs: ['esp'] },
+      ],
+    },
   ],
 
-  // Vendredi — Chapelet de la Divine Miséricorde (15h)
+  // Vendredi (5) — Messe ND de Valcluse
   5: [
-    { type: 'chapelet', label: 'Chapelet de minuit',              entries: [
-      { t: '0:00',  tl: '0h00',  srcs: ['rm'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet de nuit',                entries: [
-      { t: '3:00',  tl: '3h00',  srcs: ['rm'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet en latin',               entries: [
-      { t: '5:30',  tl: '5h30',  srcs: ['rm'] },
-    ]},
-    { type: 'laudes',   label: 'Laudes',                         entries: [
-      { t: '7:00',  tl: '7h00',  srcs: ['rm', 'nd'] },
-    ]},
-    { type: 'matin',    label: 'Prière du matin',                entries: [
-      { t: '7:30',  tl: '7h30',  srcs: ['rcf'] },
-      { t: '8:00',  tl: '8h00',  srcs: ['rm', 'esp'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet du matin (avec un internaute)',              entries: [
-      { t: '8:30',  tl: '8h30',  srcs: ['rm'] },
-    ]},
-    { type: 'messe',    label: 'Sainte Messe',                   entries: [
-      { t: '9:15',  tl: '9h15',  srcs: ['lou'] },
-      { t: '10:00', tl: '10h00', srcs: ['nd', 'kto'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet de Midi',               entries: [
-      { t: '12:00', tl: '12h00', srcs: ['rm'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet aux intentions des auditeurs', entries: [
-      { t: '14:30', tl: '14h30', srcs: ['nd'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet de la Divine Miséricorde',     entries: [
-      { t: '15:00', tl: '15h00', srcs: ['rm', 'fid'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet de Lourdes',            entries: [
-      { t: '15:30', tl: '15h30', srcs: ['rm', 'lou'] },
-    ]},
-    { type: 'vepres',   label: 'Vêpres',                         entries: [
-      { t: '17:40', tl: '17h40', srcs: ['rm'] },
-      { t: '18:00', tl: '18h00', srcs: ['nd'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet du soir (avec un internaute)',               entries: [
-      { t: '18:00', tl: '18h00', srcs: ['rm'] },
-    ]},
-    { type: 'complies', label: 'Complies',                       entries: [
-      { t: '21:00', tl: '21h00', srcs: ['nd'] },
-      { t: '22:00', tl: '22h00', srcs: ['rm', 'fid'] },
-      { t: '22:05', tl: '22h05', srcs: ['esp'] },
-    ]},
+    { type: 'chapelet', label: 'Chapelet de minuit',
+      desc: RM_DESC.midnightCh, mystByDow: MYST_DOW.midnight,
+      entries: [{ t: '0:00', tl: '0h00', dur: 30, srcs: ['rm'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet de la Divine Miséricorde',
+      desc: RM_DESC.divineMercy3,
+      entries: [{ t: '3:00', tl: '3h00', dur: 15, srcs: ['rm'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet en latin',
+      desc: 'Récité en latin, langue de la liturgie traditionnelle.', mystByDow: MYST_DOW.latin,
+      entries: [{ t: '5:30', tl: '5h30', dur: 30, srcs: ['rm'] }],
+    },
+    { type: 'laudes', label: 'Laudes',
+      desc: "Office du matin de l'Église — louange à Dieu au lever du jour.",
+      entries: [{ t: '7:00', tl: '7h00', dur: 30, srcs: ['rm', 'nd'] }],
+    },
+    { type: 'matin', label: 'Prière du matin',
+      desc: RM_DESC.morningPrayer,
+      entries: [
+        { t: '7:30', tl: '7h30', dur: 15, srcs: ['rcf'] },
+        { t: '8:00', tl: '8h00', dur: 15, srcs: ['rm', 'esp'] },
+      ],
+    },
+    { type: 'chapelet', label: 'Chapelet du matin (avec un internaute)',
+      desc: RM_DESC.morningCh830, mystByDow: MYST_DOW.morning830,
+      entries: [{ t: '8:30', tl: '8h30', dur: 40, srcs: ['rm'] }],
+    },
+    { type: 'messe', label: 'Sainte Messe',
+      entries: [
+        { t: '9:15',  tl: '9h15',  dur: 45, srcs: ['lou'] },
+        { t: '10:00', tl: '10h00', dur: 45, srcs: ['nd', 'kto'] },
+      ],
+    },
+    { type: 'messe', label: 'Messe — Notre-Dame de Valcluse',
+      desc: "Messe en direct du Sanctuaire Notre-Dame de Valcluse.",
+      entries: [{ t: '11:15', tl: '11h15', dur: 45, srcs: ['rm'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet de Midi',
+      entries: [{ t: '12:00', tl: '12h00', dur: 30, srcs: ['rm'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet aux intentions des auditeurs',
+      desc: RM_DESC.intentions14,
+      entries: [{ t: '14:30', tl: '14h30', dur: 30, srcs: ['nd'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet de la Divine Miséricorde (avec un auditeur)',
+      desc: RM_DESC.divineMercy15,
+      entries: [{ t: '15:00', tl: '15h00', dur: 15, srcs: ['rm', 'fid'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet de Lourdes',
+      desc: RM_DESC.lourdesCh,
+      entries: [{ t: '15:30', tl: '15h30', dur: 40, srcs: ['rm', 'lou'] }],
+    },
+    { type: 'vepres', label: 'Vêpres',
+      desc: RM_DESC.vespers,
+      entries: [
+        { t: '17:40', tl: '17h40', dur: 20, srcs: ['rm'] },
+        { t: '18:00', tl: '18h00', dur: 30, srcs: ['nd'] },
+      ],
+    },
+    { type: 'chapelet', label: 'Chapelet du soir (avec un internaute)',
+      entries: [{ t: '18:00', tl: '18h00', dur: 30, srcs: ['rm'] }],
+    },
+    { type: 'soiree', label: 'Prière du soir — Pour vous les enfants',
+      desc: RM_DESC.eveningKids,
+      entries: [{ t: '19:40', tl: '19h40', dur: 20, srcs: ['rm'] }],
+    },
+    { type: 'complies', label: 'Complies',
+      desc: RM_DESC.complines,
+      entries: [
+        { t: '21:00', tl: '21h00', dur: 20, srcs: ['nd'] },
+        { t: '22:00', tl: '22h00', dur: 20, srcs: ['rm', 'fid'] },
+        { t: '22:05', tl: '22h05', dur: 20, srcs: ['esp'] },
+      ],
+    },
   ],
 
-  // Samedi — Jour marial, Vêpres du dimanche anticipées
-  // ND : Vêpres anticipées 17h (N-D des Victoires samedi)
+  // Samedi (6) — Jour marial. Pas de Divine Miséricorde à 3h. Messe Saint Louis d'Antin
   6: [
-    { type: 'chapelet', label: 'Chapelet de minuit',   entries: [
-      { t: '0:00',  tl: '0h00',  srcs: ['rm'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet de nuit',     entries: [
-      { t: '3:00',  tl: '3h00',  srcs: ['rm'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet en latin',    entries: [
-      { t: '5:30',  tl: '5h30',  srcs: ['rm'] },
-    ]},
-    { type: 'laudes',   label: 'Laudes',              entries: [
-      { t: '7:00',  tl: '7h00',  srcs: ['rm', 'nd'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet du matin (avec un internaute)',   entries: [
-      { t: '8:30',  tl: '8h30',  srcs: ['rm'] },
-    ]},
-    { type: 'messe',    label: 'Sainte Messe',        entries: [
-      { t: '10:00', tl: '10h00', srcs: ['nd', 'kto', 'ars'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet marial',     entries: [
-      { t: '12:00', tl: '12h00', srcs: ['rm'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet aux intentions des auditeurs', entries: [
-      { t: '14:30', tl: '14h30', srcs: ['nd'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet de la Divine Miséricorde', entries: [
-      { t: '15:00', tl: '15h00', srcs: ['rm', 'fid'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet de Lourdes', entries: [
-      { t: '15:30', tl: '15h30', srcs: ['rm', 'lou'] },
-    ]},
-    { type: 'vepres',   label: 'Vêpres du dimanche', entries: [
-      { t: '17:00', tl: '17h00', srcs: ['nd'] },
-      { t: '17:40', tl: '17h40', srcs: ['rm'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet du soir (avec un internaute)',    entries: [
-      { t: '18:00', tl: '18h00', srcs: ['rm'] },
-    ]},
-    { type: 'complies', label: 'Complies',            entries: [
-      { t: '21:00', tl: '21h00', srcs: ['nd'] },
-      { t: '22:00', tl: '22h00', srcs: ['rm'] },
-      { t: '22:05', tl: '22h05', srcs: ['esp'] },
-    ]},
+    { type: 'chapelet', label: 'Chapelet de minuit',
+      desc: RM_DESC.midnightCh, mystByDow: MYST_DOW.midnight,
+      entries: [{ t: '0:00', tl: '0h00', dur: 30, srcs: ['rm'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet en latin',
+      desc: 'Récité en latin, langue de la liturgie traditionnelle.', mystByDow: MYST_DOW.latin,
+      entries: [{ t: '5:30', tl: '5h30', dur: 30, srcs: ['rm'] }],
+    },
+    { type: 'laudes', label: 'Laudes',
+      desc: "Office du matin de l'Église — louange à Dieu au lever du jour.",
+      entries: [{ t: '7:00', tl: '7h00', dur: 30, srcs: ['rm', 'nd'] }],
+    },
+    { type: 'matin', label: 'Prière du matin',
+      desc: RM_DESC.morningPrayer,
+      entries: [{ t: '8:00', tl: '8h00', dur: 15, srcs: ['rm', 'esp'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet du matin (avec un internaute)',
+      desc: RM_DESC.morningCh830, mystByDow: MYST_DOW.morning830,
+      entries: [{ t: '8:30', tl: '8h30', dur: 40, srcs: ['rm'] }],
+    },
+    { type: 'messe', label: 'Sainte Messe',
+      entries: [{ t: '10:00', tl: '10h00', dur: 45, srcs: ['nd', 'kto', 'ars'] }],
+    },
+    { type: 'messe', label: 'Messe — Saint Louis d\'Antin (Paris 9e)',
+      desc: "Messe en direct de l'église Saint-Louis-d'Antin (Paris 9ᵉ).",
+      entries: [{ t: '11:30', tl: '11h30', dur: 45, srcs: ['rm'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet marial',
+      entries: [{ t: '12:00', tl: '12h00', dur: 30, srcs: ['rm'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet aux intentions des auditeurs',
+      desc: RM_DESC.intentions14,
+      entries: [{ t: '14:30', tl: '14h30', dur: 30, srcs: ['nd'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet de la Divine Miséricorde (avec un auditeur)',
+      desc: RM_DESC.divineMercy15,
+      entries: [{ t: '15:00', tl: '15h00', dur: 15, srcs: ['rm', 'fid'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet de Lourdes',
+      desc: RM_DESC.lourdesCh,
+      entries: [{ t: '15:30', tl: '15h30', dur: 40, srcs: ['rm', 'lou'] }],
+    },
+    { type: 'vepres', label: 'Vêpres du dimanche (anticipées)',
+      desc: "Vêpres dominicales anticipées le samedi soir.",
+      entries: [
+        { t: '17:00', tl: '17h00', dur: 30, srcs: ['nd'] },
+        { t: '17:40', tl: '17h40', dur: 20, srcs: ['rm'] },
+      ],
+    },
+    { type: 'chapelet', label: 'Chapelet du soir (avec un internaute)',
+      entries: [{ t: '18:00', tl: '18h00', dur: 30, srcs: ['rm'] }],
+    },
+    { type: 'soiree', label: 'Prière du soir — Pour vous les enfants',
+      desc: RM_DESC.eveningKids,
+      entries: [{ t: '19:40', tl: '19h40', dur: 20, srcs: ['rm'] }],
+    },
+    { type: 'complies', label: 'Complies',
+      desc: RM_DESC.complines,
+      entries: [
+        { t: '21:00', tl: '21h00', dur: 20, srcs: ['nd'] },
+        { t: '22:00', tl: '22h00', dur: 20, srcs: ['rm'] },
+        { t: '22:05', tl: '22h05', dur: 20, srcs: ['esp'] },
+      ],
+    },
   ],
 
-  // Lundi — Messe N-D de Boulogne (19h40) + Prière du soir avec enfants
+  // Lundi (1) — Messe Sanctuaire ND de Grâce à Cotignac
   1: [
-    { type: 'chapelet', label: 'Chapelet de minuit',  entries: [
-      { t: '0:00',  tl: '0h00',  srcs: ['rm'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet de nuit',    entries: [
-      { t: '3:00',  tl: '3h00',  srcs: ['rm'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet en latin',   entries: [
-      { t: '5:30',  tl: '5h30',  srcs: ['rm'] },
-    ]},
-    { type: 'laudes',   label: 'Laudes',             entries: [
-      { t: '7:00',  tl: '7h00',  srcs: ['rm', 'nd'] },
-    ]},
-    { type: 'matin',    label: 'Prière du matin',    entries: [
-      { t: '7:30',  tl: '7h30',  srcs: ['rcf'] },
-      { t: '8:00',  tl: '8h00',  srcs: ['rm', 'esp'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet du matin (avec un internaute)',  entries: [
-      { t: '8:30',  tl: '8h30',  srcs: ['rm'] },
-    ]},
-    { type: 'messe',    label: 'Sainte Messe',       entries: [
-      { t: '9:15',  tl: '9h15',  srcs: ['lou'] },
-      { t: '10:00', tl: '10h00', srcs: ['nd', 'kto'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet de Midi',   entries: [
-      { t: '12:00', tl: '12h00', srcs: ['rm'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet de la Divine Miséricorde', entries: [
-      { t: '15:00', tl: '15h00', srcs: ['rm'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet de Lourdes', entries: [
-      { t: '15:30', tl: '15h30', srcs: ['rm', 'lou'] },
-    ]},
-    { type: 'vepres',   label: 'Vêpres',             entries: [
-      { t: '17:40', tl: '17h40', srcs: ['rm'] },
-      { t: '18:00', tl: '18h00', srcs: ['nd'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet du soir (avec un internaute)',   entries: [
-      { t: '18:00', tl: '18h00', srcs: ['rm'] },
-    ]},
-    { type: 'messe',    label: 'Messe Notre-Dame de Boulogne', entries: [
-      { t: '19:00', tl: '19h00', srcs: ['rm'] },
-    ]},
-    { type: 'soiree',   label: 'Prière du soir avec enfants', entries: [
-      { t: '19:40', tl: '19h40', srcs: ['rm'] },
-    ]},
-    { type: 'complies', label: 'Complies',            entries: [
-      { t: '21:00', tl: '21h00', srcs: ['nd'] },
-      { t: '22:00', tl: '22h00', srcs: ['rm'] },
-      { t: '22:05', tl: '22h05', srcs: ['esp'] },
-    ]},
+    { type: 'chapelet', label: 'Chapelet de minuit',
+      desc: RM_DESC.midnightCh, mystByDow: MYST_DOW.midnight,
+      entries: [{ t: '0:00', tl: '0h00', dur: 30, srcs: ['rm'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet de la Divine Miséricorde',
+      desc: RM_DESC.divineMercy3,
+      entries: [{ t: '3:00', tl: '3h00', dur: 15, srcs: ['rm'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet en latin',
+      desc: 'Récité en latin, langue de la liturgie traditionnelle.', mystByDow: MYST_DOW.latin,
+      entries: [{ t: '5:30', tl: '5h30', dur: 30, srcs: ['rm'] }],
+    },
+    { type: 'laudes', label: 'Laudes',
+      desc: "Office du matin de l'Église — louange à Dieu au lever du jour.",
+      entries: [{ t: '7:00', tl: '7h00', dur: 30, srcs: ['rm', 'nd'] }],
+    },
+    { type: 'matin', label: 'Prière du matin',
+      desc: RM_DESC.morningPrayer,
+      entries: [
+        { t: '7:30', tl: '7h30', dur: 15, srcs: ['rcf'] },
+        { t: '8:00', tl: '8h00', dur: 15, srcs: ['rm', 'esp'] },
+      ],
+    },
+    { type: 'chapelet', label: 'Chapelet du matin (avec un internaute)',
+      desc: RM_DESC.morningCh830, mystByDow: MYST_DOW.morning830,
+      entries: [{ t: '8:30', tl: '8h30', dur: 40, srcs: ['rm'] }],
+    },
+    { type: 'messe', label: 'Sainte Messe',
+      entries: [
+        { t: '9:15',  tl: '9h15',  dur: 45, srcs: ['lou'] },
+        { t: '10:00', tl: '10h00', dur: 45, srcs: ['nd', 'kto'] },
+      ],
+    },
+    { type: 'messe', label: 'Messe — Sanctuaire ND de Grâce à Cotignac',
+      desc: "Messe en direct du Sanctuaire Notre-Dame de Grâce à Cotignac (Var).",
+      entries: [{ t: '11:30', tl: '11h30', dur: 45, srcs: ['rm'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet de Midi',
+      entries: [{ t: '12:00', tl: '12h00', dur: 30, srcs: ['rm'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet aux intentions des auditeurs',
+      desc: RM_DESC.intentions14,
+      entries: [{ t: '14:30', tl: '14h30', dur: 30, srcs: ['nd'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet de la Divine Miséricorde (avec un auditeur)',
+      desc: RM_DESC.divineMercy15,
+      entries: [{ t: '15:00', tl: '15h00', dur: 15, srcs: ['rm'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet de Lourdes',
+      desc: RM_DESC.lourdesCh,
+      entries: [{ t: '15:30', tl: '15h30', dur: 40, srcs: ['rm', 'lou'] }],
+    },
+    { type: 'vepres', label: 'Vêpres',
+      desc: RM_DESC.vespers,
+      entries: [
+        { t: '17:40', tl: '17h40', dur: 20, srcs: ['rm'] },
+        { t: '18:00', tl: '18h00', dur: 30, srcs: ['nd'] },
+      ],
+    },
+    { type: 'chapelet', label: 'Chapelet du soir (avec un internaute)',
+      entries: [{ t: '18:00', tl: '18h00', dur: 30, srcs: ['rm'] }],
+    },
+    { type: 'messe', label: 'Messe Notre-Dame de Boulogne',
+      entries: [{ t: '19:00', tl: '19h00', dur: 45, srcs: ['rm'] }],
+    },
+    { type: 'soiree', label: 'Prière du soir — Pour vous les enfants',
+      desc: RM_DESC.eveningKids,
+      entries: [{ t: '19:40', tl: '19h40', dur: 20, srcs: ['rm'] }],
+    },
+    { type: 'complies', label: 'Complies',
+      desc: RM_DESC.complines,
+      entries: [
+        { t: '21:00', tl: '21h00', dur: 20, srcs: ['nd'] },
+        { t: '22:00', tl: '22h00', dur: 20, srcs: ['rm'] },
+        { t: '22:05', tl: '22h05', dur: 20, srcs: ['esp'] },
+      ],
+    },
   ],
 
-  // Dimanche — Cœur de la semaine liturgique
+  // Dimanche (0) — Cœur de la semaine. Pas de Divine Miséricorde à 3h.
   0: [
-    { type: 'chapelet', label: 'Chapelet de minuit',  entries: [
-      { t: '0:00',  tl: '0h00',  srcs: ['rm'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet de nuit',    entries: [
-      { t: '3:00',  tl: '3h00',  srcs: ['rm'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet en latin',   entries: [
-      { t: '5:30',  tl: '5h30',  srcs: ['rm'] },
-    ]},
-    { type: 'laudes',   label: 'Laudes dominicales', entries: [
-      { t: '8:00',  tl: '8h00',  srcs: ['rm', 'nd', 'rcf'] },
-    ]},
-    { type: 'messe',    label: "Grand'Messe",         entries: [
-      { t: '10:00', tl: '10h00', srcs: ['nd', 'ndp', 'kto'] },
-      { t: '10:30', tl: '10h30', srcs: ['rm', 'lou'] },
-    ]},
-    { type: 'chapelet', label: 'Angélus',             entries: [
-      { t: '12:00', tl: '12h00', srcs: ['vat', 'kto', 'nd'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet aux intentions des auditeurs', entries: [
-      { t: '14:30', tl: '14h30', srcs: ['nd'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet de la Divine Miséricorde', entries: [
-      { t: '15:00', tl: '15h00', srcs: ['rm', 'lou', 'nd'] },
-    ]},
-    { type: 'vepres',   label: 'Vêpres solennelles', entries: [
-      { t: '17:30', tl: '17h30', srcs: ['ndp'] },
-      { t: '17:40', tl: '17h40', srcs: ['rm'] },
-      { t: '18:00', tl: '18h00', srcs: ['nd'] },
-    ]},
-    { type: 'chapelet', label: 'Chapelet du soir (avec un internaute)',   entries: [
-      { t: '18:00', tl: '18h00', srcs: ['rm'] },
-    ]},
-    { type: 'complies', label: 'Complies',            entries: [
-      { t: '22:00', tl: '22h00', srcs: ['rm'] },
-      { t: '22:05', tl: '22h05', srcs: ['esp'] },  // nd et rcf ne diffusent pas les complies le dimanche
-    ]},
+    { type: 'chapelet', label: 'Chapelet de minuit',
+      desc: RM_DESC.midnightCh, mystByDow: MYST_DOW.midnight,
+      entries: [{ t: '0:00', tl: '0h00', dur: 30, srcs: ['rm'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet en latin',
+      desc: 'Récité en latin, langue de la liturgie traditionnelle.', mystByDow: MYST_DOW.latin,
+      entries: [{ t: '5:30', tl: '5h30', dur: 30, srcs: ['rm'] }],
+    },
+    { type: 'laudes', label: 'Laudes dominicales',
+      desc: "Louange solennelle du dimanche, Jour du Seigneur.",
+      entries: [{ t: '8:00', tl: '8h00', dur: 30, srcs: ['rm', 'nd', 'rcf'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet du matin (enregistré)',
+      desc: RM_DESC.morningCh830, mystByDow: MYST_DOW.morning830,
+      entries: [{ t: '8:30', tl: '8h30', dur: 40, srcs: ['rm'] }],
+    },
+    { type: 'messe', label: "Grand'Messe",
+      entries: [
+        { t: '10:00', tl: '10h00', dur: 45, srcs: ['nd', 'ndp', 'kto'] },
+        { t: '10:30', tl: '10h30', dur: 45, srcs: ['lou'] },
+      ],
+    },
+    { type: 'messe', label: 'Messe en direct (paroisse ou sanctuaire)',
+      desc: "Messe en direct d'une paroisse ou d'un sanctuaire différent chaque dimanche, grâce aux équipes de bénévoles de Radio Maria.",
+      entries: [{ t: '10:00', tl: '10h00', dur: 120, srcs: ['rm'] }],
+    },
+    { type: 'chapelet', label: 'Angélus',
+      desc: "Prière mariale traditionnelle de midi, en union avec le Pape depuis Saint-Pierre de Rome.",
+      entries: [{ t: '12:00', tl: '12h00', dur: 15, srcs: ['vat', 'kto', 'nd'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet aux intentions des auditeurs',
+      desc: RM_DESC.intentions14,
+      entries: [{ t: '14:30', tl: '14h30', dur: 30, srcs: ['nd'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet de la Divine Miséricorde',
+      desc: "Le chapelet de la Divine Miséricorde diffusé sur plusieurs sources le dimanche.",
+      entries: [{ t: '15:00', tl: '15h00', dur: 15, srcs: ['rm', 'lou', 'nd'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet de Lourdes',
+      desc: RM_DESC.lourdesCh,
+      entries: [{ t: '15:30', tl: '15h30', dur: 40, srcs: ['rm', 'lou'] }],
+    },
+    { type: 'vepres', label: 'Vêpres solennelles',
+      desc: "Vêpres dominicales solennelles.",
+      entries: [
+        { t: '17:30', tl: '17h30', dur: 30, srcs: ['ndp'] },
+        { t: '17:40', tl: '17h40', dur: 20, srcs: ['rm'] },
+        { t: '18:00', tl: '18h00', dur: 30, srcs: ['nd'] },
+      ],
+    },
+    { type: 'chapelet', label: 'Chapelet du soir (avec un internaute)',
+      entries: [{ t: '18:00', tl: '18h00', dur: 30, srcs: ['rm'] }],
+    },
+    { type: 'soiree', label: 'Prière du soir — Pour vous les enfants',
+      desc: RM_DESC.eveningKids,
+      entries: [{ t: '19:40', tl: '19h40', dur: 20, srcs: ['rm'] }],
+    },
+    { type: 'complies', label: 'Complies',
+      desc: RM_DESC.complines,
+      entries: [
+        { t: '22:00', tl: '22h00', dur: 20, srcs: ['rm'] },
+        { t: '22:05', tl: '22h05', dur: 20, srcs: ['esp'] },
+      ],
+    },
   ],
 };
 
@@ -3251,14 +3519,27 @@ function initTodayTimeline() {
 
   container.innerHTML = '';
 
+  // Helper : échappe les " et < pour les attributs HTML
+  const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  // Helper : formate une durée en minutes → "30 min" / "1 h" / "1 h 30"
+  const fmtDur = m => {
+    if (!m || m <= 0) return '';
+    if (m < 60) return `${m} min`;
+    const h = Math.floor(m / 60), r = m % 60;
+    return r ? `${h} h ${r.toString().padStart(2, '0')}` : `${h} h`;
+  };
+
   flat.forEach(({ slot, entry }, i) => {
     const startMin = toMin(entry.t);
 
-    // Durée estimée : gap jusqu'au prochain créneau, plafonné à 75 min
-    let duration = 60;
-    if (i < flat.length - 1) {
-      const gap = toMin(flat[i + 1].entry.t) - startMin;
-      if (gap > 0 && gap <= 75) duration = gap;
+    // Durée : priorité à entry.dur (explicite), sinon estimée par gap
+    let duration = entry.dur || 0;
+    if (!duration) {
+      duration = 60;
+      if (i < flat.length - 1) {
+        const gap = toMin(flat[i + 1].entry.t) - startMin;
+        if (gap > 0 && gap <= 75) duration = gap;
+      }
     }
 
     // Boutons sources
@@ -3269,7 +3550,7 @@ function initTodayTimeline() {
       if (src.s) {
         srcsHtml += `<button class="tl-src radio" data-action="radio"
           data-stream="${src.s}" data-web="${src.w}"
-          data-name="${src.n}" data-prayer="${slot.label}" data-time="${entry.tl}">
+          data-name="${src.n}" data-prayer="${esc(slot.label)}" data-time="${entry.tl}">
           <i class="fa-solid fa-play"></i> ${src.n}
         </button>`;
       } else {
@@ -3281,7 +3562,7 @@ function initTodayTimeline() {
 
     const brevLabel = BREV_LABEL[slot.type];
     const brevHtml  = brevLabel
-      ? `<button class="tl-breviary-btn" data-prayer="${slot.type}" data-label="${slot.label || ''}">
+      ? `<button class="tl-breviary-btn" data-prayer="${slot.type}" data-label="${esc(slot.label)}" data-myst-dow='${slot.mystByDow ? JSON.stringify(slot.mystByDow) : ''}'>
            <i class="fa-solid fa-book-open"></i> ${brevLabel}
          </button>`
       : '';
@@ -3291,7 +3572,7 @@ function initTodayTimeline() {
     const officeName = slot.label + ' — ' + entry.tl;
     const chatHtml   = `<div class="tl-chat-wrap">
         <button class="tl-chat-btn" data-action="chat"
-          data-office-id="${officeId}" data-office-name="${officeName}">
+          data-office-id="${officeId}" data-office-name="${esc(officeName)}">
           <i class="fa-solid fa-dove"></i> Intentions
         </button>
         <div class="tl-chat-time-info">
@@ -3300,16 +3581,35 @@ function initTodayTimeline() {
         </div>
       </div>`;
 
+    // Durée affichée à côté de l'heure
+    const durHtml = duration
+      ? `<span class="tl-dur">(${fmtDur(duration)})</span>`
+      : '';
+
+    // Description : bouton "info" inline + panneau collapsible
+    const infoBtn = slot.desc
+      ? `<button class="tl-info-btn" type="button" aria-expanded="false" aria-label="Voir la description">
+           <i class="fa-solid fa-circle-info"></i>
+         </button>`
+      : '';
+    const descPanel = slot.desc
+      ? `<div class="tl-desc" hidden>${esc(slot.desc)}</div>`
+      : '';
+
     const art = document.createElement('article');
     art.className        = 'tl-item';
     art.dataset.type     = slot.type;
     art.dataset.start    = entry.t;
     art.dataset.duration = String(duration);
     art.innerHTML = `
-      <div class="tl-time">${entry.tl}</div>
+      <div class="tl-time">
+        <span class="tl-time-h">${entry.tl}</span>
+        ${durHtml}
+      </div>
       <div class="tl-marker ${slot.type}"></div>
       <div class="tl-body">
-        <h3 class="tl-prayer">${slot.label}</h3>
+        <h3 class="tl-prayer">${slot.label} ${infoBtn}</h3>
+        ${descPanel}
         <div class="tl-sources">${srcsHtml}</div>
       </div>
       <div class="tl-actions">
@@ -3318,6 +3618,28 @@ function initTodayTimeline() {
         ${chatHtml}
       </div>`;
     container.appendChild(art);
+  });
+
+  // Délégation : toggle de la description sur clic du bouton info
+  container.addEventListener('click', e => {
+    const btn = e.target.closest('.tl-info-btn');
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const item = btn.closest('.tl-item');
+    if (!item) return;
+    const desc = item.querySelector('.tl-desc');
+    if (!desc) return;
+    const isOpen = !desc.hasAttribute('hidden');
+    if (isOpen) {
+      desc.setAttribute('hidden', '');
+      btn.setAttribute('aria-expanded', 'false');
+      btn.classList.remove('open');
+    } else {
+      desc.removeAttribute('hidden');
+      btn.setAttribute('aria-expanded', 'true');
+      btn.classList.add('open');
+    }
   });
 
   // ── Teaser chat pour les visiteurs non connectés ──────────────

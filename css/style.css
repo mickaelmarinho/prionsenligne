@@ -376,12 +376,56 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
 .tl-time {
   font-size: 13px;
   color: var(--text-soft);
-  min-width: 44px;
+  min-width: 50px;
   padding-top: 3px;
   flex-shrink: 0;
   line-height: 1.3;
   white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
 }
+.tl-time-h {
+  font-weight: 500;
+  color: var(--text);
+  font-size: 14px;
+}
+.tl-dur {
+  font-size: 10.5px;
+  color: var(--text-soft);
+  opacity: .8;
+  font-weight: 400;
+}
+
+/* Bouton info à côté du titre */
+.tl-info-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  font-size: 13px;
+  color: var(--text-soft);
+  vertical-align: middle;
+  transition: color .15s;
+  margin-left: 2px;
+}
+.tl-info-btn:hover { color: var(--gold); }
+.tl-info-btn.open { color: var(--gold); }
+
+/* Description dépliée */
+.tl-desc {
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-mid);
+  background: var(--cream);
+  border-left: 2px solid var(--gold-pale);
+  padding: 8px 12px;
+  margin: 6px 0 10px;
+  border-radius: 0 6px 6px 0;
+  font-style: italic;
+}
+.tl-desc[hidden] { display: none; }
 
 .tl-marker {
   width: 10px; height: 10px;
