@@ -2018,6 +2018,7 @@ function initChapelet() {
   let audioMode   = localStorage.getItem('pel_ch_audio') === '1';
   let speed       = parseFloat(localStorage.getItem('pel_ch_speed')) || 1;
   let voiceURI    = localStorage.getItem('pel_ch_voice') || '';
+  let voiceGenderFilter = localStorage.getItem('pel_ch_gender') || 'auto'; // 'auto' | 'f' | 'm'
   let playing     = false;
   let currentUtterance = null;
 
@@ -2186,6 +2187,37 @@ function initChapelet() {
     'joana','luciana','catarina','joaquim','felipe','helena',
   ]);
 
+  // Voix féminines connues (pour le filtre genre — toutes plateformes)
+  const FEMALE_VOICES = new Set([
+    // FR
+    'aurélie','aurelie','marie','audrey','amélie','amelie','julie','hortense',
+    'virginie','céline','celine','élise','elise',
+    // EN
+    'samantha','karen','moira','allison','ava','tessa','serena','victoria','kate','susan',
+    'aria','jenny','michelle','zira','catherine','susan','linda','heera','veena',
+    // ES
+    'marisol','monica','mónica','paulina','helena','laura','sabina','marisol','elvira',
+    // IT
+    'alice','federica','irma','isabella','elsa',
+    // PT
+    'joana','luciana','catarina','helena','heloisa','heloísa','fernanda','michelle','francisca',
+  ]);
+
+  // Voix masculines connues
+  const MALE_VOICES = new Set([
+    // FR
+    'thomas','daniel','paul','claude','henri','olivier','nicolas',
+    // EN
+    'alex','daniel','tom','fred','rishi','guy','christopher','eric','david','mark',
+    'oliver','george','james','william','aaron','arthur',
+    // ES
+    'diego','jorge','juan','pablo','raul','raúl','enrique','jorge',
+    // IT
+    'luca','paolo','cosimo',
+    // PT
+    'joaquim','felipe','duarte','antonio','antônio',
+  ]);
+
   // Voix Microsoft connues (Windows) — qualité variable mais toutes utilisables
   const MS_QUALITY_VOICES = new Set([
     // FR
@@ -2202,6 +2234,18 @@ function initChapelet() {
 
   // Voix "novelty" Apple à exclure (drôles mais inutilisables pour prier)
   const APPLE_NOVELTY = /(whisper|bad news|good news|cellos|bubbles|bahh|deranged|trinoids|zarvox|albert|hysterical|pipe organ|jester|organ|bells|boing|junior|kathy|ralph|princess|bahh)/i;
+
+  // Détecte le genre d'une voix (m/f/null si inconnu)
+  function voiceGender(v) {
+    const n = (v.name || '').toLowerCase();
+    const cleaned = n.replace(/^(microsoft|google)\s+/i, '').split(/[\s(]/)[0];
+    if (FEMALE_VOICES.has(cleaned)) return 'f';
+    if (MALE_VOICES.has(cleaned))   return 'm';
+    // Heuristiques pour les voix moins connues
+    if (/(female|woman|femme|feminine|femenina|femminile|feminina|mujer|donna|mulher)/.test(n)) return 'f';
+    if (/(male|man|homme|masculine|masculino|maschile|hombre|uomo|homem)/.test(n))               return 'm';
+    return null;
+  }
 
   // Note de qualité d'une voix (plus = mieux).
   function voiceQuality(v) {
@@ -2262,18 +2306,36 @@ function initChapelet() {
     return matches;
   }
 
-  // Remplit le <select> avec les voix disponibles (max 8 pour pas saturer)
+  // Affichage du nom voix avec marqueur de genre
+  function voiceLabel(v) {
+    const g = voiceGender(v);
+    const icon = g === 'f' ? '♀ ' : g === 'm' ? '♂ ' : '';
+    return icon + prettyVoiceName(v);
+  }
+
+  // Remplit le <select> avec les voix disponibles, filtrées selon le genre choisi
   function refreshVoiceList() {
     const sel = document.getElementById('ch-voice-select');
     if (!sel) return;
-    const voices = getMatchingVoices();
+    let voices = getMatchingVoices();
     const previous = voiceURI;
     sel.innerHTML = '';
+
+    // Filtre par genre si demandé
+    if (voiceGenderFilter === 'f' || voiceGenderFilter === 'm') {
+      const filtered = voices.filter(v => voiceGender(v) === voiceGenderFilter);
+      // Si aucune voix trouvée du genre demandé → on garde tout (pas de liste vide)
+      if (filtered.length) voices = filtered;
+    }
 
     // Option par défaut (laisse le navigateur choisir)
     const optDefault = document.createElement('option');
     optDefault.value = '';
-    optDefault.textContent = '— Voix par défaut du système —';
+    optDefault.textContent = voiceGenderFilter === 'f'
+      ? '— Meilleure voix féminine —'
+      : voiceGenderFilter === 'm'
+        ? '— Meilleure voix masculine —'
+        : '— Voix par défaut du système —';
     sel.appendChild(optDefault);
 
     if (!voices.length) {
@@ -2296,7 +2358,7 @@ function initChapelet() {
       list.forEach(v => {
         const o = document.createElement('option');
         o.value = v.voiceURI;
-        o.textContent = prettyVoiceName(v);
+        o.textContent = voiceLabel(v);
         group.appendChild(o);
       });
       sel.appendChild(group);
@@ -2305,12 +2367,30 @@ function initChapelet() {
     addGroup('Voix standard',        tierMed);
     addGroup('Autres voix',          tierLow);
 
-    // Restaure la sélection si possible
-    if (previous && [...sel.options].some(o => o.value === previous)) {
-      sel.value = previous;
+    // Si filtrage actif et aucune voix précédente compatible, auto-sélectionne la meilleure
+    if (voiceGenderFilter !== 'auto') {
+      // Voice précédente toujours valide ?
+      const prevValid = previous && voices.find(v => v.voiceURI === previous);
+      if (prevValid) {
+        sel.value = previous;
+      } else {
+        // Auto-sélection de la meilleure voix (premier du tri par qualité)
+        if (voices[0]) {
+          voiceURI  = voices[0].voiceURI;
+          sel.value = voiceURI;
+        } else {
+          voiceURI  = '';
+          sel.value = '';
+        }
+      }
     } else {
-      sel.value = '';
-      voiceURI  = '';
+      // Mode auto : reste sur la sélection précédente si possible
+      if (previous && [...sel.options].some(o => o.value === previous)) {
+        sel.value = previous;
+      } else {
+        sel.value = '';
+        voiceURI  = '';
+      }
     }
   }
 
@@ -2468,6 +2548,27 @@ function initChapelet() {
     if (wasPlaying) setTimeout(startAudio, 200);
   });
 
+  // Filtre genre voix
+  function syncGenderBtns() {
+    modal.querySelectorAll('.ch-voice-gender-btn').forEach(b => {
+      const isActive = b.dataset.gender === voiceGenderFilter;
+      b.classList.toggle('active', isActive);
+      b.setAttribute('aria-checked', isActive ? 'true' : 'false');
+    });
+  }
+  document.getElementById('ch-voice-gender')?.addEventListener('click', e => {
+    const btn = e.target.closest('.ch-voice-gender-btn');
+    if (!btn) return;
+    const wasPlaying = playing;
+    if (wasPlaying) pauseAudio();
+    voiceGenderFilter = btn.dataset.gender;
+    localStorage.setItem('pel_ch_gender', voiceGenderFilter);
+    syncGenderBtns();
+    refreshVoiceList();
+    localStorage.setItem('pel_ch_voice', voiceURI || '');
+    if (wasPlaying) setTimeout(startAudio, 200);
+  });
+
   // Clic direct sur une perle pour reprendre à un endroit précis
   document.getElementById('ch-beads')?.addEventListener('click', e => {
     const bead = e.target.closest('.ch-bead');
@@ -2491,11 +2592,13 @@ function initChapelet() {
     audioMode = localStorage.getItem('pel_ch_audio') === '1';
     speed    = parseFloat(localStorage.getItem('pel_ch_speed')) || 1;
     voiceURI = localStorage.getItem('pel_ch_voice') || '';
+    voiceGenderFilter = localStorage.getItem('pel_ch_gender') || 'auto';
     buildBeads();
     syncLangBtns();
     syncMystBtns();
     syncModeBtns();
     syncSpeedBtns();
+    syncGenderBtns();
     refreshVoiceList();
     render();
   });

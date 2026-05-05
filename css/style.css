@@ -3681,6 +3681,39 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
 }
 .ch-audio-label i { color: var(--chapelet); font-size: 11px; }
 
+/* Filtre genre voix — pills compacts ♀ / ♂ */
+.ch-voice-gender {
+  display: inline-flex;
+  gap: 3px;
+  background: white;
+  border-radius: 9px;
+  padding: 2px;
+  border: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.ch-voice-gender-btn {
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  padding: 5px 10px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 12px;
+  color: var(--text-soft);
+  cursor: pointer;
+  transition: background .15s, color .15s;
+  min-width: 32px;
+}
+.ch-voice-gender-btn:hover { color: var(--text); }
+.ch-voice-gender-btn.active {
+  background: var(--chapelet);
+  color: white;
+}
+.ch-voice-gender-btn[data-gender="f"],
+.ch-voice-gender-btn[data-gender="m"] {
+  font-size: 15px;
+  line-height: 1;
+}
+
 /* Select voix — design propre, agnostique navigateur */
 .ch-voice-select {
   flex: 1;

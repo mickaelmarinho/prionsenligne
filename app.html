@@ -640,6 +640,14 @@
       <div class="ch-audio-ctrls" id="ch-audio-ctrls" hidden>
         <div class="ch-audio-row">
           <span class="ch-audio-label"><i class="fa-solid fa-microphone"></i> Voix</span>
+          <div class="ch-voice-gender" id="ch-voice-gender" role="radiogroup" aria-label="Filtrer par genre">
+            <button class="ch-voice-gender-btn active" data-gender="auto" type="button" role="radio" aria-checked="true">Auto</button>
+            <button class="ch-voice-gender-btn" data-gender="f" type="button" role="radio" aria-checked="false" title="Voix féminines">♀</button>
+            <button class="ch-voice-gender-btn" data-gender="m" type="button" role="radio" aria-checked="false" title="Voix masculines">♂</button>
+          </div>
+        </div>
+        <div class="ch-audio-row">
+          <span class="ch-audio-label"></span>
           <select class="ch-voice-select" id="ch-voice-select" aria-label="Choix de la voix">
             <option value="">Voix par défaut</option>
           </select>
