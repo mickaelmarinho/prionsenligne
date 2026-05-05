@@ -2065,12 +2065,17 @@ function initChapelet() {
     const c = document.getElementById('ch-beads');
     if (!c) return;
     c.innerHTML = '';
+    let stepIdx = 0;   // index global de l'étape pour data-step
+
     // Rangée d'intro (6 perles) visuellement séparée des décades
     const introRow = document.createElement('div');
     introRow.className = 'ch-decade-dots ch-intro-row';
     for (let b = 0; b < INTRO; b++) {
-      const bead = document.createElement('div');
+      const bead = document.createElement('button');   // <button> = naturellement tappable
       bead.className = 'ch-bead ch-bead-sp';
+      bead.type = 'button';
+      bead.dataset.step = stepIdx++;
+      bead.setAttribute('aria-label', `Aller à la prière ${stepIdx}`);
       introRow.appendChild(bead);
     }
     c.appendChild(introRow);
@@ -2079,8 +2084,11 @@ function initChapelet() {
       const row = document.createElement('div');
       row.className = 'ch-decade-dots';
       for (let b = 0; b < 12; b++) {
-        const bead = document.createElement('div');
+        const bead = document.createElement('button');
         bead.className = 'ch-bead' + (b === 0 || b === 11 ? ' ch-bead-sp' : '');
+        bead.type = 'button';
+        bead.dataset.step = stepIdx++;
+        bead.setAttribute('aria-label', `Aller à la prière ${stepIdx}`);
         row.appendChild(bead);
       }
       c.appendChild(row);
@@ -2162,17 +2170,53 @@ function initChapelet() {
   const synth = window.speechSynthesis;
   let availableVoices = [];
 
-  // Note de qualité d'une voix (plus = mieux). Fait remonter les voix
-  // premium/enhanced/natural (Apple, Microsoft Natural, Google Wavenet...)
+  // Voix Apple connues comme étant de très bonne qualité (toutes langues)
+  // Source : voix système d'iOS/macOS — les "Enhanced/Premium" sont encore meilleures
+  // mais ces voix sont déjà excellentes par défaut.
+  const APPLE_QUALITY_VOICES = new Set([
+    // FR
+    'aurélie','aurelie','marie','thomas','audrey','amélie','amelie','daniel',
+    // EN (US/GB/AU/IE/IN/ZA)
+    'samantha','alex','karen','daniel','moira','tom','allison','ava','susan',
+    'fred','victoria','serena','kate','tessa','rishi','veena',
+    // ES (ES/MX)
+    'marisol','diego','jorge','monica','mónica','paulina','juan',
+    // IT
+    'alice','federica','luca','paolo',
+    // PT (PT/BR)
+    'joana','luciana','catarina','joaquim','felipe','helena',
+  ]);
+
+  // Voix "novelty" Apple à exclure (drôles mais inutilisables pour prier)
+  const APPLE_NOVELTY = /(whisper|bad news|good news|cellos|bubbles|bahh|deranged|trinoids|zarvox|albert|hysterical|pipe organ|jester|organ|bells|boing|junior|kathy|ralph|princess)/i;
+
+  // Note de qualité d'une voix (plus = mieux).
   function voiceQuality(v) {
-    const n = (v.name || '').toLowerCase();
+    const n  = (v.name || '').toLowerCase();
+    const nT = (v.name || '').trim();
     let s = 0;
-    if (/(premium|enhanced|natural|neural|wavenet|studio)/.test(n)) s += 100;
-    if (n.includes('siri'))      s += 90;   // iOS Siri voices
-    if (n.includes('google'))    s += 50;
-    if (n.includes('microsoft')) s += 30;
-    if (v.localService === false) s += 25;  // voix réseau souvent meilleures
-    if (v.default)               s += 10;
+
+    // Voix premium / enhanced / natural / neural (Microsoft Natural, Google Wavenet, etc.)
+    if (/(premium|enhanced|natural|neural|wavenet|studio|hd)/.test(n)) s += 110;
+    // Voix Siri (iOS 16+) — qualité quasi humaine
+    if (n.includes('siri')) s += 100;
+    // Voix Apple connues (system voices haute qualité)
+    const firstWord = nT.split(/[\s(]/)[0].toLowerCase();
+    if (APPLE_QUALITY_VOICES.has(firstWord)) s += 70;
+    // Voix Google (network) — très bonnes pour fr / en / es / it / pt
+    if (n.includes('google')) s += 60;
+    // Voix Microsoft (souvent qualité correcte mais moins naturelle que Apple/Google)
+    if (n.includes('microsoft')) s += 35;
+    // Voix réseau (souvent meilleure qualité que locale)
+    if (v.localService === false) s += 25;
+    // Voix par défaut du système
+    if (v.default) s += 10;
+
+    // Pénalisations
+    if (APPLE_NOVELTY.test(nT))                  s -= 200;  // voix novelty/blagues
+    if (n.includes('espeak'))                    s -= 100;  // synthèse robotique Linux
+    if (/^\w+\s+(compact|petite)$/.test(n))      s -= 40;   // versions compactes basse qualité
+    if (n.includes('eloquence'))                 s -= 30;   // ancienne voix Apple
     return s;
   }
 
@@ -2221,11 +2265,11 @@ function initChapelet() {
     }
     sel.disabled = false;
 
-    // Top 8 voix par qualité
-    const top = voices.slice(0, 8);
-    // Sépare premium / standard pour visualisation
-    const premium = top.filter(v => voiceQuality(v) >= 60);
-    const others  = top.filter(v => voiceQuality(v) <  60);
+    // Top 10 voix par qualité
+    const top = voices.slice(0, 10);
+    // Sépare premium / standard pour visualisation (Apple connues + premium + neural ≥ 70)
+    const premium = top.filter(v => voiceQuality(v) >= 70);
+    const others  = top.filter(v => voiceQuality(v) <  70);
 
     function addGroup(label, list) {
       if (!list.length) return;
@@ -2403,6 +2447,19 @@ function initChapelet() {
     voiceURI = e.target.value || '';
     localStorage.setItem('pel_ch_voice', voiceURI);
     if (wasPlaying) setTimeout(startAudio, 200);
+  });
+
+  // Clic direct sur une perle pour reprendre à un endroit précis
+  document.getElementById('ch-beads')?.addEventListener('click', e => {
+    const bead = e.target.closest('.ch-bead');
+    if (!bead) return;
+    const newStep = parseInt(bead.dataset.step, 10);
+    if (isNaN(newStep) || newStep === step) return;
+    const wasPlaying = playing;
+    if (wasPlaying) pauseAudio();
+    step = newStep;
+    render();
+    if (wasPlaying && audioMode) setTimeout(startAudio, 200);
   });
 
   fab.addEventListener('click', () => {

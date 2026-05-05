@@ -3136,6 +3136,12 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   border-radius: 50%;
   background: var(--border-mid);
   flex-shrink: 0;
+  /* Reset boutons natifs (les perles sont maintenant des <button> tappables) */
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
   transition: background .2s, transform .2s, box-shadow .2s;
 }
 .ch-bead.ch-bead-sp {
@@ -3148,6 +3154,31 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   background: var(--chapelet);
   transform: scale(1.45);
   box-shadow: 0 0 8px rgba(153,53,86,.45);
+}
+/* Feedback visuel au survol / tap : on veut clairement signaler que c'est cliquable */
+.ch-bead:hover:not(.current) {
+  background: rgba(153,53,86,.55);
+  transform: scale(1.3);
+}
+.ch-bead:active:not(.current) {
+  transform: scale(1.2);
+}
+.ch-bead:focus-visible {
+  outline: 2px solid var(--chapelet);
+  outline-offset: 2px;
+}
+/* Sur mobile : zone tactile élargie autour de chaque perle (sans changer la taille visuelle) */
+@media (max-width: 640px) {
+  .ch-bead {
+    /* élargit la cible tactile via un pseudo-élément invisible */
+    position: relative;
+  }
+  .ch-bead::before {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border-radius: inherit;
+  }
 }
 
 /* Sélecteur de langue — rangée de drapeaux */
