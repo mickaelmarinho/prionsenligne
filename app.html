@@ -101,6 +101,7 @@
         <div class="hm-item" id="hm-install"><i class="fa-solid fa-download"></i> Ajouter à l'écran d'accueil</div>
         <div class="hm-divider"></div>
         <a href="/" class="hm-item hm-home-link"><i class="fa-solid fa-house"></i> Accueil &amp; présentation</a>
+        <div class="hm-item" id="hm-contact"><i class="fa-solid fa-envelope"></i> Nous contacter</div>
         <div class="hm-item" id="hm-about"><i class="fa-solid fa-circle-info"></i> À propos</div>
         <div class="hm-divider" id="hm-auth-sep"></div>
         <div class="hm-item" id="hm-login-item"><i class="fa-solid fa-right-to-bracket"></i> Se connecter</div>
@@ -640,16 +641,8 @@
       <div class="ch-audio-ctrls" id="ch-audio-ctrls" hidden>
         <div class="ch-audio-row">
           <span class="ch-audio-label"><i class="fa-solid fa-microphone"></i> Voix</span>
-          <div class="ch-voice-gender" id="ch-voice-gender" role="radiogroup" aria-label="Filtrer par genre">
-            <button class="ch-voice-gender-btn active" data-gender="auto" type="button" role="radio" aria-checked="true">Auto</button>
-            <button class="ch-voice-gender-btn" data-gender="f" type="button" role="radio" aria-checked="false" title="Voix féminines">♀</button>
-            <button class="ch-voice-gender-btn" data-gender="m" type="button" role="radio" aria-checked="false" title="Voix masculines">♂</button>
-          </div>
-        </div>
-        <div class="ch-audio-row">
-          <span class="ch-audio-label"></span>
           <select class="ch-voice-select" id="ch-voice-select" aria-label="Choix de la voix">
-            <option value="">Voix par défaut</option>
+            <option value="">★ Voix recommandée</option>
           </select>
         </div>
         <div class="ch-audio-row">
@@ -669,6 +662,45 @@
       </div>
     </div>
   </div>
+
+  <!-- ═══════════════════════════════════════════
+       MODAL CONTACT
+  ═══════════════════════════════════════════ -->
+  <div id="contact-overlay" class="auth-overlay hidden"></div>
+  <div id="contact-modal" class="contact-modal hidden" role="dialog" aria-modal="true" aria-label="Nous contacter">
+    <div class="contact-panel">
+      <button class="auth-close" id="contact-close" aria-label="Fermer"><i class="fa-solid fa-xmark"></i></button>
+      <div class="contact-header">
+        <i class="fa-solid fa-envelope contact-icon"></i>
+        <h2 class="contact-title">Nous contacter</h2>
+        <p class="contact-tagline">Une suggestion, un bug, un mot d'encouragement ? Écrivez-nous, nous lisons tous les messages.</p>
+      </div>
+      <form id="contact-form" class="contact-form" novalidate>
+        <div class="contact-types">
+          <label class="contact-type-pill"><input type="radio" name="type" value="suggestion" checked><span><i class="fa-solid fa-lightbulb"></i> Suggestion</span></label>
+          <label class="contact-type-pill"><input type="radio" name="type" value="bug"><span><i class="fa-solid fa-bug"></i> Bug</span></label>
+          <label class="contact-type-pill"><input type="radio" name="type" value="merci"><span><i class="fa-solid fa-heart"></i> Remerciement</span></label>
+          <label class="contact-type-pill"><input type="radio" name="type" value="autre"><span><i class="fa-solid fa-comment"></i> Autre</span></label>
+        </div>
+        <div class="contact-group">
+          <label for="contact-email">Email <span class="contact-optional">(optionnel — pour qu'on puisse vous répondre)</span></label>
+          <input type="email" id="contact-email" name="email" placeholder="vous@exemple.fr" autocomplete="email">
+        </div>
+        <div class="contact-group">
+          <label for="contact-message">Votre message</label>
+          <textarea id="contact-message" name="message" rows="5" maxlength="2000" placeholder="Bonjour, …" required></textarea>
+          <div class="contact-counter"><span id="contact-count">0</span> / 2000</div>
+        </div>
+        <!-- Honeypot anti-spam : invisible pour les humains, rempli par les bots -->
+        <input type="text" name="website" id="contact-honeypot" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;opacity:0" aria-hidden="true">
+        <div id="contact-feedback" class="contact-feedback hidden" role="status" aria-live="polite"></div>
+        <button type="submit" class="contact-submit" id="contact-submit">
+          <i class="fa-solid fa-paper-plane"></i> Envoyer
+        </button>
+      </form>
+    </div>
+  </div>
+
 
   <!-- ═══════════════════════════════════════════
        MODAL À PROPOS

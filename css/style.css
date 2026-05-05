@@ -2155,11 +2155,9 @@ body.player-open .greg-btn { bottom: 80px; }
 @media (max-width: 640px) {
   body.player-open .greg-btn { bottom: 148px; }
 }
-/* Quand le chapelet FAB est présent (app.html) : on remonte le greg-btn */
-body:has(.chapelet-fab) .greg-btn { right: 84px; }
-@media (max-width: 640px) {
-  body:has(.chapelet-fab) .greg-btn { right: 80px; }
-}
+/* Bouton grégorien : toujours à gauche du FAB chapelet (qui mesure 54px + 20px de marge)
+   On utilise une position absolue plutôt que :has() pour compatibilité maximale */
+.greg-btn { right: 88px; }   /* 54 (FAB) + 20 (marge droite) + 14 (gap) */
 
 
 /* ══════════════════════════════════════════════
@@ -3725,39 +3723,6 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
 }
 .ch-audio-label i { color: var(--chapelet); font-size: 11px; }
 
-/* Filtre genre voix — pills compacts ♀ / ♂ */
-.ch-voice-gender {
-  display: inline-flex;
-  gap: 3px;
-  background: white;
-  border-radius: 9px;
-  padding: 2px;
-  border: 1px solid var(--border);
-  flex-shrink: 0;
-}
-.ch-voice-gender-btn {
-  background: transparent;
-  border: none;
-  border-radius: 7px;
-  padding: 5px 10px;
-  font-family: 'Outfit', sans-serif;
-  font-size: 12px;
-  color: var(--text-soft);
-  cursor: pointer;
-  transition: background .15s, color .15s;
-  min-width: 32px;
-}
-.ch-voice-gender-btn:hover { color: var(--text); }
-.ch-voice-gender-btn.active {
-  background: var(--chapelet);
-  color: white;
-}
-.ch-voice-gender-btn[data-gender="f"],
-.ch-voice-gender-btn[data-gender="m"] {
-  font-size: 15px;
-  line-height: 1;
-}
-
 /* Select voix — design propre, agnostique navigateur */
 .ch-voice-select {
   flex: 1;
@@ -4204,6 +4169,210 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
     transform: translateY(0) scale(1);
     opacity: 1;
   }
+}
+
+
+/* ═══════════════════════════════════════════
+   MODAL CONTACT
+═══════════════════════════════════════════ */
+.contact-modal {
+  position: fixed; inset: 0;
+  z-index: 510;
+  background: rgba(26,39,68,.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  overflow-y: auto;
+}
+.contact-modal.hidden { display: none; }
+
+.contact-panel {
+  position: relative;
+  background: var(--cream);
+  width: 100%;
+  max-width: 520px;
+  border-radius: 22px 22px 0 0;
+  padding: 24px 22px max(24px, env(safe-area-inset-bottom));
+  box-shadow: 0 -8px 40px rgba(0,0,0,.18);
+  animation: contactSlideUp .3s cubic-bezier(.4,0,.2,1);
+}
+@keyframes contactSlideUp {
+  from { transform: translateY(40px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.contact-header {
+  text-align: center;
+  margin-bottom: 18px;
+}
+.contact-icon {
+  display: block;
+  font-size: 32px;
+  color: var(--gold);
+  margin-bottom: 10px;
+}
+.contact-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--navy);
+  margin: 0 0 8px;
+}
+.contact-tagline {
+  font-size: 13px;
+  color: var(--text-soft);
+  line-height: 1.5;
+  max-width: 380px;
+  margin: 0 auto;
+}
+
+.contact-form { margin-top: 4px; }
+
+.contact-types {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.contact-type-pill {
+  position: relative;
+  cursor: pointer;
+}
+.contact-type-pill input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.contact-type-pill > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 12px;
+  background: white;
+  border: 1.5px solid var(--border-mid);
+  border-radius: 10px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  color: var(--text-mid);
+  transition: all .15s;
+}
+.contact-type-pill:hover > span {
+  border-color: var(--navy-soft);
+  color: var(--navy);
+}
+.contact-type-pill input:checked + span {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: white;
+  box-shadow: 0 2px 8px rgba(26,39,68,.2);
+}
+.contact-type-pill input:focus-visible + span {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.contact-group { margin-bottom: 14px; }
+.contact-group label {
+  display: block;
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  color: var(--text-mid);
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+.contact-optional {
+  font-weight: 400;
+  color: var(--text-soft);
+  font-size: 11.5px;
+}
+.contact-group input[type="email"],
+.contact-group textarea {
+  width: 100%;
+  padding: 11px 13px;
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  transition: border-color .15s;
+  resize: vertical;
+}
+.contact-group input:focus,
+.contact-group textarea:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+.contact-group textarea { min-height: 110px; line-height: 1.5; }
+
+.contact-counter {
+  text-align: right;
+  font-size: 11px;
+  color: var(--text-soft);
+  margin-top: 4px;
+}
+
+.contact-feedback {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+.contact-feedback.hidden { display: none; }
+.contact-feedback.ok {
+  background: #dcfce7;
+  color: #166534;
+}
+.contact-feedback.err {
+  background: #fee2e2;
+  color: #991B1B;
+}
+
+.contact-submit {
+  width: 100%;
+  padding: 13px;
+  background: var(--navy);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background .15s, transform .1s;
+}
+.contact-submit:hover:not(:disabled) {
+  background: var(--navy-mid);
+  transform: translateY(-1px);
+}
+.contact-submit:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+/* Desktop : modale centrée et flottante */
+@media (min-width: 600px) {
+  .contact-modal {
+    align-items: center;
+    padding: 20px;
+  }
+  .contact-panel {
+    border-radius: 18px;
+    max-height: 88dvh;
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 380px) {
+  .contact-types { grid-template-columns: 1fr; }
 }
 
 

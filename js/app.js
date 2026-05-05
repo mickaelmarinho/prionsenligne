@@ -2018,7 +2018,6 @@ function initChapelet() {
   let audioMode   = localStorage.getItem('pel_ch_audio') === '1';
   let speed       = parseFloat(localStorage.getItem('pel_ch_speed')) || 1;
   let voiceURI    = localStorage.getItem('pel_ch_voice') || '';
-  let voiceGenderFilter = localStorage.getItem('pel_ch_gender') || 'auto'; // 'auto' | 'f' | 'm'
   let playing     = false;
   let currentUtterance = null;
 
@@ -2324,55 +2323,44 @@ function initChapelet() {
     return prettyVoiceName(v);
   }
 
-  // Remplit le <select> avec les voix disponibles, filtrées selon le genre choisi
+  // Remplit le <select> avec les voix disponibles
   function refreshVoiceList() {
     const sel = document.getElementById('ch-voice-select');
     if (!sel) return;
-    let voices = getMatchingVoices();
+    const voices = getMatchingVoices();
     const previous = voiceURI;
     sel.innerHTML = '';
 
-    // Filtre par genre si demandé
-    if (voiceGenderFilter === 'f' || voiceGenderFilter === 'm') {
-      const filtered = voices.filter(v => voiceGender(v) === voiceGenderFilter);
-      // Si aucune voix trouvée du genre demandé → on garde tout (pas de liste vide)
-      if (filtered.length) voices = filtered;
-    }
-
-    // Option par défaut (laisse le navigateur choisir)
+    // Première option : voix recommandée Wavenet (joue le MP3)
     const optDefault = document.createElement('option');
     optDefault.value = '';
-    optDefault.textContent = voiceGenderFilter === 'f'
-      ? '— Meilleure voix féminine —'
-      : voiceGenderFilter === 'm'
-        ? '— Meilleure voix masculine —'
-        : '— Voix par défaut du système —';
+    optDefault.textContent = '★ Voix recommandée';
     sel.appendChild(optDefault);
 
     if (!voices.length) {
-      sel.disabled = true;
+      sel.disabled = false;
       return;
     }
     sel.disabled = false;
 
-    // Dédoublonnage par prénom affiché : on garde la meilleure variante
-    // (ex: "Hortense" et "Hortense Desktop" → on ne garde que la mieux notée)
+    // Dédoublonnage agressif par PRÉNOM seul (sans le genre)
+    // Ainsi "Marie", "Marie (Compact)", "Marie Premium" comptent comme 1 seule
     const seen = new Map();
     for (const v of voices) {
-      const key = prettyVoiceName(v).toLowerCase() + '|' + (voiceGender(v) || '?');
+      const key = prettyVoiceName(v).toLowerCase();
       if (!seen.has(key) || voiceQuality(v) > voiceQuality(seen.get(key))) {
         seen.set(key, v);
       }
     }
     const dedupedVoices = [...seen.values()].sort((a, b) => voiceQuality(b) - voiceQuality(a));
 
-    // Top 6 voix max — évite de noyer l'utilisateur sous le choix
-    const TOP_N = 6;
+    // Top 5 voix système max (en plus de la "Voix recommandée" déjà présente)
+    const TOP_N = 5;
     const top = dedupedVoices.slice(0, TOP_N);
 
     if (top.length) {
       const group = document.createElement('optgroup');
-      group.label = '★ Meilleures voix';
+      group.label = 'Voix du système';
       top.forEach(v => {
         const o = document.createElement('option');
         o.value = v.voiceURI;
@@ -2382,30 +2370,12 @@ function initChapelet() {
       sel.appendChild(group);
     }
 
-    // Si filtrage actif et aucune voix précédente compatible, auto-sélectionne la meilleure
-    if (voiceGenderFilter !== 'auto') {
-      // Voice précédente toujours valide ?
-      const prevValid = previous && voices.find(v => v.voiceURI === previous);
-      if (prevValid) {
-        sel.value = previous;
-      } else {
-        // Auto-sélection de la meilleure voix (premier du tri par qualité)
-        if (voices[0]) {
-          voiceURI  = voices[0].voiceURI;
-          sel.value = voiceURI;
-        } else {
-          voiceURI  = '';
-          sel.value = '';
-        }
-      }
+    // Restaure la sélection précédente si elle existe encore dans la liste
+    if (previous && [...sel.options].some(o => o.value === previous)) {
+      sel.value = previous;
     } else {
-      // Mode auto : reste sur la sélection précédente si possible
-      if (previous && [...sel.options].some(o => o.value === previous)) {
-        sel.value = previous;
-      } else {
-        sel.value = '';
-        voiceURI  = '';
-      }
+      sel.value = '';
+      voiceURI  = '';
     }
   }
 
@@ -2471,11 +2441,6 @@ function initChapelet() {
     return `/audio/${lang}/${gender}/${fileKey}.mp3`;
   }
 
-  // Genre demandé pour la lecture MP3 (auto → féminin par défaut)
-  function audioGender() {
-    return voiceGenderFilter === 'm' ? 'm' : 'f';
-  }
-
   async function speakStep() {
     if (!audioMode || !playing) return;
     const L     = CHAPELET_TEXTS[lang] || CHAPELET_TEXTS.fr;
@@ -2493,17 +2458,25 @@ function initChapelet() {
         : '';
     }
 
-    // ── Tentative MP3 préenregistré (qualité humaine) ──
-    let mp3Worked = true;
-    try {
-      const g = audioGender();
-      if (isStartOfDecade) {
-        await tryPlayMp3(getMp3Url(lang, g, `myst-${mystKey}-${decade}`), speed);
-        if (!playing) return;
+    // ── Choix du moteur selon le voiceURI sélectionné ──
+    // Voix recommandée (voiceURI vide) = MP3 cloud Wavenet (haute qualité)
+    // Voix système choisie               = Web Speech API avec cette voix
+    const useMp3 = !voiceURI;
+    let mp3Worked = false;
+
+    if (useMp3) {
+      try {
+        // MP3 féminin par défaut (Wavenet F = la plus claire)
+        const g = 'f';
+        if (isStartOfDecade) {
+          await tryPlayMp3(getMp3Url(lang, g, `myst-${mystKey}-${decade}`), speed);
+          if (!playing) return;
+        }
+        await tryPlayMp3(getMp3Url(lang, g, key), speed);
+        mp3Worked = true;
+      } catch(_) {
+        mp3Worked = false;
       }
-      await tryPlayMp3(getMp3Url(lang, g, key), speed);
-    } catch(_) {
-      mp3Worked = false;
     }
 
     // ── Avance auto si MP3 a réussi ──
@@ -2633,27 +2606,6 @@ function initChapelet() {
     if (wasPlaying) setTimeout(startAudio, 200);
   });
 
-  // Filtre genre voix
-  function syncGenderBtns() {
-    modal.querySelectorAll('.ch-voice-gender-btn').forEach(b => {
-      const isActive = b.dataset.gender === voiceGenderFilter;
-      b.classList.toggle('active', isActive);
-      b.setAttribute('aria-checked', isActive ? 'true' : 'false');
-    });
-  }
-  document.getElementById('ch-voice-gender')?.addEventListener('click', e => {
-    const btn = e.target.closest('.ch-voice-gender-btn');
-    if (!btn) return;
-    const wasPlaying = playing;
-    if (wasPlaying) pauseAudio();
-    voiceGenderFilter = btn.dataset.gender;
-    localStorage.setItem('pel_ch_gender', voiceGenderFilter);
-    syncGenderBtns();
-    refreshVoiceList();
-    localStorage.setItem('pel_ch_voice', voiceURI || '');
-    if (wasPlaying) setTimeout(startAudio, 200);
-  });
-
   // Clic direct sur une perle pour reprendre à un endroit précis
   document.getElementById('ch-beads')?.addEventListener('click', e => {
     const bead = e.target.closest('.ch-bead');
@@ -2677,13 +2629,11 @@ function initChapelet() {
     audioMode = localStorage.getItem('pel_ch_audio') === '1';
     speed    = parseFloat(localStorage.getItem('pel_ch_speed')) || 1;
     voiceURI = localStorage.getItem('pel_ch_voice') || '';
-    voiceGenderFilter = localStorage.getItem('pel_ch_gender') || 'auto';
     buildBeads();
     syncLangBtns();
     syncMystBtns();
     syncModeBtns();
     syncSpeedBtns();
-    syncGenderBtns();
     refreshVoiceList();
     render();
   });
@@ -4151,6 +4101,105 @@ function initInstallBanner() {
   window.addEventListener('appinstalled', () => { bar.style.display = 'none'; });
 }
 
+function initContact() {
+  const overlay  = document.getElementById('contact-overlay');
+  const modal    = document.getElementById('contact-modal');
+  const closeBtn = document.getElementById('contact-close');
+  const trigger  = document.getElementById('hm-contact');
+  const form     = document.getElementById('contact-form');
+  const textarea = document.getElementById('contact-message');
+  const counter  = document.getElementById('contact-count');
+  const submitBtn = document.getElementById('contact-submit');
+  const feedback = document.getElementById('contact-feedback');
+  if (!modal || !form) return;
+
+  function openContact() {
+    overlay?.classList.remove('hidden');
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    // Ferme le menu burger si ouvert
+    document.getElementById('hamburger-menu')?.classList.add('hidden');
+    document.getElementById('hamburger-overlay')?.classList.remove('show');
+    setTimeout(() => textarea?.focus(), 100);
+  }
+  function closeContact() {
+    overlay?.classList.add('hidden');
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
+    if (feedback) { feedback.className = 'contact-feedback hidden'; feedback.textContent = ''; }
+  }
+
+  trigger?.addEventListener('click', openContact);
+  closeBtn?.addEventListener('click', closeContact);
+  overlay?.addEventListener('click', closeContact);
+  modal?.addEventListener('click', e => { if (e.target === modal) closeContact(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeContact();
+  });
+
+  // Compteur de caractères live
+  textarea?.addEventListener('input', () => {
+    if (counter) counter.textContent = textarea.value.length;
+  });
+
+  // Soumission
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (!feedback || !submitBtn) return;
+    feedback.className = 'contact-feedback hidden';
+    feedback.textContent = '';
+
+    const formData = new FormData(form);
+    const payload = {
+      type:    formData.get('type')    || 'autre',
+      email:   (formData.get('email')   || '').toString().trim(),
+      message: (formData.get('message') || '').toString().trim(),
+      website: (formData.get('website') || '').toString(),  // honeypot
+      ua:      navigator.userAgent,
+      page:    location.pathname,
+    };
+
+    if (!payload.message || payload.message.length < 5) {
+      feedback.className = 'contact-feedback err';
+      feedback.textContent = 'Merci d\'écrire un message d\'au moins 5 caractères.';
+      return;
+    }
+    if (payload.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
+      feedback.className = 'contact-feedback err';
+      feedback.textContent = 'Adresse email invalide (ou laissez le champ vide).';
+      return;
+    }
+
+    submitBtn.disabled = true;
+    const originalLabel = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Envoi…';
+
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const txt = await res.text().catch(() => '');
+        throw new Error(txt || `HTTP ${res.status}`);
+      }
+      feedback.className = 'contact-feedback ok';
+      feedback.textContent = '✓ Message envoyé. Merci pour votre retour !';
+      form.reset();
+      if (counter) counter.textContent = '0';
+      setTimeout(closeContact, 2500);
+    } catch (err) {
+      console.warn('[contact] erreur envoi:', err);
+      feedback.className = 'contact-feedback err';
+      feedback.textContent = 'Envoi impossible pour le moment. Réessayez plus tard ou écrivez à contact@prionsenligne.fr';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalLabel;
+    }
+  });
+}
+
 function initAbout() {
   const overlay = document.getElementById('about-overlay');
   const modal   = document.getElementById('about-modal');
@@ -4320,6 +4369,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initChat();
   initInstallBanner();
   initAbout();
+  initContact();
   initGregorianPlayer();
   handleDeepLink();      // applique le filtre/onglet issu du hash URL (landing page)
 });
