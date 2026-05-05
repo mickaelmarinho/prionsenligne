@@ -2427,35 +2427,97 @@ function initChapelet() {
     synth.speak(u);
   }
 
-  function speakStep() {
+  /* ── Lecture MP3 préenregistrée (Google Cloud TTS) ─────────────
+     On essaie d'abord les fichiers /audio/{lang}/{f|m}/{key}.mp3
+     (qualité humaine garantie pour TOUS les visiteurs).
+     Si le fichier n'existe pas → fallback Web Speech API.
+     ────────────────────────────────────────────────────────── */
+  let currentAudio = null;
+
+  function tryPlayMp3(url, rate) {
+    return new Promise((resolve, reject) => {
+      const a = new Audio();
+      a.preload = 'auto';
+      try { a.preservesPitch = true; } catch(_) {}
+      a.playbackRate = rate || 1;
+      a.src = url;
+      const cleanup = () => {
+        a.onended = null; a.onerror = null; a.oncanplay = null;
+        currentAudio = null;
+      };
+      a.onended = () => { cleanup(); resolve(); };
+      a.onerror = () => { cleanup(); reject(new Error('audio load failed')); };
+      currentAudio = a;
+      a.play().catch(err => { cleanup(); reject(err); });
+    });
+  }
+
+  function getMp3Url(lang, gender, fileKey) {
+    return `/audio/${lang}/${gender}/${fileKey}.mp3`;
+  }
+
+  // Genre demandé pour la lecture MP3 (auto → féminin par défaut)
+  function audioGender() {
+    return voiceGenderFilter === 'm' ? 'm' : 'f';
+  }
+
+  async function speakStep() {
     if (!audioMode || !playing) return;
     const L     = CHAPELET_TEXTS[lang] || CHAPELET_TEXTS.fr;
     const myst  = mystery();
     const key   = getPrayerKey(step);
-    let text    = L.texts[key] || '';
 
-    // Au début de chaque décade (sauf intro), on annonce le mystère
-    if (step >= INTRO && (step - INTRO) % 12 === 0) {
-      const decade = Math.floor((step - INTRO) / 12);
-      const announce = (ANNOUNCE[lang] || ANNOUNCE.fr)(decade, myst.list[decade]);
-      text = announce + ' ' + text;
-      const hint = document.getElementById('ch-audio-hint');
-      if (hint) hint.textContent = `Mystère ${decade+1}/5 — ${myst.list[decade]}`;
-    } else {
-      const hint = document.getElementById('ch-audio-hint');
-      if (hint) hint.textContent = '';
+    const isStartOfDecade = step >= INTRO && (step - INTRO) % 12 === 0;
+    const decade = isStartOfDecade ? Math.floor((step - INTRO) / 12) : -1;
+
+    // Hint UI : nom du mystère en cours (si début de décade)
+    const hint = document.getElementById('ch-audio-hint');
+    if (hint) {
+      hint.textContent = isStartOfDecade
+        ? `Mystère ${decade+1}/5 — ${myst.list[decade]}`
+        : '';
     }
 
-    speak(text, () => {
-      // Avance automatique au pas suivant
+    // ── Tentative MP3 préenregistré (qualité humaine) ──
+    let mp3Worked = true;
+    try {
+      const g = audioGender();
+      if (isStartOfDecade) {
+        await tryPlayMp3(getMp3Url(lang, g, `myst-${mystKey}-${decade}`), speed);
+        if (!playing) return;
+      }
+      await tryPlayMp3(getMp3Url(lang, g, key), speed);
+    } catch(_) {
+      mp3Worked = false;
+    }
+
+    // ── Avance auto si MP3 a réussi ──
+    if (mp3Worked) {
       if (!playing) return;
       if (step < TOTAL - 1) {
         step++;
         render();
-        // Petit délai pour respiration entre les prières
         setTimeout(() => { if (playing) speakStep(); }, 280);
       } else {
-        // Fin du chapelet
+        playing = false;
+        render();
+      }
+      return;
+    }
+
+    // ── Fallback Web Speech API (voix système) ──
+    let text = L.texts[key] || '';
+    if (isStartOfDecade) {
+      const announce = (ANNOUNCE[lang] || ANNOUNCE.fr)(decade, myst.list[decade]);
+      text = announce + ' ' + text;
+    }
+    speak(text, () => {
+      if (!playing) return;
+      if (step < TOTAL - 1) {
+        step++;
+        render();
+        setTimeout(() => { if (playing) speakStep(); }, 280);
+      } else {
         playing = false;
         render();
       }
@@ -2463,7 +2525,7 @@ function initChapelet() {
   }
 
   function startAudio() {
-    if (!synth) {
+    if (!synth && !window.Audio) {
       const hint = document.getElementById('ch-audio-hint');
       if (hint) hint.textContent = 'Audio non supporté par ce navigateur.';
       return;
@@ -2474,14 +2536,22 @@ function initChapelet() {
   }
   function pauseAudio() {
     playing = false;
-    try { synth.cancel(); } catch(_) {}
+    try { synth?.cancel(); } catch(_) {}
     currentUtterance = null;
+    if (currentAudio) {
+      try { currentAudio.pause(); } catch(_) {}
+      currentAudio = null;
+    }
     render();
   }
   function stopAudio() {
     playing = false;
-    try { synth.cancel(); } catch(_) {}
+    try { synth?.cancel(); } catch(_) {}
     currentUtterance = null;
+    if (currentAudio) {
+      try { currentAudio.pause(); } catch(_) {}
+      currentAudio = null;
+    }
   }
 
   /* ── Listeners UI ── */
