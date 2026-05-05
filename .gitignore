@@ -6,6 +6,7 @@ style.css
 .claude/
 
 # Clés API Google Cloud (NE JAMAIS COMMIT)
+scripts/google-api-key.txt
 scripts/google-credentials.json
 scripts/*-credentials*.json
 scripts/key*.json

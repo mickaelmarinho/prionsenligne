@@ -2,13 +2,13 @@
   "name": "prionsenligne-scripts",
   "version": "1.0.0",
   "private": true,
-  "description": "Scripts de génération audio TTS pour le chapelet (Google Cloud)",
+  "description": "Scripts de génération audio TTS pour le chapelet (Google Cloud TTS via REST API)",
   "scripts": {
     "extract": "node extract-texts.js",
     "generate": "node generate-tts.js",
     "all": "node extract-texts.js && node generate-tts.js"
   },
-  "dependencies": {
-    "@google-cloud/text-to-speech": "^5.5.0"
+  "engines": {
+    "node": ">=18"
   }
 }

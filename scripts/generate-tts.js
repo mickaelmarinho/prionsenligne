@@ -2,41 +2,48 @@
 /**
  * generate-tts.js
  *
- * Génère tous les fichiers audio MP3 du chapelet via Google Cloud Text-to-Speech.
+ * Génère tous les fichiers audio MP3 du chapelet via Google Cloud Text-to-Speech
+ * (utilise l'API REST avec une clé API — pas de compte de service requis).
  *
  * PRÉREQUIS :
  *   1. Compte Google Cloud créé
  *   2. API "Cloud Text-to-Speech" activée
- *   3. Clé de compte de service téléchargée (JSON)
- *   4. Variable d'env GOOGLE_APPLICATION_CREDENTIALS pointant vers le JSON
- *      OU placer le JSON dans scripts/google-credentials.json
- *   5. npm install @google-cloud/text-to-speech (depuis le dossier scripts/)
+ *   3. Clé API créée (APIs & Services → Credentials → Create Credentials → API Key)
+ *   4. Clé placée dans scripts/google-api-key.txt (juste la clé, en texte brut)
+ *      OU variable d'env : export GOOGLE_TTS_API_KEY="ta-clé"
+ *   5. Node.js 18+ requis (utilise fetch natif)
  *
  * USAGE :
- *   cd scripts && node generate-tts.js
+ *   cd scripts
+ *   node extract-texts.js   # 1ère fois ou si app.js modifié
+ *   node generate-tts.js
  *
- * SORTIE : fichiers MP3 dans /audio/{lang}/{m,f}/{prayerKey}.mp3
- *           et /audio/{lang}/{m,f}/myst-{type}-{n}.mp3
+ * SORTIE : audio/{lang}/{m,f}/{prayerKey}.mp3 + audio/{lang}/{m,f}/myst-{type}-{n}.mp3
  *
- * Coût estimé : ~20 000 caractères × 2 voix = 40 000 chars
- *               → bien dans le tier gratuit (1M chars/mois Wavenet/Neural)
+ * Coût : ~40 000 caractères × 2 voix → 0 € (tier gratuit Wavenet : 1M chars/mois)
  */
 
 const fs   = require('fs');
 const path = require('path');
-const textToSpeech = require('@google-cloud/text-to-speech');
 
-// Si pas de variable d'env, on cherche un fichier local
-const localCreds = path.join(__dirname, 'google-credentials.json');
-if (!process.env.GOOGLE_APPLICATION_CREDENTIALS && fs.existsSync(localCreds)) {
-  process.env.GOOGLE_APPLICATION_CREDENTIALS = localCreds;
+// ── Récupération de la clé API ───────────────────────────────────────
+const localKeyFile = path.join(__dirname, 'google-api-key.txt');
+let API_KEY = process.env.GOOGLE_TTS_API_KEY || '';
+if (!API_KEY && fs.existsSync(localKeyFile)) {
+  API_KEY = fs.readFileSync(localKeyFile, 'utf8').trim();
+}
+if (!API_KEY) {
+  console.error('❌ Aucune clé API trouvée.');
+  console.error('   Place ta clé dans scripts/google-api-key.txt');
+  console.error('   ou définis la variable d\'env GOOGLE_TTS_API_KEY.');
+  process.exit(1);
 }
 
-const client  = new textToSpeech.TextToSpeechClient();
 const OUT_DIR = path.join(__dirname, '..', 'audio');
+const ENDPOINT = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${encodeURIComponent(API_KEY)}`;
 
-// ── Voix Google Cloud TTS Wavenet (qualité quasi-humaine) ─────────────
-// Voir : https://cloud.google.com/text-to-speech/docs/voices
+// ── Voix Google Cloud TTS Wavenet (qualité quasi-humaine) ────────────
+// https://cloud.google.com/text-to-speech/docs/voices
 const VOICES = {
   fr: { f: { code:'fr-FR', name:'fr-FR-Wavenet-C' }, m: { code:'fr-FR', name:'fr-FR-Wavenet-D' } },
   en: { f: { code:'en-US', name:'en-US-Wavenet-F' }, m: { code:'en-US', name:'en-US-Wavenet-D' } },
@@ -47,35 +54,50 @@ const VOICES = {
   la: { f: { code:'it-IT', name:'it-IT-Wavenet-A' }, m: { code:'it-IT', name:'it-IT-Wavenet-D' } },
 };
 
-// ── Données : chargées depuis le fichier JSON séparé pour propreté ──
 const TEXTS = require('./tts-texts.json');
 
-// ── Génération ───────────────────────────────────────────────────────
-async function synthesize(text, voice, outFile) {
-  if (fs.existsSync(outFile)) {
-    console.log('  ✓ Skip (existe déjà):', path.relative(OUT_DIR, outFile));
-    return;
-  }
-
-  const [response] = await client.synthesizeSpeech({
+// ── Appel REST direct à Google TTS ───────────────────────────────────
+async function callTts(text, voice) {
+  const body = {
     input: { text },
     voice: { languageCode: voice.code, name: voice.name },
     audioConfig: {
       audioEncoding: 'MP3',
-      speakingRate: 0.95,    // léger ralentissement pour la prière
+      speakingRate: 0.95,
       pitch: 0,
       sampleRateHertz: 24000,
     },
+  };
+
+  const resp = await fetch(ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
   });
 
+  if (!resp.ok) {
+    const errTxt = await resp.text();
+    throw new Error(`HTTP ${resp.status} : ${errTxt.slice(0, 300)}`);
+  }
+  const data = await resp.json();
+  if (!data.audioContent) throw new Error('Réponse sans audioContent');
+  return Buffer.from(data.audioContent, 'base64');
+}
+
+async function synthesize(text, voice, outFile) {
+  if (fs.existsSync(outFile)) {
+    console.log('  ✓ Skip (existe):', path.relative(OUT_DIR, outFile));
+    return;
+  }
+  const audio = await callTts(text, voice);
   fs.mkdirSync(path.dirname(outFile), { recursive: true });
-  fs.writeFileSync(outFile, response.audioContent, 'binary');
-  const sizeKB = (response.audioContent.length / 1024).toFixed(1);
+  fs.writeFileSync(outFile, audio);
+  const sizeKB = (audio.length / 1024).toFixed(1);
   console.log(`  ✓ Généré (${sizeKB} KB):`, path.relative(OUT_DIR, outFile));
 }
 
 async function generateAll() {
-  let total = 0, generated = 0;
+  let total = 0, generated = 0, errors = 0;
 
   for (const [lang, prayers] of Object.entries(TEXTS.prayers)) {
     for (const [gender, voice] of Object.entries(VOICES[lang])) {
@@ -86,7 +108,12 @@ async function generateAll() {
         total++;
         const outFile = path.join(OUT_DIR, lang, gender, `${key}.mp3`);
         if (!fs.existsSync(outFile)) generated++;
-        await synthesize(text, voice, outFile);
+        try {
+          await synthesize(text, voice, outFile);
+        } catch (err) {
+          errors++;
+          console.error(`  ✗ Erreur ${key}:`, err.message);
+        }
       }
 
       // Annonces de mystères
@@ -95,21 +122,24 @@ async function generateAll() {
           total++;
           const outFile = path.join(OUT_DIR, lang, gender, `myst-${mystKey}-${i}.mp3`);
           if (!fs.existsSync(outFile)) generated++;
-          await synthesize(mystAnnounces[i], voice, outFile);
+          try {
+            await synthesize(mystAnnounces[i], voice, outFile);
+          } catch (err) {
+            errors++;
+            console.error(`  ✗ Erreur myst-${mystKey}-${i}:`, err.message);
+          }
         }
       }
     }
   }
 
-  console.log(`\n✅ Terminé : ${generated} nouveaux fichiers / ${total} total`);
+  console.log(`\n✅ Terminé.`);
+  console.log(`   ${generated} nouveaux / ${total} total`);
+  if (errors) console.log(`   ⚠ ${errors} erreur(s)`);
   console.log(`   Dossier de sortie : ${OUT_DIR}`);
 }
 
 generateAll().catch(err => {
-  console.error('\n❌ Erreur :', err.message);
-  if (err.code === 'ENOENT' || /credential/i.test(err.message)) {
-    console.error('\nVérifie que GOOGLE_APPLICATION_CREDENTIALS pointe vers ton fichier JSON,');
-    console.error('ou que scripts/google-credentials.json existe.');
-  }
+  console.error('\n❌ Erreur fatale :', err.message);
   process.exit(1);
 });
