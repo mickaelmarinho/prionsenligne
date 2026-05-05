@@ -1605,10 +1605,17 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
   gap: 16px;
   z-index: 150;
   box-shadow: 0 -4px 24px rgba(0,0,0,.25);
-  transform: translateY(120%);
+  transform: translateY(150%);
   transition: transform .35s cubic-bezier(.4,0,.2,1);
+  /* Sécurité : invisible et non-interactif tant que .visible n'est pas ajouté */
+  visibility: hidden;
+  pointer-events: none;
 }
-.radio-player.visible { transform: translateY(0); }
+.radio-player.visible {
+  transform: translateY(0);
+  visibility: visible;
+  pointer-events: auto;
+}
 
 .rp-info {
   display: flex;

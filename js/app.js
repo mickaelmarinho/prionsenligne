@@ -1579,6 +1579,7 @@ function initRadioPlayer() {
     audio.removeAttribute('src');
     audio.load();
     currentStream = '';
+    currentWeb    = '';   // évite qu'un onglet s'ouvre via le handler audio.error
     player.classList.remove('visible');
     document.body.classList.remove('player-open');
     setIcon(false);
