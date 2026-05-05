@@ -104,9 +104,10 @@ export default async function handler(req, res) {
   }
 
   // Configuration Resend
+  // Le domaine prionsenligne.fr est vérifié chez Resend → on l'utilise par défaut
   const apiKey = process.env.RESEND_API_KEY;
   const toEmail = process.env.CONTACT_TO_EMAIL || 'contact@prionsenligne.fr';
-  const fromEmail = process.env.CONTACT_FROM_EMAIL || 'PrionsEnLigne <onboarding@resend.dev>';
+  const fromEmail = process.env.CONTACT_FROM_EMAIL || 'PrionsEnLigne <contact@prionsenligne.fr>';
 
   if (!apiKey) {
     // Service pas encore configuré côté Vercel. On renvoie un code spécial
@@ -161,7 +162,17 @@ export default async function handler(req, res) {
     if (!resendResp.ok) {
       const errText = await resendResp.text();
       console.error('[contact] Resend error:', resendResp.status, errText);
-      res.status(502).json({ error: 'Erreur d\'envoi côté serveur.' });
+      // Renvoie le message d'erreur Resend pour aider au debug en dev
+      let errDetail = '';
+      try {
+        const errObj = JSON.parse(errText);
+        errDetail = errObj.message || errObj.error || errText;
+      } catch (_) { errDetail = errText; }
+      res.status(502).json({
+        error: 'Erreur d\'envoi côté serveur.',
+        detail: errDetail.slice(0, 200),
+        status: resendResp.status,
+      });
       return;
     }
 
