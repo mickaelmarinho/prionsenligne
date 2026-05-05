@@ -2306,11 +2306,11 @@ function initChapelet() {
     return matches;
   }
 
-  // Affichage du nom voix avec marqueur de genre
+  // Affichage du nom voix — juste le prénom, sans marqueur de genre
+  // (le filtre ♀/♂ au-dessus suffit ; les symboles dans la liste pouvaient
+  //  être incorrects pour des voix étrangères mal détectées)
   function voiceLabel(v) {
-    const g = voiceGender(v);
-    const icon = g === 'f' ? '♀ ' : g === 'm' ? '♂ ' : '';
-    return icon + prettyVoiceName(v);
+    return prettyVoiceName(v);
   }
 
   // Remplit le <select> avec les voix disponibles, filtrées selon le genre choisi
