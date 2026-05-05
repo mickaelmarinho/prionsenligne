@@ -53,9 +53,15 @@ function extractBlock(varName) {
 }
 
 // On évalue les deux blocs dans une sandbox isolée
+// Note : on remplace `const X = ` par `globalThis.X = ` pour exposer
+//        les bindings au sandbox (les const sont sinon scopés au script).
 const sandbox = {};
 vm.createContext(sandbox);
-vm.runInContext(extractBlock('CHAPELET_TEXTS'), sandbox);
+function evalToSandbox(code) {
+  const transformed = code.replace(/^const\s+(\w+)\s*=/, 'globalThis.$1 =');
+  vm.runInContext(transformed, sandbox);
+}
+evalToSandbox(extractBlock('CHAPELET_TEXTS'));
 
 // MYST_DATA est imbriqué dans initChapelet → on l'extrait au regex
 function extractMystData() {
@@ -78,7 +84,7 @@ function extractMystData() {
     }
     i++;
   }
-  vm.runInContext(src.slice(startIdx, i) + ';', sandbox);
+  evalToSandbox(src.slice(startIdx, i) + ';');
 }
 extractMystData();
 
