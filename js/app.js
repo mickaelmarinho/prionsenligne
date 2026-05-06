@@ -2358,17 +2358,22 @@ function initChapelet() {
     const previous = voiceURI;
     sel.innerHTML = '';
 
-    // Première option : voix recommandée Wavenet (joue le MP3)
-    const optDefault = document.createElement('option');
-    optDefault.value = '';
-    optDefault.textContent = '★ Voix recommandée';
-    sel.appendChild(optDefault);
+    // Voix recommandées MP3 Wavenet : 2 options (femme + homme)
+    // value spéciale "" = MP3 femme (défaut), "_pel_mp3_m" = MP3 homme
+    const optGroup = document.createElement('optgroup');
+    optGroup.label = '★ Voix recommandées';
+    const optF = document.createElement('option');
+    optF.value = '';
+    optF.textContent = '★ Voix féminine';
+    optGroup.appendChild(optF);
+    const optM = document.createElement('option');
+    optM.value = '_pel_mp3_m';
+    optM.textContent = '★ Voix masculine';
+    optGroup.appendChild(optM);
+    sel.appendChild(optGroup);
 
-    if (!voices.length) {
-      sel.disabled = false;
-      return;
-    }
     sel.disabled = false;
+    if (!voices.length) return;
 
     // Dédoublonnage agressif par PRÉNOM seul (sans le genre)
     // Ainsi "Marie", "Marie (Compact)", "Marie Premium" comptent comme 1 seule
@@ -2542,20 +2547,20 @@ function initChapelet() {
     }
 
     // ── Choix du moteur selon le voiceURI sélectionné ──
-    // Voix recommandée (voiceURI vide) = MP3 cloud Wavenet (haute qualité)
-    // Voix système choisie               = Web Speech API avec cette voix
-    const useMp3 = !voiceURI;
+    // ""              → MP3 femme (défaut)
+    // "_pel_mp3_m"    → MP3 homme
+    // autre chose     → Web Speech API avec cette voix système
+    const useMp3 = !voiceURI || voiceURI === '_pel_mp3_m';
+    const mp3Gender = voiceURI === '_pel_mp3_m' ? 'm' : 'f';
     let mp3Worked = false;
 
     if (useMp3) {
       try {
-        // MP3 féminin par défaut (Wavenet F = la plus claire)
-        const g = 'f';
         if (isStartOfDecade) {
-          await tryPlayMp3(getMp3Url(lang, g, `myst-${mystKey}-${decade}`), speed);
+          await tryPlayMp3(getMp3Url(lang, mp3Gender, `myst-${mystKey}-${decade}`), speed);
           if (!playing) return;
         }
-        await tryPlayMp3(getMp3Url(lang, g, key), speed);
+        await tryPlayMp3(getMp3Url(lang, mp3Gender, key), speed);
         mp3Worked = true;
       } catch(_) {
         mp3Worked = false;
