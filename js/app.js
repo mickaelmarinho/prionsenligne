@@ -2280,14 +2280,20 @@ function initChapelet() {
     return s;
   }
 
-  // Affichage propre du nom de la voix : on garde uniquement le prénom
+  // Affichage propre du nom de la voix : prénom + suffixe HD/Natural si premium
   function prettyVoiceName(v) {
-    let name = v.name || 'Voix';
-    name = name
+    const original = v.name || 'Voix';
+    // Détecte si c'est une voix naturelle / premium / neural / wavenet / siri
+    const isNatural = /(premium|enhanced|natural|neural|wavenet|studio|\bhd\b|siri)/i.test(original);
+
+    let name = original
       .replace(/^Microsoft\s+/i, '')           // "Microsoft Hortense" → "Hortense"
       .replace(/^Google\s+/i, '')              // "Google français" → "français"
       .replace(/\s+Online\s+\(Natural\)/i, '') // "Hortense Online (Natural)" → "Hortense"
       .replace(/\s+\(Natural\)/i, '')          // "(Natural)" tout court
+      .replace(/\s+Premium$/i, '')
+      .replace(/\s+Enhanced$/i, '')
+      .replace(/\s+Neural$/i, '')
       .replace(/\s+Desktop$/i, '')             // "Hortense Desktop" → "Hortense"
       .replace(/\s+Mobile$/i, '')              // idem
       .replace(/\s+Compact$/i, '')             // "Marie Compact" → "Marie"
@@ -2299,8 +2305,10 @@ function initChapelet() {
       .replace(/\s+-\s+Portuguese.*$/i, '')
       .trim();
     // Garder uniquement le 1er mot (prénom propre)
-    const firstWord = name.split(/\s+/)[0];
-    return firstWord || name;
+    const firstWord = name.split(/\s+/)[0] || name;
+    // Suffixe ★ pour les voix naturelles/premium → l'utilisateur voit
+    // immédiatement lesquelles sont haute qualité
+    return isNatural ? `${firstWord} ★` : firstWord;
   }
 
   // Liste les voix correspondant à la langue active, triées par qualité
