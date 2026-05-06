@@ -2304,19 +2304,35 @@ function initChapelet() {
   }
 
   // Liste les voix correspondant à la langue active, triées par qualité
-  // (exclut les voix qu'on a détectées comme cassées sur ce navigateur)
+  // (exclut les voix détectées comme cassées + fallback sur toutes les voix
+  //  si aucune voix de la langue cible n'est disponible)
   function getMatchingVoices() {
     if (!synth) return [];
-    if (!availableVoices.length) availableVoices = synth.getVoices();
+    // Re-fetch à chaque appel : Chrome/Opera chargent les voix en async,
+    // pas de cache pour éviter de manquer des voix arrivées après l'init
+    availableVoices = synth.getVoices() || [];
+    if (!availableVoices.length) return [];
+
     const target = SPEECH_LANG[lang] || 'fr-FR';
-    const prefix = target.split('-')[0];   // 'fr', 'en', etc.
+    const prefix = target.split('-')[0];   // 'fr', 'en', 'es', 'it'...
     const broken = getBrokenVoices();
-    const matches = availableVoices.filter(v =>
-      (v.lang === target || v.lang.startsWith(prefix + '-') || v.lang === prefix) &&
-      !broken.includes(v.voiceURI)
+    const usable = availableVoices.filter(v => !broken.includes(v.voiceURI));
+
+    // Voix qui matchent strictement la langue cible
+    const exact = usable.filter(v =>
+      v.lang === target || v.lang.startsWith(prefix + '-') || v.lang === prefix
     );
-    matches.sort((a, b) => voiceQuality(b) - voiceQuality(a));
-    return matches;
+
+    if (exact.length) {
+      exact.sort((a, b) => voiceQuality(b) - voiceQuality(a));
+      return exact;
+    }
+
+    // Fallback : aucune voix native pour cette langue → on affiche TOUTES les
+    // voix dispos. L'utilisateur peut quand même choisir, le moteur lira le
+    // texte étranger avec l'accent de cette voix (mieux que rien).
+    usable.sort((a, b) => voiceQuality(b) - voiceQuality(a));
+    return usable;
   }
 
   // Affichage du nom voix — juste le prénom, sans marqueur de genre
