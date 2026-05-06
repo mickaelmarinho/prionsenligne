@@ -1995,6 +1995,17 @@ function initChapelet() {
 
   // Codes BCP-47 pour Web Speech API
   const SPEECH_LANG = { fr: 'fr-FR', en: 'en-US', es: 'es-ES', it: 'it-IT', pt: 'pt-PT', la: 'it-IT' };
+
+  // Prénoms attribués aux voix Wavenet recommandées (différents par langue)
+  // → l'utilisateur les distingue facilement parmi les voix système
+  const RECOMMENDED_NAMES = {
+    fr: { f: 'Camille',  m: 'Antoine' },
+    en: { f: 'Emily',    m: 'William' },
+    es: { f: 'Carmen',   m: 'Miguel'  },
+    it: { f: 'Giulia',   m: 'Marco'   },
+    pt: { f: 'Beatriz',  m: 'João'    },
+    la: { f: 'Lucia',    m: 'Petrus'  },
+  };
   // Texte d'annonce de mystère selon la langue
   const ANNOUNCE = {
     fr: (i, m) => `${i+1}ᵉ mystère : ${m}.`,
@@ -2358,17 +2369,18 @@ function initChapelet() {
     const previous = voiceURI;
     sel.innerHTML = '';
 
-    // Voix recommandées MP3 Wavenet : 2 options (femme + homme)
+    // Voix recommandées MP3 Wavenet : 2 options par prénom (femme + homme)
     // value spéciale "" = MP3 femme (défaut), "_pel_mp3_m" = MP3 homme
+    const recoNames = RECOMMENDED_NAMES[lang] || RECOMMENDED_NAMES.fr;
     const optGroup = document.createElement('optgroup');
     optGroup.label = '★ Voix recommandées';
     const optF = document.createElement('option');
     optF.value = '';
-    optF.textContent = '★ Voix féminine';
+    optF.textContent = `${recoNames.f} ★`;
     optGroup.appendChild(optF);
     const optM = document.createElement('option');
     optM.value = '_pel_mp3_m';
-    optM.textContent = '★ Voix masculine';
+    optM.textContent = `${recoNames.m} ★`;
     optGroup.appendChild(optM);
     sel.appendChild(optGroup);
 
