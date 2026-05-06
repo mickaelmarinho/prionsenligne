@@ -4207,8 +4207,15 @@ function initContact() {
       }
 
       if (!res.ok) {
-        const txt = await res.text().catch(() => '');
-        throw new Error(txt || `HTTP ${res.status}`);
+        // Tente de récupérer le détail JSON pour afficher la vraie cause
+        let detail = '';
+        try {
+          const errData = await res.json();
+          detail = errData.detail || errData.error || '';
+        } catch (_) {
+          detail = await res.text().catch(() => '');
+        }
+        throw Object.assign(new Error(detail || `HTTP ${res.status}`), { status: res.status });
       }
       feedback.className = 'contact-feedback ok';
       feedback.textContent = '✓ Message envoyé. Merci pour votre retour !';
@@ -4217,10 +4224,19 @@ function initContact() {
       setTimeout(closeContact, 2500);
     } catch (err) {
       console.warn('[contact] erreur envoi:', err);
-      // En cas d'erreur réseau ou autre, on offre quand même le mailto
-      feedback.className = 'contact-feedback err';
-      feedback.innerHTML = 'Problème d\'envoi. <button type="button" id="contact-mailto-fallback" style="background:none;border:none;color:inherit;text-decoration:underline;cursor:pointer;padding:0;font:inherit;">Ouvrir votre app mail</button>';
-      document.getElementById('contact-mailto-fallback')?.addEventListener('click', openMailto);
+      // Cas spéciaux où on ne propose PAS le mailto (rate limit, validation)
+      if (err.status === 429) {
+        feedback.className = 'contact-feedback err';
+        feedback.textContent = 'Trop de messages envoyés. Réessayez dans une minute.';
+      } else if (err.status === 400) {
+        feedback.className = 'contact-feedback err';
+        feedback.textContent = err.message || 'Données invalides.';
+      } else {
+        // Erreur serveur/réseau → fallback mailto
+        feedback.className = 'contact-feedback err';
+        feedback.innerHTML = 'Problème d\'envoi. <button type="button" id="contact-mailto-fallback" style="background:none;border:none;color:inherit;text-decoration:underline;cursor:pointer;padding:0;font:inherit;">Ouvrir votre app mail</button>';
+        document.getElementById('contact-mailto-fallback')?.addEventListener('click', openMailto);
+      }
     } finally {
       submitBtn.disabled = false;
       submitBtn.innerHTML = originalLabel;
