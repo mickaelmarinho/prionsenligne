@@ -2304,13 +2304,16 @@ function initChapelet() {
   }
 
   // Liste les voix correspondant à la langue active, triées par qualité
+  // (exclut les voix qu'on a détectées comme cassées sur ce navigateur)
   function getMatchingVoices() {
     if (!synth) return [];
     if (!availableVoices.length) availableVoices = synth.getVoices();
     const target = SPEECH_LANG[lang] || 'fr-FR';
     const prefix = target.split('-')[0];   // 'fr', 'en', etc.
+    const broken = getBrokenVoices();
     const matches = availableVoices.filter(v =>
-      v.lang === target || v.lang.startsWith(prefix + '-') || v.lang === prefix
+      (v.lang === target || v.lang.startsWith(prefix + '-') || v.lang === prefix) &&
+      !broken.includes(v.voiceURI)
     );
     matches.sort((a, b) => voiceQuality(b) - voiceQuality(a));
     return matches;
@@ -2396,6 +2399,23 @@ function initChapelet() {
     }
   }
 
+  // Voix qui ont déjà échoué (listées par l'OS mais non installées)
+  // Mémorisées en localStorage pour ne plus les proposer
+  function getBrokenVoices() {
+    try { return JSON.parse(localStorage.getItem('pel_ch_broken_voices') || '[]'); }
+    catch(_) { return []; }
+  }
+  function markVoiceBroken(uri) {
+    if (!uri) return;
+    const broken = getBrokenVoices();
+    if (!broken.includes(uri)) {
+      broken.push(uri);
+      try { localStorage.setItem('pel_ch_broken_voices', JSON.stringify(broken)); } catch(_) {}
+      const hint = document.getElementById('ch-audio-hint');
+      if (hint) hint.textContent = '⚠ Voix indisponible — bascule sur la voix recommandée.';
+    }
+  }
+
   function speak(text, onEnd) {
     if (!synth) { onEnd && onEnd(); return; }
     try { synth.cancel(); } catch(_) {}
@@ -2406,10 +2426,49 @@ function initChapelet() {
     u.rate  = speed;
     u.pitch = 1;
     u.volume = 1;
-    u.onend = () => { currentUtterance = null; onEnd && onEnd(); };
-    u.onerror = () => { currentUtterance = null; onEnd && onEnd(); };
+
+    // Détection des voix défaillantes : si onstart ne se déclenche pas
+    // dans les 1500 ms, c'est que la voix est listée mais non installée
+    let started   = false;
+    let watchdog  = null;
+    const cleanup = () => { if (watchdog) clearTimeout(watchdog); currentUtterance = null; };
+
+    u.onstart = () => { started = true; if (watchdog) clearTimeout(watchdog); };
+    u.onend   = () => { cleanup(); onEnd && onEnd(); };
+    u.onerror = () => {
+      // Marque cette voix comme cassée et auto-fallback sur la voix recommandée
+      if (v && !started) markVoiceBroken(v.voiceURI);
+      cleanup();
+      // Si la voix n'a pas démarré, on retombe sur la voix par défaut (MP3)
+      if (!started && v) {
+        voiceURI = '';
+        const sel = document.getElementById('ch-voice-select');
+        if (sel) sel.value = '';
+        try { localStorage.setItem('pel_ch_voice', ''); } catch(_) {}
+        refreshVoiceList();
+      }
+      onEnd && onEnd();
+    };
+
     currentUtterance = u;
     synth.speak(u);
+
+    // Watchdog : si pas de onstart en 1.5s, voix défaillante
+    watchdog = setTimeout(() => {
+      if (!started) {
+        if (v) markVoiceBroken(v.voiceURI);
+        try { synth.cancel(); } catch(_) {}
+        if (v) {
+          voiceURI = '';
+          const sel = document.getElementById('ch-voice-select');
+          if (sel) sel.value = '';
+          try { localStorage.setItem('pel_ch_voice', ''); } catch(_) {}
+          refreshVoiceList();
+        }
+        cleanup();
+        onEnd && onEnd();
+      }
+    }, 1500);
   }
 
   /* ── Lecture MP3 préenregistrée (Google Cloud TTS) ─────────────

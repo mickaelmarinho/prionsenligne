@@ -3052,7 +3052,7 @@ body.player-open .greg-btn { bottom: 80px; }
 .chapelet-fab {
   position: fixed;
   right: 20px;
-  bottom: 84px;       /* au-dessus de la bottom-nav mobile */
+  bottom: 28px;       /* desktop par défaut — mobile surcharge à bottom: calc(...) */
   width: 54px; height: 54px;
   background: #7B4F2E;
   color: white;
