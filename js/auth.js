@@ -40,6 +40,99 @@ function avatarColor(str) {
 }
 
 /* ════════════════════════════════════════════
+   PERSONNALISATION — Icônes + palettes liturgiques
+═════════════════════════════════════════════*/
+const AVATAR_ICONS = {
+  initial: { type:'text', label:'Mon initiale' },
+  cross:   { type:'icon', icon:'fa-cross',          label:'Croix latine' },
+  dove:    { type:'icon', icon:'fa-dove',           label:'Colombe — Esprit Saint' },
+  hands:   { type:'icon', icon:'fa-hands-praying',  label:'Mains jointes' },
+  church:  { type:'icon', icon:'fa-church',         label:'Église' },
+  bible:   { type:'icon', icon:'fa-book-bible',     label:'Bible' },
+  heart:   { type:'icon', icon:'fa-heart',          label:'Cœur Sacré' },
+  fire:    { type:'icon', icon:'fa-fire',           label:'Feu de l\'Esprit' },
+  star:    { type:'icon', icon:'fa-star',           label:'Étoile' },
+  leaf:    { type:'icon', icon:'fa-leaf',           label:'Rameau d\'olivier' },
+  feather: { type:'icon', icon:'fa-feather',        label:'Plume — humilité' },
+  crown:   { type:'icon', icon:'fa-crown',          label:'Couronne — Christ Roi' },
+};
+
+// Palettes inspirées des couleurs liturgiques de l'Église catholique
+const AVATAR_PALETTES = {
+  auto:    { label:'Automatique (selon prénom)' },
+  classic: { bg:'#1a2744', fg:'#c9a84c', label:'Classique — Navy & Or' },
+  sacred:  { bg:'#8b1117', fg:'#f5d76e', label:'Sacré-Cœur — Rouge' },
+  marian:  { bg:'#1e3a8a', fg:'#e0e7ff', label:'Marial — Bleu Immaculée' },
+  hope:    { bg:'#0f5132', fg:'#fde047', label:'Espérance — Vert' },
+  advent:  { bg:'#581c87', fg:'#fde68a', label:'Avent / Carême — Violet' },
+  ivory:   { bg:'#f5f0e8', fg:'#1a2744', label:'Ivoire — Pâques / Noël' },
+};
+
+// ~30 saints populaires — affichage sous la forme « Saint Joseph (19 mars) »
+const SAINTS = [
+  { id:'aucun',      name:'— Aucun —',                        feast:'' },
+  { id:'marie',      name:'Sainte Vierge Marie',              feast:'15 août' },
+  { id:'joseph',     name:'Saint Joseph',                     feast:'19 mars' },
+  { id:'michel',     name:'Saint Michel Archange',            feast:'29 septembre' },
+  { id:'pierre',     name:'Saint Pierre',                     feast:'29 juin' },
+  { id:'paul',       name:'Saint Paul',                       feast:'29 juin' },
+  { id:'jean-evang', name:'Saint Jean l\'Évangéliste',        feast:'27 décembre' },
+  { id:'jb',         name:'Saint Jean-Baptiste',              feast:'24 juin' },
+  { id:'francois',   name:'Saint François d\'Assise',         feast:'4 octobre' },
+  { id:'antoine-p',  name:'Saint Antoine de Padoue',          feast:'13 juin' },
+  { id:'therese-l',  name:'Sainte Thérèse de Lisieux',        feast:'1er octobre' },
+  { id:'therese-a',  name:'Sainte Thérèse d\'Avila',          feast:'15 octobre' },
+  { id:'ignace',     name:'Saint Ignace de Loyola',           feast:'31 juillet' },
+  { id:'benoit',     name:'Saint Benoît',                     feast:'11 juillet' },
+  { id:'augustin',   name:'Saint Augustin',                   feast:'28 août' },
+  { id:'thomas-aq',  name:'Saint Thomas d\'Aquin',            feast:'28 janvier' },
+  { id:'christophe', name:'Saint Christophe',                 feast:'25 juillet' },
+  { id:'bernadette', name:'Sainte Bernadette',                feast:'16 avril' },
+  { id:'faustine',   name:'Sainte Faustine',                  feast:'5 octobre' },
+  { id:'padre-pio',  name:'Saint Padre Pio',                  feast:'23 septembre' },
+  { id:'jp2',        name:'Saint Jean-Paul II',               feast:'22 octobre' },
+  { id:'jean-23',    name:'Saint Jean XXIII',                 feast:'11 octobre' },
+  { id:'cath-s',     name:'Sainte Catherine de Sienne',       feast:'29 avril' },
+  { id:'jeanne',     name:'Sainte Jeanne d\'Arc',             feast:'30 mai' },
+  { id:'vincent',    name:'Saint Vincent de Paul',            feast:'27 septembre' },
+  { id:'monique',    name:'Sainte Monique',                   feast:'27 août' },
+  { id:'claire',     name:'Sainte Claire d\'Assise',          feast:'11 août' },
+  { id:'rita',       name:'Sainte Rita',                      feast:'22 mai' },
+  { id:'philomene',  name:'Sainte Philomène',                 feast:'11 août' },
+  { id:'kateri',     name:'Sainte Kateri Tekakwitha',         feast:'14 juillet' },
+  { id:'jean-vian',  name:'Saint Jean-Marie Vianney (curé d\'Ars)', feast:'4 août' },
+  { id:'maxim-k',    name:'Saint Maximilien Kolbe',           feast:'14 août' },
+  { id:'edith-s',    name:'Sainte Edith Stein',               feast:'9 août' },
+  { id:'mere-tere',  name:'Sainte Mère Teresa',               feast:'5 septembre' },
+  { id:'charles-f',  name:'Saint Charles de Foucauld',        feast:'1er décembre' },
+];
+
+// Applique l'avatar (icône+couleur OU initiale+auto-couleur) à un élément
+function applyAvatarTo(el, user) {
+  if (!el || !user) return;
+  const meta = user.user_metadata || {};
+  const name = meta.name || (user.email || '').split('@')[0] || '?';
+  const iconKey    = meta.avatar_icon    || 'initial';
+  const paletteKey = meta.avatar_palette || 'auto';
+  const palette    = (paletteKey === 'auto')
+    ? avatarColor(name)
+    : (AVATAR_PALETTES[paletteKey] && AVATAR_PALETTES[paletteKey].bg
+        ? AVATAR_PALETTES[paletteKey]
+        : avatarColor(name));
+  const icon = AVATAR_ICONS[iconKey] || AVATAR_ICONS.initial;
+
+  el.style.background = palette.bg;
+  el.style.color      = palette.fg;
+  if (icon.type === 'icon') {
+    el.innerHTML = `<i class="fa-solid ${icon.icon}"></i>`;
+    el.classList.add('avatar-with-icon');
+  } else {
+    el.textContent = name.charAt(0).toUpperCase();
+    el.classList.remove('avatar-with-icon');
+  }
+}
+
+/* ════════════════════════════════════════════
    UI HEADER
 ═════════════════════════════════════════════*/
 // Dispatche un événement custom à chaque changement d'auth
@@ -68,33 +161,31 @@ function updateHeaderUI(user) {
   if (user) {
     const name    = user.user_metadata?.name || user.email.split('@')[0];
     const email   = user.email || '';
-    const initial = name.charAt(0).toUpperCase();
-    const col     = avatarColor(name);
 
-    // Hamburger btn → avatar stylé
-    if (btn) btn.innerHTML = `<span class="hamburger-avatar" title="${name}">${initial}</span>`;
+    // Hamburger btn : avatar mini (toujours initiale pour la lisibilité dans le bouton compact)
+    if (btn) {
+      const initial = name.charAt(0).toUpperCase();
+      const col     = avatarColor(name);
+      btn.innerHTML = `<span class="hamburger-avatar" title="${name}" style="background:${col.bg};color:${col.fg}">${initial}</span>`;
+    }
     headerUser?.classList.add('user-logged-in');
 
-    // Bouton compte desktop
+    // Bouton compte desktop — avatar plein avec icône perso
     if (accountBtn) {
       accountBtn.classList.remove('hidden');
       const avatarSpan = $id('header-acct-avatar');
       const nameSpan   = $id('header-acct-name');
-      if (avatarSpan) {
-        avatarSpan.textContent = initial;
-        avatarSpan.style.background = col.bg;
-        avatarSpan.style.color      = col.fg;
-      }
+      applyAvatarTo(avatarSpan, user);
       if (nameSpan) nameSpan.textContent = name;
     }
 
-    // Ligne profil dans le menu burger
+    // Ligne profil dans le menu burger — avec icône perso
     if (hmProfileRow) {
       hmProfileRow.classList.remove('hidden');
       const av = $id('hm-pr-avatar');
       const nm = $id('hm-pr-name');
       const em = $id('hm-pr-email');
-      if (av) { av.textContent = initial; av.style.background = col.bg; av.style.color = col.fg; }
+      applyAvatarTo(av, user);
       if (nm) nm.textContent = name;
       if (em) em.textContent = email;
     }
@@ -161,13 +252,47 @@ async function loadProfileContent() {
     ? since.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' })
     : '';
 
+  // Méta utilisateur pour la perso
+  const meta = user.user_metadata || {};
+  const currentIcon    = meta.avatar_icon    || 'initial';
+  const currentPalette = meta.avatar_palette || 'auto';
+  const currentSaint   = meta.patron_saint   || 'aucun';
+  const currentVerse   = meta.favorite_verse || '';
+
+  // HTML pour la grille des icônes
+  const iconsGridHTML = Object.entries(AVATAR_ICONS).map(([key, ico]) => {
+    const isActive = key === currentIcon;
+    const inner = ico.type === 'icon' ? `<i class="fa-solid ${ico.icon}"></i>` : '<span class="prof-ico-initial">A</span>';
+    return `<button type="button" class="prof-ico-btn${isActive ? ' active' : ''}" data-icon="${key}" title="${_esc(ico.label)}">${inner}</button>`;
+  }).join('');
+
+  // HTML pour la grille des palettes
+  const palettesGridHTML = Object.entries(AVATAR_PALETTES).map(([key, pal]) => {
+    const isActive = key === currentPalette;
+    const swatch = pal.bg
+      ? `<span class="prof-pal-swatch" style="background:${pal.bg};color:${pal.fg}"></span>`
+      : `<span class="prof-pal-swatch prof-pal-auto"><i class="fa-solid fa-shuffle"></i></span>`;
+    return `<button type="button" class="prof-pal-btn${isActive ? ' active' : ''}" data-palette="${key}" title="${_esc(pal.label)}">${swatch}<span class="prof-pal-name">${_esc(pal.label)}</span></button>`;
+  }).join('');
+
+  // HTML pour le sélecteur de saint patron
+  const saintsHTML = SAINTS.map(s => {
+    const sel = s.id === currentSaint ? ' selected' : '';
+    const display = s.feast ? `${s.name} — ${s.feast}` : s.name;
+    return `<option value="${s.id}"${sel}>${_esc(display)}</option>`;
+  }).join('');
+
+  const selectedSaint = SAINTS.find(s => s.id === currentSaint);
+
   // Squelette immédiat (sans attendre Supabase)
   bodyEl.innerHTML = `
     <div class="prof-hero">
-      <div class="prof-avatar" style="background:${col.bg};color:${col.fg}">${_esc(initial)}</div>
+      <div class="prof-avatar" id="prof-avatar-display"></div>
       <div class="prof-name" id="prof-display-name">${_esc(name)}</div>
       <div class="prof-email">${_esc(email)}</div>
       ${sinceStr ? `<div class="prof-since"><i class="fa-solid fa-cross"></i> Membre depuis le ${sinceStr}</div>` : ''}
+      ${selectedSaint && selectedSaint.id !== 'aucun' ? `<div class="prof-patron"><i class="fa-solid fa-star"></i> Saint patron : <strong>${_esc(selectedSaint.name)}</strong>${selectedSaint.feast ? ' <span class="prof-patron-feast">(' + _esc(selectedSaint.feast) + ')</span>' : ''}</div>` : ''}
+      ${currentVerse ? `<blockquote class="prof-verse">« ${_esc(currentVerse)} »</blockquote>` : ''}
     </div>
 
     <div class="prof-stats">
@@ -188,6 +313,32 @@ async function loadProfileContent() {
         </button>
       </div>
       <div class="prof-feedback hidden" id="prof-name-feedback"></div>
+    </div>
+
+    <div class="prof-section">
+      <div class="prof-section-title">
+        <i class="fa-solid fa-palette"></i> Personnalisation
+      </div>
+
+      <div class="prof-perso-label">Icône de votre avatar</div>
+      <div class="prof-ico-grid">${iconsGridHTML}</div>
+
+      <div class="prof-perso-label">Couleur (palette liturgique)</div>
+      <div class="prof-pal-grid">${palettesGridHTML}</div>
+
+      <div class="prof-perso-label">Saint patron</div>
+      <select class="prof-input prof-saint-select" id="prof-saint-select">
+        ${saintsHTML}
+      </select>
+
+      <div class="prof-perso-label">Citation favorite (Bible, saint…)</div>
+      <textarea class="prof-input prof-verse-input" id="prof-verse-input"
+                rows="2" maxlength="240"
+                placeholder="« Que votre cœur ne se trouble pas… » — Jean 14:1">${_esc(currentVerse)}</textarea>
+      <button class="prof-save-btn" id="prof-perso-save">
+        <i class="fa-solid fa-check"></i> Enregistrer mes préférences
+      </button>
+      <div class="prof-feedback hidden" id="prof-perso-feedback"></div>
     </div>
 
     <div class="prof-section">
@@ -240,6 +391,71 @@ async function loadProfileContent() {
   // Events
   $id('prof-name-save')?.addEventListener('click', saveProfileName);
 
+  // Avatar avec icône / palette : aperçu live dans le hero
+  applyAvatarTo($id('prof-avatar-display'), user);
+
+  // Sélection d'icône : highlight + preview
+  document.querySelectorAll('.prof-ico-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.prof-ico-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      btn.dataset.touched = '1';
+      // Preview immédiate dans le hero
+      previewAvatar();
+    });
+  });
+
+  // Sélection de palette : highlight + preview
+  document.querySelectorAll('.prof-pal-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.prof-pal-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      previewAvatar();
+    });
+  });
+
+  // Saint patron : preview sous le hero
+  $id('prof-saint-select')?.addEventListener('change', () => {
+    const sid = $id('prof-saint-select').value;
+    const s = SAINTS.find(x => x.id === sid);
+    let bloc = document.querySelector('.prof-patron');
+    const heroEl = document.querySelector('.prof-hero');
+    if (!s || s.id === 'aucun') {
+      bloc?.remove();
+    } else {
+      const html = `<i class="fa-solid fa-star"></i> Saint patron : <strong>${_esc(s.name)}</strong>${s.feast ? ' <span class="prof-patron-feast">(' + _esc(s.feast) + ')</span>' : ''}`;
+      if (bloc) {
+        bloc.innerHTML = html;
+      } else if (heroEl) {
+        const div = document.createElement('div');
+        div.className = 'prof-patron';
+        div.innerHTML = html;
+        // Inséré avant la citation si elle existe, sinon en dernier
+        const verse = heroEl.querySelector('.prof-verse');
+        if (verse) verse.before(div); else heroEl.appendChild(div);
+      }
+    }
+  });
+
+  // Citation : preview en live
+  $id('prof-verse-input')?.addEventListener('input', () => {
+    const txt = $id('prof-verse-input').value.trim();
+    let bloc = document.querySelector('.prof-verse');
+    const heroEl = document.querySelector('.prof-hero');
+    if (!txt) { bloc?.remove(); return; }
+    if (bloc) {
+      bloc.textContent = `« ${txt} »`;
+    } else if (heroEl) {
+      const bq = document.createElement('blockquote');
+      bq.className = 'prof-verse';
+      bq.textContent = `« ${txt} »`;
+      heroEl.appendChild(bq);
+    }
+  });
+
+  // Save personnalisation
+  $id('prof-perso-save')?.addEventListener('click', saveProfilePerso);
+
   $id('prof-change-pw-btn')?.addEventListener('click', () => {
     const form    = $id('prof-pw-form');
     const chevron = $id('prof-pw-chevron');
@@ -255,6 +471,62 @@ async function loadProfileContent() {
     closeProfilePanel();
     await _sb.auth.signOut();
   });
+}
+
+// Preview live de l'avatar quand l'utilisateur sélectionne une icône / palette
+function previewAvatar() {
+  if (!_currentUser) return;
+  const iconKey    = document.querySelector('.prof-ico-btn.active')?.dataset.icon || 'initial';
+  const paletteKey = document.querySelector('.prof-pal-btn.active')?.dataset.palette || 'auto';
+  // On simule un user temporaire avec les meta pickées
+  const tempUser = {
+    ...(_currentUser),
+    user_metadata: {
+      ...(_currentUser.user_metadata || {}),
+      avatar_icon: iconKey,
+      avatar_palette: paletteKey,
+    },
+  };
+  applyAvatarTo($id('prof-avatar-display'), tempUser);
+}
+
+// Sauvegarde des préférences perso (icône, palette, saint, citation)
+async function saveProfilePerso() {
+  const fb = $id('prof-perso-feedback');
+  if (!_sb || !_currentUser) return;
+  const btn = $id('prof-perso-save');
+  if (!btn) return;
+
+  const iconKey    = document.querySelector('.prof-ico-btn.active')?.dataset.icon || 'initial';
+  const paletteKey = document.querySelector('.prof-pal-btn.active')?.dataset.palette || 'auto';
+  const saintId    = $id('prof-saint-select')?.value || 'aucun';
+  const verseTxt   = $id('prof-verse-input')?.value.trim().slice(0, 240) || '';
+
+  btn.disabled = true;
+  const oldHTML = btn.innerHTML;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enregistrement…';
+
+  try {
+    const newMeta = {
+      ...(_currentUser.user_metadata || {}),
+      avatar_icon:    iconKey,
+      avatar_palette: paletteKey,
+      patron_saint:   saintId,
+      favorite_verse: verseTxt,
+    };
+    const { data, error } = await _sb.auth.updateUser({ data: newMeta });
+    if (error) throw error;
+    _currentUser = data?.user || _currentUser;
+    window._pelUser = _currentUser;
+    updateHeaderUI(_currentUser);
+    applyAvatarTo($id('prof-avatar-display'), _currentUser);
+    _showProfFeedback(fb, '✓ Préférences enregistrées', 'success');
+  } catch (err) {
+    _showProfFeedback(fb, err.message || 'Erreur, réessayez.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = oldHTML;
+  }
 }
 
 async function saveProfileName() {
