@@ -2026,11 +2026,56 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
   margin-bottom: 22px;
 }
 
-/* ── Boutons auth desktop ── */
-.header-auth-desktop {
+/* ── Bouton unifié "Se connecter / Rejoindre" (remplace les 2 anciens) ── */
+.nav-auth-unified {
+  background: var(--gold);
+  color: var(--navy);
+  border: 1px solid transparent;
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 7px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all .2s;
   display: flex;
   align-items: center;
   gap: 8px;
+  white-space: nowrap;
+}
+.nav-auth-unified:hover {
+  background: var(--gold-pale);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(201,168,76,.3);
+}
+.nav-auth-unified > i { font-size: 13px; }
+.nav-auth-unified.hidden { display: none; }
+.nav-auth-unified-text-short { display: none; }
+
+/* Mobile : on n'affiche que "Compte" (texte court) pour éviter le débordement */
+@media (max-width: 480px) {
+  .nav-auth-unified-text       { display: none; }
+  .nav-auth-unified-text-short { display: inline; }
+  .nav-auth-unified            { padding: 7px 12px; font-size: 12px; }
+}
+
+/* Boutons cachés (shims pour compat — handleDeepLink, contact form fallback) */
+.hidden-auth-shim {
+  position: absolute;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── Anciens boutons auth (header-auth-desktop) — conservé pour compat
+   mais rendu invisible (le nouveau bouton unifié les remplace) ── */
+.header-auth-desktop {
+  display: none !important;
 }
 
 .nav-auth-btn {
@@ -2829,15 +2874,12 @@ body.player-open .greg-btn { bottom: 80px; }
   .radio-player { bottom: 0; }
   body.player-open { padding-bottom: 64px; }
 
-  /* Desktop déconnecté : cacher le burger, montrer les boutons */
-  #header-user:not(.user-logged-in) #hamburger-btn { display: none; }
+  /* Desktop : le burger est TOUJOURS visible (connecté ou pas)
+     → tout le monde peut accéder à À propos, Contact, Accueil…   */
+  #hamburger-btn { display: flex; }
 
-  /* Desktop connecté : cacher les boutons, montrer le burger */
-  #header-user.user-logged-in .header-auth-desktop { display: none; }
-
-  #hm-auth-sep,
-  #hm-login-item,
-  #hm-signup-item { display: none !important; }
+  /* Les anciens IDs login/signup sont des shims invisibles (compat handleDeepLink) */
+  .hidden-auth-shim { display: none !important; }
 
   /* FAB chapelet */
   .chapelet-fab { bottom: 30px; }

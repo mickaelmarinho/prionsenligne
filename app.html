@@ -58,14 +58,15 @@
         <button class="nav-tab" data-tab="sources"><i class="fa-solid fa-tower-broadcast"></i> Sources</button>
       </nav>
       <div class="header-user" id="header-user">
-        <div class="header-auth-desktop" id="header-auth-desktop">
-          <button class="nav-auth-btn nav-login-btn" id="header-btn-login">
-            <i class="fa-solid fa-right-to-bracket"></i> Se connecter
-          </button>
-          <button class="nav-auth-btn nav-signup-btn" id="header-btn-signup">
-            <i class="fa-solid fa-hands-praying"></i> Rejoindre
-          </button>
-        </div>
+        <!-- Bouton unifié connexion/inscription — affiché uniquement quand pas connecté -->
+        <button class="nav-auth-unified" id="header-btn-auth">
+          <i class="fa-solid fa-user"></i>
+          <span class="nav-auth-unified-text">Se connecter / Rejoindre</span>
+          <span class="nav-auth-unified-text-short">Compte</span>
+        </button>
+        <!-- IDs préservés pour compat (handleDeepLink, contact form, etc.) — invisibles -->
+        <button class="hidden-auth-shim" id="header-btn-login" aria-hidden="true" tabindex="-1"></button>
+        <button class="hidden-auth-shim" id="header-btn-signup" aria-hidden="true" tabindex="-1"></button>
         <!-- Bouton compte desktop — affiché uniquement quand connecté -->
         <button class="nav-account-btn hidden" id="header-btn-account" title="Mon profil">
           <span class="header-acct-avatar" id="header-acct-avatar">?</span>
@@ -105,9 +106,9 @@
         <a href="/" class="hm-item hm-home-link"><i class="fa-solid fa-house"></i> Accueil &amp; présentation</a>
         <div class="hm-item" id="hm-contact"><i class="fa-solid fa-envelope"></i> Nous contacter</div>
         <div class="hm-item" id="hm-about"><i class="fa-solid fa-circle-info"></i> À propos</div>
-        <div class="hm-divider" id="hm-auth-sep"></div>
-        <div class="hm-item" id="hm-login-item"><i class="fa-solid fa-right-to-bracket"></i> Se connecter</div>
-        <div class="hm-item hm-join" id="hm-signup-item"><i class="fa-solid fa-hands-praying"></i> Rejoindre</div>
+        <!-- IDs login/signup préservés (cachés) pour compat handleDeepLink + contact form fallback -->
+        <div class="hm-item hidden-auth-shim" id="hm-login-item" aria-hidden="true"></div>
+        <div class="hm-item hidden-auth-shim" id="hm-signup-item" aria-hidden="true"></div>
       </div>
     </div>
   </header>

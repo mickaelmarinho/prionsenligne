@@ -60,10 +60,8 @@ function updateHeaderUI(user) {
   const signoutItem = $id('hm-signout');
   const logoutBtn   = $id('header-btn-logout');
   const accountBtn  = $id('header-btn-account');
+  const authUnified = $id('header-btn-auth');
   const headerUser  = $id('header-user');
-  const hmAuthSep   = $id('hm-auth-sep');
-  const hmLogin     = $id('hm-login-item');
-  const hmSignup    = $id('hm-signup-item');
   const hmProfileRow = $id('hm-profile-row');
   const hmPrDivider  = $id('hm-pr-divider');
 
@@ -102,9 +100,8 @@ function updateHeaderUI(user) {
     }
     if (hmPrDivider) hmPrDivider.classList.remove('hidden');
 
-    if (hmAuthSep) hmAuthSep.style.display = 'none';
-    if (hmLogin)   hmLogin.style.display   = 'none';
-    if (hmSignup)  hmSignup.style.display  = 'none';
+    // Connecté → masque le bouton auth unifié, montre le profil
+    authUnified?.classList.add('hidden');
     logoutBtn?.classList.add('hidden'); // signout est désormais dans le panneau profil
   } else {
     if (btn) btn.innerHTML = '<i class="fa-solid fa-bars"></i>';
@@ -112,9 +109,8 @@ function updateHeaderUI(user) {
     accountBtn?.classList.add('hidden');
     if (hmProfileRow) hmProfileRow.classList.add('hidden');
     if (hmPrDivider)  hmPrDivider.classList.add('hidden');
-    if (hmAuthSep) hmAuthSep.style.display = '';
-    if (hmLogin)   hmLogin.style.display   = '';
-    if (hmSignup)  hmSignup.style.display  = '';
+    // Pas connecté → montre le bouton auth unifié
+    authUnified?.classList.remove('hidden');
     logoutBtn?.classList.add('hidden');
   }
   if (signoutItem) signoutItem.style.display = user ? '' : 'none';
@@ -600,8 +596,12 @@ function showPasswordUpdated() {
 ═════════════════════════════════════════════*/
 function initAuthUI() {
   // ── Ouvrir le modal (header desktop) ──
+  // Anciens boutons login/signup (cachés mais conservés pour compat)
   $id('header-btn-login')?.addEventListener('click',  () => openAuthModal('login'));
   $id('header-btn-signup')?.addEventListener('click', () => openAuthModal('signup'));
+  // Nouveau bouton unifié "Se connecter / Rejoindre" : ouvre le modal en mode signup
+  // (l'utilisateur peut basculer vers Connexion via les onglets dans le modal)
+  $id('header-btn-auth')?.addEventListener('click', () => openAuthModal('signup'));
 
   // ── Déconnexion (bouton desktop header) ──
   $id('header-btn-logout')?.addEventListener('click', async () => {
