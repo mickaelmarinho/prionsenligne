@@ -109,6 +109,38 @@
   let currentVerseHighlight = null;   // numéro de verset à scroller
   let initialized = false;
 
+  // ── Auth : la personnalisation (highlights / favoris) requiert un compte ──
+  function isLoggedIn() { return !!window._pelUser; }
+
+  // Affiche un message éphémère invitant à se connecter
+  let _loginToastEl = null;
+  function showLoginRequiredToast(msg) {
+    if (_loginToastEl) { _loginToastEl.remove(); _loginToastEl = null; }
+    const toast = document.createElement('div');
+    toast.className = 'bible-login-toast';
+    toast.innerHTML = `
+      <i class="fa-solid fa-lock"></i>
+      <span>${escapeHtml(msg || 'Connectez-vous pour personnaliser votre Bible')}</span>
+      <button type="button" class="bible-login-toast-cta" id="bible-login-toast-cta">Créer un compte</button>
+    `;
+    document.body.appendChild(toast);
+    _loginToastEl = toast;
+    requestAnimationFrame(() => toast.classList.add('show'));
+    document.getElementById('bible-login-toast-cta')?.addEventListener('click', () => {
+      // Ouvre le modal d'inscription via le header
+      document.getElementById('header-btn-signup')?.click();
+      // Sur mobile, ouvre via le menu burger
+      document.getElementById('hm-signup-item')?.click();
+      hideLoginToast();
+    });
+    setTimeout(hideLoginToast, 4500);
+  }
+  function hideLoginToast() {
+    if (!_loginToastEl) return;
+    _loginToastEl.classList.remove('show');
+    setTimeout(() => { _loginToastEl?.remove(); _loginToastEl = null; }, 300);
+  }
+
   // ── Cache localStorage (indexé par traduction + livre + chapitre) ─
   const CACHE_PREFIX = 'pel_bible_ch_';
   function cacheGet(book, ch) {
@@ -343,7 +375,8 @@
     const nextCh = chapter < book.ch ? chapter + 1 : null;
 
     const trShort = TRANSLATIONS[currentTranslation]?.short || '';
-    let html = `<div class="bible-chapter">
+    const loggedIn = isLoggedIn();
+    let html = `<div class="bible-chapter${loggedIn ? '' : ' guest-mode'}">
       <div class="bible-chapter-toprow">
         <button class="bible-home-btn" id="bible-home" type="button" title="Retour à la sélection des Bibles">
           <i class="fa-solid fa-house"></i>
@@ -351,6 +384,12 @@
         </button>
         <span class="bible-current-trans-badge">${escapeHtml(trShort)}</span>
       </div>
+      ${!loggedIn ? `
+      <div class="bible-guest-banner">
+        <i class="fa-solid fa-lock"></i>
+        <span>Lecture libre. <strong>Créez un compte gratuit</strong> pour surligner vos versets, marquer des favoris et personnaliser votre Bible.</span>
+        <button type="button" class="bible-guest-banner-cta" id="bible-guest-signup">Créer un compte</button>
+      </div>` : ''}
       <div class="bible-chapter-header">
         <button class="bible-back-btn" id="bible-back" aria-label="Retour à la liste des chapitres" title="Liste des chapitres">
           <i class="fa-solid fa-arrow-left"></i>
@@ -401,6 +440,15 @@
     reader.innerHTML = html;
 
     // Event handlers
+    reader.querySelector('#bible-guest-signup')?.addEventListener('click', () => {
+      // Ouvre le modal d'inscription (header desktop OU menu burger mobile)
+      const desktopBtn = document.getElementById('header-btn-signup');
+      const mobileBtn  = document.getElementById('hm-signup-item');
+      // Préférer le visible
+      if (desktopBtn && desktopBtn.offsetParent !== null) desktopBtn.click();
+      else if (mobileBtn) mobileBtn.click();
+      else desktopBtn?.click();
+    });
     reader.querySelector('#bible-home')?.addEventListener('click', () => {
       currentBook = null;
       currentChapter = null;
@@ -428,14 +476,8 @@
         const verseEl = reader.querySelector(`#v-${verse}`);
         const action = btn.dataset.action;
 
-        if (action === 'hi') {
-          const isOn = toggleHighlight(book.name, chapter, verse);
-          btn.classList.toggle('active', isOn);
-          verseEl?.classList.toggle('highlighted', isOn);
-        } else if (action === 'fav') {
-          const isOn = toggleFav(book.name, chapter, verse);
-          btn.classList.toggle('active', isOn);
-        } else if (action === 'share') {
+        // "share" est dispo pour tout le monde (juste copier dans le presse-papier)
+        if (action === 'share') {
           const ref = `${book.name} ${chapter}:${verse}`;
           const txt = verseEl?.querySelector('.bible-verse-text')?.textContent.trim() || '';
           const fullText = `« ${txt} »\n— ${ref}`;
@@ -444,12 +486,34 @@
               flashFeedback(btn, '✓ Copié');
             }).catch(() => {});
           }
+          return;
+        }
+
+        // Personnalisation (highlight verset, favori) : compte requis
+        if (!isLoggedIn()) {
+          showLoginRequiredToast(action === 'fav'
+            ? 'Créez un compte gratuit pour ajouter des favoris.'
+            : 'Créez un compte gratuit pour surligner vos versets préférés.');
+          return;
+        }
+
+        if (action === 'hi') {
+          const isOn = toggleHighlight(book.name, chapter, verse);
+          btn.classList.toggle('active', isOn);
+          verseEl?.classList.toggle('highlighted', isOn);
+        } else if (action === 'fav') {
+          const isOn = toggleFav(book.name, chapter, verse);
+          btn.classList.toggle('active', isOn);
         }
         return;
       }
-      // 2. Clic sur un mot → toggle surlignage du mot
+      // 2. Clic sur un mot → toggle surlignage du mot (compte requis)
       const word = e.target.closest('.bible-word');
       if (word) {
+        if (!isLoggedIn()) {
+          showLoginRequiredToast('Créez un compte gratuit pour surligner mot par mot.');
+          return;
+        }
         const verseEl = word.closest('.bible-verse');
         if (!verseEl) return;
         const verse  = parseInt(verseEl.dataset.verse, 10);
@@ -710,8 +774,14 @@
     });
     syncTranslationBtns();
 
-    // Panel favoris
-    document.getElementById('bible-fav-toggle')?.addEventListener('click', openFavPanel);
+    // Panel favoris (compte requis)
+    document.getElementById('bible-fav-toggle')?.addEventListener('click', () => {
+      if (!isLoggedIn()) {
+        showLoginRequiredToast('Créez un compte gratuit pour retrouver vos favoris partout.');
+        return;
+      }
+      openFavPanel();
+    });
     document.getElementById('bible-fav-close')?.addEventListener('click', closeFavPanel);
     // Clic sur l'overlay derrière le panel → ferme
     document.getElementById('bible-fav-overlay')?.addEventListener('click', closeFavPanel);
