@@ -5219,6 +5219,13 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
 }
 @keyframes bibleSpin { to { transform: rotate(360deg); } }
 .bible-error i { color: #c44; font-size: 24px; margin-bottom: 8px; }
+.bible-error-detail {
+  font-size: 11px !important;
+  color: var(--text-soft);
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  margin-top: 8px !important;
+  opacity: .7;
+}
 .bible-retry {
   background: var(--navy); color: white;
   border: none; border-radius: 8px;

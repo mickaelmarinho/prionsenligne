@@ -11,76 +11,77 @@
   'use strict';
 
   // ── Liste des livres bibliques (LSG) ──────────────────────
+  // id : numéro 1-66 utilisé par bolls.life (Genesis=1, Apocalypse=66)
   const BOOKS = {
     ot: [
-      { name: 'Genèse',         api: 'genesis',         ch: 50 },
-      { name: 'Exode',          api: 'exodus',          ch: 40 },
-      { name: 'Lévitique',      api: 'leviticus',       ch: 27 },
-      { name: 'Nombres',        api: 'numbers',         ch: 36 },
-      { name: 'Deutéronome',    api: 'deuteronomy',     ch: 34 },
-      { name: 'Josué',          api: 'joshua',          ch: 24 },
-      { name: 'Juges',          api: 'judges',          ch: 21 },
-      { name: 'Ruth',           api: 'ruth',            ch: 4  },
-      { name: '1 Samuel',       api: '1+samuel',        ch: 31 },
-      { name: '2 Samuel',       api: '2+samuel',        ch: 24 },
-      { name: '1 Rois',         api: '1+kings',         ch: 22 },
-      { name: '2 Rois',         api: '2+kings',         ch: 25 },
-      { name: '1 Chroniques',   api: '1+chronicles',    ch: 29 },
-      { name: '2 Chroniques',   api: '2+chronicles',    ch: 36 },
-      { name: 'Esdras',         api: 'ezra',            ch: 10 },
-      { name: 'Néhémie',        api: 'nehemiah',        ch: 13 },
-      { name: 'Esther',         api: 'esther',          ch: 10 },
-      { name: 'Job',            api: 'job',             ch: 42 },
-      { name: 'Psaumes',        api: 'psalms',          ch: 150 },
-      { name: 'Proverbes',      api: 'proverbs',        ch: 31 },
-      { name: 'Ecclésiaste',    api: 'ecclesiastes',    ch: 12 },
-      { name: 'Cantique',       api: 'song+of+solomon', ch: 8  },
-      { name: 'Ésaïe',          api: 'isaiah',          ch: 66 },
-      { name: 'Jérémie',        api: 'jeremiah',        ch: 52 },
-      { name: 'Lamentations',   api: 'lamentations',    ch: 5  },
-      { name: 'Ézéchiel',       api: 'ezekiel',         ch: 48 },
-      { name: 'Daniel',         api: 'daniel',          ch: 12 },
-      { name: 'Osée',           api: 'hosea',           ch: 14 },
-      { name: 'Joël',           api: 'joel',            ch: 3  },
-      { name: 'Amos',           api: 'amos',            ch: 9  },
-      { name: 'Abdias',         api: 'obadiah',         ch: 1  },
-      { name: 'Jonas',          api: 'jonah',           ch: 4  },
-      { name: 'Michée',         api: 'micah',           ch: 7  },
-      { name: 'Nahum',          api: 'nahum',           ch: 3  },
-      { name: 'Habakuk',        api: 'habakkuk',        ch: 3  },
-      { name: 'Sophonie',       api: 'zephaniah',       ch: 3  },
-      { name: 'Aggée',          api: 'haggai',          ch: 2  },
-      { name: 'Zacharie',       api: 'zechariah',       ch: 14 },
-      { name: 'Malachie',       api: 'malachi',         ch: 4  },
+      { name: 'Genèse',         id: 1,  ch: 50 },
+      { name: 'Exode',          id: 2,  ch: 40 },
+      { name: 'Lévitique',      id: 3,  ch: 27 },
+      { name: 'Nombres',        id: 4,  ch: 36 },
+      { name: 'Deutéronome',    id: 5,  ch: 34 },
+      { name: 'Josué',          id: 6,  ch: 24 },
+      { name: 'Juges',          id: 7,  ch: 21 },
+      { name: 'Ruth',           id: 8,  ch: 4  },
+      { name: '1 Samuel',       id: 9,  ch: 31 },
+      { name: '2 Samuel',       id: 10, ch: 24 },
+      { name: '1 Rois',         id: 11, ch: 22 },
+      { name: '2 Rois',         id: 12, ch: 25 },
+      { name: '1 Chroniques',   id: 13, ch: 29 },
+      { name: '2 Chroniques',   id: 14, ch: 36 },
+      { name: 'Esdras',         id: 15, ch: 10 },
+      { name: 'Néhémie',        id: 16, ch: 13 },
+      { name: 'Esther',         id: 17, ch: 10 },
+      { name: 'Job',            id: 18, ch: 42 },
+      { name: 'Psaumes',        id: 19, ch: 150 },
+      { name: 'Proverbes',      id: 20, ch: 31 },
+      { name: 'Ecclésiaste',    id: 21, ch: 12 },
+      { name: 'Cantique',       id: 22, ch: 8  },
+      { name: 'Ésaïe',          id: 23, ch: 66 },
+      { name: 'Jérémie',        id: 24, ch: 52 },
+      { name: 'Lamentations',   id: 25, ch: 5  },
+      { name: 'Ézéchiel',       id: 26, ch: 48 },
+      { name: 'Daniel',         id: 27, ch: 12 },
+      { name: 'Osée',           id: 28, ch: 14 },
+      { name: 'Joël',           id: 29, ch: 3  },
+      { name: 'Amos',           id: 30, ch: 9  },
+      { name: 'Abdias',         id: 31, ch: 1  },
+      { name: 'Jonas',          id: 32, ch: 4  },
+      { name: 'Michée',         id: 33, ch: 7  },
+      { name: 'Nahum',          id: 34, ch: 3  },
+      { name: 'Habakuk',        id: 35, ch: 3  },
+      { name: 'Sophonie',       id: 36, ch: 3  },
+      { name: 'Aggée',          id: 37, ch: 2  },
+      { name: 'Zacharie',       id: 38, ch: 14 },
+      { name: 'Malachie',       id: 39, ch: 4  },
     ],
     nt: [
-      { name: 'Matthieu',       api: 'matthew',         ch: 28 },
-      { name: 'Marc',           api: 'mark',            ch: 16 },
-      { name: 'Luc',            api: 'luke',            ch: 24 },
-      { name: 'Jean',           api: 'john',            ch: 21 },
-      { name: 'Actes',          api: 'acts',            ch: 28 },
-      { name: 'Romains',        api: 'romans',          ch: 16 },
-      { name: '1 Corinthiens',  api: '1+corinthians',   ch: 16 },
-      { name: '2 Corinthiens',  api: '2+corinthians',   ch: 13 },
-      { name: 'Galates',        api: 'galatians',       ch: 6  },
-      { name: 'Éphésiens',      api: 'ephesians',       ch: 6  },
-      { name: 'Philippiens',    api: 'philippians',     ch: 4  },
-      { name: 'Colossiens',     api: 'colossians',      ch: 4  },
-      { name: '1 Thessaloniciens', api: '1+thessalonians', ch: 5 },
-      { name: '2 Thessaloniciens', api: '2+thessalonians', ch: 3 },
-      { name: '1 Timothée',     api: '1+timothy',       ch: 6  },
-      { name: '2 Timothée',     api: '2+timothy',       ch: 4  },
-      { name: 'Tite',           api: 'titus',           ch: 3  },
-      { name: 'Philémon',       api: 'philemon',        ch: 1  },
-      { name: 'Hébreux',        api: 'hebrews',         ch: 13 },
-      { name: 'Jacques',        api: 'james',           ch: 5  },
-      { name: '1 Pierre',       api: '1+peter',         ch: 5  },
-      { name: '2 Pierre',       api: '2+peter',         ch: 3  },
-      { name: '1 Jean',         api: '1+john',          ch: 5  },
-      { name: '2 Jean',         api: '2+john',          ch: 1  },
-      { name: '3 Jean',         api: '3+john',          ch: 1  },
-      { name: 'Jude',           api: 'jude',            ch: 1  },
-      { name: 'Apocalypse',     api: 'revelation',      ch: 22 },
+      { name: 'Matthieu',       id: 40, ch: 28 },
+      { name: 'Marc',           id: 41, ch: 16 },
+      { name: 'Luc',            id: 42, ch: 24 },
+      { name: 'Jean',           id: 43, ch: 21 },
+      { name: 'Actes',          id: 44, ch: 28 },
+      { name: 'Romains',        id: 45, ch: 16 },
+      { name: '1 Corinthiens',  id: 46, ch: 16 },
+      { name: '2 Corinthiens',  id: 47, ch: 13 },
+      { name: 'Galates',        id: 48, ch: 6  },
+      { name: 'Éphésiens',      id: 49, ch: 6  },
+      { name: 'Philippiens',    id: 50, ch: 4  },
+      { name: 'Colossiens',     id: 51, ch: 4  },
+      { name: '1 Thessaloniciens', id: 52, ch: 5 },
+      { name: '2 Thessaloniciens', id: 53, ch: 3 },
+      { name: '1 Timothée',     id: 54, ch: 6  },
+      { name: '2 Timothée',     id: 55, ch: 4  },
+      { name: 'Tite',           id: 56, ch: 3  },
+      { name: 'Philémon',       id: 57, ch: 1  },
+      { name: 'Hébreux',        id: 58, ch: 13 },
+      { name: 'Jacques',        id: 59, ch: 5  },
+      { name: '1 Pierre',       id: 60, ch: 5  },
+      { name: '2 Pierre',       id: 61, ch: 3  },
+      { name: '1 Jean',         id: 62, ch: 5  },
+      { name: '2 Jean',         id: 63, ch: 1  },
+      { name: '3 Jean',         id: 64, ch: 1  },
+      { name: 'Jude',           id: 65, ch: 1  },
+      { name: 'Apocalypse',     id: 66, ch: 22 },
     ],
   };
 
@@ -111,13 +112,37 @@
   // ── Cache localStorage ────────────────────────────────────
   const CACHE_PREFIX = 'pel_bible_ch_';
   function cacheGet(book, ch) {
-    try { return JSON.parse(localStorage.getItem(`${CACHE_PREFIX}${book.api}_${ch}`) || 'null'); }
+    try { return JSON.parse(localStorage.getItem(`${CACHE_PREFIX}${book.id}_${ch}`) || 'null'); }
     catch (_) { return null; }
   }
   function cacheSet(book, ch, data) {
-    try { localStorage.setItem(`${CACHE_PREFIX}${book.api}_${ch}`, JSON.stringify(data)); }
+    try { localStorage.setItem(`${CACHE_PREFIX}${book.id}_${ch}`, JSON.stringify(data)); }
     catch (_) { /* quota plein, ignore */ }
   }
+
+  // ── Sources API (essai en cascade) ────────────────────────
+  // bolls.life propose la Bible Segond 1910 (FRLSG) gratuitement,
+  // avec CORS ouvert. On garde une BDS (Bible du Semeur) en fallback.
+  function bollsSource(translation) {
+    return {
+      name: 'bolls/' + translation,
+      url: (book, ch) => `https://bolls.life/get-text/${translation}/${book.id}/${ch}/`,
+      parse: (data) => {
+        if (!Array.isArray(data)) return null;
+        return {
+          verses: data.map(v => ({
+            verse: parseInt(v.verse, 10),
+            text:  String(v.text || '').replace(/<[^>]+>/g, '').trim(),
+          })).filter(v => !isNaN(v.verse) && v.text),
+        };
+      },
+    };
+  }
+  const API_SOURCES = [
+    bollsSource('FRLSG'),   // Louis Segond 1910 (référence catholique francophone)
+    bollsSource('BDS'),     // Bible du Semeur 2015 (fallback si LSG indisponible)
+    bollsSource('NBS'),     // Nouvelle Bible Segond 2002 (2e fallback)
+  ];
 
   // ── Surlignages ──────────────────────────────────────────
   // Forme : { "Jean_3:16": true, "Psaumes_23:1": true, ... }
@@ -233,16 +258,32 @@
         <p>Chargement de ${escapeHtml(book.name)} ${chapter}…</p>
       </div>`;
 
-      try {
-        const url = `https://bible-api.com/${book.api}+${chapter}?translation=lsg`;
-        const resp = await fetch(url);
-        if (!resp.ok) throw new Error('HTTP ' + resp.status);
-        data = await resp.json();
-        cacheSet(book, chapter, data);
-      } catch (err) {
+      // Essai en cascade des différentes sources API
+      let lastError = null;
+      for (const source of API_SOURCES) {
+        try {
+          const url = source.url(book, chapter);
+          const resp = await fetch(url);
+          if (!resp.ok) { lastError = `${source.name}: HTTP ${resp.status}`; continue; }
+          const raw = await resp.json();
+          const parsed = source.parse(raw);
+          if (parsed && parsed.verses && parsed.verses.length) {
+            data = parsed;
+            cacheSet(book, chapter, data);
+            break;
+          }
+          lastError = `${source.name}: réponse vide`;
+        } catch (err) {
+          lastError = `${source.name}: ${err.message}`;
+        }
+      }
+
+      if (!data) {
+        console.warn('[bible] Toutes les sources ont échoué :', lastError);
         reader.innerHTML = `<div class="bible-error">
           <i class="fa-solid fa-triangle-exclamation"></i>
           <p>Impossible de charger ce chapitre. Vérifiez votre connexion internet.</p>
+          <p class="bible-error-detail">${escapeHtml(lastError || '')}</p>
           <button class="bible-retry" id="bible-retry">Réessayer</button>
         </div>`;
         document.getElementById('bible-retry')?.addEventListener('click', () => loadChapter(book, chapter, opts));
