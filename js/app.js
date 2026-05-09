@@ -3956,6 +3956,35 @@ function handleDeepLink() {
   const hash = location.hash.replace('#', '').toLowerCase();
   if (!hash) return;
 
+  // Ouverture du modal d'inscription (depuis la landing page)
+  if (hash === 'signup') {
+    // Petit délai pour laisser le DOM et l'auth s'initialiser
+    setTimeout(() => {
+      const desktopBtn = document.getElementById('header-btn-signup');
+      const mobileBtn  = document.getElementById('hm-signup-item');
+      // Préférer le bouton visible (desktop si visible, sinon mobile)
+      if (desktopBtn && desktopBtn.offsetParent !== null) desktopBtn.click();
+      else if (mobileBtn && mobileBtn.offsetParent !== null) mobileBtn.click();
+      else (desktopBtn || mobileBtn)?.click();
+      // Nettoie le hash de l'URL pour ne pas le réouvrir au refresh
+      history.replaceState(null, '', location.pathname);
+    }, 250);
+    return;
+  }
+
+  // Ouverture du modal de connexion
+  if (hash === 'login') {
+    setTimeout(() => {
+      const desktopBtn = document.getElementById('header-btn-login');
+      const mobileBtn  = document.getElementById('hm-login-item');
+      if (desktopBtn && desktopBtn.offsetParent !== null) desktopBtn.click();
+      else if (mobileBtn && mobileBtn.offsetParent !== null) mobileBtn.click();
+      else (desktopBtn || mobileBtn)?.click();
+      history.replaceState(null, '', location.pathname);
+    }, 250);
+    return;
+  }
+
   // Ouvre directement le chapelet numérique (modal)
   if (hash === 'open-chapelet') {
     setTimeout(() => document.getElementById('chapelet-fab')?.click(), 150);
@@ -3971,7 +4000,7 @@ function handleDeepLink() {
   }
 
   // Onglets dédiés simples
-  if (['semaine', 'sources'].includes(hash)) {
+  if (['semaine', 'sources', 'bible'].includes(hash)) {
     document.querySelector(`.nav-tab[data-tab="${hash}"]`)?.click();
     return;
   }
