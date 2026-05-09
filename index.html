@@ -72,7 +72,7 @@
         <i class="fa-solid fa-hands-praying"></i> Commencer à prier
       </a>
 
-      <a href="/agenda#login" class="lp-signin-link">J'ai déjà un compte → me connecter</a>
+      <a href="#" class="lp-signin-link" data-lp-auth="login">J'ai déjà un compte → me connecter</a>
     </div>
 
     <div class="lp-scroll-hint" aria-hidden="true">
@@ -189,7 +189,7 @@
             <li><i class="fa-solid fa-lock-open"></i> Synchronisation entre tous vos appareils</li>
             <li><i class="fa-solid fa-circle-check"></i> Inscription en 30 secondes, sans carte bancaire</li>
           </ul>
-          <a href="/agenda#signup" class="lp-account-cta">
+          <a href="#" class="lp-account-cta" data-lp-auth="signup">
             <i class="fa-solid fa-hands-praying"></i>
             Créer mon compte gratuit
           </a>
@@ -282,7 +282,7 @@
       </div>
 
       <br>
-      <a href="/agenda#signup" class="lp-cta-secondary">Créer un compte gratuitement →</a>
+      <a href="#" class="lp-cta-secondary" data-lp-auth="signup">Créer un compte gratuitement →</a>
     </div>
   </section>
 
@@ -296,6 +296,73 @@
       Textes liturgiques : <a href="https://www.aelf.org" target="_blank" rel="noopener">AELF</a>
     </span>
   </footer>
+
+
+  <!-- ═══════════════════════════════════════════
+       MODAL AUTH (création de compte / connexion)
+  ═══════════════════════════════════════════ -->
+  <div id="lp-auth-overlay" class="lp-auth-overlay hidden"></div>
+  <div id="lp-auth-modal" class="lp-auth-modal hidden" role="dialog" aria-modal="true" aria-label="Créer un compte ou se connecter">
+    <div class="lp-auth-panel">
+      <button class="lp-auth-close" id="lp-auth-close" aria-label="Fermer">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="lp-auth-header">
+        <div class="lp-auth-cross" aria-hidden="true">
+          <span></span><span></span>
+        </div>
+        <h2 id="lp-auth-title" class="lp-auth-title">Créer mon compte</h2>
+        <p id="lp-auth-subtitle" class="lp-auth-subtitle">Inscription en 30 secondes — gratuit, sans carte bancaire</p>
+      </div>
+
+      <!-- Tabs : signup / login -->
+      <div class="lp-auth-tabs" role="tablist">
+        <button class="lp-auth-tab active" id="lp-tab-signup" data-mode="signup" role="tab" type="button">Créer un compte</button>
+        <button class="lp-auth-tab" id="lp-tab-login" data-mode="login" role="tab" type="button">Connexion</button>
+      </div>
+
+      <form id="lp-auth-form" class="lp-auth-form" novalidate>
+        <div class="lp-auth-group" id="lp-name-group">
+          <label for="lp-name"><i class="fa-solid fa-user"></i> Prénom</label>
+          <input type="text" id="lp-name" name="name" placeholder="Votre prénom" autocomplete="given-name">
+        </div>
+        <div class="lp-auth-group">
+          <label for="lp-email"><i class="fa-solid fa-envelope"></i> Adresse e-mail</label>
+          <input type="email" id="lp-email" name="email" placeholder="vous@exemple.fr" autocomplete="email" required>
+        </div>
+        <div class="lp-auth-group">
+          <label for="lp-password"><i class="fa-solid fa-lock"></i> Mot de passe</label>
+          <input type="password" id="lp-password" name="password" placeholder="••••••••" minlength="6" autocomplete="new-password" required>
+        </div>
+        <div class="lp-auth-group" id="lp-confirm-group">
+          <label for="lp-confirm"><i class="fa-solid fa-lock"></i> Confirmer le mot de passe</label>
+          <input type="password" id="lp-confirm" name="confirm" placeholder="••••••••" minlength="6" autocomplete="new-password">
+        </div>
+
+        <div id="lp-auth-error" class="lp-auth-error hidden"></div>
+
+        <button type="submit" class="lp-auth-submit" id="lp-auth-submit">
+          <i class="fa-solid fa-hands-praying"></i>
+          <span id="lp-auth-submit-label">Créer mon compte gratuit</span>
+        </button>
+
+        <p class="lp-auth-note" id="lp-auth-note">
+          <i class="fa-solid fa-shield-halved"></i>
+          Aucune publicité. Aucune carte bancaire. Vos données ne sont jamais revendues.
+        </p>
+      </form>
+
+      <!-- Écran de succès après inscription -->
+      <div id="lp-auth-success" class="lp-auth-success hidden">
+        <i class="fa-solid fa-envelope-circle-check lp-auth-success-icon"></i>
+        <h3>Vérifiez votre boîte mail</h3>
+        <p>Un email de confirmation vient de partir à <strong id="lp-auth-success-email"></strong>. Cliquez sur le lien qu'il contient pour activer votre compte.</p>
+        <p class="lp-auth-success-hint">Pensez à vérifier vos spams si vous ne le voyez pas dans la minute.</p>
+        <a href="/agenda" class="lp-auth-success-cta">Continuer vers le site →</a>
+      </div>
+    </div>
+  </div>
 
 
   <!-- ═══════════════════════════════════════════
@@ -476,6 +543,185 @@
         });
       }, { threshold: 0.01 });
       obs.observe(footer);
+    })();
+
+
+    // ── Auth Modal (signup / login direct sur la landing) ─────
+    (function () {
+      const SB_URL = 'https://idltzfiaourgfwiuiphp.supabase.co';
+      const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlkbHR6Zmlhb3VyZ2Z3aXVpcGhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcxMzYxOTksImV4cCI6MjA5MjcxMjE5OX0.d5egaKYxiIarxdkW6Lxvttlbd8dukJtmoJ3k4s1Hjro';
+
+      const overlay   = document.getElementById('lp-auth-overlay');
+      const modal     = document.getElementById('lp-auth-modal');
+      const closeBtn  = document.getElementById('lp-auth-close');
+      const tabSign   = document.getElementById('lp-tab-signup');
+      const tabLog    = document.getElementById('lp-tab-login');
+      const form      = document.getElementById('lp-auth-form');
+      const submit    = document.getElementById('lp-auth-submit');
+      const subLabel  = document.getElementById('lp-auth-submit-label');
+      const errBox    = document.getElementById('lp-auth-error');
+      const successEl = document.getElementById('lp-auth-success');
+      const successEmail = document.getElementById('lp-auth-success-email');
+      const titleEl   = document.getElementById('lp-auth-title');
+      const subtitleEl= document.getElementById('lp-auth-subtitle');
+      const noteEl    = document.getElementById('lp-auth-note');
+      const nameGroup = document.getElementById('lp-name-group');
+      const confirmGroup = document.getElementById('lp-confirm-group');
+
+      let mode = 'signup';
+
+      function setMode(m) {
+        mode = m;
+        const isSign = m === 'signup';
+        tabSign.classList.toggle('active', isSign);
+        tabLog.classList.toggle('active', !isSign);
+        tabSign.setAttribute('aria-selected', isSign);
+        tabLog.setAttribute('aria-selected',  !isSign);
+        nameGroup.style.display    = isSign ? '' : 'none';
+        confirmGroup.style.display = isSign ? '' : 'none';
+        titleEl.textContent    = isSign ? 'Créer mon compte' : 'Connexion';
+        subtitleEl.textContent = isSign
+          ? 'Inscription en 30 secondes — gratuit, sans carte bancaire'
+          : 'Connectez-vous à votre compte PrionsEnLigne';
+        subLabel.textContent = isSign ? 'Créer mon compte gratuit' : 'Se connecter';
+        noteEl.style.display = isSign ? '' : 'none';
+        clearError();
+      }
+
+      function open(m) {
+        setMode(m || 'signup');
+        successEl.classList.add('hidden');
+        form.classList.remove('hidden');
+        form.reset();
+        overlay.classList.remove('hidden');
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        setTimeout(() => document.getElementById(mode === 'signup' ? 'lp-name' : 'lp-email')?.focus(), 80);
+      }
+      function close() {
+        overlay.classList.add('hidden');
+        modal.classList.add('hidden');
+        document.body.style.overflow = '';
+      }
+
+      function showError(msg) {
+        errBox.textContent = msg;
+        errBox.classList.remove('hidden');
+      }
+      function clearError() {
+        errBox.classList.add('hidden');
+        errBox.textContent = '';
+      }
+
+      function translateError(code, msg) {
+        const m = (msg || '').toLowerCase();
+        if (m.includes('user already registered') || m.includes('already')) return 'Cette adresse est déjà utilisée. Connectez-vous plutôt.';
+        if (m.includes('invalid login credentials')) return 'Email ou mot de passe incorrect.';
+        if (m.includes('email not confirmed')) return "Email pas encore confirmé. Vérifiez votre boîte mail.";
+        if (m.includes('weak password') || m.includes('password should')) return 'Mot de passe trop faible (au moins 6 caractères).';
+        if (m.includes('rate limit') || m.includes('too many')) return 'Trop de tentatives. Réessayez dans une minute.';
+        if (m.includes('email') && m.includes('invalid')) return 'Adresse email invalide.';
+        return msg || 'Erreur, réessayez.';
+      }
+
+      // Listeners pour ouvrir le modal
+      document.querySelectorAll('[data-lp-auth]').forEach(el => {
+        el.addEventListener('click', e => {
+          e.preventDefault();
+          open(el.dataset.lpAuth);
+        });
+      });
+      closeBtn?.addEventListener('click', close);
+      overlay?.addEventListener('click', close);
+      modal?.addEventListener('click', e => { if (e.target === modal) close(); });
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) close();
+      });
+
+      tabSign.addEventListener('click', () => setMode('signup'));
+      tabLog.addEventListener('click',  () => setMode('login'));
+
+      // Soumission via API REST Supabase
+      form.addEventListener('submit', async e => {
+        e.preventDefault();
+        clearError();
+
+        const name     = document.getElementById('lp-name').value.trim();
+        const email    = document.getElementById('lp-email').value.trim();
+        const password = document.getElementById('lp-password').value;
+        const confirm  = document.getElementById('lp-confirm').value;
+
+        if (!email || !password) { showError('Veuillez remplir tous les champs.'); return; }
+        if (password.length < 6) { showError('Mot de passe : 6 caractères minimum.'); return; }
+
+        if (mode === 'signup') {
+          if (password !== confirm) { showError('Les mots de passe ne correspondent pas.'); return; }
+        }
+
+        submit.disabled = true;
+        const oldLabel = subLabel.textContent;
+        subLabel.textContent = mode === 'signup' ? 'Création…' : 'Connexion…';
+
+        try {
+          const endpoint = mode === 'signup' ? '/auth/v1/signup' : '/auth/v1/token?grant_type=password';
+          const body = mode === 'signup'
+            ? { email, password, data: { name: name || email.split('@')[0] } }
+            : { email, password };
+
+          const res = await fetch(SB_URL + endpoint, {
+            method: 'POST',
+            headers: {
+              'apikey': SB_KEY,
+              'Authorization': 'Bearer ' + SB_KEY,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(body),
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            showError(translateError(data.error_code || data.code, data.msg || data.error_description || data.message));
+            return;
+          }
+
+          if (mode === 'signup') {
+            // Affiche l'écran de confirmation
+            successEmail.textContent = email;
+            form.classList.add('hidden');
+            successEl.classList.remove('hidden');
+            // Mémorise pour l'agenda : pas afficher le bandeau bienvenue
+            try { localStorage.setItem('pel_welcomed', '1'); } catch (_) {}
+          } else {
+            // Login OK → on stocke la session et on redirige vers /agenda
+            try {
+              if (data.access_token) {
+                // Stocke dans le localStorage de Supabase pour reprise auto
+                const sessionKey = 'sb-' + (new URL(SB_URL).hostname.split('.')[0]) + '-auth-token';
+                localStorage.setItem(sessionKey, JSON.stringify({
+                  access_token:  data.access_token,
+                  refresh_token: data.refresh_token,
+                  expires_at:    data.expires_at,
+                  token_type:    data.token_type,
+                  user:          data.user,
+                }));
+              }
+            } catch (_) {}
+            window.location.href = '/agenda';
+          }
+        } catch (err) {
+          showError('Connexion impossible. Vérifiez votre internet.');
+        } finally {
+          submit.disabled = false;
+          subLabel.textContent = oldLabel;
+        }
+      });
+
+      // Si on arrive avec #signup ou #login dans l'URL, on ouvre direct
+      const hash = location.hash.replace('#', '').toLowerCase();
+      if (hash === 'signup' || hash === 'login') {
+        setTimeout(() => open(hash), 100);
+      }
     })();
   </script>
 
