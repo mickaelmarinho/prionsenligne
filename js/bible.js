@@ -109,42 +109,78 @@
   let currentVerseHighlight = null;   // numéro de verset à scroller
   let initialized = false;
 
-  // ── Cache localStorage ────────────────────────────────────
+  // ── Cache localStorage (indexé par traduction + livre + chapitre) ─
   const CACHE_PREFIX = 'pel_bible_ch_';
   function cacheGet(book, ch) {
-    try { return JSON.parse(localStorage.getItem(`${CACHE_PREFIX}${book.id}_${ch}`) || 'null'); }
+    try { return JSON.parse(localStorage.getItem(`${CACHE_PREFIX}${currentTranslation}_${book.id}_${ch}`) || 'null'); }
     catch (_) { return null; }
   }
   function cacheSet(book, ch, data) {
-    try { localStorage.setItem(`${CACHE_PREFIX}${book.id}_${ch}`, JSON.stringify(data)); }
+    try { localStorage.setItem(`${CACHE_PREFIX}${currentTranslation}_${book.id}_${ch}`, JSON.stringify(data)); }
     catch (_) { /* quota plein, ignore */ }
   }
 
-  // ── Sources API (essai en cascade) ────────────────────────
-  // bolls.life propose la Bible Segond 1910 (FRLSG) gratuitement,
-  // avec CORS ouvert. On garde une BDS (Bible du Semeur) en fallback.
-  function bollsSource(translation) {
-    return {
-      name: 'bolls/' + translation,
-      url: (book, ch) => `https://bolls.life/get-text/${translation}/${book.id}/${ch}/`,
-      parse: (data) => {
-        if (!Array.isArray(data)) return null;
-        return {
-          verses: data.map(v => ({
-            verse: parseInt(v.verse, 10),
-            text:  String(v.text || '').replace(/<[^>]+>/g, '').trim(),
-          })).filter(v => !isNaN(v.verse) && v.text),
-        };
-      },
-    };
-  }
-  const API_SOURCES = [
-    bollsSource('FRLSG'),   // Louis Segond 1910 (référence catholique francophone)
-    bollsSource('BDS'),     // Bible du Semeur 2015 (fallback si LSG indisponible)
-    bollsSource('NBS'),     // Nouvelle Bible Segond 2002 (2e fallback)
-  ];
+  // ── Traductions disponibles (bolls.life) ─────────────────
+  const TRANSLATIONS = {
+    FRLSG: {
+      code:  'FRLSG',
+      short: 'LSG',
+      full:  'Bible Segond 1910',
+      year:  '1910',
+      desc:  "Traduction historique de référence dans le monde francophone, par Louis Segond. Texte limpide et fidèle aux originaux hébreux et grecs.",
+      cover: 'navy',  // style de couverture
+    },
+    BDS: {
+      code:  'BDS',
+      short: 'BDS',
+      full:  'Bible du Semeur',
+      year:  '2015',
+      desc:  "Traduction moderne et accessible, soucieuse d'une lecture fluide tout en restant fidèle aux textes originaux.",
+      cover: 'leather',
+    },
+    NBS: {
+      code:  'NBS',
+      short: 'NBS',
+      full:  'Nouvelle Bible Segond',
+      year:  '2002',
+      desc:  "Révision savante de la Segond avec un appareil critique poussé. Idéale pour l'étude approfondie des Écritures.",
+      cover: 'minimal',
+    },
+  };
+  const TRANSLATION_ORDER = ['FRLSG', 'BDS', 'NBS'];
 
-  // ── Surlignages ──────────────────────────────────────────
+  let currentTranslation = localStorage.getItem('pel_bible_translation') || 'FRLSG';
+  if (!TRANSLATIONS[currentTranslation]) currentTranslation = 'FRLSG';
+
+  // Source unique selon la traduction active. Fallback automatique
+  // sur les autres traductions si la source primaire échoue.
+  function fetchChapter(book, ch) {
+    const order = [currentTranslation, ...TRANSLATION_ORDER.filter(t => t !== currentTranslation)];
+    return (async () => {
+      let lastErr = '';
+      for (const t of order) {
+        try {
+          const url = `https://bolls.life/get-text/${t}/${book.id}/${ch}/`;
+          const resp = await fetch(url);
+          if (!resp.ok) { lastErr = `${t}: HTTP ${resp.status}`; continue; }
+          const raw = await resp.json();
+          if (!Array.isArray(raw) || !raw.length) { lastErr = `${t}: réponse vide`; continue; }
+          return {
+            translation: t,
+            verses: raw.map(v => ({
+              verse: parseInt(v.verse, 10),
+              text:  String(v.text || '').replace(/<[^>]+>/g, '').trim(),
+            })).filter(v => !isNaN(v.verse) && v.text),
+          };
+        } catch (err) {
+          lastErr = `${t}: ${err.message}`;
+        }
+      }
+      throw new Error(lastErr);
+    })();
+  }
+
+  // ── Surlignages PAR VERSET ────────────────────────────────
   // Forme : { "Jean_3:16": true, "Psaumes_23:1": true, ... }
   function getHighlights() {
     try { return JSON.parse(localStorage.getItem('pel_bible_highlights') || '{}'); }
@@ -162,6 +198,26 @@
   }
   function isHighlighted(bookName, ch, verse) {
     return !!getHighlights()[`${bookName}_${ch}:${verse}`];
+  }
+
+  // ── Surlignages PAR MOT (granulaire) ──────────────────────
+  // Forme : { "Jean_3:16:5": true } → 5e mot du verset Jn 3:16
+  function getWordHighlights() {
+    try { return JSON.parse(localStorage.getItem('pel_bible_word_hi') || '{}'); }
+    catch (_) { return {}; }
+  }
+  function saveWordHighlights(obj) {
+    try { localStorage.setItem('pel_bible_word_hi', JSON.stringify(obj)); } catch (_) {}
+  }
+  function toggleWordHighlight(bookName, ch, verse, wordIdx) {
+    const key = `${bookName}_${ch}:${verse}:${wordIdx}`;
+    const h = getWordHighlights();
+    if (h[key]) delete h[key]; else h[key] = Date.now();
+    saveWordHighlights(h);
+    return !!h[key];
+  }
+  function isWordHighlighted(bookName, ch, verse, wordIdx) {
+    return !!getWordHighlights()[`${bookName}_${ch}:${verse}:${wordIdx}`];
   }
 
   // ── Favoris ──────────────────────────────────────────────
@@ -250,40 +306,24 @@
     const reader = document.getElementById('bible-reader');
     if (!reader) return;
 
-    // Si déjà en cache, on affiche immédiatement
+    // Si déjà en cache (pour la traduction active), on affiche immédiatement
     let data = cacheGet(book, chapter);
     if (!data) {
       reader.innerHTML = `<div class="bible-loading">
         <div class="bible-spinner"></div>
         <p>Chargement de ${escapeHtml(book.name)} ${chapter}…</p>
+        <p class="bible-loading-trans">${escapeHtml(TRANSLATIONS[currentTranslation].full)}</p>
       </div>`;
 
-      // Essai en cascade des différentes sources API
-      let lastError = null;
-      for (const source of API_SOURCES) {
-        try {
-          const url = source.url(book, chapter);
-          const resp = await fetch(url);
-          if (!resp.ok) { lastError = `${source.name}: HTTP ${resp.status}`; continue; }
-          const raw = await resp.json();
-          const parsed = source.parse(raw);
-          if (parsed && parsed.verses && parsed.verses.length) {
-            data = parsed;
-            cacheSet(book, chapter, data);
-            break;
-          }
-          lastError = `${source.name}: réponse vide`;
-        } catch (err) {
-          lastError = `${source.name}: ${err.message}`;
-        }
-      }
-
-      if (!data) {
-        console.warn('[bible] Toutes les sources ont échoué :', lastError);
+      try {
+        data = await fetchChapter(book, chapter);
+        cacheSet(book, chapter, data);
+      } catch (err) {
+        console.warn('[bible] Toutes les sources ont échoué :', err.message);
         reader.innerHTML = `<div class="bible-error">
           <i class="fa-solid fa-triangle-exclamation"></i>
           <p>Impossible de charger ce chapitre. Vérifiez votre connexion internet.</p>
-          <p class="bible-error-detail">${escapeHtml(lastError || '')}</p>
+          <p class="bible-error-detail">${escapeHtml(err.message || '')}</p>
           <button class="bible-retry" id="bible-retry">Réessayer</button>
         </div>`;
         document.getElementById('bible-retry')?.addEventListener('click', () => loadChapter(book, chapter, opts));
@@ -320,17 +360,29 @@
       const txt = (v.text || '').trim();
       const hi  = isHighlighted(book.name, chapter, num);
       const fav = isFav(book.name, chapter, num);
+
+      // Découpe le verset en mots cliquables individuellement
+      // (chaque mot peut être surligné séparément du reste du verset)
+      const words = txt.split(/(\s+)/);   // garde les espaces
+      let wordIdx = 0;
+      const wordsHtml = words.map(w => {
+        if (/^\s+$/.test(w)) return w;            // pur whitespace → on garde tel quel
+        const idx = wordIdx++;
+        const isHi = isWordHighlighted(book.name, chapter, num, idx);
+        return `<span class="bible-word${isHi ? ' word-highlighted' : ''}" data-w="${idx}">${escapeHtml(w)}</span>`;
+      }).join('');
+
       html += `<div class="bible-verse${hi ? ' highlighted' : ''}" id="v-${num}" data-verse="${num}">
         <span class="bible-verse-num">${num}</span>
-        <span class="bible-verse-text">${escapeHtml(txt)}</span>
+        <span class="bible-verse-text">${wordsHtml}</span>
         <div class="bible-verse-actions">
-          <button class="bible-verse-action bible-hi-btn${hi ? ' active' : ''}" data-action="hi" data-verse="${num}" aria-label="Surligner">
+          <button class="bible-verse-action bible-hi-btn${hi ? ' active' : ''}" data-action="hi" data-verse="${num}" aria-label="Surligner tout le verset" title="Surligner le verset">
             <i class="fa-solid fa-highlighter"></i>
           </button>
-          <button class="bible-verse-action bible-fav-btn${fav ? ' active' : ''}" data-action="fav" data-verse="${num}" aria-label="Ajouter aux favoris">
-            <i class="fa-${fav ? 'solid' : 'regular'} fa-bookmark"></i>
+          <button class="bible-verse-action bible-fav-btn${fav ? ' active' : ''}" data-action="fav" data-verse="${num}" aria-label="Ajouter aux favoris" title="Favori">
+            <i class="fa-solid fa-bookmark"></i>
           </button>
-          <button class="bible-verse-action bible-share-btn" data-action="share" data-verse="${num}" aria-label="Copier la référence">
+          <button class="bible-verse-action bible-share-btn" data-action="share" data-verse="${num}" aria-label="Copier la référence" title="Copier">
             <i class="fa-solid fa-link"></i>
           </button>
         </div>
@@ -352,33 +404,45 @@
       });
     });
 
-    // Délégation pour les actions verset (highlight/fav/share)
+    // Délégation : clic sur action OU sur un mot
     reader.querySelector('.bible-verses')?.addEventListener('click', e => {
+      // 1. Action (surligner verset, favori, copier)
       const btn = e.target.closest('.bible-verse-action');
-      if (!btn) return;
-      e.stopPropagation();
-      const verse = parseInt(btn.dataset.verse, 10);
-      const verseEl = reader.querySelector(`#v-${verse}`);
-      const action = btn.dataset.action;
+      if (btn) {
+        e.stopPropagation();
+        const verse = parseInt(btn.dataset.verse, 10);
+        const verseEl = reader.querySelector(`#v-${verse}`);
+        const action = btn.dataset.action;
 
-      if (action === 'hi') {
-        const isOn = toggleHighlight(book.name, chapter, verse);
-        btn.classList.toggle('active', isOn);
-        verseEl?.classList.toggle('highlighted', isOn);
-      } else if (action === 'fav') {
-        const isOn = toggleFav(book.name, chapter, verse);
-        btn.classList.toggle('active', isOn);
-        const icon = btn.querySelector('i');
-        if (icon) icon.className = isOn ? 'fa-solid fa-bookmark' : 'fa-regular fa-bookmark';
-      } else if (action === 'share') {
-        const ref = `${book.name} ${chapter}:${verse}`;
-        const txt = verseEl?.querySelector('.bible-verse-text')?.textContent.trim() || '';
-        const fullText = `« ${txt} »\n— ${ref}`;
-        if (navigator.clipboard) {
-          navigator.clipboard.writeText(fullText).then(() => {
-            flashFeedback(btn, '✓ Copié');
-          }).catch(() => {});
+        if (action === 'hi') {
+          const isOn = toggleHighlight(book.name, chapter, verse);
+          btn.classList.toggle('active', isOn);
+          verseEl?.classList.toggle('highlighted', isOn);
+        } else if (action === 'fav') {
+          const isOn = toggleFav(book.name, chapter, verse);
+          btn.classList.toggle('active', isOn);
+        } else if (action === 'share') {
+          const ref = `${book.name} ${chapter}:${verse}`;
+          const txt = verseEl?.querySelector('.bible-verse-text')?.textContent.trim() || '';
+          const fullText = `« ${txt} »\n— ${ref}`;
+          if (navigator.clipboard) {
+            navigator.clipboard.writeText(fullText).then(() => {
+              flashFeedback(btn, '✓ Copié');
+            }).catch(() => {});
+          }
         }
+        return;
+      }
+      // 2. Clic sur un mot → toggle surlignage du mot
+      const word = e.target.closest('.bible-word');
+      if (word) {
+        const verseEl = word.closest('.bible-verse');
+        if (!verseEl) return;
+        const verse  = parseInt(verseEl.dataset.verse, 10);
+        const idx    = parseInt(word.dataset.w, 10);
+        if (isNaN(verse) || isNaN(idx)) return;
+        const isOn = toggleWordHighlight(book.name, chapter, verse, idx);
+        word.classList.toggle('word-highlighted', isOn);
       }
     });
 
@@ -467,10 +531,12 @@
 
   function openFavPanel() {
     document.getElementById('bible-fav-panel')?.classList.remove('hidden');
+    document.getElementById('bible-fav-overlay')?.classList.add('show');
     renderFavList();
   }
   function closeFavPanel() {
     document.getElementById('bible-fav-panel')?.classList.add('hidden');
+    document.getElementById('bible-fav-overlay')?.classList.remove('show');
   }
 
   // ── Helpers ──────────────────────────────────────────────
@@ -481,12 +547,102 @@
   }
   function escapeAttr(s) { return escapeHtml(s); }
 
+  // ── Sélecteur de traduction ──────────────────────────────
+  function setTranslation(code) {
+    if (!TRANSLATIONS[code] || code === currentTranslation) return;
+    currentTranslation = code;
+    localStorage.setItem('pel_bible_translation', code);
+    syncTranslationBtns();
+    // Recharge le chapitre courant si un est ouvert (avec le cache de cette traduction)
+    if (currentBook && currentChapter) {
+      loadChapter(currentBook, currentChapter);
+    } else {
+      // Sinon, on rafraîchit la welcome screen pour mettre à jour la couverture active
+      renderWelcome();
+    }
+  }
+  function syncTranslationBtns() {
+    document.querySelectorAll('.bible-trans-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.trans === currentTranslation);
+    });
+  }
+
+  // ── Welcome screen avec 3 couvertures de Bible ───────────
+  function renderWelcome() {
+    const reader = document.getElementById('bible-reader');
+    if (!reader) return;
+    const t = TRANSLATIONS;
+    reader.innerHTML = `
+      <div class="bible-welcome">
+        <h3 class="bible-welcome-title">Choisissez une traduction</h3>
+        <p class="bible-welcome-sub">Cliquez sur une Bible pour l'ouvrir et commencer la lecture.</p>
+
+        <div class="bible-shelf">
+          ${TRANSLATION_ORDER.map(code => {
+            const tr = t[code];
+            const isActive = code === currentTranslation;
+            return `<button class="bible-cover bible-cover-${tr.cover}${isActive ? ' is-active' : ''}" data-trans="${code}" type="button">
+              <div class="bible-cover-spine"></div>
+              <div class="bible-cover-front">
+                <div class="bible-cover-ornament-top"></div>
+                <div class="bible-cover-cross">
+                  <span></span><span></span>
+                </div>
+                <div class="bible-cover-title-block">
+                  <div class="bible-cover-the">LA SAINTE</div>
+                  <div class="bible-cover-bible">BIBLE</div>
+                  <div class="bible-cover-divider"></div>
+                  <div class="bible-cover-version">${escapeHtml(tr.short === 'LSG' ? 'Segond' : tr.short === 'BDS' ? 'Du Semeur' : 'Nouvelle Segond')}</div>
+                  <div class="bible-cover-year">${escapeHtml(tr.year)}</div>
+                </div>
+                <div class="bible-cover-ornament-bottom"></div>
+              </div>
+              <div class="bible-cover-pages"></div>
+              ${isActive ? '<span class="bible-cover-active-badge">Sélectionnée</span>' : ''}
+            </button>`;
+          }).join('')}
+        </div>
+
+        <p class="bible-welcome-translation-desc">${escapeHtml(t[currentTranslation].desc)}</p>
+
+        <div class="bible-quick-refs">
+          <span class="bible-quick-ref-label">Ou ouvrez directement :</span>
+          <button class="bible-quick-ref" data-ref="Genèse 1">Genèse 1</button>
+          <button class="bible-quick-ref" data-ref="Psaumes 23">Psaume 23</button>
+          <button class="bible-quick-ref" data-ref="Matthieu 5">Béatitudes</button>
+          <button class="bible-quick-ref" data-ref="Jean 3:16">Jean 3:16</button>
+          <button class="bible-quick-ref" data-ref="1 Corinthiens 13">1 Co 13 — L'Amour</button>
+        </div>
+      </div>
+    `;
+
+    // Click sur une couverture → ouvre la traduction sur Genèse 1
+    reader.querySelectorAll('.bible-cover').forEach(el => {
+      el.addEventListener('click', () => {
+        const code = el.dataset.trans;
+        setTranslation(code);
+        // Si pas déjà sur un chapitre, ouvre Genèse 1
+        if (!currentBook || !currentChapter) {
+          loadChapter(BOOKS.ot[0], 1);
+        }
+      });
+    });
+
+    reader.querySelectorAll('.bible-quick-ref').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const ref = parseReference(btn.dataset.ref);
+        if (ref) loadChapter(ref.book, ref.ch, { scrollToVerse: ref.verse });
+      });
+    });
+  }
+
   // ── Init ─────────────────────────────────────────────────
   function init() {
     if (initialized) return;
     initialized = true;
 
     renderBookList();
+    renderWelcome();
 
     // Recherche
     const searchInput = document.getElementById('bible-search');
@@ -517,17 +673,24 @@
       searchInput.focus();
     });
 
-    // Boutons "quick refs" sur la page d'accueil
-    document.querySelectorAll('.bible-quick-ref').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const ref = parseReference(btn.dataset.ref);
-        if (ref) loadChapter(ref.book, ref.ch, { scrollToVerse: ref.verse });
-      });
+    // Sélecteur de traduction (boutons en toolbar)
+    document.querySelectorAll('.bible-trans-btn').forEach(btn => {
+      btn.addEventListener('click', () => setTranslation(btn.dataset.trans));
     });
+    syncTranslationBtns();
 
     // Panel favoris
     document.getElementById('bible-fav-toggle')?.addEventListener('click', openFavPanel);
     document.getElementById('bible-fav-close')?.addEventListener('click', closeFavPanel);
+    // Clic sur l'overlay derrière le panel → ferme
+    document.getElementById('bible-fav-overlay')?.addEventListener('click', closeFavPanel);
+    // ESC → ferme aussi
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        const panel = document.getElementById('bible-fav-panel');
+        if (panel && !panel.classList.contains('hidden')) closeFavPanel();
+      }
+    });
   }
 
   // Expose pour debug et init différée

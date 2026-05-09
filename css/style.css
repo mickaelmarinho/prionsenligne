@@ -4903,6 +4903,36 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
 }
 .bible-tool-btn i { color: var(--gold); }
 
+/* Sélecteur de traduction (LSG/BDS/NBS) */
+.bible-trans-selector {
+  display: inline-flex;
+  gap: 2px;
+  background: white;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 3px;
+  flex-shrink: 0;
+}
+.bible-trans-btn {
+  background: transparent;
+  border: none;
+  border-radius: 9px;
+  padding: 8px 14px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: .03em;
+  color: var(--text-soft);
+  cursor: pointer;
+  transition: all .15s;
+}
+.bible-trans-btn:hover { color: var(--navy); }
+.bible-trans-btn.active {
+  background: var(--navy);
+  color: white;
+  box-shadow: 0 1px 4px rgba(26,39,68,.18);
+}
+
 /* Layout : sidebar + reader */
 .bible-layout {
   display: grid;
@@ -4972,51 +5002,292 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   min-height: 400px;
 }
 
-/* Welcome screen */
+/* Welcome screen — étagère avec 3 Bibles */
 .bible-welcome {
   text-align: center;
-  padding: 40px 20px;
+  padding: 30px 20px 24px;
 }
-.bible-welcome-icon {
-  font-size: 40px;
-  color: var(--gold);
-  margin-bottom: 16px;
-}
-.bible-welcome h3 {
+.bible-welcome-title {
   font-family: 'Cormorant Garamond', serif;
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 400;
   color: var(--navy);
-  margin: 0 0 10px;
+  margin: 0 0 6px;
 }
-.bible-welcome p {
+.bible-welcome-sub {
   color: var(--text-soft);
-  font-size: 14px;
-  line-height: 1.6;
-  max-width: 500px;
-  margin: 0 auto 20px;
+  font-size: 13.5px;
+  margin: 0 0 30px;
 }
-.bible-welcome em {
-  background: var(--cream);
-  padding: 1px 6px;
-  border-radius: 4px;
-  color: var(--navy);
+.bible-welcome-translation-desc {
+  color: var(--text-mid);
+  font-size: 13.5px;
   font-style: italic;
+  line-height: 1.6;
+  max-width: 540px;
+  margin: 18px auto 26px;
+  padding: 0 16px;
 }
+
+/* ─── Étagère + couvertures ─── */
+.bible-shelf {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 26px;
+  perspective: 1200px;
+  padding: 16px 0 24px;
+}
+.bible-cover {
+  position: relative;
+  width: 175px;
+  height: 240px;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  background: transparent;
+  transform-style: preserve-3d;
+  transition: transform .35s cubic-bezier(.4,0,.2,1);
+  border-radius: 4px 8px 8px 4px;
+}
+.bible-cover:hover {
+  transform: translateY(-8px) rotateY(-12deg) scale(1.04);
+}
+.bible-cover.is-active {
+  transform: translateY(-12px) rotateY(-8deg) scale(1.06);
+}
+.bible-cover.is-active:hover {
+  transform: translateY(-16px) rotateY(-12deg) scale(1.08);
+}
+
+/* Tranche du livre */
+.bible-cover-spine {
+  position: absolute;
+  left: -3px; top: 4px;
+  width: 6px;
+  height: calc(100% - 8px);
+  background: linear-gradient(to right, rgba(0,0,0,.4), rgba(0,0,0,.2));
+  border-radius: 2px 0 0 2px;
+}
+/* Pages (tranche droite) */
+.bible-cover-pages {
+  position: absolute;
+  right: -3px; top: 4px;
+  width: 6px;
+  height: calc(100% - 8px);
+  background: repeating-linear-gradient(
+    to bottom,
+    #f5f0e8 0,
+    #f5f0e8 1px,
+    #ddd5c0 1px,
+    #ddd5c0 2px
+  );
+  border-radius: 0 2px 2px 0;
+  box-shadow: inset -1px 0 2px rgba(0,0,0,.15);
+}
+
+/* Front (couverture principale) */
+.bible-cover-front {
+  position: absolute;
+  inset: 0;
+  border-radius: 4px 8px 8px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 14px;
+  box-shadow:
+    0 8px 24px rgba(0,0,0,.25),
+    inset 0 0 0 1px rgba(255,255,255,.08);
+  font-family: 'Cormorant Garamond', serif;
+  color: white;
+  text-align: center;
+  overflow: hidden;
+}
+
+/* Style "navy" (LSG) — bleu marine ornementé doré */
+.bible-cover-navy .bible-cover-front {
+  background:
+    radial-gradient(circle at 30% 20%, rgba(201,168,76,.10), transparent 50%),
+    linear-gradient(160deg, #1a2744 0%, #0d172e 100%);
+}
+.bible-cover-navy .bible-cover-cross span,
+.bible-cover-navy .bible-cover-divider {
+  background: var(--gold);
+}
+.bible-cover-navy .bible-cover-the,
+.bible-cover-navy .bible-cover-bible,
+.bible-cover-navy .bible-cover-version,
+.bible-cover-navy .bible-cover-year {
+  color: var(--gold);
+}
+.bible-cover-navy .bible-cover-ornament-top,
+.bible-cover-navy .bible-cover-ornament-bottom {
+  border-color: rgba(201,168,76,.45);
+}
+
+/* Style "leather" (BDS) — bordeaux cuir blanc */
+.bible-cover-leather .bible-cover-front {
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,.08), transparent 50%),
+    linear-gradient(160deg, #6b1f2a 0%, #3d0c14 100%);
+}
+.bible-cover-leather .bible-cover-cross span,
+.bible-cover-leather .bible-cover-divider {
+  background: rgba(255,255,255,.85);
+}
+.bible-cover-leather .bible-cover-the,
+.bible-cover-leather .bible-cover-bible,
+.bible-cover-leather .bible-cover-version,
+.bible-cover-leather .bible-cover-year {
+  color: rgba(255,255,255,.92);
+}
+.bible-cover-leather .bible-cover-ornament-top,
+.bible-cover-leather .bible-cover-ornament-bottom {
+  border-color: rgba(255,255,255,.35);
+}
+
+/* Style "minimal" (NBS) — crème minimaliste avec accents charbon */
+.bible-cover-minimal .bible-cover-front {
+  background:
+    radial-gradient(circle at 30% 20%, rgba(0,0,0,.04), transparent 50%),
+    linear-gradient(160deg, #f5f0e8 0%, #e0d8c5 100%);
+  color: #1e1c18;
+}
+.bible-cover-minimal .bible-cover-cross span,
+.bible-cover-minimal .bible-cover-divider {
+  background: #1a2744;
+}
+.bible-cover-minimal .bible-cover-the,
+.bible-cover-minimal .bible-cover-bible,
+.bible-cover-minimal .bible-cover-version,
+.bible-cover-minimal .bible-cover-year {
+  color: #1a2744;
+}
+.bible-cover-minimal .bible-cover-ornament-top,
+.bible-cover-minimal .bible-cover-ornament-bottom {
+  border-color: rgba(26,39,68,.45);
+}
+
+/* Croix dorée centrale */
+.bible-cover-cross {
+  position: relative;
+  width: 32px; height: 36px;
+  margin-top: 10px;
+}
+.bible-cover-cross span:first-child {
+  position: absolute;
+  left: 50%; top: 0;
+  transform: translateX(-50%);
+  width: 3px; height: 36px;
+  border-radius: 1.5px;
+}
+.bible-cover-cross span:last-child {
+  position: absolute;
+  top: 9px; left: 0;
+  width: 32px; height: 3px;
+  border-radius: 1.5px;
+}
+
+/* Bloc titre */
+.bible-cover-title-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+}
+.bible-cover-the {
+  font-family: 'Outfit', sans-serif;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: .25em;
+  text-transform: uppercase;
+  opacity: .8;
+}
+.bible-cover-bible {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 32px;
+  font-weight: 400;
+  letter-spacing: .12em;
+  line-height: 1;
+  margin: 2px 0 4px;
+}
+.bible-cover-divider {
+  width: 60px; height: 1.5px;
+  margin: 4px 0;
+  opacity: .7;
+}
+.bible-cover-version {
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 14px;
+  line-height: 1;
+}
+.bible-cover-year {
+  font-family: 'Outfit', sans-serif;
+  font-size: 10px;
+  letter-spacing: .15em;
+  opacity: .8;
+  margin-top: 2px;
+}
+
+/* Ornements décoratifs */
+.bible-cover-ornament-top,
+.bible-cover-ornament-bottom {
+  width: 80px;
+  height: 6px;
+  border-top: 1px solid;
+  border-bottom: 1px solid;
+  position: relative;
+}
+.bible-cover-ornament-top::before,
+.bible-cover-ornament-bottom::before {
+  content: '';
+  position: absolute;
+  inset: 2px 30%;
+  border-top: 0.5px solid;
+  border-color: inherit;
+  opacity: .7;
+}
+
+/* Badge "Sélectionnée" */
+.bible-cover-active-badge {
+  position: absolute;
+  top: -8px; right: -8px;
+  background: var(--gold);
+  color: var(--navy);
+  font-family: 'Outfit', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  box-shadow: 0 3px 10px rgba(201,168,76,.35);
+}
+
+/* Boutons "quick refs" */
 .bible-quick-refs {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   justify-content: center;
+  align-items: center;
   margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+.bible-quick-ref-label {
+  font-size: 12px;
+  color: var(--text-soft);
+  margin-right: 4px;
 }
 .bible-quick-ref {
   background: var(--cream);
   border: 1px solid var(--border);
   border-radius: 999px;
-  padding: 7px 14px;
+  padding: 6px 12px;
   font-family: 'Outfit', sans-serif;
-  font-size: 12.5px;
+  font-size: 12px;
   color: var(--text-mid);
   cursor: pointer;
   transition: all .15s;
@@ -5025,6 +5296,31 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   background: var(--navy);
   color: white;
   border-color: var(--navy);
+}
+
+/* Mot cliquable individuellement (surlignage granulaire) */
+.bible-word {
+  cursor: pointer;
+  border-radius: 3px;
+  padding: 0 1px;
+  transition: background .15s;
+}
+.bible-word:hover {
+  background: rgba(201,168,76,.18);
+}
+.bible-word.word-highlighted {
+  background: rgba(255,235,100,.55);
+  box-shadow: inset 0 -2px 0 rgba(201,168,76,.65);
+}
+
+/* Loading translation indicator */
+.bible-loading-trans {
+  font-size: 11.5px !important;
+  color: var(--text-soft);
+  margin-top: 4px !important;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  font-family: 'Outfit', sans-serif;
 }
 
 /* Liste des chapitres (grille de numéros) */
@@ -5233,6 +5529,21 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   cursor: pointer; font-family: 'Outfit', sans-serif;
 }
 
+/* Overlay derrière le panel favoris (clic = fermeture) */
+.bible-fav-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(26,39,68,.45);
+  z-index: 199;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s ease;
+}
+.bible-fav-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 /* Panel favoris (slide-in) */
 .bible-fav-panel {
   position: fixed;
@@ -5340,7 +5651,20 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   .bible-subtitle { font-size: 12.5px; }
   .bible-toolbar { flex-direction: column; gap: 8px; }
   .bible-search { padding: 10px 36px 10px 36px; font-size: 13.5px; }
+  .bible-trans-selector { width: 100%; }
+  .bible-trans-btn { flex: 1; padding: 9px 8px; font-size: 12px; }
   .bible-tool-btn { width: 100%; justify-content: center; padding: 10px 14px; }
+  /* Couvertures plus petites en colonne sur mobile */
+  .bible-shelf { gap: 14px; padding: 12px 0 18px; }
+  .bible-cover { width: 130px; height: 180px; }
+  .bible-cover:hover { transform: translateY(-4px) rotateY(-8deg); }
+  .bible-cover-bible { font-size: 24px; }
+  .bible-cover-version { font-size: 12px; }
+  .bible-cover-the,
+  .bible-cover-year { font-size: 8.5px; }
+  .bible-welcome { padding: 16px 8px; }
+  .bible-welcome-title { font-size: 21px; }
+  .bible-welcome-translation-desc { font-size: 12.5px; }
   .bible-reader { padding: 18px 16px; border-radius: 12px; }
   .bible-chapter-title { font-size: 22px; }
   .bible-verses { font-size: 16px; line-height: 1.75; }

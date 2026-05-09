@@ -262,6 +262,11 @@
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
+        <div class="bible-trans-selector" role="group" aria-label="Choix de la traduction">
+          <button class="bible-trans-btn" data-trans="FRLSG" type="button" title="Bible Segond 1910">LSG</button>
+          <button class="bible-trans-btn" data-trans="BDS"   type="button" title="Bible du Semeur 2015">BDS</button>
+          <button class="bible-trans-btn" data-trans="NBS"   type="button" title="Nouvelle Bible Segond 2002">NBS</button>
+        </div>
         <div class="bible-toolbar-actions">
           <button class="bible-tool-btn" id="bible-fav-toggle" title="Mes favoris">
             <i class="fa-solid fa-bookmark"></i>
@@ -280,22 +285,12 @@
         </aside>
 
         <div class="bible-reader" id="bible-reader">
-          <div class="bible-welcome" id="bible-welcome">
-            <i class="fa-solid fa-feather-pointed bible-welcome-icon"></i>
-            <h3>Bienvenue dans la Bible</h3>
-            <p>Choisissez un livre dans le menu latéral, ou tapez une référence dans la barre de recherche (par exemple <em>Jean 3:16</em> ou <em>Matthieu 5</em>).</p>
-            <div class="bible-quick-refs">
-              <button class="bible-quick-ref" data-ref="Genèse 1">Genèse 1 — La Création</button>
-              <button class="bible-quick-ref" data-ref="Psaumes 23">Psaume 23 — Le Seigneur est mon berger</button>
-              <button class="bible-quick-ref" data-ref="Matthieu 5">Matthieu 5 — Béatitudes</button>
-              <button class="bible-quick-ref" data-ref="Jean 3:16">Jean 3:16</button>
-              <button class="bible-quick-ref" data-ref="1 Corinthiens 13">1 Corinthiens 13 — L'Amour</button>
-              <button class="bible-quick-ref" data-ref="Apocalypse 21">Apocalypse 21 — Cieux nouveaux</button>
-            </div>
-          </div>
+          <!-- Contenu généré dynamiquement par bible.js (welcome screen avec couvertures, ou chapitre) -->
         </div>
       </div>
 
+      <!-- Overlay sombre derrière le panel favoris (clic dessus = fermer) -->
+      <div class="bible-fav-overlay" id="bible-fav-overlay"></div>
       <!-- Panel favoris (slide-in) -->
       <div class="bible-fav-panel hidden" id="bible-fav-panel">
         <div class="bible-fav-header">
