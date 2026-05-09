@@ -566,6 +566,186 @@
     return { book, ch, verse };
   }
 
+  // ── Suggestions curées (passages célèbres & thèmes connus) ─
+  // Chaque entrée a des "keywords" pour le matching.
+  // Quand l'utilisateur tape un mot-clé même partiel, la
+  // suggestion remonte instantanément, même si le terme n'est
+  // pas littéralement dans le texte (ex: "béatitudes").
+  const CURATED = [
+    { ref:'Genèse 1',          title:'La Création du monde',                kw:['creation','commencement','genese','dieu cre','jours','eden','adam','eve'] },
+    { ref:'Genèse 6',          title:"L'Arche de Noé",                      kw:['noe','arche','deluge','animaux'] },
+    { ref:'Exode 3',           title:'Le Buisson ardent',                   kw:['moise','buisson','ardent','feu'] },
+    { ref:'Exode 20',          title:'Les Dix Commandements',               kw:['dix','commandements','tables','loi','sinai'] },
+    { ref:'Psaumes 23',        title:'Le Seigneur est mon berger',          kw:['berger','psaume','vingt-trois','ombre','vallee'] },
+    { ref:'Psaumes 51',        title:'Miserere — Psaume du repentir',       kw:['miserere','repentir','peche','pardon'] },
+    { ref:'Psaumes 91',        title:"Refuge sous les ailes de Dieu",       kw:['refuge','protection','ailes'] },
+    { ref:'Psaumes 121',       title:"Cantique des montées",                kw:['montees','cantique','protection','aide'] },
+    { ref:'Psaumes 139',       title:"Tu me sondes, Seigneur",              kw:['sondes','connais','intime'] },
+    { ref:'Cantique 1',        title:'Cantique des cantiques',              kw:['cantique','cantiques','salomon','amour','epoux'] },
+    { ref:'Ésaïe 53',          title:'Le Serviteur souffrant',              kw:['serviteur','souffrant','isaie 53'] },
+    { ref:'Matthieu 5',        title:'Les Béatitudes',                      kw:['beatitudes','heureux','bonheur','sermon montagne','sermon sur la montagne'] },
+    { ref:'Matthieu 6:9',      title:'Le Notre Père',                       kw:['notre pere','pater','priere','que ton nom'] },
+    { ref:'Matthieu 4',        title:'Tentation au désert',                 kw:['tentation','desert','satan','diable','jeune'] },
+    { ref:'Matthieu 17',       title:'La Transfiguration',                  kw:['transfiguration','tabor','gloire','elie','moise'] },
+    { ref:'Matthieu 25',       title:'Le Jugement dernier',                 kw:['jugement','brebis','boucs','dernier','fin'] },
+    { ref:'Matthieu 26:26',    title:"L'Institution de l'Eucharistie",      kw:['cene','eucharistie','dernier repas','pain vin'] },
+    { ref:'Matthieu 27',       title:'La Crucifixion',                      kw:['crucifixion','golgotha','calvaire','passion','mort'] },
+    { ref:'Matthieu 28',       title:'La Résurrection',                     kw:['resurrection','tombeau vide','paques','dimanche'] },
+    { ref:'Marc 1',            title:"Début de l'Évangile selon Marc",      kw:['evangile selon marc','baptiste','desert'] },
+    { ref:'Luc 1:26',          title:"L'Annonciation",                      kw:['annonciation','gabriel','vierge','marie'] },
+    { ref:'Luc 1:46',          title:'Le Magnificat',                       kw:['magnificat','marie','mon ame'] },
+    { ref:'Luc 2',             title:'La Nativité',                         kw:['nativite','naissance','jesus','noel','etable','mages','bergers'] },
+    { ref:'Luc 10:25',         title:'La Parabole du bon Samaritain',       kw:['samaritain','samaritaine','bon samaritain','pretre','levite'] },
+    { ref:'Luc 15:11',         title:'La Parabole du fils prodigue',        kw:['prodigue','fils perdu','retour','heritage','pere'] },
+    { ref:'Luc 24',            title:"Les disciples d'Emmaüs",              kw:['emmaus','disciples','rompit','reconnaissent'] },
+    { ref:'Jean 1',            title:'Prologue : le Verbe fait chair',      kw:['prologue','verbe','chair','logos','commencement'] },
+    { ref:'Jean 3:16',         title:'Dieu a tant aimé le monde',           kw:['nicodeme','aime','vie eternelle','dieu a tant'] },
+    { ref:'Jean 6:51',         title:'Pain de vie',                         kw:['pain de vie','pain vivant','manger ma chair'] },
+    { ref:'Jean 13',           title:'Lavement des pieds',                  kw:['lavement','pieds','dernier repas'] },
+    { ref:'Jean 14',           title:'Le chemin, la vérité, la vie',        kw:['chemin','verite','vie','adieu'] },
+    { ref:'Jean 20',           title:'Apparitions du Ressuscité',           kw:['ressuscite','thomas','marie madeleine','tombeau'] },
+    { ref:'Actes 1:9',         title:"L'Ascension",                         kw:['ascension','elevation','nuee'] },
+    { ref:'Actes 2',           title:'La Pentecôte',                        kw:['pentecote','esprit saint','langues feu','apotres'] },
+    { ref:'Actes 9',           title:'Conversion de saint Paul',            kw:['saul','paul','conversion','damas','chemin'] },
+    { ref:'Romains 8',         title:"Rien ne nous séparera de l'amour",    kw:['rien ne separera','romains huit'] },
+    { ref:'1 Corinthiens 13',  title:"Hymne à l'amour",                     kw:['amour','charite','hymne','si je'] },
+    { ref:'Philippiens 2:6',   title:'Hymne au Christ — abaissement',       kw:['kenose','abaissement','condition de serviteur'] },
+    { ref:'Hébreux 11',        title:'La foi des anciens',                  kw:['foi anciens','heros','abraham','moise','rahab'] },
+    { ref:'Apocalypse 21',     title:'Cieux nouveaux et terre nouvelle',    kw:['apocalypse','jerusalem celeste','nouveaux','larmes'] },
+    { ref:'Apocalypse 22',     title:"Marana tha — Viens Seigneur Jésus",   kw:['marana','viens','arbre vie','fin'] },
+  ];
+
+  // Trouve les suggestions curées qui matchent une requête (lowercase, sans accents)
+  function matchCurated(query) {
+    const q = norm(query);
+    if (!q || q.length < 2) return [];
+    return CURATED.filter(item => {
+      // Match dans le titre OU dans les mots-clés
+      if (norm(item.title).includes(q)) return true;
+      return item.kw.some(k => norm(k).includes(q) || q.includes(norm(k)));
+    }).slice(0, 5);
+  }
+
+  // ── Recherche plein texte via bolls.life ──────────────────
+  let _searchAbortCtrl = null;
+  async function searchFullText(query) {
+    if (!query || query.length < 3) return [];
+    if (_searchAbortCtrl) _searchAbortCtrl.abort();
+    _searchAbortCtrl = new AbortController();
+    try {
+      const url = `https://bolls.life/find/${currentTranslation}/?search=${encodeURIComponent(query)}&limit=8`;
+      const resp = await fetch(url, { signal: _searchAbortCtrl.signal });
+      if (!resp.ok) return [];
+      const data = await resp.json();
+      if (!Array.isArray(data)) return [];
+      // bolls renvoie : { book, chapter, verse, text } — book est numérique 1-66
+      return data.map(r => {
+        const allBooks = [...BOOKS.ot, ...BOOKS.nt];
+        const book = allBooks.find(b => b.id === r.book);
+        return book ? {
+          book, ch: r.chapter, verse: r.verse,
+          text: String(r.text || '').replace(/<\/?mark>/g, ''), // marqueur temporaire pour highlight
+        } : null;
+      }).filter(Boolean);
+    } catch (err) {
+      if (err.name === 'AbortError') return null;
+      return [];
+    }
+  }
+
+  // ── Dropdown de suggestions ──────────────────────────────
+  let _dropdownEl = null;
+  function ensureDropdown() {
+    if (_dropdownEl) return _dropdownEl;
+    _dropdownEl = document.createElement('div');
+    _dropdownEl.className = 'bible-search-dropdown';
+    _dropdownEl.hidden = true;
+    const wrap = document.querySelector('.bible-search-wrap');
+    wrap?.appendChild(_dropdownEl);
+    return _dropdownEl;
+  }
+
+  function hideDropdown() {
+    if (_dropdownEl) _dropdownEl.hidden = true;
+  }
+
+  function renderDropdown(query, refMatch, curated, fullText) {
+    const dd = ensureDropdown();
+    dd.innerHTML = '';
+
+    let html = '';
+    // 1. Match exact de référence en haut (toujours en premier)
+    if (refMatch) {
+      html += `<div class="bible-dd-section">
+        <div class="bible-dd-section-title">📖 Référence directe</div>
+        <button type="button" class="bible-dd-item bible-dd-ref" data-go="${refMatch.book.id}|${refMatch.ch}|${refMatch.verse || ''}">
+          <div class="bible-dd-ref-name">${escapeHtml(refMatch.book.name)} ${refMatch.ch}${refMatch.verse ? ':' + refMatch.verse : ''}</div>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>`;
+    }
+
+    // 2. Suggestions curées (passages célèbres)
+    if (curated && curated.length) {
+      html += `<div class="bible-dd-section">
+        <div class="bible-dd-section-title">✨ Passages célèbres</div>`;
+      curated.forEach(c => {
+        const ref = parseReference(c.ref);
+        if (!ref) return;
+        html += `<button type="button" class="bible-dd-item" data-go="${ref.book.id}|${ref.ch}|${ref.verse || ''}">
+          <div class="bible-dd-curated">
+            <div class="bible-dd-curated-title">${escapeHtml(c.title)}</div>
+            <div class="bible-dd-curated-ref">${escapeHtml(c.ref)}</div>
+          </div>
+        </button>`;
+      });
+      html += '</div>';
+    }
+
+    // 3. Résultats plein texte (versets contenant le mot)
+    if (fullText && fullText.length) {
+      html += `<div class="bible-dd-section">
+        <div class="bible-dd-section-title">🔍 Versets contenant « ${escapeHtml(query)} »</div>`;
+      fullText.forEach(r => {
+        // Surligne les occurrences du mot cherche (insensible casse)
+        const reHL = new RegExp('(' + query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&') + ')', 'gi');
+        const cleanText = String(r.text).replace(/<\/?mark>/gi, '');
+        const safeText = escapeHtml(cleanText).replace(reHL, '<mark>$1</mark>');
+        html += `<button type="button" class="bible-dd-item bible-dd-fulltext" data-go="${r.book.id}|${r.ch}|${r.verse}">
+          <div class="bible-dd-ft-ref">${escapeHtml(r.book.name)} ${r.ch}:${r.verse}</div>
+          <div class="bible-dd-ft-text">${safeText}</div>
+        </button>`;
+      });
+      html += '</div>';
+    }
+
+    if (!html) {
+      html = `<div class="bible-dd-empty">Aucun résultat. Essayez « Jean 3:16 », « samaritain » ou « amour ».</div>`;
+    }
+
+    dd.innerHTML = html;
+    dd.hidden = false;
+
+    // Click handlers
+    dd.querySelectorAll('[data-go]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const [bookId, ch, verse] = btn.dataset.go.split('|');
+        const allBooks = [...BOOKS.ot, ...BOOKS.nt];
+        const book = allBooks.find(b => b.id === parseInt(bookId, 10));
+        if (!book) return;
+        loadChapter(book, parseInt(ch, 10), { scrollToVerse: verse ? parseInt(verse, 10) : null });
+        hideDropdown();
+        // Vide la barre pour le prochain usage
+        const input = document.getElementById('bible-search');
+        if (input) {
+          input.value = '';
+          document.getElementById('bible-search-clear').hidden = true;
+          input.blur();
+        }
+      });
+    });
+  }
+
   // ── Panel favoris ────────────────────────────────────────
   function renderFavList() {
     const list = document.getElementById('bible-fav-list');
@@ -927,33 +1107,71 @@
     renderBookList();
     renderWelcome();
 
-    // Recherche
+    // Recherche enrichie : référence + passages célèbres + plein texte
     const searchInput = document.getElementById('bible-search');
     const clearBtn    = document.getElementById('bible-search-clear');
     let searchTimer = null;
+
+    async function runSearch() {
+      const v = searchInput.value.trim();
+      if (!v) { hideDropdown(); return; }
+
+      // 1. Référence directe (synchrone, immédiat)
+      const refMatch = parseReference(v);
+
+      // 2. Suggestions curées (synchrone, sur mots-clés)
+      const curated = matchCurated(v);
+
+      // 3. Recherche plein texte (asynchrone, via API)
+      // On affiche déjà le dropdown avec ce qu'on a, puis on update quand
+      // les résultats plein texte arrivent
+      renderDropdown(v, refMatch, curated, []);
+
+      if (v.length >= 3 && !refMatch) {
+        const ft = await searchFullText(v);
+        if (ft === null) return;     // requête annulée par une plus récente
+        // Si l'utilisateur a continué à taper, ne pas écraser
+        if (searchInput.value.trim() !== v) return;
+        renderDropdown(v, refMatch, curated, ft);
+      }
+    }
+
     searchInput?.addEventListener('input', () => {
-      const v = searchInput.value;
-      clearBtn.hidden = !v;
+      clearBtn.hidden = !searchInput.value;
       clearTimeout(searchTimer);
-      searchTimer = setTimeout(() => {
-        if (!v.trim()) return;
-        const ref = parseReference(v);
-        if (ref) {
-          loadChapter(ref.book, ref.ch, { scrollToVerse: ref.verse });
-        }
-      }, 400);
+      searchTimer = setTimeout(runSearch, 250);
+    });
+    searchInput?.addEventListener('focus', () => {
+      if (searchInput.value.trim()) runSearch();
     });
     searchInput?.addEventListener('keydown', e => {
       if (e.key === 'Enter') {
         clearTimeout(searchTimer);
+        // Au Enter, si une référence directe matche, on y va
         const ref = parseReference(searchInput.value);
-        if (ref) loadChapter(ref.book, ref.ch, { scrollToVerse: ref.verse });
+        if (ref) {
+          loadChapter(ref.book, ref.ch, { scrollToVerse: ref.verse });
+          hideDropdown();
+          searchInput.value = '';
+          clearBtn.hidden = true;
+          searchInput.blur();
+          return;
+        }
+        runSearch();
+      } else if (e.key === 'Escape') {
+        hideDropdown();
+        searchInput.blur();
       }
     });
     clearBtn?.addEventListener('click', () => {
       searchInput.value = '';
       clearBtn.hidden = true;
+      hideDropdown();
       searchInput.focus();
+    });
+    // Click hors du dropdown → ferme
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.bible-search-wrap')) hideDropdown();
     });
 
     // Sélecteur de traduction (boutons en toolbar)

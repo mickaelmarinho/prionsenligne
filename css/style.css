@@ -4884,6 +4884,144 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   display: flex; align-items: center; justify-content: center;
 }
 .bible-search-clear:hover { background: var(--border-mid); color: var(--text); }
+
+/* ── Dropdown de suggestions (apparaît sous la barre de recherche) ── */
+.bible-search-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 10px 32px rgba(26,39,68,.18);
+  max-height: 480px;
+  overflow-y: auto;
+  animation: bibleDropdownSlide .2s ease;
+}
+@keyframes bibleDropdownSlide {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.bible-search-dropdown[hidden] { display: none; }
+
+.bible-dd-section { padding: 4px 0; }
+.bible-dd-section + .bible-dd-section { border-top: 1px solid var(--border); }
+.bible-dd-section-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--text-soft);
+  padding: 8px 14px 4px;
+}
+.bible-dd-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: background .12s;
+  font-family: inherit;
+  color: var(--text);
+}
+.bible-dd-item:hover {
+  background: var(--cream);
+}
+.bible-dd-item:focus-visible {
+  background: var(--cream-mid);
+  outline: 2px solid var(--gold);
+  outline-offset: -2px;
+}
+
+/* Référence directe */
+.bible-dd-ref {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.bible-dd-ref-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px;
+  color: var(--navy);
+  font-weight: 500;
+}
+.bible-dd-ref > i { color: var(--gold); font-size: 12px; }
+
+/* Passages célèbres */
+.bible-dd-curated {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.bible-dd-curated-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 15px;
+  color: var(--text);
+  flex: 1;
+}
+.bible-dd-curated-ref {
+  font-family: 'Outfit', sans-serif;
+  font-size: 11px;
+  color: var(--gold);
+  font-weight: 500;
+  background: var(--cream);
+  padding: 3px 8px;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+
+/* Résultats plein texte */
+.bible-dd-fulltext { padding: 10px 14px; }
+.bible-dd-ft-ref {
+  font-family: 'Outfit', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gold);
+  margin-bottom: 3px;
+  letter-spacing: .02em;
+}
+.bible-dd-ft-text {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-mid);
+  /* Tronque à 2 lignes */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.bible-dd-ft-text mark {
+  background: rgba(201,168,76,.45);
+  color: var(--text);
+  padding: 0 2px;
+  border-radius: 3px;
+  font-weight: 600;
+}
+
+.bible-dd-empty {
+  padding: 18px 14px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-soft);
+  font-style: italic;
+}
+
+@media (max-width: 640px) {
+  .bible-search-dropdown {
+    max-height: 60vh;
+    border-radius: 12px;
+  }
+  .bible-dd-curated-title { font-size: 14px; }
+  .bible-dd-ft-text { font-size: 12.5px; }
+}
 .bible-toolbar-actions { display: flex; gap: 8px; }
 .bible-tool-btn {
   background: white;
