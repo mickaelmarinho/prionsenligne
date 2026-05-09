@@ -54,6 +54,7 @@
         <button class="nav-tab active" data-tab="aujourd"><i class="fa-solid fa-sun"></i> Aujourd'hui</button>
         <button class="nav-tab" data-tab="semaine"><i class="fa-solid fa-calendar-week"></i> Semaine</button>
         <button class="nav-tab" data-tab="mois"><i class="fa-solid fa-calendar"></i> Mois</button>
+        <button class="nav-tab" data-tab="bible"><i class="fa-solid fa-book-bible"></i> Bible</button>
         <button class="nav-tab" data-tab="sources"><i class="fa-solid fa-tower-broadcast"></i> Sources</button>
       </nav>
       <div class="header-user" id="header-user">
@@ -95,6 +96,7 @@
         <div class="hm-item hm-nav-item" data-tab="aujourd"><i class="fa-solid fa-sun"></i> Aujourd'hui</div>
         <div class="hm-item hm-nav-item" data-tab="semaine"><i class="fa-solid fa-calendar-week"></i> Semaine</div>
         <div class="hm-item hm-nav-item" data-tab="mois"><i class="fa-solid fa-calendar"></i> Mois</div>
+        <div class="hm-item hm-nav-item" data-tab="bible"><i class="fa-solid fa-book-bible"></i> Bible</div>
         <div class="hm-item hm-nav-item" data-tab="sources"><i class="fa-solid fa-tower-broadcast"></i> Sources</div>
         <div class="hm-divider hm-nav-divider"></div>
         <div class="hm-item" id="hm-signout" style="display:none"><i class="fa-solid fa-right-from-bracket"></i> Se déconnecter</div>
@@ -243,6 +245,71 @@
 
 
     <!-- ──────────── SOURCES ──────────── -->
+    <!-- ──────────── BIBLE ──────────── -->
+    <section id="tab-bible" class="tab-section">
+      <div class="bible-header">
+        <h2 class="bible-title"><i class="fa-solid fa-book-bible"></i> Bible Louis Segond</h2>
+        <p class="bible-subtitle">Version Louis Segond 1910 — Ancien et Nouveau Testament. Surlignez vos passages préférés et créez vos favoris (connecté).</p>
+      </div>
+
+      <div class="bible-toolbar">
+        <div class="bible-search-wrap">
+          <i class="fa-solid fa-magnifying-glass bible-search-icon"></i>
+          <input type="search" id="bible-search" class="bible-search"
+            placeholder="Rechercher une référence (ex: Jean 3:16) ou un mot-clé…"
+            autocomplete="off" inputmode="search">
+          <button class="bible-search-clear" id="bible-search-clear" hidden aria-label="Effacer">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="bible-toolbar-actions">
+          <button class="bible-tool-btn" id="bible-fav-toggle" title="Mes favoris">
+            <i class="fa-solid fa-bookmark"></i>
+            <span>Favoris</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Layout : sidebar livres + zone lecture -->
+      <div class="bible-layout">
+        <aside class="bible-sidebar" id="bible-sidebar">
+          <div class="bible-section-title">Ancien Testament</div>
+          <div class="bible-books" id="bible-books-ot"></div>
+          <div class="bible-section-title">Nouveau Testament</div>
+          <div class="bible-books" id="bible-books-nt"></div>
+        </aside>
+
+        <div class="bible-reader" id="bible-reader">
+          <div class="bible-welcome" id="bible-welcome">
+            <i class="fa-solid fa-feather-pointed bible-welcome-icon"></i>
+            <h3>Bienvenue dans la Bible</h3>
+            <p>Choisissez un livre dans le menu latéral, ou tapez une référence dans la barre de recherche (par exemple <em>Jean 3:16</em> ou <em>Matthieu 5</em>).</p>
+            <div class="bible-quick-refs">
+              <button class="bible-quick-ref" data-ref="Genèse 1">Genèse 1 — La Création</button>
+              <button class="bible-quick-ref" data-ref="Psaumes 23">Psaume 23 — Le Seigneur est mon berger</button>
+              <button class="bible-quick-ref" data-ref="Matthieu 5">Matthieu 5 — Béatitudes</button>
+              <button class="bible-quick-ref" data-ref="Jean 3:16">Jean 3:16</button>
+              <button class="bible-quick-ref" data-ref="1 Corinthiens 13">1 Corinthiens 13 — L'Amour</button>
+              <button class="bible-quick-ref" data-ref="Apocalypse 21">Apocalypse 21 — Cieux nouveaux</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel favoris (slide-in) -->
+      <div class="bible-fav-panel hidden" id="bible-fav-panel">
+        <div class="bible-fav-header">
+          <h3><i class="fa-solid fa-bookmark"></i> Mes favoris</h3>
+          <button class="bible-fav-close" id="bible-fav-close" aria-label="Fermer"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="bible-fav-body" id="bible-fav-list">
+          <div class="bible-fav-empty">Aucun favori. Cliquez sur le ❤ d'un verset pour l'ajouter.</div>
+        </div>
+      </div>
+
+    </section><!-- /bible -->
+
+
     <section id="tab-sources" class="tab-section">
 
       <div class="sources-intro">
@@ -845,6 +912,7 @@
   </script>
 
   <script src="js/app.js"></script>
+  <script src="js/bible.js"></script>
   <!-- Supabase — build UMD explicite (évite que jsdelivr serve le build CJS/ESM) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="js/auth.js"></script>

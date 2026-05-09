@@ -2073,38 +2073,118 @@ function initChapelet() {
     el.scrollTop = 0;
   }
 
+  // Construit le chapelet en VRAIE forme de chapelet (SVG) :
+  //   • Boucle ovale = 5 décades × 12 perles = 60 perles
+  //   • Pendentif sous la boucle : 5 perles d'intro (Pater + 3 Aves + Gloria)
+  //   • Crucifix tout en bas (Credo, étape 0)
   function buildBeads() {
     const c = document.getElementById('ch-beads');
     if (!c) return;
     c.innerHTML = '';
-    let stepIdx = 0;   // index global de l'étape pour data-step
 
-    // Rangée d'intro (6 perles) visuellement séparée des décades
-    const introRow = document.createElement('div');
-    introRow.className = 'ch-decade-dots ch-intro-row';
-    for (let b = 0; b < INTRO; b++) {
-      const bead = document.createElement('button');   // <button> = naturellement tappable
-      bead.className = 'ch-bead ch-bead-sp';
-      bead.type = 'button';
-      bead.dataset.step = stepIdx++;
-      bead.setAttribute('aria-label', `Aller à la prière ${stepIdx}`);
-      introRow.appendChild(bead);
+    const NS = 'http://www.w3.org/2000/svg';
+    const W = 280, H = 360;
+    const cx = W / 2;
+    const loopCy = 130, loopRx = 110, loopRy = 95;
+
+    const svg = document.createElementNS(NS, 'svg');
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    svg.setAttribute('class', 'ch-rosary');
+    svg.setAttribute('role', 'group');
+    svg.setAttribute('aria-label', 'Chapelet — cliquez sur une perle pour reprendre à cet endroit');
+
+    // ── Cordon : ovale pointillé qui relie les perles ──
+    const loop = document.createElementNS(NS, 'ellipse');
+    loop.setAttribute('cx', cx);
+    loop.setAttribute('cy', loopCy);
+    loop.setAttribute('rx', loopRx);
+    loop.setAttribute('ry', loopRy);
+    loop.setAttribute('class', 'ch-rosary-thread');
+    svg.appendChild(loop);
+
+    // ── 60 perles autour de la boucle (5 décades × 12) ──
+    // On commence en bas (jonction avec le pendentif) et on tourne dans le sens horaire
+    function placeBead(stepGlobal, x, y, isSpecial) {
+      const circle = document.createElementNS(NS, 'circle');
+      circle.setAttribute('cx', x);
+      circle.setAttribute('cy', y);
+      circle.setAttribute('r', isSpecial ? 6 : 5);
+      circle.setAttribute('class', 'ch-bead' + (isSpecial ? ' ch-bead-sp' : ''));
+      circle.setAttribute('data-step', stepGlobal);
+      circle.setAttribute('tabindex', '0');
+      circle.setAttribute('role', 'button');
+      circle.setAttribute('aria-label', `Prière ${stepGlobal + 1}`);
+      svg.appendChild(circle);
     }
-    c.appendChild(introRow);
-    // 5 décades
-    for (let d = 0; d < 5; d++) {
-      const row = document.createElement('div');
-      row.className = 'ch-decade-dots';
-      for (let b = 0; b < 12; b++) {
-        const bead = document.createElement('button');
-        bead.className = 'ch-bead' + (b === 0 || b === 11 ? ' ch-bead-sp' : '');
-        bead.type = 'button';
-        bead.dataset.step = stepIdx++;
-        bead.setAttribute('aria-label', `Aller à la prière ${stepIdx}`);
-        row.appendChild(bead);
-      }
-      c.appendChild(row);
+
+    for (let i = 0; i < 60; i++) {
+      const inDecade = i % 12;
+      const isPater  = inDecade === 0;
+      const isGloria = inDecade === 11;
+      // Angle : on démarre au bas (Math.PI/2 = 90°) et on tourne dans le sens horaire
+      const t = (i + 0.5) / 60;
+      const angle = Math.PI / 2 + t * 2 * Math.PI;
+      const x = cx     + loopRx * Math.cos(angle);
+      const y = loopCy + loopRy * Math.sin(angle);
+      placeBead(INTRO + i, x, y, isPater || isGloria);
     }
+
+    // ── Pendentif : ligne reliant la boucle au crucifix ──
+    const pendantTopY = loopCy + loopRy + 6;
+    const pendantBeadGap = 16;
+
+    const cordPendant = document.createElementNS(NS, 'line');
+    cordPendant.setAttribute('x1', cx);
+    cordPendant.setAttribute('y1', pendantTopY);
+    cordPendant.setAttribute('x2', cx);
+    cordPendant.setAttribute('y2', pendantTopY + INTRO * pendantBeadGap + 6);
+    cordPendant.setAttribute('class', 'ch-rosary-thread ch-rosary-pendant-line');
+    svg.appendChild(cordPendant);
+
+    // ── 5 perles d'intro sur le pendentif (Gloria → Pater → 3 Aves → Pater → Credo)
+    //    L'ordre dans la séquence : 0=Credo, 1=Pater, 2-4=Aves, 5=Gloria
+    //    Visuellement de la boucle vers la croix : Gloria (5) → 3 Aves (4,3,2) → Pater (1)
+    //    Le Credo (0) est porté par la croix elle-même (clic sur la croix)
+    for (let i = 0; i < 5; i++) {
+      // i=0 → Gloria (step 5), i=1..3 → Aves (4,3,2), i=4 → Pater (step 1)
+      const stepIdx = 5 - i;
+      const isPater  = stepIdx === 1;
+      const isGloria = stepIdx === 5;
+      const y = pendantTopY + (i + 1) * pendantBeadGap;
+      placeBead(stepIdx, cx, y, isPater || isGloria);
+    }
+
+    // ── Crucifix : porte le Credo (étape 0) ──
+    const crossY = pendantTopY + 6 * pendantBeadGap;
+    const crossGroup = document.createElementNS(NS, 'g');
+    crossGroup.setAttribute('class', 'ch-rosary-cross-group ch-bead');
+    crossGroup.setAttribute('data-step', '0');
+    crossGroup.setAttribute('tabindex', '0');
+    crossGroup.setAttribute('role', 'button');
+    crossGroup.setAttribute('aria-label', 'Prière 1 — Credo');
+
+    // Vertical
+    const vbar = document.createElementNS(NS, 'rect');
+    vbar.setAttribute('x', cx - 1.6);
+    vbar.setAttribute('y', crossY);
+    vbar.setAttribute('width', 3.2);
+    vbar.setAttribute('height', 22);
+    vbar.setAttribute('rx', 1.2);
+    vbar.setAttribute('class', 'ch-rosary-cross');
+    crossGroup.appendChild(vbar);
+    // Horizontal
+    const hbar = document.createElementNS(NS, 'rect');
+    hbar.setAttribute('x', cx - 7);
+    hbar.setAttribute('y', crossY + 6);
+    hbar.setAttribute('width', 14);
+    hbar.setAttribute('height', 3.2);
+    hbar.setAttribute('rx', 1.2);
+    hbar.setAttribute('class', 'ch-rosary-cross');
+    crossGroup.appendChild(hbar);
+
+    svg.appendChild(crossGroup);
+
+    c.appendChild(svg);
   }
 
   function render() {
@@ -2125,9 +2205,12 @@ function initChapelet() {
     if (el('ch-progress'))   el('ch-progress').textContent   = `${step + 1} / ${TOTAL}`;
     updateFullText(step);
 
-    modal.querySelectorAll('.ch-bead').forEach((bead, i) => {
-      bead.classList.toggle('done',    i < step);
-      bead.classList.toggle('current', i === step);
+    // Les perles SVG ne sont plus dans l'ordre du DOM → on utilise data-step
+    modal.querySelectorAll('.ch-bead').forEach(bead => {
+      const s = parseInt(bead.dataset.step, 10);
+      if (isNaN(s)) return;
+      bead.classList.toggle('done',    s < step);
+      bead.classList.toggle('current', s === step);
     });
 
     if (tapBtn) {
