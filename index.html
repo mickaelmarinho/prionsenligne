@@ -266,17 +266,103 @@
             <span>Ordinateur</span>
           </button>
         </div>
-        <!-- Modale iOS -->
-        <div class="lp-ios-modal hidden" id="lp-ios-modal">
+        <!-- Modale iOS — guide visuel d'installation -->
+        <div class="lp-ios-modal hidden" id="lp-ios-modal" role="dialog" aria-modal="true">
           <div class="lp-ios-card">
-            <button class="lp-ios-close" id="lp-ios-close">✕</button>
-            <p class="lp-ios-title"><i class="fa-brands fa-apple"></i> Ajouter à l'écran d'accueil</p>
-            <ol class="lp-ios-steps">
-              <li>Appuyez sur <strong>le bouton Partager</strong> <span class="lp-ios-icon">⬆</span> en bas de Safari</li>
-              <li>Faites défiler et appuyez sur <strong>« Sur l'écran d'accueil »</strong></li>
-              <li>Confirmez en appuyant sur <strong>« Ajouter »</strong></li>
-            </ol>
-            <p class="lp-ios-note">L'icône PrionsEnLigne apparaîtra sur votre écran comme une vraie appli.</p>
+            <button class="lp-ios-close" id="lp-ios-close" aria-label="Fermer">✕</button>
+
+            <!-- Variant 1 : Safari iOS — guide complet -->
+            <div class="lp-ios-content" id="lp-ios-content-safari">
+              <h3 class="lp-ios-title">
+                <i class="fa-brands fa-apple"></i>
+                Ajouter à votre écran d'accueil
+              </h3>
+              <p class="lp-ios-intro">Apple ne permet pas l'installation automatique. C'est rapide à la main, en 3 gestes :</p>
+
+              <!-- Étape 1 : Bouton Partager -->
+              <div class="lp-ios-step">
+                <div class="lp-ios-step-num">1</div>
+                <div class="lp-ios-step-content">
+                  <p class="lp-ios-step-title">Appuyez sur <strong>le bouton Partager</strong></p>
+                  <p class="lp-ios-step-desc">Il se trouve dans la barre du bas de Safari (icône carrée avec une flèche)</p>
+                  <!-- Illustration : mock Safari avec icône Partager animée -->
+                  <div class="lp-ios-mock lp-ios-mock-safari">
+                    <div class="lp-ios-mock-bar">
+                      <span class="lp-ios-mock-icon">‹</span>
+                      <span class="lp-ios-mock-icon">›</span>
+                      <span class="lp-ios-mock-icon lp-ios-mock-share-btn" aria-label="Partager">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+                          <polyline points="16 6 12 2 8 6"/>
+                          <line x1="12" y1="2" x2="12" y2="15"/>
+                        </svg>
+                      </span>
+                      <span class="lp-ios-mock-icon">📖</span>
+                      <span class="lp-ios-mock-icon">⊞</span>
+                    </div>
+                    <div class="lp-ios-pointer">
+                      <div class="lp-ios-pointer-arrow">↑</div>
+                      <div class="lp-ios-pointer-label">Ici, dans la barre du bas</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Étape 2 : Sur l'écran d'accueil -->
+              <div class="lp-ios-step">
+                <div class="lp-ios-step-num">2</div>
+                <div class="lp-ios-step-content">
+                  <p class="lp-ios-step-title">Faites défiler et tapez <strong>« Sur l'écran d'accueil »</strong></p>
+                  <p class="lp-ios-step-desc">L'option apparaît dans le menu Partager, parmi les actions</p>
+                  <!-- Illustration : mock du menu partage iOS -->
+                  <div class="lp-ios-mock lp-ios-mock-menu">
+                    <div class="lp-ios-mock-menu-item">
+                      <span class="lp-ios-mock-menu-icon">📋</span>
+                      <span>Copier</span>
+                    </div>
+                    <div class="lp-ios-mock-menu-item lp-ios-mock-menu-highlight">
+                      <span class="lp-ios-mock-menu-icon">➕</span>
+                      <span>Sur l'écran d'accueil</span>
+                      <span class="lp-ios-mock-menu-arrow">›</span>
+                    </div>
+                    <div class="lp-ios-mock-menu-item">
+                      <span class="lp-ios-mock-menu-icon">🔖</span>
+                      <span>Marque-page</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Étape 3 : Confirmer -->
+              <div class="lp-ios-step">
+                <div class="lp-ios-step-num">3</div>
+                <div class="lp-ios-step-content">
+                  <p class="lp-ios-step-title">Confirmez en tapant <strong>« Ajouter »</strong></p>
+                  <p class="lp-ios-step-desc">Le bouton bleu en haut à droite — c'est tout !</p>
+                  <div class="lp-ios-mock lp-ios-mock-confirm">
+                    <span class="lp-ios-mock-confirm-cancel">Annuler</span>
+                    <span class="lp-ios-mock-confirm-title">PrionsEnLigne</span>
+                    <span class="lp-ios-mock-confirm-add">Ajouter</span>
+                  </div>
+                </div>
+              </div>
+
+              <p class="lp-ios-final"><i class="fa-solid fa-circle-check"></i> L'icône PrionsEnLigne apparaîtra sur votre écran comme une vraie appli, plein écran sans la barre Safari.</p>
+            </div>
+
+            <!-- Variant 2 : Chrome iOS / Firefox iOS — message redirection vers Safari -->
+            <div class="lp-ios-content hidden" id="lp-ios-content-non-safari">
+              <h3 class="lp-ios-title">
+                <i class="fa-brands fa-apple"></i>
+                Ouvrez d'abord dans Safari
+              </h3>
+              <p class="lp-ios-intro">L'installation sur l'écran d'accueil n'est possible qu'à travers <strong>Safari</strong> sur iPhone/iPad. Apple bloque cette fonction dans les autres navigateurs.</p>
+              <div class="lp-ios-redirect-steps">
+                <div class="lp-ios-redirect-step"><span>1.</span> Copiez le lien <code>prionsenligne.fr</code></div>
+                <div class="lp-ios-redirect-step"><span>2.</span> Ouvrez l'app <strong>Safari</strong></div>
+                <div class="lp-ios-redirect-step"><span>3.</span> Collez le lien et reprenez ici depuis Safari</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -404,11 +490,18 @@
       const iosModal   = document.getElementById('lp-ios-modal');
       const iosClose   = document.getElementById('lp-ios-close');
 
-      // Détection iOS
-      const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      // ── Détection iOS plus fine ───────────────────────────
+      const ua = navigator.userAgent;
+      const isIos = /iphone|ipad|ipod/i.test(ua);
+      // CriOS = Chrome iOS, FxiOS = Firefox iOS, EdgiOS = Edge iOS, OPiOS = Opera iOS
+      const isOtherBrowserOnIos = /CriOS|FxiOS|EdgiOS|OPiOS/.test(ua);
+      const isSafariIos = isIos && !isOtherBrowserOnIos;
       const isInStandaloneMode = window.matchMedia('(display-mode: standalone)').matches
         || window.navigator.standalone === true;
 
+      // On affiche le bouton iPhone uniquement si :
+      // - on est sur iOS (Safari OU autre navigateur, on adapte le message dans la modale)
+      // - et l'app n'est pas DÉJÀ installée (sinon ça n'a pas de sens)
       if (isIos && !isInStandaloneMode && btnIos) {
         btnIos.classList.remove('hidden');
       }
@@ -441,22 +534,38 @@
       if (btnNative)  btnNative.addEventListener('click',  triggerInstall);
       if (btnDesktop) btnDesktop.addEventListener('click', triggerInstall);
 
-      // iOS modal
-      if (btnIos) {
-        btnIos.addEventListener('click', () => {
-          if (iosModal) iosModal.classList.remove('hidden');
-        });
+      // iOS modal — affiche la variante Safari OU "Ouvrez dans Safari"
+      const iosContentSafari    = document.getElementById('lp-ios-content-safari');
+      const iosContentNonSafari = document.getElementById('lp-ios-content-non-safari');
+
+      function openIosModal() {
+        if (!iosModal) return;
+        // Choisit la bonne variante selon le navigateur
+        if (isSafariIos) {
+          iosContentSafari?.classList.remove('hidden');
+          iosContentNonSafari?.classList.add('hidden');
+        } else {
+          iosContentSafari?.classList.add('hidden');
+          iosContentNonSafari?.classList.remove('hidden');
+        }
+        iosModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
       }
-      if (iosClose) {
-        iosClose.addEventListener('click', () => {
-          if (iosModal) iosModal.classList.add('hidden');
-        });
+      function closeIosModal() {
+        iosModal?.classList.add('hidden');
+        document.body.style.overflow = '';
       }
+
+      if (btnIos)   btnIos.addEventListener('click', openIosModal);
+      if (iosClose) iosClose.addEventListener('click', closeIosModal);
       if (iosModal) {
         iosModal.addEventListener('click', e => {
-          if (e.target === iosModal) iosModal.classList.add('hidden');
+          if (e.target === iosModal) closeIosModal();
         });
       }
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && iosModal && !iosModal.classList.contains('hidden')) closeIosModal();
+      });
 
       // Masquer si déjà installé
       window.addEventListener('appinstalled', () => {
