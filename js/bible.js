@@ -342,9 +342,17 @@
     const prevCh = chapter > 1 ? chapter - 1 : null;
     const nextCh = chapter < book.ch ? chapter + 1 : null;
 
+    const trShort = TRANSLATIONS[currentTranslation]?.short || '';
     let html = `<div class="bible-chapter">
+      <div class="bible-chapter-toprow">
+        <button class="bible-home-btn" id="bible-home" type="button" title="Retour à la sélection des Bibles">
+          <i class="fa-solid fa-house"></i>
+          <span>Choisir une autre Bible</span>
+        </button>
+        <span class="bible-current-trans-badge">${escapeHtml(trShort)}</span>
+      </div>
       <div class="bible-chapter-header">
-        <button class="bible-back-btn" id="bible-back" aria-label="Retour à la liste des chapitres">
+        <button class="bible-back-btn" id="bible-back" aria-label="Retour à la liste des chapitres" title="Liste des chapitres">
           <i class="fa-solid fa-arrow-left"></i>
         </button>
         <h2 class="bible-chapter-title">${escapeHtml(book.name)} <span class="bible-chapter-num">${chapter}</span></h2>
@@ -393,6 +401,12 @@
     reader.innerHTML = html;
 
     // Event handlers
+    reader.querySelector('#bible-home')?.addEventListener('click', () => {
+      currentBook = null;
+      currentChapter = null;
+      syncActiveBookBtn();
+      renderWelcome();
+    });
     reader.querySelector('#bible-back')?.addEventListener('click', () => openBook(book));
     reader.querySelectorAll('.bible-nav-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -572,16 +586,17 @@
     const reader = document.getElementById('bible-reader');
     if (!reader) return;
     const t = TRANSLATIONS;
+    const tr = t[currentTranslation];
     reader.innerHTML = `
       <div class="bible-welcome">
         <h3 class="bible-welcome-title">Choisissez une traduction</h3>
-        <p class="bible-welcome-sub">Cliquez sur une Bible pour l'ouvrir et commencer la lecture.</p>
+        <p class="bible-welcome-sub">Cliquez sur une Bible pour découvrir sa description, puis ouvrez-la.</p>
 
         <div class="bible-shelf">
           ${TRANSLATION_ORDER.map(code => {
-            const tr = t[code];
+            const trItem = t[code];
             const isActive = code === currentTranslation;
-            return `<button class="bible-cover bible-cover-${tr.cover}${isActive ? ' is-active' : ''}" data-trans="${code}" type="button">
+            return `<button class="bible-cover bible-cover-${trItem.cover}${isActive ? ' is-active' : ''}" data-trans="${code}" type="button" aria-label="Sélectionner ${escapeAttr(trItem.full)}">
               <div class="bible-cover-spine"></div>
               <div class="bible-cover-front">
                 <div class="bible-cover-ornament-top"></div>
@@ -592,8 +607,8 @@
                   <div class="bible-cover-the">LA SAINTE</div>
                   <div class="bible-cover-bible">BIBLE</div>
                   <div class="bible-cover-divider"></div>
-                  <div class="bible-cover-version">${escapeHtml(tr.short === 'LSG' ? 'Segond' : tr.short === 'BDS' ? 'Du Semeur' : 'Nouvelle Segond')}</div>
-                  <div class="bible-cover-year">${escapeHtml(tr.year)}</div>
+                  <div class="bible-cover-version">${escapeHtml(trItem.short === 'LSG' ? 'Segond' : trItem.short === 'BDS' ? 'Du Semeur' : 'Nouvelle Segond')}</div>
+                  <div class="bible-cover-year">${escapeHtml(trItem.year)}</div>
                 </div>
                 <div class="bible-cover-ornament-bottom"></div>
               </div>
@@ -603,10 +618,18 @@
           }).join('')}
         </div>
 
-        <p class="bible-welcome-translation-desc">${escapeHtml(t[currentTranslation].desc)}</p>
+        <div class="bible-welcome-trans-info">
+          <h4 class="bible-welcome-trans-name">${escapeHtml(tr.full)} <span class="bible-welcome-trans-year">— ${escapeHtml(tr.year)}</span></h4>
+          <p class="bible-welcome-translation-desc">${escapeHtml(tr.desc)}</p>
+          <button class="bible-open-btn" id="bible-open-selected" type="button">
+            <i class="fa-solid fa-book-open"></i>
+            Ouvrir la <strong>${escapeHtml(tr.short)}</strong>
+            <i class="fa-solid fa-arrow-right bible-open-arrow"></i>
+          </button>
+        </div>
 
         <div class="bible-quick-refs">
-          <span class="bible-quick-ref-label">Ou ouvrez directement :</span>
+          <span class="bible-quick-ref-label">Ou allez directement à :</span>
           <button class="bible-quick-ref" data-ref="Genèse 1">Genèse 1</button>
           <button class="bible-quick-ref" data-ref="Psaumes 23">Psaume 23</button>
           <button class="bible-quick-ref" data-ref="Matthieu 5">Béatitudes</button>
@@ -616,16 +639,24 @@
       </div>
     `;
 
-    // Click sur une couverture → ouvre la traduction sur Genèse 1
+    // 1er clic sur une couverture = SÉLECTION (description s'actualise, pas d'ouverture)
+    // 2e clic sur la même couverture (déjà sélectionnée) = OUVERTURE
     reader.querySelectorAll('.bible-cover').forEach(el => {
       el.addEventListener('click', () => {
         const code = el.dataset.trans;
-        setTranslation(code);
-        // Si pas déjà sur un chapitre, ouvre Genèse 1
-        if (!currentBook || !currentChapter) {
+        if (code === currentTranslation) {
+          // Déjà sélectionnée → on l'ouvre
           loadChapter(BOOKS.ot[0], 1);
+        } else {
+          // Sélection seulement
+          setTranslation(code);
         }
       });
+    });
+
+    // Bouton "Ouvrir la BIBLE" sous la description
+    reader.querySelector('#bible-open-selected')?.addEventListener('click', () => {
+      loadChapter(BOOKS.ot[0], 1);
     });
 
     reader.querySelectorAll('.bible-quick-ref').forEach(btn => {
