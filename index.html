@@ -612,6 +612,19 @@
 
       btn.addEventListener('click', () => {
         if (failed) return; // géré par onclick remplacé
+        // Cas spécial : autoplay bloqué au reload — un clic relance
+        if (btn.classList.contains('lp-music-needs-resume')) {
+          btn.classList.remove('lp-music-needs-resume');
+          btn.querySelector('.lp-music-icon').innerHTML =
+            '<circle cx="12" cy="12" r="9" stroke-dasharray="2 3"/>';
+          label.textContent = '…';
+          audio.volume = 0.4;
+          loadTimer = setTimeout(showFallback, 4000);
+          audio.play()
+            .then(() => { clearTimeout(loadTimer); setPlaying(true); })
+            .catch(() => { clearTimeout(loadTimer); showFallback(); });
+          return;
+        }
         if (!playing) {
           btn.querySelector('.lp-music-icon').innerHTML =
             '<circle cx="12" cy="12" r="9" stroke-dasharray="2 3"/>';
@@ -633,11 +646,19 @@
       audio.addEventListener('playing', () => { clearTimeout(loadTimer); setPlaying(true); });
 
       // ── Reprise automatique si en cours sur /agenda ───────────
+      // Si l'autoplay est bloqué par le navigateur, on garde l'état
+      // visuel "actif en attente" pour que l'utilisateur reprenne
+      // en un seul clic au lieu de devoir tout réactiver.
       if (localStorage.getItem(LS_KEY) === '1') {
         audio.volume = 0.28;
         audio.play()
           .then(() => setPlaying(true))
-          .catch(() => localStorage.setItem(LS_KEY, '0'));
+          .catch(() => {
+            btn.classList.add('lp-music-playing', 'lp-music-needs-resume');
+            label.textContent = 'Reprendre';
+            btn.title = 'Cliquez pour reprendre le chant grégorien';
+            // LS_KEY reste à '1' — on ne perd pas la mémoire
+          });
       }
     })();
 

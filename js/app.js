@@ -4580,6 +4580,15 @@ function initGregorianPlayer() {
 
   btn.addEventListener('click', () => {
     if (failed) { window.open(FALLBACK, '_blank', 'noopener'); return; }
+    // Cas spécial : autoplay bloqué au reload → un clic relance la lecture
+    if (btn.classList.contains('greg-needs-resume')) {
+      btn.classList.remove('greg-needs-resume');
+      if (svgEl) svgEl.innerHTML = '<circle cx="12" cy="12" r="9" stroke-dasharray="2 3"/>';
+      if (label) label.textContent = '…';
+      loadTimer = setTimeout(showFallback, 5000);
+      audio.play().catch(() => { clearTimeout(loadTimer); showFallback(); });
+      return;
+    }
     if (playing) {
       clearTimeout(loadTimer);
       audio.pause();
@@ -4597,8 +4606,15 @@ function initGregorianPlayer() {
     audio.play()
       .then(() => setUI(true))
       .catch(() => {
-        // Navigateur a bloqué l'autoplay — on efface l'état pour ne pas boucler
-        localStorage.setItem(LS_KEY, '0');
+        // Navigateur a bloqué l'autoplay (politique de sécurité depuis reload)
+        // → on conserve l'intention en localStorage et on présente le bouton
+        //   dans un état "actif en attente" (un seul clic suffira à relancer)
+        btn.classList.add('greg-playing', 'greg-needs-resume');
+        if (svgEl) svgEl.innerHTML = SVG_MUSIC;
+        if (label) label.textContent = 'Reprendre';
+        btn.title = 'Cliquez pour reprendre le chant grégorien';
+        btn.setAttribute('aria-pressed', 'false');
+        // LS_KEY reste à '1' — l'intention est préservée
       });
   }
 }

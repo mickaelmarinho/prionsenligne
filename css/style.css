@@ -2191,6 +2191,29 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
   0%, 100% { box-shadow: 0 2px 14px rgba(201,168,76,.2); }
   50%       { box-shadow: 0 4px 24px rgba(201,168,76,.45); }
 }
+/* État "actif mais en attente" après reload (autoplay bloqué) :
+   pulse plus subtil + flèche play discrète qui invite au clic */
+.greg-btn.greg-needs-resume {
+  animation: gregPulseSoft 2s ease-in-out infinite;
+}
+.greg-btn.greg-needs-resume::after {
+  content: '▶';
+  position: absolute;
+  top: -3px; right: -3px;
+  background: var(--gold);
+  color: var(--navy);
+  font-size: 8px;
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,.3);
+}
+@keyframes gregPulseSoft {
+  0%, 100% { box-shadow: 0 2px 12px rgba(201,168,76,.25); }
+  50%       { box-shadow: 0 3px 18px rgba(201,168,76,.4); }
+}
 /* Mobile : au-dessus de la bottom-nav */
 @media (max-width: 640px) {
   .greg-btn { bottom: 84px; right: 14px; }
