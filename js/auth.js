@@ -42,9 +42,20 @@ function avatarColor(str) {
 /* ════════════════════════════════════════════
    UI HEADER
 ═════════════════════════════════════════════*/
+// Dispatche un événement custom à chaque changement d'auth
+// → permet aux autres modules (Bible) de réagir (sync, refresh UI…)
+function _dispatchAuthChange(user) {
+  try {
+    document.dispatchEvent(new CustomEvent('pel:authchange', {
+      detail: { user, sb: window._sbClient || null },
+    }));
+  } catch (_) {}
+}
+
 function updateHeaderUI(user) {
   _currentUser = user;
   window._pelUser = user; // Exposé pour app.js (chat)
+  _dispatchAuthChange(user);
   const btn         = $id('hamburger-btn');
   const signoutItem = $id('hm-signout');
   const logoutBtn   = $id('header-btn-logout');

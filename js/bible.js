@@ -226,7 +226,10 @@
     const h = getHighlights();
     if (h[key]) delete h[key]; else h[key] = Date.now();
     saveHighlights(h);
-    return !!h[key];
+    const isOn = !!h[key];
+    // Sync background → Supabase si connecté
+    syncToggleHighlight(bookName, ch, verse, isOn);
+    return isOn;
   }
   function isHighlighted(bookName, ch, verse) {
     return !!getHighlights()[`${bookName}_${ch}:${verse}`];
@@ -246,7 +249,9 @@
     const h = getWordHighlights();
     if (h[key]) delete h[key]; else h[key] = Date.now();
     saveWordHighlights(h);
-    return !!h[key];
+    const isOn = !!h[key];
+    syncToggleWordHighlight(bookName, ch, verse, wordIdx, isOn);
+    return isOn;
   }
   function isWordHighlighted(bookName, ch, verse, wordIdx) {
     return !!getWordHighlights()[`${bookName}_${ch}:${verse}:${wordIdx}`];
@@ -264,14 +269,17 @@
   function toggleFav(bookName, ch, verse) {
     const favs = getFavs();
     const idx = favs.findIndex(f => f.book === bookName && f.ch === ch && f.verse === verse);
+    const label = `${bookName} ${ch}:${verse}`;
     if (idx >= 0) {
       favs.splice(idx, 1);
     } else {
-      favs.unshift({ book: bookName, ch, verse, label: `${bookName} ${ch}:${verse}`, ts: Date.now() });
+      favs.unshift({ book: bookName, ch, verse, label, ts: Date.now() });
     }
     saveFavs(favs);
     renderFavList();
-    return idx < 0;
+    const isOn = idx < 0;
+    syncToggleFav(bookName, ch, verse, isOn, label);
+    return isOn;
   }
   function isFav(bookName, ch, verse) {
     return getFavs().some(f => f.book === bookName && f.ch === ch && f.verse === verse);
@@ -731,6 +739,186 @@
     });
   }
 
+  // ════════════════════════════════════════════════════════
+  //  Synchronisation Supabase (compte connecté)
+  //  - On garde toujours localStorage comme source de vérité locale
+  //    pour fonctionnement immédiat & offline
+  //  - Au login : pull serveur + merge UNION + push diff serveur
+  //    (ainsi un user qui avait surligné en local conserve tout)
+  //  - À chaque toggle local : push delta au serveur en arrière-plan
+  // ════════════════════════════════════════════════════════
+  let _syncing = false;
+
+  // Helper : parse "Jean_3:16" → { book, ch, verse }
+  function parseHiKey(key) {
+    const m = key.match(/^(.+)_(\d+):(\d+)$/);
+    if (!m) return null;
+    return { book: m[1], ch: parseInt(m[2], 10), verse: parseInt(m[3], 10) };
+  }
+  // Helper : parse "Jean_3:16:5" → { book, ch, verse, wordIdx }
+  function parseWordHiKey(key) {
+    const m = key.match(/^(.+)_(\d+):(\d+):(\d+)$/);
+    if (!m) return null;
+    return { book: m[1], ch: parseInt(m[2], 10), verse: parseInt(m[3], 10), wordIdx: parseInt(m[4], 10) };
+  }
+
+  async function pullFromSupabase() {
+    const sb = window._sbClient;
+    const user = window._pelUser;
+    if (!sb || !user) return;
+
+    try {
+      const [hiRes, whiRes, favRes] = await Promise.all([
+        sb.from('bible_highlights').select('book,chapter,verse'),
+        sb.from('bible_word_highlights').select('book,chapter,verse,word_idx'),
+        sb.from('bible_favorites').select('book,chapter,verse,label,created_at'),
+      ]);
+
+      // Merge UNION avec localStorage : on ne perd jamais rien
+      if (!hiRes.error && Array.isArray(hiRes.data)) {
+        const local = getHighlights();
+        hiRes.data.forEach(r => {
+          const key = `${r.book}_${r.chapter}:${r.verse}`;
+          if (!local[key]) local[key] = Date.now();
+        });
+        saveHighlights(local);
+      }
+
+      if (!whiRes.error && Array.isArray(whiRes.data)) {
+        const local = getWordHighlights();
+        whiRes.data.forEach(r => {
+          const key = `${r.book}_${r.chapter}:${r.verse}:${r.word_idx}`;
+          if (!local[key]) local[key] = Date.now();
+        });
+        saveWordHighlights(local);
+      }
+
+      if (!favRes.error && Array.isArray(favRes.data)) {
+        const local = getFavs();
+        const seen = new Set(local.map(f => `${f.book}_${f.ch}:${f.verse}`));
+        favRes.data.forEach(r => {
+          const key = `${r.book}_${r.chapter}:${r.verse}`;
+          if (!seen.has(key)) {
+            local.unshift({
+              book: r.book, ch: r.chapter, verse: r.verse,
+              label: r.label || `${r.book} ${r.chapter}:${r.verse}`,
+              ts: r.created_at ? new Date(r.created_at).getTime() : Date.now(),
+            });
+          }
+        });
+        saveFavs(local);
+        renderFavList();
+      }
+    } catch (err) {
+      console.warn('[bible/sync] pull error:', err.message);
+    }
+  }
+
+  async function pushAllToSupabase() {
+    // Pousse tout ce qui n'est pas encore sur le serveur
+    // (à utiliser après un pull, pour synchroniser ce que l'user
+    //  avait fait en local avant de se connecter)
+    const sb = window._sbClient;
+    const user = window._pelUser;
+    if (!sb || !user) return;
+
+    try {
+      const hi = getHighlights();
+      const hiRows = Object.keys(hi).map(parseHiKey).filter(Boolean)
+        .map(o => ({ user_id: user.id, book: o.book, chapter: o.ch, verse: o.verse }));
+      if (hiRows.length) {
+        await sb.from('bible_highlights').upsert(hiRows, { onConflict: 'user_id,book,chapter,verse', ignoreDuplicates: true });
+      }
+
+      const whi = getWordHighlights();
+      const whiRows = Object.keys(whi).map(parseWordHiKey).filter(Boolean)
+        .map(o => ({ user_id: user.id, book: o.book, chapter: o.ch, verse: o.verse, word_idx: o.wordIdx }));
+      if (whiRows.length) {
+        await sb.from('bible_word_highlights').upsert(whiRows, { onConflict: 'user_id,book,chapter,verse,word_idx', ignoreDuplicates: true });
+      }
+
+      const favs = getFavs();
+      const favRows = favs.map(f => ({
+        user_id: user.id, book: f.book, chapter: f.ch, verse: f.verse, label: f.label || null,
+      }));
+      if (favRows.length) {
+        await sb.from('bible_favorites').upsert(favRows, { onConflict: 'user_id,book,chapter,verse', ignoreDuplicates: true });
+      }
+    } catch (err) {
+      console.warn('[bible/sync] push error:', err.message);
+    }
+  }
+
+  // Synchronisation complète (pull puis push) — appelée au login
+  async function syncOnLogin() {
+    if (_syncing) return;
+    _syncing = true;
+    try {
+      await pullFromSupabase();
+      await pushAllToSupabase();
+      // Si on est dans un chapitre, on rafraîchit l'affichage pour montrer
+      // les surlignages tirés du serveur
+      if (currentBook && currentChapter) {
+        const data = cacheGet(currentBook, currentChapter);
+        if (data) renderChapter(currentBook, currentChapter, data);
+      }
+    } finally {
+      _syncing = false;
+    }
+  }
+
+  // ── Sync delta : après chaque toggle local, on pousse au serveur ──
+  async function syncToggleHighlight(bookName, ch, verse, isOn) {
+    const sb = window._sbClient;
+    const user = window._pelUser;
+    if (!sb || !user) return;
+    try {
+      if (isOn) {
+        await sb.from('bible_highlights').upsert(
+          { user_id: user.id, book: bookName, chapter: ch, verse },
+          { onConflict: 'user_id,book,chapter,verse', ignoreDuplicates: true }
+        );
+      } else {
+        await sb.from('bible_highlights').delete()
+          .eq('user_id', user.id).eq('book', bookName).eq('chapter', ch).eq('verse', verse);
+      }
+    } catch (_) {}
+  }
+
+  async function syncToggleWordHighlight(bookName, ch, verse, wordIdx, isOn) {
+    const sb = window._sbClient;
+    const user = window._pelUser;
+    if (!sb || !user) return;
+    try {
+      if (isOn) {
+        await sb.from('bible_word_highlights').upsert(
+          { user_id: user.id, book: bookName, chapter: ch, verse, word_idx: wordIdx },
+          { onConflict: 'user_id,book,chapter,verse,word_idx', ignoreDuplicates: true }
+        );
+      } else {
+        await sb.from('bible_word_highlights').delete()
+          .eq('user_id', user.id).eq('book', bookName).eq('chapter', ch).eq('verse', verse).eq('word_idx', wordIdx);
+      }
+    } catch (_) {}
+  }
+
+  async function syncToggleFav(bookName, ch, verse, isOn, label) {
+    const sb = window._sbClient;
+    const user = window._pelUser;
+    if (!sb || !user) return;
+    try {
+      if (isOn) {
+        await sb.from('bible_favorites').upsert(
+          { user_id: user.id, book: bookName, chapter: ch, verse, label: label || null },
+          { onConflict: 'user_id,book,chapter,verse', ignoreDuplicates: true }
+        );
+      } else {
+        await sb.from('bible_favorites').delete()
+          .eq('user_id', user.id).eq('book', bookName).eq('chapter', ch).eq('verse', verse);
+      }
+    } catch (_) {}
+  }
+
   // ── Init ─────────────────────────────────────────────────
   function init() {
     if (initialized) return;
@@ -773,6 +961,29 @@
       btn.addEventListener('click', () => setTranslation(btn.dataset.trans));
     });
     syncTranslationBtns();
+
+    // Sync Supabase à chaque connexion / déconnexion
+    document.addEventListener('pel:authchange', e => {
+      if (e.detail?.user) {
+        // Login (ou check session) → on récupère les surlignages/favoris du serveur
+        // et on pousse ce qui est en local mais pas encore sur le serveur
+        syncOnLogin();
+        // Rafraîchit la bannière "guest" si le chapitre est ouvert
+        if (currentBook && currentChapter) {
+          const data = cacheGet(currentBook, currentChapter);
+          if (data) renderChapter(currentBook, currentChapter, data);
+        }
+      } else {
+        // Logout → on rafraîchit pour réafficher la bannière "guest"
+        if (currentBook && currentChapter) {
+          const data = cacheGet(currentBook, currentChapter);
+          if (data) renderChapter(currentBook, currentChapter, data);
+        }
+      }
+    });
+
+    // Si l'auth est déjà initialisée au moment où la Bible s'init, on sync directement
+    if (window._pelUser) syncOnLogin();
 
     // Panel favoris (compte requis)
     document.getElementById('bible-fav-toggle')?.addEventListener('click', () => {
