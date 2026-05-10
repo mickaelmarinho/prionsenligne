@@ -831,6 +831,125 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
   padding-top: 8px;
 }
 
+/* ─── Bloc bio nominis (Conférence des évêques de France) ─── */
+.dd-nominis {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,.1);
+}
+.dd-nominis-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.dd-nominis-head > i {
+  color: var(--gold);
+  font-size: 12px;
+}
+.dd-nominis-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--gold);
+}
+.dd-nominis-title strong { color: rgba(245,240,232,.95); text-transform: none; letter-spacing: 0; font-weight: 600; }
+.dd-nominis-tagline {
+  font-size: 13px;
+  color: rgba(245,240,232,.85);
+  font-style: italic;
+  margin-bottom: 10px;
+  font-family: 'Cormorant Garamond', serif;
+}
+.dd-nominis-bio {
+  font-size: 13px;
+  line-height: 1.65;
+  color: rgba(245,240,232,.78);
+  overflow: hidden;
+  transition: max-height .35s ease;
+}
+.dd-nominis-bio.dd-nominis-collapsed {
+  max-height: 110px;
+  -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent);
+          mask-image: linear-gradient(to bottom, black 60%, transparent);
+}
+.dd-nominis-bio:not(.dd-nominis-collapsed) {
+  max-height: 1000px;
+}
+.dd-nominis-bio p { margin: 0 0 10px; }
+.dd-nominis-bio a {
+  color: var(--gold);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(201,168,76,.4);
+}
+.dd-nominis-bio a:hover { border-bottom-color: var(--gold); }
+.dd-nominis-bio img {
+  max-width: 140px;
+  border-radius: 8px;
+  margin: 4px 0 6px 12px;
+  float: right;
+}
+.dd-nominis-bio em { color: rgba(245,240,232,.85); }
+.dd-nominis-bio sup { font-size: 9px; }
+
+.dd-nominis-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 10px;
+}
+.dd-nominis-toggle {
+  background: rgba(201,168,76,.12);
+  border: 1px solid rgba(201,168,76,.3);
+  color: var(--gold);
+  font-family: 'Outfit', sans-serif;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background .15s;
+}
+.dd-nominis-toggle:hover { background: rgba(201,168,76,.22); }
+.dd-nominis-link {
+  font-size: 11px;
+  color: rgba(245,240,232,.55);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.dd-nominis-link:hover { color: var(--gold); }
+.dd-nominis-link > i { font-size: 9px; }
+
+.dd-nominis-loading {
+  font-size: 12px;
+  color: rgba(245,240,232,.5);
+  font-style: italic;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dd-nominis-spinner {
+  width: 12px; height: 12px;
+  border: 2px solid rgba(245,240,232,.2);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  display: inline-block;
+  animation: nominisSpin .8s linear infinite;
+}
+@keyframes nominisSpin { to { transform: rotate(360deg); } }
+
+/* Mobile : images bio plus petites */
+@media (max-width: 640px) {
+  .dd-nominis-bio img { max-width: 90px; margin-left: 8px; }
+  .dd-nominis-bio { font-size: 12.5px; }
+}
+
 /* ══════════════════════════════════════════════
    CHAT — INTENTIONS DE PRIÈRE
 ══════════════════════════════════════════════ */

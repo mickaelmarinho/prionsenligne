@@ -3,7 +3,7 @@
    Cache les pages principales pour consultation hors-ligne
 ═══════════════════════════════════════════════ */
 
-const CACHE_NAME = 'pel-v42';
+const CACHE_NAME = 'pel-v43';
 const PRECACHE = [
   '/',
   '/index.html',

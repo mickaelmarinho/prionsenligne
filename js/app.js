@@ -356,12 +356,35 @@ function initCalendar() {
     return CALENDAR_DATA[key]?.days?.[d] || null;
   }
 
+  // Cache mémoire pour les bios nominis (évite les appels en double)
+  const _nominisCache = {};
+  let _nominisAbort = null;
+
+  async function fetchNominisBio(year, month, day) {
+    const key = `${year}-${month}-${day}`;
+    if (_nominisCache[key]) return _nominisCache[key];
+    if (_nominisAbort) _nominisAbort.abort();
+    _nominisAbort = new AbortController();
+    try {
+      const resp = await fetch(`/api/nominis?day=${day}&month=${month}&year=${year}`, {
+        signal: _nominisAbort.signal,
+      });
+      if (!resp.ok) return null;
+      const data = await resp.json();
+      _nominisCache[key] = data;
+      return data;
+    } catch (_) { return null; }
+  }
+
   function selectDay(dayEl) {
     const date  = dayEl.dataset.date  || '';
     const type  = dayEl.dataset.type  || 'ordinaire';
     const saint = dayEl.dataset.saint || '';
     const desc  = dayEl.dataset.desc  || '';
     const minor = dayEl.dataset.minor || '';
+    const yr    = parseInt(dayEl.dataset.year,  10);
+    const mo    = parseInt(dayEl.dataset.month, 10);
+    const dy    = parseInt(dayEl.dataset.day,   10);
 
     if (ddDate)  ddDate.textContent  = date;
     if (ddType) { ddType.textContent = TYPE_LABELS[type] || type; ddType.className = 'dd-type ' + type; }
@@ -371,10 +394,76 @@ function initCalendar() {
       if (minor) { ddMinor.textContent = 'Aussi celebres : ' + minor; ddMinor.style.display = ''; }
       else { ddMinor.style.display = 'none'; }
     }
+
+    // Enrichissement nominis : bio détaillée + lien officiel CEF
+    let nomBlock = document.getElementById('dd-nominis');
+    if (!nomBlock) {
+      nomBlock = document.createElement('div');
+      nomBlock.id = 'dd-nominis';
+      nomBlock.className = 'dd-nominis';
+      detail.appendChild(nomBlock);
+    }
+    nomBlock.innerHTML = `<div class="dd-nominis-loading">
+      <span class="dd-nominis-spinner"></span>
+      Chargement de la biographie…
+    </div>`;
+    nomBlock.style.display = '';
+
+    if (yr && mo && dy) {
+      fetchNominisBio(yr, mo, dy).then(bio => {
+        if (!bio || !bio.nom) {
+          nomBlock.style.display = 'none';
+          return;
+        }
+        // Si on a déjà changé de jour entre temps, on ignore
+        if (parseInt(dayEl.dataset.day, 10) !== dy) return;
+        // Description courte (sans HTML)
+        const shortDesc = (bio.description || '').replace(/<[^>]+>/g, '').trim();
+        // Bio HTML : on garde en l'état (lien aelf, vatican, etc. ouvre dans nouvel onglet)
+        // On n'expose qu'un extrait par défaut, avec bouton "Lire plus"
+        const fullHtml = bio.contenu || '';
+        // Force target=_blank sur tous les liens pour ouvrir hors-app
+        const safeHtml = fullHtml.replace(/<a /g, '<a target="_blank" rel="noopener" ');
+        const lien = bio.lien || '';
+
+        nomBlock.innerHTML = `
+          <div class="dd-nominis-head">
+            <i class="fa-solid fa-book-open"></i>
+            <span class="dd-nominis-title">${bio.nom !== saint ? `<strong>${escapeHtmlSimple(bio.nom)}</strong> — ` : ''}selon nominis</span>
+          </div>
+          ${shortDesc ? `<div class="dd-nominis-tagline">${escapeHtmlSimple(shortDesc)}</div>` : ''}
+          <div class="dd-nominis-bio dd-nominis-collapsed">${safeHtml}</div>
+          <div class="dd-nominis-actions">
+            <button type="button" class="dd-nominis-toggle" id="dd-nominis-toggle">Lire la biographie complète <i class="fa-solid fa-chevron-down"></i></button>
+            ${lien ? `<a class="dd-nominis-link" href="${lien}" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square"></i> Sur nominis.cef.fr</a>` : ''}
+          </div>
+        `;
+        const toggleBtn = document.getElementById('dd-nominis-toggle');
+        const bioEl     = nomBlock.querySelector('.dd-nominis-bio');
+        toggleBtn?.addEventListener('click', () => {
+          const expanded = bioEl.classList.toggle('dd-nominis-collapsed') === false;
+          toggleBtn.innerHTML = expanded
+            ? 'Réduire <i class="fa-solid fa-chevron-up"></i>'
+            : 'Lire la biographie complète <i class="fa-solid fa-chevron-down"></i>';
+        });
+      }).catch(() => {
+        nomBlock.style.display = 'none';
+      });
+    } else {
+      nomBlock.style.display = 'none';
+    }
+
     detail.classList.remove('hidden');
     detail.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     grid.querySelectorAll('.cal-day:not(.other)').forEach(d => d.style.outline = '');
     dayEl.style.outline = '2px solid #c9a84c';
+  }
+
+  // Helper pour l'échappement HTML (réutilisable, simple)
+  function escapeHtmlSimple(s) {
+    return String(s || '').replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
   }
 
   function renderCalendar(year, month) {
@@ -428,6 +517,9 @@ function initCalendar() {
       div.dataset.saint = saint;
       div.dataset.desc  = desc;
       div.dataset.minor = minor;
+      div.dataset.year  = year;
+      div.dataset.month = month;
+      div.dataset.day   = d;
       // Petit tag discret pour les saints mineurs, visible dans la case
       const minorTag = minor ? '<span class="cal-minor-hint" title="' + minor + '">+</span>' : '';
       div.innerHTML = '<span class="cal-num">' + d + '</span>' +
