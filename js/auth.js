@@ -248,7 +248,9 @@ function openProfilePanel() {
   const panel   = $id('profile-panel');
   const overlay = $id('profile-overlay');
   if (!panel) return;
+  // Ferme le drawer burger ET son overlay (sinon il reste au-dessus du panneau profil)
   $id('hamburger-menu')?.classList.add('hidden');
+  $id('hamburger-overlay')?.classList.remove('show');
   loadProfileContent();
   panel.classList.add('open');
   panel.setAttribute('aria-hidden', 'false');
