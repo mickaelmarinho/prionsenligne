@@ -695,56 +695,69 @@ function initSaintCombobox() {
     results.innerHTML = localHTML + remoteHTML + manualHTML;
     results.classList.remove('hidden');
 
-    // Validation saisie manuelle
-    const manualBtn = results.querySelector('#prof-saint-manual-btn');
-    manualBtn?.addEventListener('click', e => {
-      e.stopPropagation();
-      const n  = results.querySelector('#prof-saint-manual-name')?.value.trim();
-      const f  = results.querySelector('#prof-saint-manual-feast')?.value.trim();
-      if (!n) { results.querySelector('#prof-saint-manual-name')?.focus(); return; }
-      applySelection({ id: 'custom', name: n, feast: f, lien: '' });
-    });
     // Empêcher la fermeture du dropdown quand on clique dans les inputs manuels
     results.querySelectorAll('.prof-saint-manual input').forEach(inp => {
+      inp.addEventListener('mousedown', e => e.stopPropagation());
       inp.addEventListener('click', e => e.stopPropagation());
       inp.addEventListener('keydown', e => {
-        if (e.key === 'Enter') { e.preventDefault(); manualBtn?.click(); }
-      });
-    });
-
-    results.querySelectorAll('.prof-saint-result').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const source = btn.dataset.source;
-        if (source === 'local') {
-          const s = SAINTS.find(x => x.id === btn.dataset.id);
-          if (s) applySelection(s);
-        } else {
-          // Récupère le détail Nominis (date de fête)
-          btn.querySelector('.prof-saint-result-feast').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> chargement…';
-          const id   = btn.dataset.id;
-          const slug = btn.dataset.slug;
-          const kind = btn.dataset.kind || 'saint';
-          try {
-            const r = await fetch(`/api/saint-detail?kind=${encodeURIComponent(kind)}&id=${encodeURIComponent(id)}&slug=${encodeURIComponent(slug)}`);
-            const d = r.ok ? await r.json() : {};
-            applySelection({
-              id:    'custom',
-              name:  btn.dataset.name,
-              feast: d.feast || '',
-              lien:  btn.dataset.url,
-            });
-          } catch (_) {
-            applySelection({
-              id:    'custom',
-              name:  btn.dataset.name,
-              feast: '',
-              lien:  btn.dataset.url,
-            });
-          }
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          results.querySelector('#prof-saint-manual-btn')?.click();
         }
       });
     });
   }
+
+  // ── Délégation d'évènement sur le container des résultats ──
+  // mousedown (au lieu de click) évite que le blur de l'input ferme le dropdown avant le clic
+  results.addEventListener('mousedown', async e => {
+    // Saisie manuelle — bouton Valider
+    const manualBtn = e.target.closest('#prof-saint-manual-btn');
+    if (manualBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const n = results.querySelector('#prof-saint-manual-name')?.value.trim();
+      const f = results.querySelector('#prof-saint-manual-feast')?.value.trim();
+      if (!n) { results.querySelector('#prof-saint-manual-name')?.focus(); return; }
+      applySelection({ id: 'custom', name: n, feast: f || '', lien: '' });
+      return;
+    }
+    // Résultat (curated ou Nominis)
+    const btn = e.target.closest('.prof-saint-result');
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const source = btn.dataset.source;
+    if (source === 'local') {
+      const s = SAINTS.find(x => x.id === btn.dataset.id);
+      if (s) applySelection(s);
+    } else {
+      const bioEl = btn.querySelector('.prof-saint-result-bio') || btn.querySelector('.prof-saint-result-feast');
+      const prevHTML = bioEl?.innerHTML;
+      if (bioEl) bioEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> chargement…';
+      const id   = btn.dataset.id;
+      const slug = btn.dataset.slug;
+      const kind = btn.dataset.kind || 'saint';
+      try {
+        const r = await fetch(`/api/saint-detail?kind=${encodeURIComponent(kind)}&id=${encodeURIComponent(id)}&slug=${encodeURIComponent(slug)}`);
+        const d = r.ok ? await r.json() : {};
+        applySelection({
+          id:    'custom',
+          name:  btn.dataset.name,
+          feast: d.feast || '',
+          lien:  btn.dataset.url,
+        });
+      } catch (_) {
+        if (bioEl) bioEl.innerHTML = prevHTML || '';
+        applySelection({
+          id:    'custom',
+          name:  btn.dataset.name,
+          feast: '',
+          lien:  btn.dataset.url,
+        });
+      }
+    }
+  });
 }
 
 // Met à jour les blocs « saint patron » du hero (badge + bio + compteur)
