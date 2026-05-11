@@ -105,6 +105,20 @@ function initDate() {
   const el = document.getElementById('js-date');
   if (el) el.textContent = label;
   // Feast display handled by initCalendar() → renderCalendar()
+  // Fallback : si le bandeau reste à « — » après 800 ms (pas de saint curated pour aujourd'hui),
+  // on tente une enrichissement direct via Nominis (n'attend pas la nav vers l'onglet Mois).
+  setTimeout(() => {
+    const fe = document.getElementById('js-feast');
+    if (!fe || (fe.textContent && fe.textContent !== '—')) return;
+    fetch(`/api/nominis?day=${now.getDate()}&month=${now.getMonth() + 1}&year=${now.getFullYear()}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        if (!d?.nom) return;
+        const cur = document.getElementById('js-feast');
+        if (cur && (!cur.textContent || cur.textContent === '—')) cur.textContent = d.nom;
+      })
+      .catch(() => {});
+  }, 800);
 }
 
 
@@ -360,6 +374,60 @@ function initCalendar() {
   const _nominisCache = {};
   let _nominisAbort = null;
 
+  // Cache module pour les batchs mois
+  const _nominisMonthCache = {};
+
+  // Enrichit les cases du mois sans saint curated avec les données Nominis
+  async function enrichCalendarWithNominis(year, month, grid) {
+    const key = `${year}-${month}`;
+    let monthData;
+    if (_nominisMonthCache[key]) {
+      monthData = _nominisMonthCache[key];
+    } else {
+      try {
+        const r = await fetch(`/api/nominis-month?year=${year}&month=${month}`);
+        if (!r.ok) return;
+        monthData = await r.json();
+        _nominisMonthCache[key] = monthData;
+      } catch (_) { return; }
+    }
+    if (!monthData?.days) return;
+
+    // Vérifier qu'on est toujours sur le bon mois (l'utilisateur a pu naviguer)
+    const currentKey = grid.dataset.monthKey;
+    if (currentKey && currentKey !== key) return;
+
+    monthData.days.forEach(entry => {
+      const cell = grid.querySelector(`.cal-day[data-day="${entry.day}"][data-month="${month}"]`);
+      if (!cell || cell.classList.contains('other')) return;
+      // Ne touche pas aux cases qui ont déjà un saint curated
+      if (cell.dataset.saint) {
+        // Stocker le 2e nom comme "nominis" pour info (consulté dans selectDay)
+        if (!cell.dataset.nominisName) cell.dataset.nominisName = entry.nom;
+        return;
+      }
+      // Pose les méta-données et l'affichage
+      cell.dataset.saint = entry.nom;
+      cell.dataset.desc  = entry.description || '';
+      cell.dataset.nominisOnly = '1';
+      const shortName = entry.nom.replace(/^(Saint|Sainte|Ss|Ste|St|Bienheureux|Bienheureuse|Vénérable)\s+/i, '').replace(/,.*$/, '').substring(0, 13);
+      const numEl = cell.querySelector('.cal-num');
+      if (numEl && !cell.querySelector('.cal-saint')) {
+        const span = document.createElement('span');
+        span.className = 'cal-saint cal-saint--nominis';
+        span.textContent = shortName;
+        numEl.after(span);
+      }
+      // Mettre à jour le bandeau si c'est aujourd'hui
+      if (cell.classList.contains('today')) {
+        const saintEl = document.getElementById('js-feast');
+        if (saintEl && (!saintEl.textContent || saintEl.textContent === '—')) {
+          saintEl.textContent = entry.nom;
+        }
+      }
+    });
+  }
+
   async function fetchNominisBio(year, month, day) {
     const key = `${year}-${month}-${day}`;
     if (_nominisCache[key]) return _nominisCache[key];
@@ -484,6 +552,7 @@ function initCalendar() {
     const headers = Array.from(grid.querySelectorAll('.cal-head')).map(h => h.cloneNode(true));
     grid.innerHTML = '';
     headers.forEach(h => grid.appendChild(h));
+    grid.dataset.monthKey = `${year}-${month}`;
 
     // Leading "other" cells
     for (let i = 0; i < startCol; i++) {
@@ -535,6 +604,10 @@ function initCalendar() {
         if (typeEl)  typeEl.textContent  = TYPE_LABELS[type] || '—';
       }
     }
+
+    // Enrichissement Nominis : remplit les cases sans saint curated
+    // (asynchrone, non bloquant). Cache CDN 24h → quasi gratuit après le 1er hit.
+    enrichCalendarWithNominis(year, month, grid);
 
     // Trailing "other" cells
     const total    = startCol + daysInMonth;
