@@ -17,7 +17,7 @@ const ALLOWED_ORIGINS = [
   'https://www.prionsenligne.fr',
 ];
 
-const MAX_PAGES_PER_LETTER = 18;  // jusqu'à ~900 entrées par lettre (la lettre J a 15 pages)
+const MAX_PAGES_PER_LETTER = 15;  // couvre toutes les lettres (les plus longues : J=15, M=14)
 const TTL_MS = 7 * 24 * 3600 * 1000;
 const _letterCache = {};          // { 'J': { entries, fetchedAt } }
 
