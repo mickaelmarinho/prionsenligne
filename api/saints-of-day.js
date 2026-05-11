@@ -68,13 +68,28 @@ export default async function handler(req, res) {
     }
     const html = await upstream.text();
 
-    // Isole le bloc "Autres fêtes du jour"
-    const blockMatch = html.match(/<h4>Autres f[êe]tes du jour<\/h4>[\s\S]*?<\/div>/i);
-    if (!blockMatch) {
+    // Isole le bloc "Autres fêtes du jour" : on prend tout ce qui suit le marqueur
+    // jusqu'au prochain séparateur de section (formulaire, autre list-group-item-secondary…)
+    const startMatch = html.match(/<h4>Autres f[êe]tes du jour<\/h4>/i);
+    if (!startMatch) {
       res.status(200).json({ day, month, year, saints: [] });
       return;
     }
-    const block = blockMatch[0];
+    const startIdx = startMatch.index + startMatch[0].length;
+    // Trouve la fin : prochain h4 (autre section), <form, ou <span list-group-item-secondary
+    const tail = html.slice(startIdx);
+    let endIdx = tail.length;
+    const endMarkers = [
+      /<h4[^>]*>/i,
+      /<form[^>]*>/i,
+      /<span[^>]+list-group-item-secondary/i,
+      /<!--\s*robots/i,
+    ];
+    for (const re of endMarkers) {
+      const m = tail.match(re);
+      if (m && m.index !== undefined && m.index < endIdx) endIdx = m.index;
+    }
+    const block = tail.slice(0, endIdx);
 
     // Parse chaque ancre : <a href="/contenus/saint/ID/SLUG.html" ...><div ...><h5 ...>NAME</h5></div><p ...>BIO</p></a>
     const saints = [];
