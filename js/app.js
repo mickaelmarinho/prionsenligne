@@ -4228,9 +4228,13 @@ function initChat() {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openProfilePopover(div, avatar); }
     });
 
-    // Couleur d'auteur basée sur sa palette (pour identification rapide)
+    // Couleur d'auteur + accent de bulle basés sur sa palette
     const palBg = getAvatarPalette(msg.avatar_palette, msg.user_name);
     const authorColor = palBg ? palBg.bg : '';
+    if (palBg && palBg.bg) {
+      // Variable CSS héritée par les enfants (.chat-msg-text)
+      div.style.setProperty('--user-palette', palBg.bg);
+    }
 
     // Grade selon ancienneté
     const rank = memberRank(msg.member_since);
@@ -4302,6 +4306,11 @@ function initChat() {
 
     const pop = document.createElement('div');
     pop.className = 'chat-popover';
+    // Hérite la palette de l'utilisateur pour teinter le popover
+    if (window.pelGetPalette) {
+      const pal = window.pelGetPalette(data.avatarPalette, userName);
+      if (pal && pal.bg) pop.style.setProperty('--user-palette', pal.bg);
+    }
     const avatarHTML = '<span class="chat-pop-avatar"></span>';
     const saintHTML = (saint && saint.id !== 'aucun')
       ? `<div class="chat-pop-row"><i class="fa-solid fa-star"></i> <span>Saint patron : <strong>${escHtml(saint.name)}</strong>${saint.feast ? ' <em>(' + escHtml(saint.feast) + ')</em>' : ''}</span></div>`

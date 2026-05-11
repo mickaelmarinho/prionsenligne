@@ -4057,8 +4057,12 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   border-radius: 0 12px 12px 12px;
   padding: 9px 13px;
   word-break: break-word;
+  /* Rail liturgique : barre colorée de 3px sur le côté */
+  border-left: 3px solid var(--user-palette, rgba(255,255,255,.18));
+  position: relative;
+  transition: background .15s;
 }
-/* Message envoyé par l'utilisateur courant */
+/* Message envoyé par l'utilisateur courant — fond teinté par la palette */
 .chat-msg.own {
   align-items: flex-end;
 }
@@ -4067,9 +4071,20 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
 }
 .chat-msg.own .chat-msg-author { color: rgba(201,168,76,.7); }
 .chat-msg.own .chat-msg-text {
-  background: rgba(201,168,76,.12);
-  border-color: rgba(201,168,76,.22);
-  border-radius: 12px 0 12px 12px;
+  background:
+    linear-gradient(to right, rgba(0,0,0,0), color-mix(in srgb, var(--user-palette, #c9a84c) 22%, transparent));
+  border-color: color-mix(in srgb, var(--user-palette, #c9a84c) 38%, transparent);
+  border-radius: 12px 12px 0 12px;
+  border-left: 1px solid color-mix(in srgb, var(--user-palette, #c9a84c) 18%, transparent);
+  /* Rail à DROITE pour les propres messages (symétrie iMessage) */
+  border-right: 3px solid var(--user-palette, var(--gold));
+}
+/* Fallback pour navigateurs sans color-mix : on garde au moins la barre latérale */
+@supports not (background: color-mix(in srgb, red, blue)) {
+  .chat-msg.own .chat-msg-text {
+    background: rgba(201,168,76,.12);
+    border-color: rgba(201,168,76,.22);
+  }
 }
 
 /* ── Popover mini-profil tchat ── */
@@ -4160,9 +4175,16 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   font-size: 14px;
   line-height: 1.5;
   color: var(--navy);
-  background: rgba(201,168,76,.08);
-  border-left: 3px solid var(--gold);
+  background: color-mix(in srgb, var(--user-palette, #c9a84c) 9%, transparent);
+  border-left: 3px solid var(--user-palette, var(--gold));
   border-radius: 0 8px 8px 0;
+}
+/* Teinte la barre d'en-tête du popover par la palette utilisateur */
+.chat-popover .chat-pop-head {
+  background:
+    linear-gradient(135deg,
+      var(--navy) 0%,
+      color-mix(in srgb, var(--user-palette, var(--navy)) 60%, var(--navy)) 100%);
 }
 
 /* Formulaire */
