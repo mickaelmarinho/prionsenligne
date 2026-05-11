@@ -517,6 +517,39 @@ async function loadProfileContent() {
   });
 }
 
+// Extrait le mot-clé principal du nom du saint pour la recherche/parsing.
+// "Saint Michel Archange" → "michel" · "Sainte Thérèse de Lisieux" → "thérèse"
+function _saintKeyword(name) {
+  if (!name) return '';
+  const cleaned = name
+    .replace(/^(Saint[e]?s?|Sainte)\s+/i, '')
+    .replace(/^(la|le)\s+/i, '')
+    .trim();
+  // Premier mot significatif (ignore "Jean-..." compose)
+  const first = cleaned.split(/[\s,]+/)[0] || cleaned;
+  return first.toLowerCase();
+}
+
+// Cherche dans le HTML `contenu` Nominis un lien vers la fiche du saint demandé
+// (utile quand le saint principal du jour n'est pas notre patron — ex. Michel/Gabriel le 29/09)
+function _findNominisLinkFor(saintName, html) {
+  if (!html || !saintName) return null;
+  const kw = _saintKeyword(saintName);
+  if (!kw) return null;
+  // Recherche tous les <a href="/contenus/saint/...">Texte</a>
+  const re = /<a[^>]+href="(\/contenus\/saint\/[^"]+\.html)"[^>]*>([^<]+)<\/a>/gi;
+  let m;
+  while ((m = re.exec(html)) !== null) {
+    const href = m[1];
+    const txt  = m[2].toLowerCase();
+    // Le mot-clé (ex. "michel") apparaît dans le texte du lien
+    if (txt.includes(kw)) {
+      return 'https://nominis.cef.fr' + href;
+    }
+  }
+  return null;
+}
+
 // Affiche la biographie du saint patron via /api/nominis
 async function renderPatronBio(saint) {
   const bio = $id('prof-patron-bio');
@@ -530,10 +563,23 @@ async function renderPatronBio(saint) {
   const currentSid = $id('prof-saint-select')?.value;
   if (currentSid && currentSid !== saint.id) return;
   if (!data) { bio.style.display = 'none'; return; }
-  const desc = data.description ? `<div class="prof-patron-desc">${_esc(data.description)}</div>` : '';
-  const lien = data.lien ? `<a class="prof-patron-link" href="${_esc(data.lien)}" target="_blank" rel="noopener"><i class="fa-solid fa-up-right-from-square"></i> Lire la biographie complète sur Nominis</a>` : '';
-  const src  = data.source ? `<div class="prof-patron-src">Source : ${_esc(data.source)}</div>` : '';
-  bio.innerHTML = `${desc}${lien}${src}`;
+
+  // Si le saint du jour selon nominis ≠ notre patron, on cherche le bon lien dans le HTML
+  const apiKw  = _saintKeyword(data.nom || '');
+  const ourKw  = _saintKeyword(saint.name);
+  let   lien   = data.lien || '';
+  let   desc   = data.description || '';
+  if (apiKw && ourKw && apiKw !== ourKw) {
+    const altLien = _findNominisLinkFor(saint.name, data.contenu || '');
+    if (altLien) lien = altLien;
+    // La description courte du jour concerne un autre saint : on l'omet
+    desc = '';
+  }
+
+  const descHTML = desc ? `<div class="prof-patron-desc">${_esc(desc)}</div>` : '';
+  const lienHTML = lien ? `<a class="prof-patron-link" href="${_esc(lien)}" target="_blank" rel="noopener"><i class="fa-solid fa-up-right-from-square"></i> Lire la biographie complète sur Nominis</a>` : '';
+  const srcHTML  = data.source ? `<div class="prof-patron-src">Source : ${_esc(data.source)}</div>` : '';
+  bio.innerHTML = `${descHTML}${lienHTML}${srcHTML}`;
 }
 
 // Preview live de l'avatar quand l'utilisateur sélectionne une icône / palette
