@@ -4152,10 +4152,18 @@ function initChat() {
     return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   }
 
-  // Groupe deux messages consécutifs du même auteur si écart < 5 min
+  // Groupe deux messages consécutifs du même auteur si :
+  //   - même user_id
+  //   - écart < 5 min
+  //   - même avatar (icône + palette)  ← permet de voir un changement de perso immédiatement
   function isGrouped(prevMsg, msg) {
     if (!prevMsg || !msg) return false;
     if (prevMsg.user_id !== msg.user_id) return false;
+    const aIc = prevMsg.avatar_icon    || 'initial';
+    const bIc = msg.avatar_icon        || 'initial';
+    const aPa = prevMsg.avatar_palette || 'auto';
+    const bPa = msg.avatar_palette     || 'auto';
+    if (aIc !== bIc || aPa !== bPa) return false;
     const a = new Date(prevMsg.created_at).getTime();
     const b = new Date(msg.created_at).getTime();
     return Math.abs(b - a) < 5 * 60 * 1000;
@@ -4170,6 +4178,8 @@ function initChat() {
     div.dataset.id = msg.id;
     div.dataset.userId = msg.user_id || '';
     div.dataset.createdAt = msg.created_at || '';
+    div.dataset.avatarIcon    = msg.avatar_icon    || 'initial';
+    div.dataset.avatarPalette = msg.avatar_palette || 'auto';
 
     // Avatar (caché en mode groupé via CSS)
     const avatar = document.createElement('span');
@@ -4241,8 +4251,10 @@ function initChat() {
     const last = msgsEl.querySelector('.chat-msg:last-child');
     if (!last) return null;
     return {
-      user_id: last.dataset.userId,
-      created_at: last.dataset.createdAt,
+      user_id:        last.dataset.userId,
+      created_at:     last.dataset.createdAt,
+      avatar_icon:    last.dataset.avatarIcon,
+      avatar_palette: last.dataset.avatarPalette,
     };
   }
 
