@@ -146,25 +146,40 @@ function applyAvatarTo(el, user) {
   if (!el || !user) return;
   const meta = user.user_metadata || {};
   const name = meta.name || (user.email || '').split('@')[0] || '?';
-  const iconKey    = meta.avatar_icon    || 'initial';
-  const paletteKey = meta.avatar_palette || 'auto';
-  const palette    = (paletteKey === 'auto')
-    ? avatarColor(name)
+  renderAvatarInto(el, {
+    icon:    meta.avatar_icon,
+    palette: meta.avatar_palette,
+    name,
+  });
+}
+
+// Variante générique (sans objet user) — utilisée par le tchat pour rendre
+// l'avatar d'un autre utilisateur à partir des champs dénormalisés.
+function renderAvatarInto(el, { icon, palette, name }) {
+  if (!el) return;
+  const safeName   = (name || '?').toString();
+  const iconKey    = icon    || 'initial';
+  const paletteKey = palette || 'auto';
+  const pal = (paletteKey === 'auto')
+    ? avatarColor(safeName)
     : (AVATAR_PALETTES[paletteKey] && AVATAR_PALETTES[paletteKey].bg
         ? AVATAR_PALETTES[paletteKey]
-        : avatarColor(name));
-  const icon = AVATAR_ICONS[iconKey] || AVATAR_ICONS.initial;
+        : avatarColor(safeName));
+  const ico = AVATAR_ICONS[iconKey] || AVATAR_ICONS.initial;
 
-  el.style.background = palette.bg;
-  el.style.color      = palette.fg;
-  if (icon.type === 'icon') {
-    el.innerHTML = `<i class="fa-solid ${icon.icon}"></i>`;
+  el.style.background = pal.bg;
+  el.style.color      = pal.fg;
+  if (ico.type === 'icon') {
+    el.innerHTML = `<i class="fa-solid ${ico.icon}"></i>`;
     el.classList.add('avatar-with-icon');
   } else {
-    el.textContent = name.charAt(0).toUpperCase();
+    el.textContent = safeName.charAt(0).toUpperCase();
     el.classList.remove('avatar-with-icon');
   }
 }
+
+// Exposé global pour app.js (tchat)
+window.pelRenderAvatar = renderAvatarInto;
 
 /* ════════════════════════════════════════════
    UI HEADER
@@ -334,9 +349,9 @@ async function loadProfileContent() {
     </div>
 
     <div class="prof-stats">
-      <div class="prof-stat-card prof-stat-intentions">
-        <div class="prof-stat-value" id="prof-stat-int">…</div>
-        <div class="prof-stat-label"><i class="fa-solid fa-hands-praying"></i> Intentions de prière</div>
+      <div class="prof-stat-card prof-stat-countdown" id="prof-stat-countdown" style="display:none">
+        <div class="prof-stat-value" id="prof-stat-cd-value">—</div>
+        <div class="prof-stat-label" id="prof-stat-cd-label"><i class="fa-solid fa-calendar-star"></i> Prochaine fête</div>
       </div>
     </div>
 
@@ -422,23 +437,8 @@ async function loadProfileContent() {
     </div>
   `;
 
-  // Charger les stats en parallèle
-  if (_sb) {
-    _sb.from('prayer_intentions')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .then(({ count, error }) => {
-        const el = $id('prof-stat-int');
-        if (el) el.textContent = error ? '—' : (count ?? 0);
-      })
-      .catch(() => {
-        const el = $id('prof-stat-int');
-        if (el) el.textContent = '—';
-      });
-  } else {
-    const el = $id('prof-stat-int');
-    if (el) el.textContent = '—';
-  }
+  // Compte à rebours jusqu'à la fête du saint patron
+  updatePatronCountdown(selectedSaint);
 
   // Events
   $id('prof-name-save')?.addEventListener('click', saveProfileName);
@@ -494,6 +494,7 @@ async function loadProfileContent() {
       }
       renderPatronBio(s);
     }
+    updatePatronCountdown(s);
   });
 
   // Bio initiale du saint patron (si défini)
@@ -566,6 +567,37 @@ function _findNominisLinkFor(saintName, html) {
     }
   }
   return null;
+}
+
+// Compte à rebours jusqu'à la prochaine fête du saint patron
+function updatePatronCountdown(saint) {
+  const card  = $id('prof-stat-countdown');
+  const val   = $id('prof-stat-cd-value');
+  const label = $id('prof-stat-cd-label');
+  if (!card || !val || !label) return;
+  if (!saint || saint.id === 'aucun') { card.style.display = 'none'; return; }
+  const parsed = parseFeastDate(saint.feast);
+  if (!parsed) { card.style.display = 'none'; return; }
+
+  const now = new Date();
+  const yr  = now.getFullYear();
+  // Date de la fête cette année à 00h00
+  let feast = new Date(yr, parsed.month - 1, parsed.day);
+  const today0 = new Date(yr, now.getMonth(), now.getDate());
+  if (feast < today0) feast = new Date(yr + 1, parsed.month - 1, parsed.day);
+  const diffDays = Math.round((feast - today0) / 86400000);
+
+  card.style.display = '';
+  if (diffDays === 0) {
+    val.innerHTML = `<i class="fa-solid fa-star"></i>`;
+    label.innerHTML = `<i class="fa-solid fa-calendar-star"></i> <strong>Bonne fête !</strong> — ${_esc(saint.name)}`;
+  } else if (diffDays === 1) {
+    val.textContent = '1';
+    label.innerHTML = `<i class="fa-solid fa-calendar-star"></i> jour avant la fête de <strong>${_esc(saint.name)}</strong>`;
+  } else {
+    val.textContent = diffDays;
+    label.innerHTML = `<i class="fa-solid fa-calendar-star"></i> jours avant la fête de <strong>${_esc(saint.name)}</strong> (${_esc(saint.feast)})`;
+  }
 }
 
 // Affiche la biographie du saint patron via /api/nominis

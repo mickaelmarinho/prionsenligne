@@ -4152,18 +4152,52 @@ function initChat() {
     return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   }
 
-  function buildBubble(msg) {
+  // Groupe deux messages consécutifs du même auteur si écart < 5 min
+  function isGrouped(prevMsg, msg) {
+    if (!prevMsg || !msg) return false;
+    if (prevMsg.user_id !== msg.user_id) return false;
+    const a = new Date(prevMsg.created_at).getTime();
+    const b = new Date(msg.created_at).getTime();
+    return Math.abs(b - a) < 5 * 60 * 1000;
+  }
+
+  function buildBubble(msg, prevMsg) {
     const userId = window._pelUser?.id;
     const isOwn  = userId && msg.user_id === userId;
+    const grouped = isGrouped(prevMsg, msg);
     const div    = document.createElement('div');
-    div.className = 'chat-msg' + (isOwn ? ' own' : '');
+    div.className = 'chat-msg' + (isOwn ? ' own' : '') + (grouped ? ' grouped' : '');
     div.dataset.id = msg.id;
-    div.innerHTML = `
+    div.dataset.userId = msg.user_id || '';
+    div.dataset.createdAt = msg.created_at || '';
+
+    // Avatar (caché en mode groupé via CSS)
+    const avatar = document.createElement('span');
+    avatar.className = 'chat-msg-avatar';
+    if (window.pelRenderAvatar) {
+      window.pelRenderAvatar(avatar, {
+        icon:    msg.avatar_icon,
+        palette: msg.avatar_palette,
+        name:    msg.user_name,
+      });
+    } else {
+      avatar.textContent = (msg.user_name || '?').charAt(0).toUpperCase();
+    }
+
+    const body = document.createElement('div');
+    body.className = 'chat-msg-body';
+    body.innerHTML = `
       <div class="chat-msg-meta">
         <span class="chat-msg-author">${escHtml(msg.user_name)}</span>
         <span class="chat-msg-time">${formatTime(msg.created_at)}</span>
       </div>
       <div class="chat-msg-text">${escHtml(msg.message)}</div>`;
+
+    const row = document.createElement('div');
+    row.className = 'chat-msg-row';
+    row.appendChild(avatar);
+    row.appendChild(body);
+    div.appendChild(row);
     return div;
   }
 
@@ -4198,8 +4232,18 @@ function initChat() {
     }
 
     emptyEl.style.display = 'none';
-    data.forEach(msg => msgsEl.appendChild(buildBubble(msg)));
+    data.forEach((msg, i) => msgsEl.appendChild(buildBubble(msg, data[i - 1])));
     scrollBottom();
+  }
+
+  // Récupère le dernier message du DOM pour comparer (utilisé pour optimistic + realtime)
+  function lastMsgFromDom() {
+    const last = msgsEl.querySelector('.chat-msg:last-child');
+    if (!last) return null;
+    return {
+      user_id: last.dataset.userId,
+      created_at: last.dataset.createdAt,
+    };
   }
 
   // ── Temps réel ───────────────────────────────────────────
@@ -4222,7 +4266,7 @@ function initChat() {
         const existing = msgsEl.querySelector('[data-id="' + msg.id + '"]');
         if (existing) return; // déjà affiché (optimistic)
         emptyEl.style.display = 'none';
-        msgsEl.appendChild(buildBubble(msg));
+        msgsEl.appendChild(buildBubble(msg, lastMsgFromDom()));
         scrollBottom();
       })
       .subscribe();
@@ -4272,6 +4316,8 @@ function initChat() {
     const meta = user.user_metadata || {};
     const cleanEmail = (user.email || '').split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     const userName = (meta.pseudo || meta.name || cleanEmail || 'Pèlerin').trim().slice(0, 30);
+    const avatarIcon    = meta.avatar_icon    || 'initial';
+    const avatarPalette = meta.avatar_palette || 'auto';
 
     // Optimistic UI
     const optimistic = {
@@ -4279,20 +4325,35 @@ function initChat() {
       office_id: currentOfficeId,
       user_id: user.id,
       user_name: userName,
+      avatar_icon:    avatarIcon,
+      avatar_palette: avatarPalette,
       message: text.trim(),
       created_at: new Date().toISOString(),
     };
     emptyEl.style.display = 'none';
-    const bubble = buildBubble(optimistic);
+    const bubble = buildBubble(optimistic, lastMsgFromDom());
     msgsEl.appendChild(bubble);
     scrollBottom();
 
-    const { data, error } = await sb.from('prayer_intentions').insert({
+    // Tentative avec les colonnes avatar — fallback si pas encore migré
+    let { data, error } = await sb.from('prayer_intentions').insert({
       office_id: currentOfficeId,
       user_id:   user.id,
       user_name: userName,
+      avatar_icon:    avatarIcon,
+      avatar_palette: avatarPalette,
       message:   text.trim(),
     }).select().single();
+    if (error && /avatar_icon|avatar_palette|column/i.test(error.message || '')) {
+      const fb = await sb.from('prayer_intentions').insert({
+        office_id: currentOfficeId,
+        user_id:   user.id,
+        user_name: userName,
+        message:   text.trim(),
+      }).select().single();
+      data  = fb.data;
+      error = fb.error;
+    }
 
     if (error) {
       bubble.remove();
