@@ -107,6 +107,40 @@ const SAINTS = [
   { id:'charles-f',  name:'Saint Charles de Foucauld',        feast:'1er décembre' },
 ];
 
+// ── Nominis : récupération bio du saint patron ──
+const _MONTHS_FR = {
+  'janvier': 1, 'février': 2, 'fevrier': 2, 'mars': 3, 'avril': 4,
+  'mai': 5, 'juin': 6, 'juillet': 7, 'août': 8, 'aout': 8,
+  'septembre': 9, 'octobre': 10, 'novembre': 11, 'décembre': 12, 'decembre': 12,
+};
+function parseFeastDate(feast) {
+  if (!feast) return null;
+  // Formats : "19 mars", "1er octobre", "15 août"
+  const m = feast.trim().toLowerCase().match(/^(\d{1,2})(?:er)?\s+([a-zûéèêâô]+)/i);
+  if (!m) return null;
+  const day = parseInt(m[1], 10);
+  const month = _MONTHS_FR[m[2]];
+  if (!day || !month) return null;
+  return { day, month };
+}
+
+const _saintBioCache = {};
+let _saintBioAbort = null;
+async function fetchSaintBio(day, month) {
+  const key = `${day}-${month}`;
+  if (_saintBioCache[key]) return _saintBioCache[key];
+  if (_saintBioAbort) _saintBioAbort.abort();
+  _saintBioAbort = new AbortController();
+  try {
+    const year = new Date().getFullYear();
+    const resp = await fetch(`/api/nominis?day=${day}&month=${month}&year=${year}`, { signal: _saintBioAbort.signal });
+    if (!resp.ok) return null;
+    const data = await resp.json();
+    _saintBioCache[key] = data;
+    return data;
+  } catch (_) { return null; }
+}
+
 // Applique l'avatar (icône+couleur OU initiale+auto-couleur) à un élément
 function applyAvatarTo(el, user) {
   if (!el || !user) return;
@@ -292,6 +326,7 @@ async function loadProfileContent() {
       <div class="prof-email">${_esc(email)}</div>
       ${sinceStr ? `<div class="prof-since"><i class="fa-solid fa-cross"></i> Membre depuis le ${sinceStr}</div>` : ''}
       ${selectedSaint && selectedSaint.id !== 'aucun' ? `<div class="prof-patron"><i class="fa-solid fa-star"></i> Saint patron : <strong>${_esc(selectedSaint.name)}</strong>${selectedSaint.feast ? ' <span class="prof-patron-feast">(' + _esc(selectedSaint.feast) + ')</span>' : ''}</div>` : ''}
+      <div class="prof-patron-bio" id="prof-patron-bio" style="display:none"></div>
       ${currentVerse ? `<blockquote class="prof-verse">« ${_esc(currentVerse)} »</blockquote>` : ''}
     </div>
 
@@ -422,6 +457,8 @@ async function loadProfileContent() {
     const heroEl = document.querySelector('.prof-hero');
     if (!s || s.id === 'aucun') {
       bloc?.remove();
+      const bio = $id('prof-patron-bio');
+      if (bio) { bio.style.display = 'none'; bio.innerHTML = ''; }
     } else {
       const html = `<i class="fa-solid fa-star"></i> Saint patron : <strong>${_esc(s.name)}</strong>${s.feast ? ' <span class="prof-patron-feast">(' + _esc(s.feast) + ')</span>' : ''}`;
       if (bloc) {
@@ -430,12 +467,19 @@ async function loadProfileContent() {
         const div = document.createElement('div');
         div.className = 'prof-patron';
         div.innerHTML = html;
-        // Inséré avant la citation si elle existe, sinon en dernier
+        // Inséré avant la bio si elle existe, sinon avant la citation
+        const bio = heroEl.querySelector('.prof-patron-bio');
         const verse = heroEl.querySelector('.prof-verse');
-        if (verse) verse.before(div); else heroEl.appendChild(div);
+        if (bio) bio.before(div);
+        else if (verse) verse.before(div);
+        else heroEl.appendChild(div);
       }
+      renderPatronBio(s);
     }
   });
+
+  // Bio initiale du saint patron (si défini)
+  if (selectedSaint && selectedSaint.id !== 'aucun') renderPatronBio(selectedSaint);
 
   // Citation : preview en live
   $id('prof-verse-input')?.addEventListener('input', () => {
@@ -471,6 +515,25 @@ async function loadProfileContent() {
     closeProfilePanel();
     await _sb.auth.signOut();
   });
+}
+
+// Affiche la biographie du saint patron via /api/nominis
+async function renderPatronBio(saint) {
+  const bio = $id('prof-patron-bio');
+  if (!bio || !saint || saint.id === 'aucun') return;
+  const parsed = parseFeastDate(saint.feast);
+  if (!parsed) { bio.style.display = 'none'; return; }
+  bio.style.display = '';
+  bio.innerHTML = `<div class="prof-patron-bio-loading"><i class="fa-solid fa-spinner fa-spin"></i> Chargement de la biographie…</div>`;
+  const data = await fetchSaintBio(parsed.day, parsed.month);
+  // Vérifier que l'utilisateur n'a pas changé de saint entre-temps
+  const currentSid = $id('prof-saint-select')?.value;
+  if (currentSid && currentSid !== saint.id) return;
+  if (!data) { bio.style.display = 'none'; return; }
+  const desc = data.description ? `<div class="prof-patron-desc">${_esc(data.description)}</div>` : '';
+  const lien = data.lien ? `<a class="prof-patron-link" href="${_esc(data.lien)}" target="_blank" rel="noopener"><i class="fa-solid fa-up-right-from-square"></i> Lire la biographie complète sur Nominis</a>` : '';
+  const src  = data.source ? `<div class="prof-patron-src">Source : ${_esc(data.source)}</div>` : '';
+  bio.innerHTML = `${desc}${lien}${src}`;
 }
 
 // Preview live de l'avatar quand l'utilisateur sélectionne une icône / palette
