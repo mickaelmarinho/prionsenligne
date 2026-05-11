@@ -700,7 +700,8 @@ h1, h2, h3, .lp-logo-name { font-family: 'Cormorant Garamond', serif; }
   justify-content: center;
   box-shadow: 0 2px 6px rgba(0,0,0,.4);
 }
-.lp-music-btn { position: relative; }
+/* (Ne PAS surcharger position: ici — le bouton doit rester en position: fixed.
+   Le ::after est positionné en absolute ; ça fonctionne au-dessus d'un parent fixed.) */
 
 /* ══════════════════════════════════════════════
    RESPONSIVE
