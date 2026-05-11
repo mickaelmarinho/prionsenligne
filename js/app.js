@@ -408,7 +408,8 @@ function initCalendar() {
       }
       // Pose les méta-données et l'affichage
       cell.dataset.saint = entry.nom;
-      cell.dataset.desc  = entry.description || '';
+      // Strip HTML pour le bandeau et le data-attribute (le texte brut suffit ici)
+      cell.dataset.desc  = (entry.description || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
       cell.dataset.nominisOnly = '1';
       const shortName = entry.nom.replace(/^(Saint|Sainte|Ss|Ste|St|Bienheureux|Bienheureuse|Vénérable)\s+/i, '').replace(/,.*$/, '').substring(0, 13);
       const numEl = cell.querySelector('.cal-num');
@@ -486,12 +487,16 @@ function initCalendar() {
         // Si on a déjà changé de jour entre temps, on ignore
         if (parseInt(dayEl.dataset.day, 10) !== dy) return;
         // Description courte (sans HTML)
-        const shortDesc = (bio.description || '').replace(/<[^>]+>/g, '').trim();
+        const shortDesc = (bio.description || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
         // Bio HTML : on garde en l'état (lien aelf, vatican, etc. ouvre dans nouvel onglet)
         // On n'expose qu'un extrait par défaut, avec bouton "Lire plus"
-        const fullHtml = bio.contenu || '';
+        let safeHtml = bio.contenu || '';
         // Force target=_blank sur tous les liens pour ouvrir hors-app
-        const safeHtml = fullHtml.replace(/<a /g, '<a target="_blank" rel="noopener" ');
+        safeHtml = safeHtml.replace(/<a /g, '<a target="_blank" rel="noopener" ');
+        // Réécrit les URLs relatives en absolues (pointent vers nominis.cef.fr)
+        safeHtml = safeHtml
+          .replace(/(<img[^>]+src=")\/([^"]+)/gi, '$1https://nominis.cef.fr/$2')
+          .replace(/(<a[^>]+href=")\/([^"]+)/gi, '$1https://nominis.cef.fr/$2');
         const lien = bio.lien || '';
 
         nomBlock.innerHTML = `

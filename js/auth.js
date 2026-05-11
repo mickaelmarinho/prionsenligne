@@ -790,7 +790,8 @@ async function renderPatronBio(saint) {
   const apiKw  = _saintKeyword(data.nom || '');
   const ourKw  = _saintKeyword(saint.name);
   let   lien   = data.lien || '';
-  let   desc   = data.description || '';
+  // Strip HTML de la description courte (Nominis peut renvoyer "Vierge (III<sup>e</sup>...)")
+  let   desc   = (data.description || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
   if (apiKw && ourKw && apiKw !== ourKw) {
     const altLien = _findNominisLinkFor(saint.name, data.contenu || '');
     if (altLien) lien = altLien;
