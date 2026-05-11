@@ -582,6 +582,14 @@ function _findNominisLinkFor(saintName, html) {
   return null;
 }
 
+// Met en majuscule la première lettre + ajoute "Saint" si absent
+function _titleCase(q) {
+  if (!q) return '';
+  const cap = q.charAt(0).toUpperCase() + q.slice(1);
+  if (/^(saint[es]?|saints?)\s/i.test(cap)) return cap;
+  return 'Saint ' + cap;
+}
+
 // ── Combobox de recherche du saint patron (curated + Nominis) ──────────
 let _saintSearchAbort = null;
 let _saintSearchTimer = null;
@@ -649,11 +657,6 @@ function initSaintCombobox() {
   }
 
   function renderResults(local, remote, q) {
-    if (local.length === 0 && remote.length === 0) {
-      results.innerHTML = `<div class="prof-saint-empty">Aucun résultat${q ? ` pour « ${_esc(q)} »` : ''}.</div>`;
-      results.classList.remove('hidden');
-      return;
-    }
     const localHTML = local.length ? `
       <div class="prof-saint-group-label">Suggestions</div>
       ${local.map(s => `
@@ -670,8 +673,44 @@ function initSaintCombobox() {
           ${r.bio ? `<span class="prof-saint-result-bio">${_esc(r.bio)}</span>` : ''}
         </button>
       `).join('')}` : '';
-    results.innerHTML = localHTML + remoteHTML;
+    // Toujours proposer la saisie manuelle (utile pour les saints absents de Nominis)
+    const manualHTML = q.length >= 2 ? `
+      <div class="prof-saint-group-label">Saisie manuelle</div>
+      <div class="prof-saint-manual">
+        <div class="prof-saint-manual-hint">
+          ${(local.length === 0 && remote.length === 0)
+            ? `Aucun résultat pour « ${_esc(q)} ». Vous pouvez saisir le saint vous-même :`
+            : `Vous ne trouvez pas votre saint ? Saisissez-le manuellement :`}
+        </div>
+        <div class="prof-saint-manual-fields">
+          <input type="text" class="prof-input prof-saint-manual-name"  id="prof-saint-manual-name"
+                 placeholder="Nom complet (ex. Saint Jason de Tarse)" value="${_esc(_titleCase(q))}" maxlength="80">
+          <input type="text" class="prof-input prof-saint-manual-feast" id="prof-saint-manual-feast"
+                 placeholder="Fête (ex. 12 juillet)" maxlength="40">
+          <button type="button" class="prof-saint-manual-btn" id="prof-saint-manual-btn">
+            <i class="fa-solid fa-check"></i> Valider
+          </button>
+        </div>
+      </div>` : '';
+    results.innerHTML = localHTML + remoteHTML + manualHTML;
     results.classList.remove('hidden');
+
+    // Validation saisie manuelle
+    const manualBtn = results.querySelector('#prof-saint-manual-btn');
+    manualBtn?.addEventListener('click', e => {
+      e.stopPropagation();
+      const n  = results.querySelector('#prof-saint-manual-name')?.value.trim();
+      const f  = results.querySelector('#prof-saint-manual-feast')?.value.trim();
+      if (!n) { results.querySelector('#prof-saint-manual-name')?.focus(); return; }
+      applySelection({ id: 'custom', name: n, feast: f, lien: '' });
+    });
+    // Empêcher la fermeture du dropdown quand on clique dans les inputs manuels
+    results.querySelectorAll('.prof-saint-manual input').forEach(inp => {
+      inp.addEventListener('click', e => e.stopPropagation());
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); manualBtn?.click(); }
+      });
+    });
 
     results.querySelectorAll('.prof-saint-result').forEach(btn => {
       btn.addEventListener('click', async () => {
