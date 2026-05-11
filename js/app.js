@@ -4071,8 +4071,8 @@ function initTodayTimeline() {
   });
 
   // ── Bouton "Ajouter ma journée au calendrier" — au-dessus du flux ──
-  const todayMain = container.closest('.today-main');
-  if (todayMain && !document.getElementById('tl-export-bar')) {
+  // Inséré DANS la colonne timeline (sinon il s'intercale entre filtres et flux en desktop)
+  if (!document.getElementById('tl-export-bar')) {
     const bar = document.createElement('div');
     bar.id = 'tl-export-bar';
     bar.className = 'tl-export-bar';
@@ -4083,10 +4083,7 @@ function initTodayTimeline() {
       </button>
       <span class="tl-export-hint">iPhone, Android, Google, Outlook…</span>
     `;
-    // Insère entre les filtres et la timeline
-    const filters = todayMain.querySelector('.prayer-filters');
-    if (filters) filters.after(bar);
-    else todayMain.prepend(bar);
+    container.prepend(bar);
   }
 
   // Délégation : clic sur les boutons calendrier (individuel + global)
