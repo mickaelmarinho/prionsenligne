@@ -1177,28 +1177,8 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
   padding: 32px 16px;
   line-height: 1.6;
 }
-.chat-msg {
-  background: var(--bg-card);
-  border-radius: 10px;
-  padding: 10px 12px;
-  border-left: 3px solid var(--gold);
-  animation: fadeIn .2s ease;
-}
-.chat-msg-new { border-left-color: var(--navy); }
-.chat-msg-header {
-  display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px;
-}
-.chat-msg-author {
-  font-size: 12px; font-weight: 500;
-  color: var(--navy); letter-spacing: .01em;
-}
-.chat-msg-time {
-  font-size: 10px; color: var(--text-soft);
-}
-.chat-msg-text {
-  font-size: 13px; color: var(--text);
-  line-height: 1.55; margin: 0;
-}
+/* (Anciens styles .chat-msg supprimés — remplacés par la version flex/avatars
+   plus bas, voir bloc « Bulles ».) */
 .chat-input-area { flex-shrink: 0; border-top: 1px solid var(--border); }
 .chat-login-prompt {
   padding: 20px 16px;
