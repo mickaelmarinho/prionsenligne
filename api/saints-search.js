@@ -31,30 +31,41 @@ async function loadLetter(letter) {
   const cached = _letterCache[letter];
   if (cached && Date.now() - cached.fetchedAt < TTL_MS) return cached.entries;
 
-  // Fetch toutes les pages en parallèle (plus rapide que séquentiel)
+  // Construit les URLs pour les DEUX index : saints (~15 pages max) ET prénoms (~5 pages max)
   const urls = [];
   for (let p = 1; p <= MAX_PAGES_PER_LETTER; p++) {
-    urls.push(p === 1
+    urls.push({ kind: 'saint',  url: p === 1
       ? `https://nominis.cef.fr/contenus/saint/alphabetique/${letter}.html`
-      : `https://nominis.cef.fr/contenus/saint/alphabetique/${letter}-${p}.html`);
+      : `https://nominis.cef.fr/contenus/saint/alphabetique/${letter}-${p}.html` });
   }
-  const htmls = await Promise.all(urls.map(u =>
-    fetch(u, { headers: { 'User-Agent': 'Mozilla/5.0 PrionsEnLigne (https://prionsenligne.fr)' } })
+  for (let p = 1; p <= 8; p++) {
+    urls.push({ kind: 'prenom', url: p === 1
+      ? `https://nominis.cef.fr/contenus/prenoms/alphabetique/${letter}.html`
+      : `https://nominis.cef.fr/contenus/prenoms/alphabetique/${letter}-${p}.html` });
+  }
+
+  const fetched = await Promise.all(urls.map(({ kind, url }) =>
+    fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 PrionsEnLigne (https://prionsenligne.fr)' } })
       .then(r => r.ok ? r.text() : null)
       .catch(() => null)
+      .then(html => ({ kind, html }))
   ));
 
   const entries = [];
-  const seen = new Set();
-  const re = /<a[^>]+href="\/contenus\/saint\/(\d+)\/([^"]+)\.html"[^>]*>[\s\S]*?<h5[^>]*>([^<]+)<\/h5>[\s\S]*?(?:<p[^>]*>([\s\S]*?)<\/p>)?[\s\S]*?<\/a>/gi;
-  for (const html of htmls) {
+  const seen = new Set();           // dédup par "type:id"
+  const saintRe  = /<a[^>]+href="\/contenus\/saint\/(\d+)\/([^"]+)\.html"[^>]*>[\s\S]*?<h5[^>]*>([^<]+)<\/h5>[\s\S]*?(?:<p[^>]*>([\s\S]*?)<\/p>)?[\s\S]*?<\/a>/gi;
+  const prenomRe = /<a[^>]+href="\/contenus\/prenom\/(\d+)\/([^"]+)\.html"[^>]*>[\s\S]*?<h5[^>]*>([^<]+)<\/h5>[\s\S]*?<\/a>/gi;
+
+  for (const { kind, html } of fetched) {
     if (!html) continue;
+    const re = kind === 'saint' ? saintRe : prenomRe;
     re.lastIndex = 0;
     let m;
     while ((m = re.exec(html)) !== null) {
-      const id = m[1];
-      if (seen.has(id)) continue;
-      seen.add(id);
+      const key = kind + ':' + m[1];
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const id   = m[1];
       const slug = m[2];
       const name = m[3].replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
       const bio  = (m[4] || '')
@@ -64,7 +75,7 @@ async function loadLetter(letter) {
         .replace(/\s+/g, ' ')
         .trim()
         .slice(0, 140);
-      entries.push({ id, name, slug, bio, normalized: stripAccents(name) });
+      entries.push({ kind, id, name, slug, bio, normalized: stripAccents(name) });
     }
   }
   _letterCache[letter] = { entries, fetchedAt: Date.now() };
@@ -99,11 +110,13 @@ export default async function handler(req, res) {
     for (const e of entries) {
       // Match si le nom (sans accents/casse) contient la requête
       if (e.normalized.includes(q) || e.normalized.includes(qBare)) {
+        const path = e.kind === 'saint' ? 'saint' : 'prenom';
         matches.push({
+          kind: e.kind,
           id:   e.id,
-          name: e.name,
+          name: e.kind === 'prenom' ? `Saint ${e.name}` : e.name,
           slug: e.slug,
-          url:  `https://nominis.cef.fr/contenus/saint/${e.id}/${e.slug}.html`,
+          url:  `https://nominis.cef.fr/contenus/${path}/${e.id}/${e.slug}.html`,
           bio:  e.bio,
         });
         if (matches.length >= 30) break;

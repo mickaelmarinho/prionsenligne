@@ -668,7 +668,7 @@ function initSaintCombobox() {
     const remoteHTML = remote.length ? `
       <div class="prof-saint-group-label">Nominis (CEF)</div>
       ${remote.map(r => `
-        <button type="button" class="prof-saint-result" data-source="nominis" data-id="${_esc(r.id)}" data-slug="${_esc(r.slug)}" data-name="${_esc(r.name)}" data-url="${_esc(r.url)}">
+        <button type="button" class="prof-saint-result" data-source="nominis" data-kind="${_esc(r.kind || 'saint')}" data-id="${_esc(r.id)}" data-slug="${_esc(r.slug)}" data-name="${_esc(r.name)}" data-url="${_esc(r.url)}">
           <span class="prof-saint-result-name">${_esc(r.name)}</span>
           ${r.bio ? `<span class="prof-saint-result-bio">${_esc(r.bio)}</span>` : ''}
         </button>
@@ -723,8 +723,9 @@ function initSaintCombobox() {
           btn.querySelector('.prof-saint-result-feast').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> chargement…';
           const id   = btn.dataset.id;
           const slug = btn.dataset.slug;
+          const kind = btn.dataset.kind || 'saint';
           try {
-            const r = await fetch(`/api/saint-detail?id=${encodeURIComponent(id)}&slug=${encodeURIComponent(slug)}`);
+            const r = await fetch(`/api/saint-detail?kind=${encodeURIComponent(kind)}&id=${encodeURIComponent(id)}&slug=${encodeURIComponent(slug)}`);
             const d = r.ok ? await r.json() : {};
             applySelection({
               id:    'custom',

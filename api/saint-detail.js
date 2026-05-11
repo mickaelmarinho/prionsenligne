@@ -55,12 +55,13 @@ export default async function handler(req, res) {
 
   const id   = (req.query.id   || '').toString();
   const slug = (req.query.slug || '').toString();
-  if (!/^\d+$/.test(id) || !/^[A-Za-z0-9_%-]+$/.test(slug)) {
-    res.status(400).json({ error: 'Paramètres id/slug invalides.' });
+  const kind = (req.query.kind || 'saint').toString();
+  if (!/^\d+$/.test(id) || !/^[A-Za-z0-9_%-]+$/.test(slug) || !/^(saint|prenom)$/.test(kind)) {
+    res.status(400).json({ error: 'Paramètres invalides.' });
     return;
   }
 
-  const url = `https://nominis.cef.fr/contenus/saint/${id}/${slug}.html`;
+  const url = `https://nominis.cef.fr/contenus/${kind}/${id}/${slug}.html`;
   try {
     const upstream = await fetch(url, {
       headers: { 'User-Agent': 'Mozilla/5.0 PrionsEnLigne (https://prionsenligne.fr)' },
