@@ -823,7 +823,14 @@
         <i class="fa-solid fa-hands-praying chat-header-icon"></i>
         <div>
           <div class="chat-header-title" id="chat-office-name">Intentions de prières</div>
-          <div class="chat-header-sub">Partagez vos intentions avec la communauté</div>
+          <div class="chat-header-sub">
+            <span id="chat-header-sub-text">Partagez vos intentions avec la communauté</span>
+            <span class="chat-presence hidden" id="chat-presence" title="Fidèles actuellement en ligne sur cet office">
+              <span class="chat-presence-dot"></span>
+              <span id="chat-presence-count">0</span>
+              <span class="chat-presence-label">en ligne</span>
+            </span>
+          </div>
         </div>
       </div>
       <button class="chat-close" id="chat-close" aria-label="Fermer"><i class="fa-solid fa-xmark"></i></button>
@@ -843,13 +850,23 @@
         </button>
       </form>
     </div>
-    <!-- Invitation à se connecter — visible si non connecté -->
-    <div class="chat-login-prompt" id="chat-login-prompt" style="display:none">
-      <i class="fa-solid fa-lock"></i>
-      <p>Connectez-vous pour partager vos intentions</p>
-      <button class="chat-login-btn" id="chat-login-btn">
-        <i class="fa-solid fa-right-to-bracket"></i> Se connecter
-      </button>
+    <!-- Vue visiteur (non connecté) : preuve sociale + CTA -->
+    <div class="chat-visitor" id="chat-login-prompt" style="display:none">
+      <div class="chat-visitor-stats">
+        <div class="chat-visitor-count">
+          <i class="fa-solid fa-hands-praying"></i>
+          <span id="chat-visitor-count-value">…</span>
+        </div>
+        <div class="chat-visitor-label" id="chat-visitor-count-label">intentions partagées pour cet office</div>
+      </div>
+      <div class="chat-visitor-mosaic" id="chat-visitor-mosaic"></div>
+      <div class="chat-visitor-cta">
+        <i class="fa-solid fa-lock"></i>
+        <p>Les intentions sont réservées aux fidèles inscrits.<br>Rejoignez la communauté pour les lire et joindre la vôtre.</p>
+        <button class="chat-login-btn" id="chat-login-btn">
+          <i class="fa-solid fa-right-to-bracket"></i> Créer un compte / Se connecter
+        </button>
+      </div>
     </div>
   </div>
 

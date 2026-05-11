@@ -4395,7 +4395,7 @@ function initChat() {
     };
   }
 
-  // ── Temps réel ───────────────────────────────────────────
+  // ── Temps réel + présence ─────────────────────────────────
   function subscribeRealtime(officeId) {
     const sb = window._sbClient;
     if (!sb) return;
@@ -4403,22 +4403,61 @@ function initChat() {
     // Désabonner l'ancien canal
     if (realtimeChannel) { sb.removeChannel(realtimeChannel); realtimeChannel = null; }
 
-    realtimeChannel = sb.channel('chat_' + officeId)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'prayer_intentions',
-        filter: 'office_id=eq.' + officeId,
-      }, payload => {
-        const msg = payload.new;
-        if (!msg) return;
-        const existing = msgsEl.querySelector('[data-id="' + msg.id + '"]');
-        if (existing) return; // déjà affiché (optimistic)
-        emptyEl.style.display = 'none';
-        msgsEl.appendChild(buildBubble(msg, lastMsgFromDom()));
-        scrollBottom();
-      })
-      .subscribe();
+    const user = window._pelUser;
+    const presenceKey = user ? user.id : ('anon_' + Math.random().toString(36).slice(2, 10));
+
+    realtimeChannel = sb.channel('chat_' + officeId, {
+      config: { presence: { key: presenceKey } },
+    });
+
+    // Inserts (nouveaux messages)
+    realtimeChannel.on('postgres_changes', {
+      event: 'INSERT',
+      schema: 'public',
+      table: 'prayer_intentions',
+      filter: 'office_id=eq.' + officeId,
+    }, payload => {
+      const msg = payload.new;
+      if (!msg) return;
+      // Si le visiteur est non connecté, on rafraîchit juste les stats
+      if (!window._pelUser) { loadVisitorView(officeId); return; }
+      const existing = msgsEl.querySelector('[data-id="' + msg.id + '"]');
+      if (existing) return; // déjà affiché (optimistic)
+      emptyEl.style.display = 'none';
+      msgsEl.appendChild(buildBubble(msg, lastMsgFromDom()));
+      scrollBottom();
+    });
+
+    // Présence : sync l'état et met à jour le compteur en ligne
+    realtimeChannel.on('presence', { event: 'sync' }, () => {
+      const state = realtimeChannel.presenceState();
+      const count = Object.keys(state).length;
+      updatePresenceUI(count);
+    });
+
+    realtimeChannel.subscribe(async (status) => {
+      if (status !== 'SUBSCRIBED') return;
+      // Track sa propre présence (anonyme si non connecté)
+      const meta = user?.user_metadata || {};
+      await realtimeChannel.track({
+        user_id:  user?.id || presenceKey,
+        anon:     !user,
+        joined_at: new Date().toISOString(),
+        // Avatar (utile si on veut afficher une mosaïque "en ligne" plus tard)
+        avatar_icon:    meta.avatar_icon    || 'initial',
+        avatar_palette: meta.avatar_palette || 'auto',
+      });
+    });
+  }
+
+  function updatePresenceUI(count) {
+    const wrap = document.getElementById('chat-presence');
+    const val  = document.getElementById('chat-presence-count');
+    const lbl  = document.querySelector('.chat-presence-label');
+    if (!wrap || !val) return;
+    wrap.classList.remove('hidden');
+    val.textContent = count;
+    if (lbl) lbl.textContent = (count <= 1) ? 'en ligne' : 'en ligne';
   }
 
   // ── Ouvrir le panneau ─────────────────────────────────────
@@ -4426,23 +4465,90 @@ function initChat() {
     currentOfficeId = officeId;
     if (nameEl) nameEl.textContent = officeName;
 
-    // Afficher formulaire ou invitation
+    // Cacher l'indicateur de présence à chaque ouverture (réactivé sur sync)
+    document.getElementById('chat-presence')?.classList.add('hidden');
+
+    // Afficher formulaire ou vue visiteur
     const user = window._pelUser;
     if (user) {
       if (formWrap)  formWrap.style.display  = '';
-      if (loginProm) loginProm.style.display  = 'none';
+      if (loginProm) loginProm.style.display = 'none';
+      if (msgsEl)    msgsEl.style.display    = '';
     } else {
       if (formWrap)  formWrap.style.display  = 'none';
-      if (loginProm) loginProm.style.display  = '';
+      if (loginProm) loginProm.style.display = '';
+      if (msgsEl)    msgsEl.style.display    = 'none'; // pas de lecture sans compte
+      loadVisitorView(officeId);
     }
 
     panel.classList.remove('hidden');
     overlay.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
 
-    loadMessages(officeId);
+    if (user) loadMessages(officeId);
     subscribeRealtime(officeId);
-    if (input) setTimeout(() => input.focus(), 320);
+    if (input && user) setTimeout(() => input.focus(), 320);
+  }
+
+  // ── Vue visiteur (non connecté) : compte + mini-mosaïque d'avatars ──
+  async function loadVisitorView(officeId) {
+    const sb = window._sbClient;
+    if (!sb) return;
+    const countEl  = document.getElementById('chat-visitor-count-value');
+    const labelEl  = document.getElementById('chat-visitor-count-label');
+    const mosaicEl = document.getElementById('chat-visitor-mosaic');
+    if (countEl) countEl.textContent = '…';
+    if (mosaicEl) mosaicEl.innerHTML = '';
+
+    // Total des intentions pour cet office
+    const { count } = await sb.from('prayer_intentions')
+      .select('id', { count: 'exact', head: true })
+      .eq('office_id', officeId);
+
+    if (countEl) countEl.textContent = (count ?? 0).toString();
+    if (labelEl) {
+      labelEl.textContent = (count === 1)
+        ? 'intention partagée pour cet office'
+        : 'intentions partagées pour cet office';
+    }
+
+    // Récupère les avatars uniques des derniers participants (max 10)
+    const { data } = await sb.from('prayer_intentions')
+      .select('user_id,avatar_icon,avatar_palette,user_name')
+      .eq('office_id', officeId)
+      .order('created_at', { ascending: false })
+      .limit(40);
+
+    const seen = new Set();
+    const uniqueAvatars = [];
+    (data || []).forEach(row => {
+      if (seen.has(row.user_id)) return;
+      seen.add(row.user_id);
+      if (uniqueAvatars.length < 10) uniqueAvatars.push(row);
+    });
+
+    if (mosaicEl) {
+      uniqueAvatars.forEach(row => {
+        const av = document.createElement('span');
+        av.className = 'chat-visitor-avatar';
+        if (window.pelRenderAvatar) {
+          window.pelRenderAvatar(av, {
+            icon:    row.avatar_icon,
+            palette: row.avatar_palette,
+            name:    row.user_name,
+          });
+        }
+        mosaicEl.appendChild(av);
+      });
+      if (uniqueAvatars.length === 0) {
+        mosaicEl.innerHTML = '<div class="chat-visitor-empty">Aucun fidèle n\'a encore confié d\'intention.</div>';
+      } else if ((count || 0) > uniqueAvatars.length) {
+        const more = document.createElement('span');
+        more.className = 'chat-visitor-more';
+        more.textContent = '+' + ((count || 0) - uniqueAvatars.length);
+        mosaicEl.appendChild(more);
+      }
+    }
   }
 
   // ── Fermer le panneau ─────────────────────────────────────
