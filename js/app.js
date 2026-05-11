@@ -4180,10 +4180,16 @@ function initChat() {
     div.dataset.createdAt = msg.created_at || '';
     div.dataset.avatarIcon    = msg.avatar_icon    || 'initial';
     div.dataset.avatarPalette = msg.avatar_palette || 'auto';
+    div.dataset.userName      = msg.user_name      || '';
+    div.dataset.patronSaint   = msg.patron_saint   || '';
+    div.dataset.favoriteVerse = msg.favorite_verse || '';
 
     // Avatar (caché en mode groupé via CSS)
     const avatar = document.createElement('span');
     avatar.className = 'chat-msg-avatar';
+    avatar.setAttribute('role', 'button');
+    avatar.setAttribute('tabindex', '0');
+    avatar.title = 'Voir le profil';
     if (window.pelRenderAvatar) {
       window.pelRenderAvatar(avatar, {
         icon:    msg.avatar_icon,
@@ -4193,15 +4199,30 @@ function initChat() {
     } else {
       avatar.textContent = (msg.user_name || '?').charAt(0).toUpperCase();
     }
+    // Click → ouvre le mini-profil
+    avatar.addEventListener('click', e => { e.stopPropagation(); openProfilePopover(div, avatar); });
+    avatar.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openProfilePopover(div, avatar); }
+    });
+
+    // Couleur d'auteur basée sur sa palette (pour identification rapide)
+    const palBg = getAvatarPalette(msg.avatar_palette, msg.user_name);
+    const authorColor = palBg ? palBg.bg : '';
 
     const body = document.createElement('div');
     body.className = 'chat-msg-body';
     body.innerHTML = `
       <div class="chat-msg-meta">
-        <span class="chat-msg-author">${escHtml(msg.user_name)}</span>
+        <button type="button" class="chat-msg-author" data-popover="1"${authorColor ? ` style="--author-color:${authorColor}"` : ''}>${escHtml(msg.user_name)}</button>
         <span class="chat-msg-time">${formatTime(msg.created_at)}</span>
       </div>
       <div class="chat-msg-text">${escHtml(msg.message)}</div>`;
+
+    // Click sur le nom auteur → popover aussi
+    body.querySelector('.chat-msg-author')?.addEventListener('click', e => {
+      e.stopPropagation();
+      openProfilePopover(div, e.currentTarget);
+    });
 
     const row = document.createElement('div');
     row.className = 'chat-msg-row';
@@ -4209,6 +4230,84 @@ function initChat() {
     row.appendChild(body);
     div.appendChild(row);
     return div;
+  }
+
+  // Résolution de la palette pour le nom d'auteur (rend la même couleur que l'avatar)
+  function getAvatarPalette(paletteKey, name) {
+    // Réutilise window.pelGetPalette si exposé par auth.js, sinon palette par hash
+    if (window.pelGetPalette) return window.pelGetPalette(paletteKey, name);
+    return null;
+  }
+
+  // ── Popover mini-profil ─────────────────────────────────────
+  let _activePopover = null;
+  function closeProfilePopover() {
+    if (_activePopover) { _activePopover.remove(); _activePopover = null; }
+    document.removeEventListener('click', _closePopoverOnOutside, true);
+    document.removeEventListener('keydown', _closePopoverOnEsc);
+  }
+  function _closePopoverOnOutside(e) {
+    if (_activePopover && !_activePopover.contains(e.target)) closeProfilePopover();
+  }
+  function _closePopoverOnEsc(e) { if (e.key === 'Escape') closeProfilePopover(); }
+
+  function openProfilePopover(bubbleEl, anchorEl) {
+    closeProfilePopover();
+    const data = bubbleEl.dataset;
+    const userName = data.userName || 'Anonyme';
+    const saintId  = data.patronSaint || '';
+    const verse    = data.favoriteVerse || '';
+
+    // Cherche le saint dans la liste exposée par auth.js
+    const saint = (window.pelSaintById && window.pelSaintById(saintId)) || null;
+
+    const pop = document.createElement('div');
+    pop.className = 'chat-popover';
+    const avatarHTML = '<span class="chat-pop-avatar"></span>';
+    const saintHTML = (saint && saint.id !== 'aucun')
+      ? `<div class="chat-pop-row"><i class="fa-solid fa-star"></i> <span>Saint patron : <strong>${escHtml(saint.name)}</strong>${saint.feast ? ' <em>(' + escHtml(saint.feast) + ')</em>' : ''}</span></div>`
+      : `<div class="chat-pop-row chat-pop-row--muted"><i class="fa-regular fa-star"></i> Aucun saint patron</div>`;
+    const verseHTML = verse
+      ? `<blockquote class="chat-pop-verse">« ${escHtml(verse)} »</blockquote>`
+      : '';
+    pop.innerHTML = `
+      <div class="chat-pop-head">
+        ${avatarHTML}
+        <div class="chat-pop-name">${escHtml(userName)}</div>
+        <button class="chat-pop-close" aria-label="Fermer"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="chat-pop-body">
+        ${saintHTML}
+        ${verseHTML}
+      </div>`;
+
+    // Rendu de l'avatar dans le popover
+    const popAvatar = pop.querySelector('.chat-pop-avatar');
+    if (window.pelRenderAvatar) {
+      window.pelRenderAvatar(popAvatar, {
+        icon:    data.avatarIcon,
+        palette: data.avatarPalette,
+        name:    userName,
+      });
+    }
+
+    // Positionnement : centré horizontalement sur l'ancrage, au-dessus
+    document.body.appendChild(pop);
+    const ar = anchorEl.getBoundingClientRect();
+    const pr = pop.getBoundingClientRect();
+    let top  = ar.top - pr.height - 10;
+    let left = ar.left + ar.width / 2 - pr.width / 2;
+    if (top < 8) top = ar.bottom + 10;
+    left = Math.max(8, Math.min(left, window.innerWidth - pr.width - 8));
+    pop.style.top  = top + 'px';
+    pop.style.left = left + 'px';
+
+    pop.querySelector('.chat-pop-close')?.addEventListener('click', closeProfilePopover);
+    _activePopover = pop;
+    setTimeout(() => {
+      document.addEventListener('click', _closePopoverOnOutside, true);
+      document.addEventListener('keydown', _closePopoverOnEsc);
+    }, 0);
   }
 
   function escHtml(str) {
@@ -4330,6 +4429,8 @@ function initChat() {
     const userName = (meta.pseudo || meta.name || cleanEmail || 'Pèlerin').trim().slice(0, 30);
     const avatarIcon    = meta.avatar_icon    || 'initial';
     const avatarPalette = meta.avatar_palette || 'auto';
+    const patronSaint   = meta.patron_saint   || '';
+    const favoriteVerse = (meta.favorite_verse || '').slice(0, 240);
 
     // Optimistic UI
     const optimistic = {
@@ -4339,6 +4440,8 @@ function initChat() {
       user_name: userName,
       avatar_icon:    avatarIcon,
       avatar_palette: avatarPalette,
+      patron_saint:   patronSaint,
+      favorite_verse: favoriteVerse,
       message: text.trim(),
       created_at: new Date().toISOString(),
     };
@@ -4347,24 +4450,29 @@ function initChat() {
     msgsEl.appendChild(bubble);
     scrollBottom();
 
-    // Tentative avec les colonnes avatar — fallback si pas encore migré
-    let { data, error } = await sb.from('prayer_intentions').insert({
+    // Tentative avec toutes les colonnes — fallback en cascade si colonnes manquent
+    const fullRow = {
       office_id: currentOfficeId,
       user_id:   user.id,
       user_name: userName,
       avatar_icon:    avatarIcon,
       avatar_palette: avatarPalette,
+      patron_saint:   patronSaint,
+      favorite_verse: favoriteVerse,
       message:   text.trim(),
-    }).select().single();
-    if (error && /avatar_icon|avatar_palette|column/i.test(error.message || '')) {
-      const fb = await sb.from('prayer_intentions').insert({
-        office_id: currentOfficeId,
-        user_id:   user.id,
-        user_name: userName,
-        message:   text.trim(),
-      }).select().single();
-      data  = fb.data;
-      error = fb.error;
+    };
+    let { data, error } = await sb.from('prayer_intentions').insert(fullRow).select().single();
+    if (error && /patron_saint|favorite_verse|avatar_icon|avatar_palette|column/i.test(error.message || '')) {
+      // Retire les colonnes manquantes et retente
+      const trimmed = { ...fullRow };
+      delete trimmed.patron_saint;
+      delete trimmed.favorite_verse;
+      ({ data, error } = await sb.from('prayer_intentions').insert(trimmed).select().single());
+      if (error && /avatar_icon|avatar_palette|column/i.test(error.message || '')) {
+        delete trimmed.avatar_icon;
+        delete trimmed.avatar_palette;
+        ({ data, error } = await sb.from('prayer_intentions').insert(trimmed).select().single());
+      }
     }
 
     if (error) {

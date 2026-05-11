@@ -180,6 +180,16 @@ function renderAvatarInto(el, { icon, palette, name }) {
 
 // Exposé global pour app.js (tchat)
 window.pelRenderAvatar = renderAvatarInto;
+// Résout la palette d'un utilisateur (utilisé pour teinter le nom dans le tchat)
+window.pelGetPalette = function (paletteKey, name) {
+  const safeName = (name || '?').toString();
+  if (paletteKey && paletteKey !== 'auto' && AVATAR_PALETTES[paletteKey]?.bg) {
+    return AVATAR_PALETTES[paletteKey];
+  }
+  return avatarColor(safeName);
+};
+// Lookup d'un saint par son id (pour le popover du tchat)
+window.pelSaintById = function (id) { return SAINTS.find(s => s.id === id) || null; };
 
 /* ════════════════════════════════════════════
    UI HEADER
