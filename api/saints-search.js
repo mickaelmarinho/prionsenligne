@@ -17,7 +17,7 @@ const ALLOWED_ORIGINS = [
   'https://www.prionsenligne.fr',
 ];
 
-const MAX_PAGES_PER_LETTER = 6;   // env. 300 entrées max
+const MAX_PAGES_PER_LETTER = 18;  // jusqu'à ~900 entrées par lettre (la lettre J a 15 pages)
 const TTL_MS = 7 * 24 * 3600 * 1000;
 const _letterCache = {};          // { 'J': { entries, fetchedAt } }
 
@@ -31,30 +31,30 @@ async function loadLetter(letter) {
   const cached = _letterCache[letter];
   if (cached && Date.now() - cached.fetchedAt < TTL_MS) return cached.entries;
 
+  // Fetch toutes les pages en parallèle (plus rapide que séquentiel)
+  const urls = [];
+  for (let p = 1; p <= MAX_PAGES_PER_LETTER; p++) {
+    urls.push(p === 1
+      ? `https://nominis.cef.fr/contenus/saint/alphabetique/${letter}.html`
+      : `https://nominis.cef.fr/contenus/saint/alphabetique/${letter}-${p}.html`);
+  }
+  const htmls = await Promise.all(urls.map(u =>
+    fetch(u, { headers: { 'User-Agent': 'Mozilla/5.0 PrionsEnLigne (https://prionsenligne.fr)' } })
+      .then(r => r.ok ? r.text() : null)
+      .catch(() => null)
+  ));
+
   const entries = [];
   const seen = new Set();
-  for (let p = 1; p <= MAX_PAGES_PER_LETTER; p++) {
-    const url = p === 1
-      ? `https://nominis.cef.fr/contenus/saint/alphabetique/${letter}.html`
-      : `https://nominis.cef.fr/contenus/saint/alphabetique/${letter}/${p}.html`;
-    let html;
-    try {
-      const resp = await fetch(url, {
-        headers: { 'User-Agent': 'Mozilla/5.0 PrionsEnLigne (https://prionsenligne.fr)' },
-      });
-      if (!resp.ok) break;
-      html = await resp.text();
-    } catch (_) { break; }
-
-    // Pattern : <a href="/contenus/saint/ID/SLUG.html" ...><div ...><h5 ...>NAME</h5></div><p ...>BIO</p></a>
-    const re = /<a[^>]+href="\/contenus\/saint\/(\d+)\/([^"]+)\.html"[^>]*>[\s\S]*?<h5[^>]*>([^<]+)<\/h5>[\s\S]*?(?:<p[^>]*>([\s\S]*?)<\/p>)?[\s\S]*?<\/a>/gi;
+  const re = /<a[^>]+href="\/contenus\/saint\/(\d+)\/([^"]+)\.html"[^>]*>[\s\S]*?<h5[^>]*>([^<]+)<\/h5>[\s\S]*?(?:<p[^>]*>([\s\S]*?)<\/p>)?[\s\S]*?<\/a>/gi;
+  for (const html of htmls) {
+    if (!html) continue;
+    re.lastIndex = 0;
     let m;
-    let foundInPage = 0;
     while ((m = re.exec(html)) !== null) {
       const id = m[1];
       if (seen.has(id)) continue;
       seen.add(id);
-      foundInPage++;
       const slug = m[2];
       const name = m[3].replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
       const bio  = (m[4] || '')
@@ -66,8 +66,6 @@ async function loadLetter(letter) {
         .slice(0, 140);
       entries.push({ id, name, slug, bio, normalized: stripAccents(name) });
     }
-    // Si la page n'a rien donné, on s'arrête (fin de pagination)
-    if (foundInPage < 10) break;
   }
   _letterCache[letter] = { entries, fetchedAt: Date.now() };
   return entries;
