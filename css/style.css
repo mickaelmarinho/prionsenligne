@@ -2468,9 +2468,9 @@ body.player-open .greg-btn { bottom: 80px; }
 @media (max-width: 640px) {
   body.player-open .greg-btn { bottom: 148px; }
 }
-/* Bouton grégorien : toujours à gauche du FAB chapelet (qui mesure 54px + 20px de marge)
-   On utilise une position absolue plutôt que :has() pour compatibilité maximale */
-.greg-btn { right: 88px; }   /* 54 (FAB) + 20 (marge droite) + 14 (gap) */
+/* Bouton grégorien : décalé uniquement quand le FAB chapelet est présent.
+   :has() supporté partout depuis 2022 (Chrome 105, Safari 15.4, Firefox 121). */
+body:has(.chapelet-fab) .greg-btn { right: 88px; }   /* 54 (FAB) + 20 (marge droite) + 14 (gap) */
 
 
 /* ══════════════════════════════════════════════
@@ -5598,13 +5598,13 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   }
   .ch-fab-icon { width: 28px; height: 28px; }
 
-  /* Bouton grégorien : à gauche du FAB chapelet (ne se chevauchent plus) */
+  /* Bouton grégorien : décalé uniquement si le FAB chapelet est présent */
   .greg-btn {
     height: 38px;
     padding: 0 12px 0 10px;
     font-size: 11.5px;
     bottom: calc(var(--bottom-nav-h) + var(--safe-bottom) + 18px);
-    right: 76px;             /* laisse la place au FAB chapelet (50px + 14 marge + 12 gap) */
+    right: 14px;
   }
   body:has(.chapelet-fab) .greg-btn { right: 76px; }
   body.player-open .greg-btn {
