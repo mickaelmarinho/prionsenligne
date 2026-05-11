@@ -526,13 +526,35 @@ function initCalendar() {
             const wrap = document.getElementById('dd-nominis-others-' + dy);
             if (!wrap || others.length === 0) return;
             wrap.style.display = '';
+            const VISIBLE = 4;
+            const head = others.slice(0, VISIBLE);
+            const rest = others.slice(VISIBLE);
+            const headHTML = head.map(s =>
+              `<a class="dd-nominis-other" href="${escapeHtmlSimple(s.url)}" target="_blank" rel="noopener" title="${escapeHtmlSimple(s.bio || '')}">${escapeHtmlSimple(s.name)}</a>`).join('');
+            const restHTML = rest.map(s =>
+              `<a class="dd-nominis-other" href="${escapeHtmlSimple(s.url)}" target="_blank" rel="noopener" title="${escapeHtmlSimple(s.bio || '')}">${escapeHtmlSimple(s.name)}</a>`).join('');
             wrap.innerHTML = `
-              <div class="dd-nominis-others-label"><i class="fa-solid fa-users"></i> Aussi célébrés ce jour (${others.length})</div>
-              <div class="dd-nominis-others-list">
-                ${others.map(s => `<a class="dd-nominis-other" href="${escapeHtmlSimple(s.url)}" target="_blank" rel="noopener" title="${escapeHtmlSimple(s.bio || '')}">${escapeHtmlSimple(s.name)}</a>`).join('')}
+              <button type="button" class="dd-nominis-others-toggle" id="dd-others-toggle-${dy}" aria-expanded="false">
+                <i class="fa-solid fa-users"></i>
+                <span class="dd-others-toggle-label">Voir les ${others.length} saints également célébrés ce jour</span>
+                <i class="fa-solid fa-chevron-down dd-others-chevron"></i>
+              </button>
+              <div class="dd-nominis-others-list dd-others-collapsed" id="dd-others-list-${dy}">
+                ${headHTML}
+                ${rest.length ? `<span class="dd-others-rest">${restHTML}</span>` : ''}
               </div>
               <div class="dd-nominis-others-more">Cliquez sur un saint pour voir sa fiche complète sur nominis.cef.fr</div>
             `;
+            const tBtn = document.getElementById('dd-others-toggle-' + dy);
+            const tList = document.getElementById('dd-others-list-' + dy);
+            const tLabel = tBtn?.querySelector('.dd-others-toggle-label');
+            tBtn?.addEventListener('click', () => {
+              const expanded = tList.classList.toggle('dd-others-collapsed') === false;
+              tBtn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+              if (tLabel) tLabel.textContent = expanded
+                ? `Replier la liste`
+                : `Voir les ${others.length} saints également célébrés ce jour`;
+            });
           })
           .catch(() => {});
         const toggleBtn = document.getElementById('dd-nominis-toggle');

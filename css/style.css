@@ -940,11 +940,49 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
   margin-bottom: 7px;
 }
 .dd-nominis-others-label i { color: var(--gold); margin-right: 5px; font-size: 10px; }
+
+/* Bouton pour déplier la liste complète */
+.dd-nominis-others-toggle {
+  width: 100%;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(245,240,232,.12);
+  color: rgba(245,240,232,.75);
+  padding: 9px 12px;
+  border-radius: var(--r-md, 10px);
+  font-size: 12px;
+  font-family: var(--font-ui);
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background .15s, border-color .15s;
+  margin-bottom: 8px;
+}
+.dd-nominis-others-toggle:hover {
+  background: rgba(201,168,76,.08);
+  border-color: rgba(201,168,76,.30);
+  color: var(--cream);
+}
+.dd-nominis-others-toggle > .fa-users { color: var(--gold); font-size: 11px; }
+.dd-others-toggle-label { flex: 1; }
+.dd-others-chevron {
+  font-size: 11px;
+  transition: transform .2s ease;
+  color: rgba(245,240,232,.5);
+}
+.dd-nominis-others-toggle[aria-expanded="true"] .dd-others-chevron {
+  transform: rotate(180deg);
+}
+
 .dd-nominis-others-list {
   display: flex;
   flex-wrap: wrap;
   gap: 5px 7px;
 }
+/* Mode replié : on cache la 2e moitié (les saints au-delà des premiers visibles) */
+.dd-others-collapsed .dd-others-rest { display: none; }
+.dd-others-rest { display: contents; }
 .dd-nominis-other {
   display: inline-block;
   font-size: 11.5px;
