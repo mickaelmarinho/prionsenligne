@@ -499,6 +499,33 @@ function initCalendar() {
           .replace(/(<a[^>]+href=")\/([^"]+)/gi, '$1https://nominis.cef.fr/$2');
         const lien = bio.lien || '';
 
+        // Extrait les autres saints mentionnés dans le corps de la bio (liens vers /contenus/saint/…)
+        // Ces saints sont souvent fêtés le même jour ou liés (martyrs ensemble, etc.)
+        const otherSaints = [];
+        const seenIds = new Set();
+        const linkRe = /<a[^>]+href="(?:https:\/\/nominis\.cef\.fr)?\/contenus\/saint\/(\d+)\/([^"]+)\.html"[^>]*>([^<]+)<\/a>/gi;
+        let lm;
+        while ((lm = linkRe.exec(safeHtml)) !== null) {
+          const id   = lm[1];
+          if (seenIds.has(id)) continue;
+          seenIds.add(id);
+          const slug = lm[2];
+          const nm   = lm[3].replace(/\s+/g, ' ').trim();
+          // Filtre : on garde les vrais saints (évite "diocèse de…" etc.)
+          if (!/^(saint|sainte|saints?|bienheureux|bienheureuse|vénérable|venerable)/i.test(nm)) continue;
+          // Évite le saint principal lui-même
+          if (nm.toLowerCase().includes(bio.nom.replace(/^Saint[es]?\s+/i, '').toLowerCase().split(/\s/)[0])) continue;
+          otherSaints.push({ name: nm, url: `https://nominis.cef.fr/contenus/saint/${id}/${slug}.html` });
+          if (otherSaints.length >= 6) break;
+        }
+        const otherSaintsHTML = otherSaints.length ? `
+          <div class="dd-nominis-others">
+            <div class="dd-nominis-others-label"><i class="fa-solid fa-users"></i> Aussi célébrés ou mentionnés</div>
+            <div class="dd-nominis-others-list">
+              ${otherSaints.map(s => `<a class="dd-nominis-other" href="${escapeHtmlSimple(s.url)}" target="_blank" rel="noopener">${escapeHtmlSimple(s.name)}</a>`).join('')}
+            </div>
+          </div>` : '';
+
         nomBlock.innerHTML = `
           <div class="dd-nominis-head">
             <i class="fa-solid fa-book-open"></i>
@@ -508,8 +535,9 @@ function initCalendar() {
           <div class="dd-nominis-bio dd-nominis-collapsed">${safeHtml}</div>
           <div class="dd-nominis-actions">
             <button type="button" class="dd-nominis-toggle" id="dd-nominis-toggle">Lire la biographie complète <i class="fa-solid fa-chevron-down"></i></button>
-            ${lien ? `<a class="dd-nominis-link" href="${lien}" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square"></i> Sur nominis.cef.fr</a>` : ''}
+            ${lien ? `<a class="dd-nominis-link" href="${lien}" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square"></i> Voir sur nominis.cef.fr</a>` : ''}
           </div>
+          ${otherSaintsHTML}
         `;
         const toggleBtn = document.getElementById('dd-nominis-toggle');
         const bioEl     = nomBlock.querySelector('.dd-nominis-bio');

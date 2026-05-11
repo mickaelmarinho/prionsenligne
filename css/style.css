@@ -926,6 +926,42 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
 .dd-nominis-link:hover { color: var(--gold); }
 .dd-nominis-link > i { font-size: 9px; }
 
+/* Saints aussi célébrés (extraits de la bio Nominis) */
+.dd-nominis-others {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(245,240,232,.12);
+}
+.dd-nominis-others-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: rgba(245,240,232,.55);
+  margin-bottom: 7px;
+}
+.dd-nominis-others-label i { color: var(--gold); margin-right: 5px; font-size: 10px; }
+.dd-nominis-others-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 7px;
+}
+.dd-nominis-other {
+  display: inline-block;
+  font-size: 11.5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(201,168,76,.10);
+  border: 1px solid rgba(201,168,76,.18);
+  color: rgba(245,240,232,.85);
+  text-decoration: none;
+  transition: background .12s, color .12s, border-color .12s;
+}
+.dd-nominis-other:hover {
+  background: rgba(201,168,76,.22);
+  border-color: rgba(201,168,76,.4);
+  color: var(--gold);
+}
+
 .dd-nominis-loading {
   font-size: 12px;
   color: rgba(245,240,232,.5);
