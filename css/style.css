@@ -2827,9 +2827,18 @@ body.player-open .greg-btn { bottom: 80px; }
   color: var(--navy);
   font-weight: 500;
 }
-.prof-saint-result-feast {
+.prof-saint-result-feast,
+.prof-saint-result-bio {
   font-size: 11px;
   color: var(--text-soft);
+  line-height: 1.4;
+}
+.prof-saint-result-bio {
+  font-style: italic;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .prof-saint-result-feast i { font-size: 9px; margin-right: 3px; opacity: .6; }
 .prof-saint-empty {

@@ -667,7 +667,7 @@ function initSaintCombobox() {
       ${remote.map(r => `
         <button type="button" class="prof-saint-result" data-source="nominis" data-id="${_esc(r.id)}" data-slug="${_esc(r.slug)}" data-name="${_esc(r.name)}" data-url="${_esc(r.url)}">
           <span class="prof-saint-result-name">${_esc(r.name)}</span>
-          <span class="prof-saint-result-feast"><i class="fa-solid fa-arrow-up-right-from-square"></i> détails à charger</span>
+          ${r.bio ? `<span class="prof-saint-result-bio">${_esc(r.bio)}</span>` : ''}
         </button>
       `).join('')}` : '';
     results.innerHTML = localHTML + remoteHTML;

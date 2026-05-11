@@ -1,14 +1,15 @@
 /*
   Vercel Serverless Function — /api/saints-search?q=<terme>
-  Recherche dans l'index alphabétique nominis.cef.fr de TOUS les saints
-  (~ 10 000 entrées). Renvoie jusqu'à 30 résultats correspondant au terme.
+  Recherche dans l'index alphabétique nominis.cef.fr.
 
   Stratégie :
-    - L'index complet est récupéré une fois et mis en cache module (chaud entre invocations)
-      avec un TTL côté CDN agressif (7 jours) — les saints ne changent pas.
-    - Filtre côté serveur par substring insensible aux accents / casse.
+    - L'utilisateur tape "jas..." → on fetch les pages /alphabetique/J/*.html
+      (jusqu'à MAX_PAGES_PER_LETTER pages, env. 250 entrées par lettre)
+    - Parse les ancres : <a href="/contenus/saint/<id>/<slug>.html">…<h5>NAME</h5>…<p>BIO</p>…</a>
+    - Filtre par substring insensible aux accents / casse
+    - Cache mémoire module + CDN agressif (7 jours)
 
-  Réponse : { results: [{ id, name, url, slug }] }
+  Réponse : { results: [{ id, name, url, slug, bio }] }
 */
 
 const ALLOWED_ORIGINS = [
@@ -16,44 +17,60 @@ const ALLOWED_ORIGINS = [
   'https://www.prionsenligne.fr',
 ];
 
-// Cache module : reste chaud entre invocations sur la même instance Lambda
-let _indexCache = null;        // [{ id, name, url, normalized }]
-let _indexFetchedAt = 0;
-const INDEX_TTL_MS = 7 * 24 * 3600 * 1000;
+const MAX_PAGES_PER_LETTER = 6;   // env. 300 entrées max
+const TTL_MS = 7 * 24 * 3600 * 1000;
+const _letterCache = {};          // { 'J': { entries, fetchedAt } }
 
 function stripAccents(s) {
   return (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 }
 
-async function loadIndex() {
-  if (_indexCache && Date.now() - _indexFetchedAt < INDEX_TTL_MS) return _indexCache;
-  const resp = await fetch('https://nominis.cef.fr/contenus/saint/alphabetique.html', {
-    headers: { 'User-Agent': 'Mozilla/5.0 PrionsEnLigne (https://prionsenligne.fr)' },
-  });
-  if (!resp.ok) throw new Error('Nominis index: HTTP ' + resp.status);
-  const html = await resp.text();
+async function loadLetter(letter) {
+  letter = letter.toUpperCase();
+  if (!/^[A-Z]$/.test(letter)) return [];
+  const cached = _letterCache[letter];
+  if (cached && Date.now() - cached.fetchedAt < TTL_MS) return cached.entries;
 
-  // Parse les ancres : <a href="/contenus/saint/<id>/<slug>.html">Saint Xxxxx</a>
-  const out = [];
+  const entries = [];
   const seen = new Set();
-  const re = /<a[^>]+href="\/contenus\/saint\/(\d+)\/([^"]+)\.html"[^>]*>([^<]+)<\/a>/gi;
-  let m;
-  while ((m = re.exec(html)) !== null) {
-    const id   = m[1];
-    if (seen.has(id)) continue;       // doublons dans la page (rare)
-    const slug = m[2];
-    const name = m[3].trim().replace(/\s+/g, ' ');
-    if (!/^(Saint|Sainte|Saints|Bienheureux|Bienheureuse|Vénérable|Vénérables)/i.test(name)) continue;
-    seen.add(id);
-    out.push({
-      id, name, slug,
-      url: 'https://nominis.cef.fr/contenus/saint/' + id + '/' + slug + '.html',
-      normalized: stripAccents(name),
-    });
+  for (let p = 1; p <= MAX_PAGES_PER_LETTER; p++) {
+    const url = p === 1
+      ? `https://nominis.cef.fr/contenus/saint/alphabetique/${letter}.html`
+      : `https://nominis.cef.fr/contenus/saint/alphabetique/${letter}/${p}.html`;
+    let html;
+    try {
+      const resp = await fetch(url, {
+        headers: { 'User-Agent': 'Mozilla/5.0 PrionsEnLigne (https://prionsenligne.fr)' },
+      });
+      if (!resp.ok) break;
+      html = await resp.text();
+    } catch (_) { break; }
+
+    // Pattern : <a href="/contenus/saint/ID/SLUG.html" ...><div ...><h5 ...>NAME</h5></div><p ...>BIO</p></a>
+    const re = /<a[^>]+href="\/contenus\/saint\/(\d+)\/([^"]+)\.html"[^>]*>[\s\S]*?<h5[^>]*>([^<]+)<\/h5>[\s\S]*?(?:<p[^>]*>([\s\S]*?)<\/p>)?[\s\S]*?<\/a>/gi;
+    let m;
+    let foundInPage = 0;
+    while ((m = re.exec(html)) !== null) {
+      const id = m[1];
+      if (seen.has(id)) continue;
+      seen.add(id);
+      foundInPage++;
+      const slug = m[2];
+      const name = m[3].replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+      const bio  = (m[4] || '')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&nbsp;/g, ' ')
+        .replace(/&amp;/g, '&')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 140);
+      entries.push({ id, name, slug, bio, normalized: stripAccents(name) });
+    }
+    // Si la page n'a rien donné, on s'arrête (fin de pagination)
+    if (foundInPage < 10) break;
   }
-  _indexCache = out;
-  _indexFetchedAt = Date.now();
-  return out;
+  _letterCache[letter] = { entries, fetchedAt: Date.now() };
+  return entries;
 }
 
 export default async function handler(req, res) {
@@ -66,35 +83,43 @@ export default async function handler(req, res) {
     res.setHeader('Vary', 'Origin');
   }
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  // Cache CDN long — les saints sont stables
   res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800');
-
   if (req.method === 'OPTIONS') { res.status(204).end(); return; }
 
-  const q = stripAccents((req.query.q || '').toString().trim());
-  if (!q || q.length < 2) {
-    res.status(200).json({ results: [] });
-    return;
-  }
+  const qRaw = (req.query.q || '').toString().trim();
+  const q = stripAccents(qRaw);
+  if (!q || q.length < 2) { res.status(200).json({ results: [] }); return; }
+
+  // Premier caractère = lettre à charger. On retire les préfixes "saint" / "sainte"
+  // pour cibler la bonne lettre si l'utilisateur tape « Saint Jas… »
+  const qBare = q.replace(/^(saint[es]?|saints?|bienheureux|bienheureuse|venerable[s]?)\s+/, '');
+  const firstLetter = (qBare || q).charAt(0).toUpperCase();
 
   try {
-    const index = await loadIndex();
+    const entries = await loadLetter(firstLetter);
     const matches = [];
-    for (const entry of index) {
-      if (entry.normalized.includes(q)) {
-        matches.push({ id: entry.id, name: entry.name, url: entry.url, slug: entry.slug });
+    for (const e of entries) {
+      // Match si le nom (sans accents/casse) contient la requête
+      if (e.normalized.includes(q) || e.normalized.includes(qBare)) {
+        matches.push({
+          id:   e.id,
+          name: e.name,
+          slug: e.slug,
+          url:  `https://nominis.cef.fr/contenus/saint/${e.id}/${e.slug}.html`,
+          bio:  e.bio,
+        });
         if (matches.length >= 30) break;
       }
     }
-    // Tri : priorité aux noms commençant par le terme
+    // Tri : préférence aux noms qui commencent par le terme
     matches.sort((a, b) => {
-      const an = stripAccents(a.name);
-      const bn = stripAccents(b.name);
-      const aPrefix = an.startsWith('saint ' + q) || an.startsWith('sainte ' + q) || an.includes(' ' + q);
-      const bPrefix = bn.startsWith('saint ' + q) || bn.startsWith('sainte ' + q) || bn.includes(' ' + q);
-      if (aPrefix && !bPrefix) return -1;
-      if (!aPrefix && bPrefix) return 1;
-      return an.localeCompare(bn);
+      const aN = stripAccents(a.name).replace(/^(saint[es]?|saints?|bienheureux|bienheureuse|venerable[s]?)\s+/, '');
+      const bN = stripAccents(b.name).replace(/^(saint[es]?|saints?|bienheureux|bienheureuse|venerable[s]?)\s+/, '');
+      const aP = aN.startsWith(qBare) || aN.startsWith(q);
+      const bP = bN.startsWith(qBare) || bN.startsWith(q);
+      if (aP && !bP) return -1;
+      if (!aP && bP) return 1;
+      return aN.localeCompare(bN);
     });
     res.status(200).json({ results: matches });
   } catch (err) {
