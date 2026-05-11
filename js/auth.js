@@ -294,6 +294,7 @@ async function loadProfileContent() {
   const currentPalette = meta.avatar_palette || 'auto';
   const currentSaint   = meta.patron_saint   || 'aucun';
   const currentVerse   = meta.favorite_verse || '';
+  const currentPseudo  = meta.pseudo         || '';
 
   // HTML pour la grille des icônes
   const iconsGridHTML = Object.entries(AVATAR_ICONS).map(([key, ico]) => {
@@ -350,6 +351,20 @@ async function loadProfileContent() {
         </button>
       </div>
       <div class="prof-feedback hidden" id="prof-name-feedback"></div>
+
+      <div class="prof-perso-label" style="margin-top:16px">
+        <i class="fa-solid fa-comments"></i> Pseudonyme pour le tchat
+      </div>
+      <div class="prof-name-form">
+        <input type="text" id="prof-pseudo-input" class="prof-input"
+               value="${_esc(currentPseudo)}" placeholder="Ex. PelerinDuJour, Frère Jean…"
+               maxlength="30" autocomplete="off">
+        <button class="prof-save-btn" id="prof-pseudo-save">
+          <i class="fa-solid fa-check"></i> Enregistrer
+        </button>
+      </div>
+      <div class="prof-pseudo-hint">Affiché à la place de votre prénom dans les conversations. Laisser vide pour utiliser votre prénom.</div>
+      <div class="prof-feedback hidden" id="prof-pseudo-feedback"></div>
     </div>
 
     <div class="prof-section">
@@ -427,6 +442,7 @@ async function loadProfileContent() {
 
   // Events
   $id('prof-name-save')?.addEventListener('click', saveProfileName);
+  $id('prof-pseudo-save')?.addEventListener('click', saveProfilePseudo);
 
   // Avatar avec icône / palette : aperçu live dans le hero
   applyAvatarTo($id('prof-avatar-display'), user);
@@ -673,6 +689,35 @@ async function saveProfileName() {
     avatarEl.textContent       = name.charAt(0).toUpperCase();
     avatarEl.style.background  = col.bg;
     avatarEl.style.color       = col.fg;
+  }
+}
+
+async function saveProfilePseudo() {
+  const input = $id('prof-pseudo-input');
+  const fb    = $id('prof-pseudo-feedback');
+  if (!input || !_sb) return;
+  const pseudo = input.value.trim().slice(0, 30);
+
+  const btn = $id('prof-pseudo-save');
+  btn.disabled = true;
+  const oldHTML = btn.innerHTML;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+  try {
+    const newMeta = { ...(_currentUser?.user_metadata || {}), pseudo };
+    const { data, error } = await _sb.auth.updateUser({ data: newMeta });
+    if (error) throw error;
+    _currentUser = data?.user || _currentUser;
+    window._pelUser = _currentUser;
+    _showProfFeedback(fb, pseudo
+      ? '<i class="fa-solid fa-circle-check"></i> Pseudonyme enregistré !'
+      : '<i class="fa-solid fa-circle-check"></i> Pseudonyme retiré — le prénom sera utilisé.',
+      'success');
+  } catch (err) {
+    _showProfFeedback(fb, translateSupabaseError(err), 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = oldHTML;
   }
 }
 

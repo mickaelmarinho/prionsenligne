@@ -4269,7 +4269,9 @@ function initChat() {
     const user = window._pelUser;
     if (!sb || !user || !currentOfficeId || !text.trim()) return;
 
-    const userName = user.user_metadata?.prenom || user.email?.split('@')[0] || 'Pèlerin';
+    const meta = user.user_metadata || {};
+    const cleanEmail = (user.email || '').split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    const userName = (meta.pseudo || meta.name || cleanEmail || 'Pèlerin').trim().slice(0, 30);
 
     // Optimistic UI
     const optimistic = {

@@ -2794,6 +2794,13 @@ body.player-open .greg-btn { bottom: 80px; }
 }
 
 /* Formulaire prénom */
+.prof-pseudo-hint {
+  margin-top: 6px;
+  font-size: 11.5px;
+  color: var(--text-soft);
+  font-style: italic;
+  line-height: 1.4;
+}
 .prof-name-form {
   display: flex;
   gap: 8px;
