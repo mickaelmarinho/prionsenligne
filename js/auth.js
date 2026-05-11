@@ -290,6 +290,21 @@ function closeProfilePanel() {
   document.body.style.overflow = '';
 }
 
+function _memberRank(memberSinceISO) {
+  if (!memberSinceISO) return null;
+  const days = (Date.now() - new Date(memberSinceISO).getTime()) / 86400000;
+  if (isNaN(days) || days < 30) return { id:'pelerin', label:'Pèlerin', icon:'fa-person-walking', cls:'rk-pelerin' };
+  if (days < 90)  return { id:'disciple', label:'Disciple',             icon:'fa-seedling', cls:'rk-disciple' };
+  if (days < 365) return { id:'frere',    label:'Frère/Sœur en prière', icon:'fa-dove',     cls:'rk-frere'    };
+  if (days < 730) return { id:'fidele',   label:'Fidèle',               icon:'fa-star',     cls:'rk-fidele'   };
+  return                 { id:'ancien',   label:'Ancien',               icon:'fa-crown',    cls:'rk-ancien'   };
+}
+function _renderRankBadge(memberSinceISO) {
+  const r = _memberRank(memberSinceISO);
+  if (!r) return '';
+  return `<div class="prof-rank-badge chat-pop-rank ${r.cls}"><i class="fa-solid ${r.icon}"></i> ${r.label}</div>`;
+}
+
 function _esc(str) {
   return String(str)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;')
@@ -353,6 +368,7 @@ async function loadProfileContent() {
       <div class="prof-name" id="prof-display-name">${_esc(name)}</div>
       <div class="prof-email">${_esc(email)}</div>
       ${sinceStr ? `<div class="prof-since"><i class="fa-solid fa-cross"></i> Membre depuis le ${sinceStr}</div>` : ''}
+      ${_renderRankBadge(user.created_at)}
       ${selectedSaint && selectedSaint.id !== 'aucun' ? `<div class="prof-patron"><i class="fa-solid fa-star"></i> Saint patron : <strong>${_esc(selectedSaint.name)}</strong>${selectedSaint.feast ? ' <span class="prof-patron-feast">(' + _esc(selectedSaint.feast) + ')</span>' : ''}</div>` : ''}
       <div class="prof-patron-bio" id="prof-patron-bio" style="display:none"></div>
       ${currentVerse ? `<blockquote class="prof-verse">« ${_esc(currentVerse)} »</blockquote>` : ''}

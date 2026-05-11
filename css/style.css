@@ -2629,6 +2629,12 @@ body.player-open .greg-btn { bottom: 80px; }
 .prof-patron strong { color: var(--gold); }
 .prof-patron-feast { opacity: .7; font-size: 11.5px; }
 
+/* Badge de grade dans le hero du profil */
+.prof-rank-badge {
+  margin-top: 10px !important;
+  display: inline-flex !important;
+}
+
 /* Biographie du saint patron (Nominis) */
 .prof-patron-bio {
   margin: 10px 14px 0;
@@ -3897,6 +3903,30 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
 .chat-msg-author:hover { opacity: .75; text-decoration: underline; }
 .chat-msg-avatar { cursor: pointer; transition: transform .12s; }
 .chat-msg-avatar:hover { transform: scale(1.08); }
+
+/* Badge de grade à côté du pseudo */
+.chat-msg-rank {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  font-size: 9px;
+  flex-shrink: 0;
+  cursor: help;
+}
+.chat-msg-rank i { font-size: 8px; }
+.rk-disciple { background: rgba(34,139,34,.22);  color: #6cc16c; }
+.rk-frere    { background: rgba(99,102,241,.22); color: #a5b4fc; }
+.rk-fidele   { background: rgba(201,168,76,.22); color: var(--gold); }
+.rk-ancien {
+  background: linear-gradient(135deg, #f3c548, #c9a84c);
+  color: #4a3a0c;
+  box-shadow: 0 0 8px rgba(201,168,76,.55);
+  animation: rankGlow 2.6s ease-in-out infinite alternate;
+}
+@keyframes rankGlow {
+  from { box-shadow: 0 0 6px rgba(201,168,76,.45); }
+  to   { box-shadow: 0 0 14px rgba(243,197,72,.85); }
+}
 .chat-msg-time {
   font-size: 10px;
   color: var(--text-soft);
@@ -3976,6 +4006,25 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
 .chat-pop-close:hover { background: rgba(255,255,255,.22); }
 .chat-pop-body {
   padding: 12px 14px 14px;
+}
+.chat-pop-rank {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 10px;
+  border-radius: 999px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.chat-pop-rank.rk-pelerin  { background: rgba(0,0,0,.06);          color: var(--text-soft); }
+.chat-pop-rank.rk-disciple { background: rgba(34,139,34,.16);      color: #2d6a2d; }
+.chat-pop-rank.rk-frere    { background: rgba(30,58,138,.14);      color: #1e3a8a; }
+.chat-pop-rank.rk-fidele   { background: rgba(201,168,76,.18);     color: #8a6f24; }
+.chat-pop-rank.rk-ancien {
+  background: linear-gradient(135deg, #f3c548, #c9a84c);
+  color: #4a3a0c;
+  box-shadow: 0 0 10px rgba(201,168,76,.55);
 }
 .chat-pop-row {
   display: flex; gap: 8px; align-items: flex-start;

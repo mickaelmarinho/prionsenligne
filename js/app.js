@@ -4169,6 +4169,26 @@ function initChat() {
     return Math.abs(b - a) < 5 * 60 * 1000;
   }
 
+  // Calcule le grade d'un membre selon son ancienneté.
+  // Renvoie { id, label, icon, cls } ou null si pas de date / Pèlerin (pas de badge).
+  function memberRank(memberSinceISO) {
+    if (!memberSinceISO) return null;
+    const days = (Date.now() - new Date(memberSinceISO).getTime()) / 86400000;
+    if (isNaN(days) || days < 30) return null; // Pèlerin : pas de badge
+    if (days < 90)  return { id: 'disciple', label: 'Disciple',             icon: 'fa-seedling', cls: 'rk-disciple' };
+    if (days < 365) return { id: 'frere',    label: 'Frère/Sœur en prière', icon: 'fa-dove',     cls: 'rk-frere'    };
+    if (days < 730) return { id: 'fidele',   label: 'Fidèle',               icon: 'fa-star',     cls: 'rk-fidele'   };
+    return                 { id: 'ancien',   label: 'Ancien',               icon: 'fa-crown',    cls: 'rk-ancien'   };
+  }
+
+  // Formate joliment une date ISO ("27 avril 2026")
+  function formatLongDate(iso) {
+    if (!iso) return '';
+    try {
+      return new Date(iso).toLocaleDateString('fr-FR', { year:'numeric', month:'long', day:'numeric' });
+    } catch (_) { return ''; }
+  }
+
   function buildBubble(msg, prevMsg) {
     const userId = window._pelUser?.id;
     const isOwn  = userId && msg.user_id === userId;
@@ -4183,6 +4203,7 @@ function initChat() {
     div.dataset.userName      = msg.user_name      || '';
     div.dataset.patronSaint   = msg.patron_saint   || '';
     div.dataset.favoriteVerse = msg.favorite_verse || '';
+    div.dataset.memberSince   = msg.member_since   || '';
 
     // Avatar (caché en mode groupé via CSS)
     const avatar = document.createElement('span');
@@ -4209,11 +4230,18 @@ function initChat() {
     const palBg = getAvatarPalette(msg.avatar_palette, msg.user_name);
     const authorColor = palBg ? palBg.bg : '';
 
+    // Grade selon ancienneté
+    const rank = memberRank(msg.member_since);
+    const rankHTML = rank
+      ? `<span class="chat-msg-rank ${rank.cls}" title="${rank.label} — membre depuis ${escHtml(formatLongDate(msg.member_since))}"><i class="fa-solid ${rank.icon}"></i></span>`
+      : '';
+
     const body = document.createElement('div');
     body.className = 'chat-msg-body';
     body.innerHTML = `
       <div class="chat-msg-meta">
         <button type="button" class="chat-msg-author" data-popover="1"${authorColor ? ` style="--author-color:${authorColor}"` : ''}>${escHtml(msg.user_name)}</button>
+        ${rankHTML}
         <span class="chat-msg-time">${formatTime(msg.created_at)}</span>
       </div>
       <div class="chat-msg-text">${escHtml(msg.message)}</div>`;
@@ -4254,12 +4282,14 @@ function initChat() {
   function openProfilePopover(bubbleEl, anchorEl) {
     closeProfilePopover();
     const data = bubbleEl.dataset;
-    const userName = data.userName || 'Anonyme';
-    const saintId  = data.patronSaint || '';
-    const verse    = data.favoriteVerse || '';
+    const userName    = data.userName || 'Anonyme';
+    const saintId     = data.patronSaint || '';
+    const verse       = data.favoriteVerse || '';
+    const memberSince = data.memberSince || '';
 
     // Cherche le saint dans la liste exposée par auth.js
     const saint = (window.pelSaintById && window.pelSaintById(saintId)) || null;
+    const rank  = memberRank(memberSince);
 
     const pop = document.createElement('div');
     pop.className = 'chat-popover';
@@ -4270,6 +4300,12 @@ function initChat() {
     const verseHTML = verse
       ? `<blockquote class="chat-pop-verse">« ${escHtml(verse)} »</blockquote>`
       : '';
+    const memberHTML = memberSince
+      ? `<div class="chat-pop-row"><i class="fa-solid fa-cross"></i> <span>Membre depuis le <strong>${escHtml(formatLongDate(memberSince))}</strong></span></div>`
+      : '';
+    const rankBadgeHTML = rank
+      ? `<div class="chat-pop-rank ${rank.cls}"><i class="fa-solid ${rank.icon}"></i> ${escHtml(rank.label)}</div>`
+      : `<div class="chat-pop-rank rk-pelerin"><i class="fa-solid fa-person-walking"></i> Pèlerin</div>`;
     pop.innerHTML = `
       <div class="chat-pop-head">
         ${avatarHTML}
@@ -4277,6 +4313,8 @@ function initChat() {
         <button class="chat-pop-close" aria-label="Fermer"><i class="fa-solid fa-xmark"></i></button>
       </div>
       <div class="chat-pop-body">
+        ${rankBadgeHTML}
+        ${memberHTML}
         ${saintHTML}
         ${verseHTML}
       </div>`;
@@ -4431,6 +4469,7 @@ function initChat() {
     const avatarPalette = meta.avatar_palette || 'auto';
     const patronSaint   = meta.patron_saint   || '';
     const favoriteVerse = (meta.favorite_verse || '').slice(0, 240);
+    const memberSince   = user.created_at || null;
 
     // Optimistic UI
     const optimistic = {
@@ -4442,6 +4481,7 @@ function initChat() {
       avatar_palette: avatarPalette,
       patron_saint:   patronSaint,
       favorite_verse: favoriteVerse,
+      member_since:   memberSince,
       message: text.trim(),
       created_at: new Date().toISOString(),
     };
@@ -4459,15 +4499,20 @@ function initChat() {
       avatar_palette: avatarPalette,
       patron_saint:   patronSaint,
       favorite_verse: favoriteVerse,
+      member_since:   memberSince,
       message:   text.trim(),
     };
     let { data, error } = await sb.from('prayer_intentions').insert(fullRow).select().single();
-    if (error && /patron_saint|favorite_verse|avatar_icon|avatar_palette|column/i.test(error.message || '')) {
-      // Retire les colonnes manquantes et retente
+    if (error && /member_since|patron_saint|favorite_verse|avatar_icon|avatar_palette|column/i.test(error.message || '')) {
+      // Cascade de retraits si certaines colonnes ne sont pas (encore) en DB
       const trimmed = { ...fullRow };
-      delete trimmed.patron_saint;
-      delete trimmed.favorite_verse;
+      delete trimmed.member_since;
       ({ data, error } = await sb.from('prayer_intentions').insert(trimmed).select().single());
+      if (error && /patron_saint|favorite_verse|column/i.test(error.message || '')) {
+        delete trimmed.patron_saint;
+        delete trimmed.favorite_verse;
+        ({ data, error } = await sb.from('prayer_intentions').insert(trimmed).select().single());
+      }
       if (error && /avatar_icon|avatar_palette|column/i.test(error.message || '')) {
         delete trimmed.avatar_icon;
         delete trimmed.avatar_palette;
