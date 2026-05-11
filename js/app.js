@@ -499,33 +499,6 @@ function initCalendar() {
           .replace(/(<a[^>]+href=")\/([^"]+)/gi, '$1https://nominis.cef.fr/$2');
         const lien = bio.lien || '';
 
-        // Extrait les autres saints mentionnés dans le corps de la bio (liens vers /contenus/saint/…)
-        // Ces saints sont souvent fêtés le même jour ou liés (martyrs ensemble, etc.)
-        const otherSaints = [];
-        const seenIds = new Set();
-        const linkRe = /<a[^>]+href="(?:https:\/\/nominis\.cef\.fr)?\/contenus\/saint\/(\d+)\/([^"]+)\.html"[^>]*>([^<]+)<\/a>/gi;
-        let lm;
-        while ((lm = linkRe.exec(safeHtml)) !== null) {
-          const id   = lm[1];
-          if (seenIds.has(id)) continue;
-          seenIds.add(id);
-          const slug = lm[2];
-          const nm   = lm[3].replace(/\s+/g, ' ').trim();
-          // Filtre : on garde les vrais saints (évite "diocèse de…" etc.)
-          if (!/^(saint|sainte|saints?|bienheureux|bienheureuse|vénérable|venerable)/i.test(nm)) continue;
-          // Évite le saint principal lui-même
-          if (nm.toLowerCase().includes(bio.nom.replace(/^Saint[es]?\s+/i, '').toLowerCase().split(/\s/)[0])) continue;
-          otherSaints.push({ name: nm, url: `https://nominis.cef.fr/contenus/saint/${id}/${slug}.html` });
-          if (otherSaints.length >= 6) break;
-        }
-        const otherSaintsHTML = otherSaints.length ? `
-          <div class="dd-nominis-others">
-            <div class="dd-nominis-others-label"><i class="fa-solid fa-users"></i> Aussi célébrés ou mentionnés</div>
-            <div class="dd-nominis-others-list">
-              ${otherSaints.map(s => `<a class="dd-nominis-other" href="${escapeHtmlSimple(s.url)}" target="_blank" rel="noopener">${escapeHtmlSimple(s.name)}</a>`).join('')}
-            </div>
-          </div>` : '';
-
         nomBlock.innerHTML = `
           <div class="dd-nominis-head">
             <i class="fa-solid fa-book-open"></i>
@@ -537,8 +510,31 @@ function initCalendar() {
             <button type="button" class="dd-nominis-toggle" id="dd-nominis-toggle">Lire la biographie complète <i class="fa-solid fa-chevron-down"></i></button>
             ${lien ? `<a class="dd-nominis-link" href="${lien}" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square"></i> Voir sur nominis.cef.fr</a>` : ''}
           </div>
-          ${otherSaintsHTML}
+          <div class="dd-nominis-others" id="dd-nominis-others-${dy}" style="display:none"></div>
         `;
+
+        // Charge en parallèle la liste des autres saints du jour (Nominis "Autres fêtes du jour")
+        fetch(`/api/saints-of-day?day=${dy}&month=${mo}&year=${yr}`)
+          .then(r => r.ok ? r.json() : null)
+          .then(payload => {
+            // Vérifier qu'on n'a pas changé de jour entre-temps
+            if (parseInt(dayEl.dataset.day, 10) !== dy) return;
+            const others = (payload?.saints || []).filter(s => {
+              // Exclure le saint principal déjà affiché plus haut
+              return !bio.nom || !s.name.toLowerCase().includes(bio.nom.replace(/^(Saint[es]?|Bienheureux[se]?)\s+/i, '').toLowerCase().split(/\s/)[0]);
+            });
+            const wrap = document.getElementById('dd-nominis-others-' + dy);
+            if (!wrap || others.length === 0) return;
+            wrap.style.display = '';
+            wrap.innerHTML = `
+              <div class="dd-nominis-others-label"><i class="fa-solid fa-users"></i> Aussi célébrés ce jour (${others.length})</div>
+              <div class="dd-nominis-others-list">
+                ${others.map(s => `<a class="dd-nominis-other" href="${escapeHtmlSimple(s.url)}" target="_blank" rel="noopener" title="${escapeHtmlSimple(s.bio || '')}">${escapeHtmlSimple(s.name)}</a>`).join('')}
+              </div>
+              <div class="dd-nominis-others-more">Cliquez sur un saint pour voir sa fiche complète sur nominis.cef.fr</div>
+            `;
+          })
+          .catch(() => {});
         const toggleBtn = document.getElementById('dd-nominis-toggle');
         const bioEl     = nomBlock.querySelector('.dd-nominis-bio');
         toggleBtn?.addEventListener('click', () => {

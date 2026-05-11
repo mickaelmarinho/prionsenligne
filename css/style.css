@@ -961,6 +961,12 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
   border-color: rgba(201,168,76,.4);
   color: var(--gold);
 }
+.dd-nominis-others-more {
+  margin-top: 8px;
+  font-size: 10.5px;
+  color: rgba(245,240,232,.4);
+  font-style: italic;
+}
 
 .dd-nominis-loading {
   font-size: 12px;
