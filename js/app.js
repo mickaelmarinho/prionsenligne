@@ -3859,6 +3859,86 @@ function initWeek() {
    Aplatit WEEK_SCHEDULE du jour courant, trie par heure,
    et injecte une carte par créneau (une source ou groupe de sources à la même heure).
 ──────────────────────────────────────────────*/
+// ── ICS / iCalendar ───────────────────────────────────────────
+// Format Europe/Paris avec VTIMEZONE complet (compatible iPhone, Mac, Outlook,
+// Google Calendar, Android…). Les events sont en heure locale Paris.
+function _icsEscape(s) {
+  return String(s || '')
+    .replace(/\\/g, '\\\\')
+    .replace(/\n/g, '\\n')
+    .replace(/,/g, '\\,')
+    .replace(/;/g, '\\;');
+}
+function _icsDateTime(date) {
+  // YYYYMMDDTHHMMSS (heure locale)
+  const p = n => String(n).padStart(2, '0');
+  return `${date.getFullYear()}${p(date.getMonth() + 1)}${p(date.getDate())}T${p(date.getHours())}${p(date.getMinutes())}00`;
+}
+function _icsUTCStamp() {
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getUTCFullYear()}${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}T${p(d.getUTCHours())}${p(d.getUTCMinutes())}${p(d.getUTCSeconds())}Z`;
+}
+function buildICS(events, calName = 'PrionsEnLigne — Prières') {
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//PrionsEnLigne//FR',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    `X-WR-CALNAME:${_icsEscape(calName)}`,
+    'X-WR-TIMEZONE:Europe/Paris',
+    'BEGIN:VTIMEZONE',
+    'TZID:Europe/Paris',
+    'BEGIN:DAYLIGHT',
+    'TZOFFSETFROM:+0100', 'TZOFFSETTO:+0200', 'TZNAME:CEST',
+    'DTSTART:19700329T020000',
+    'RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU',
+    'END:DAYLIGHT',
+    'BEGIN:STANDARD',
+    'TZOFFSETFROM:+0200', 'TZOFFSETTO:+0100', 'TZNAME:CET',
+    'DTSTART:19701025T030000',
+    'RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU',
+    'END:STANDARD',
+    'END:VTIMEZONE',
+  ];
+  const stamp = _icsUTCStamp();
+  for (const ev of events) {
+    lines.push(
+      'BEGIN:VEVENT',
+      `UID:${_icsEscape(ev.uid)}`,
+      `DTSTAMP:${stamp}`,
+      `DTSTART;TZID=Europe/Paris:${_icsDateTime(ev.start)}`,
+      `DTEND;TZID=Europe/Paris:${_icsDateTime(ev.end)}`,
+      `SUMMARY:${_icsEscape(ev.summary)}`,
+    );
+    if (ev.description) lines.push(`DESCRIPTION:${_icsEscape(ev.description)}`);
+    if (ev.url)         lines.push(`URL:${_icsEscape(ev.url)}`);
+    if (ev.location)    lines.push(`LOCATION:${_icsEscape(ev.location)}`);
+    // Rappel 10 min avant
+    lines.push(
+      'BEGIN:VALARM',
+      'TRIGGER:-PT10M',
+      'ACTION:DISPLAY',
+      `DESCRIPTION:${_icsEscape(ev.summary)}`,
+      'END:VALARM',
+      'END:VEVENT'
+    );
+  }
+  lines.push('END:VCALENDAR');
+  return lines.join('\r\n');
+}
+function downloadICS(filename, ics) {
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 200);
+}
+
 function initTodayTimeline() {
   const container = document.getElementById('timeline');
   if (!container) return;
@@ -3965,10 +4045,16 @@ function initTodayTimeline() {
     art.dataset.type     = slot.type;
     art.dataset.start    = entry.t;
     art.dataset.duration = String(duration);
+    art.dataset.label    = slot.label;
+    art.dataset.desc     = slot.desc || '';
     art.innerHTML = `
       <div class="tl-time">
         <span class="tl-time-h">${entry.tl}</span>
         ${durHtml}
+        <button class="tl-cal-btn" type="button" data-action="cal-one"
+                title="Ajouter cette prière à mon calendrier" aria-label="Ajouter au calendrier">
+          <i class="fa-regular fa-calendar-plus"></i>
+        </button>
       </div>
       <div class="tl-marker ${slot.type}"></div>
       <div class="tl-body">
@@ -3983,6 +4069,80 @@ function initTodayTimeline() {
       </div>`;
     container.appendChild(art);
   });
+
+  // ── Bouton "Ajouter ma journée au calendrier" — au-dessus du flux ──
+  const todayMain = container.closest('.today-main');
+  if (todayMain && !document.getElementById('tl-export-bar')) {
+    const bar = document.createElement('div');
+    bar.id = 'tl-export-bar';
+    bar.className = 'tl-export-bar';
+    bar.innerHTML = `
+      <button class="tl-export-btn" id="tl-export-day-btn">
+        <i class="fa-regular fa-calendar-plus"></i>
+        <span>Ajouter ma journée à mon calendrier</span>
+      </button>
+      <span class="tl-export-hint">iPhone, Android, Google, Outlook…</span>
+    `;
+    // Insère entre les filtres et la timeline
+    const filters = todayMain.querySelector('.prayer-filters');
+    if (filters) filters.after(bar);
+    else todayMain.prepend(bar);
+  }
+
+  // Délégation : clic sur les boutons calendrier (individuel + global)
+  container.addEventListener('click', e => {
+    const oneBtn = e.target.closest('.tl-cal-btn');
+    if (oneBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const item = oneBtn.closest('.tl-item');
+      if (item) exportTimelineItems([item], 'prière');
+    }
+  });
+  document.getElementById('tl-export-day-btn')?.addEventListener('click', () => {
+    const items = Array.from(document.querySelectorAll('#timeline .tl-item'));
+    exportTimelineItems(items, 'journée');
+  });
+
+  // Construit un .ics à partir d'une liste d'items de timeline et déclenche le download
+  function exportTimelineItems(items, mode) {
+    if (!items.length) return;
+    const today = getParisDate();
+    const events = items.map(item => {
+      const [h, m]  = (item.dataset.start || '0:0').split(':').map(Number);
+      const dur     = parseInt(item.dataset.duration, 10) || 30;
+      const start   = new Date(today.getFullYear(), today.getMonth(), today.getDate(), h, m, 0);
+      const end     = new Date(start.getTime() + dur * 60000);
+      const label   = item.dataset.label || item.querySelector('.tl-prayer')?.textContent?.trim().replace(/[ⓘ\s]+$/, '') || 'Prière';
+      // Liste des sources affichées sous chaque office
+      const srcNames = Array.from(item.querySelectorAll('.tl-src'))
+        .map(a => a.textContent.trim().replace(/^\s*[▶ ]+/, ''))
+        .filter(Boolean)
+        .join(' · ');
+      const desc = [
+        item.dataset.desc || '',
+        srcNames ? `Sources : ${srcNames}` : '',
+        '',
+        'Via prionsenligne.fr',
+      ].filter(Boolean).join('\n');
+      const isoDay = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
+      return {
+        uid: `pel-${(item.dataset.type || 'priere')}-${item.dataset.start || ''}-${isoDay}@prionsenligne.fr`,
+        start, end,
+        summary: label,
+        description: desc,
+        url: 'https://prionsenligne.fr/agenda',
+      };
+    });
+    const isoDayStr = today.toISOString().slice(0, 10);
+    const calName = mode === 'journée'
+      ? `PrionsEnLigne — Prières du ${today.toLocaleDateString('fr-FR')}`
+      : `PrionsEnLigne — ${events[0].summary}`;
+    const filename = mode === 'journée'
+      ? `prionsenligne-journee-${isoDayStr}.ics`
+      : `prionsenligne-${(events[0].summary || 'priere').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${isoDayStr}.ics`;
+    downloadICS(filename, buildICS(events, calName));
+  }
 
   // Délégation : toggle de la description sur clic du bouton info
   container.addEventListener('click', e => {

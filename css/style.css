@@ -398,6 +398,67 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
   font-weight: 400;
 }
 
+/* Bouton calendrier compact (par item) */
+.tl-cal-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-soft);
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  margin-top: 2px;
+  opacity: .55;
+  transition: background .15s, color .15s, border-color .15s, opacity .15s;
+}
+.tl-cal-btn:hover {
+  background: rgba(201,168,76,.10);
+  border-color: rgba(201,168,76,.30);
+  color: var(--gold);
+  opacity: 1;
+}
+
+/* Barre globale "Ajouter ma journée" */
+.tl-export-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, rgba(201,168,76,.07), rgba(201,168,76,.02));
+  border: 1px solid rgba(201,168,76,.25);
+  border-radius: var(--r-lg, 12px);
+  margin: 8px 0 12px;
+}
+.tl-export-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--navy);
+  background: var(--gold);
+  border: none;
+  border-radius: 22px;
+  padding: 9px 18px;
+  cursor: pointer;
+  transition: background .15s, transform .12s;
+}
+.tl-export-btn:hover  { background: #d4af5a; }
+.tl-export-btn:active { transform: scale(.97); }
+.tl-export-btn > i    { font-size: 13px; }
+.tl-export-hint {
+  font-size: 11.5px;
+  color: var(--text-soft);
+  font-style: italic;
+  flex: 1;
+}
+@media (max-width: 540px) {
+  .tl-export-bar { flex-direction: column; align-items: stretch; gap: 6px; text-align: center; }
+  .tl-export-hint { font-size: 11px; }
+}
+
 /* Bouton info à côté du titre */
 .tl-info-btn {
   background: transparent;
