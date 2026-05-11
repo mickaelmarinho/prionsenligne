@@ -352,14 +352,18 @@ async function loadProfileContent() {
     return `<button type="button" class="prof-pal-btn${isActive ? ' active' : ''}" data-palette="${key}" title="${_esc(pal.label)}">${swatch}<span class="prof-pal-name">${_esc(pal.label)}</span></button>`;
   }).join('');
 
-  // HTML pour le sélecteur de saint patron
-  const saintsHTML = SAINTS.map(s => {
-    const sel = s.id === currentSaint ? ' selected' : '';
-    const display = s.feast ? `${s.name} — ${s.feast}` : s.name;
-    return `<option value="${s.id}"${sel}>${_esc(display)}</option>`;
-  }).join('');
+  // Saint patron actuellement sélectionné (soit dans la liste curated, soit custom)
+  const customName  = meta.patron_saint_name  || '';
+  const customFeast = meta.patron_saint_feast || '';
+  const customLien  = meta.patron_saint_lien  || '';
+  const selectedSaint = (currentSaint === 'custom' && customName)
+    ? { id: 'custom', name: customName, feast: customFeast, lien: customLien }
+    : SAINTS.find(s => s.id === currentSaint);
 
-  const selectedSaint = SAINTS.find(s => s.id === currentSaint);
+  // Valeur affichée dans le champ de recherche
+  const saintInputValue = selectedSaint && selectedSaint.id !== 'aucun'
+    ? (selectedSaint.feast ? `${selectedSaint.name} — ${selectedSaint.feast}` : selectedSaint.name)
+    : '';
 
   // Squelette immédiat (sans attendre Supabase)
   bodyEl.innerHTML = `
@@ -420,9 +424,19 @@ async function loadProfileContent() {
       <div class="prof-pal-grid">${palettesGridHTML}</div>
 
       <div class="prof-perso-label">Saint patron</div>
-      <select class="prof-input prof-saint-select" id="prof-saint-select">
-        ${saintsHTML}
-      </select>
+      <div class="prof-saint-combobox">
+        <input type="text" class="prof-input prof-saint-input" id="prof-saint-input"
+               value="${_esc(saintInputValue)}"
+               placeholder="Rechercher un saint (Nominis)…"
+               autocomplete="off" spellcheck="false">
+        <button type="button" class="prof-saint-clear" id="prof-saint-clear" title="Effacer"><i class="fa-solid fa-xmark"></i></button>
+        <div class="prof-saint-results hidden" id="prof-saint-results"></div>
+        <input type="hidden" id="prof-saint-id"    value="${_esc(currentSaint || 'aucun')}">
+        <input type="hidden" id="prof-saint-name"  value="${_esc(selectedSaint?.name  || '')}">
+        <input type="hidden" id="prof-saint-feast" value="${_esc(selectedSaint?.feast || '')}">
+        <input type="hidden" id="prof-saint-lien"  value="${_esc(selectedSaint?.lien  || '')}">
+      </div>
+      <div class="prof-saint-hint">Tapez pour rechercher parmi plus de 10 000 saints du calendrier romain (Nominis — CEF).</div>
 
       <div class="prof-perso-label">Citation favorite (Bible, saint…)</div>
       <textarea class="prof-input prof-verse-input" id="prof-verse-input"
@@ -493,35 +507,8 @@ async function loadProfileContent() {
     });
   });
 
-  // Saint patron : preview sous le hero
-  $id('prof-saint-select')?.addEventListener('change', () => {
-    const sid = $id('prof-saint-select').value;
-    const s = SAINTS.find(x => x.id === sid);
-    let bloc = document.querySelector('.prof-patron');
-    const heroEl = document.querySelector('.prof-hero');
-    if (!s || s.id === 'aucun') {
-      bloc?.remove();
-      const bio = $id('prof-patron-bio');
-      if (bio) { bio.style.display = 'none'; bio.innerHTML = ''; }
-    } else {
-      const html = `<i class="fa-solid fa-star"></i> Saint patron : <strong>${_esc(s.name)}</strong>${s.feast ? ' <span class="prof-patron-feast">(' + _esc(s.feast) + ')</span>' : ''}`;
-      if (bloc) {
-        bloc.innerHTML = html;
-      } else if (heroEl) {
-        const div = document.createElement('div');
-        div.className = 'prof-patron';
-        div.innerHTML = html;
-        // Inséré avant la bio si elle existe, sinon avant la citation
-        const bio = heroEl.querySelector('.prof-patron-bio');
-        const verse = heroEl.querySelector('.prof-verse');
-        if (bio) bio.before(div);
-        else if (verse) verse.before(div);
-        else heroEl.appendChild(div);
-      }
-      renderPatronBio(s);
-    }
-    updatePatronCountdown(s);
-  });
+  // Saint patron : combobox de recherche
+  initSaintCombobox();
 
   // Bio initiale du saint patron (si défini)
   if (selectedSaint && selectedSaint.id !== 'aucun') renderPatronBio(selectedSaint);
@@ -593,6 +580,159 @@ function _findNominisLinkFor(saintName, html) {
     }
   }
   return null;
+}
+
+// ── Combobox de recherche du saint patron (curated + Nominis) ──────────
+let _saintSearchAbort = null;
+let _saintSearchTimer = null;
+
+function initSaintCombobox() {
+  const input    = $id('prof-saint-input');
+  const clearBtn = $id('prof-saint-clear');
+  const results  = $id('prof-saint-results');
+  if (!input || !results) return;
+
+  function applySelection(s) {
+    $id('prof-saint-id').value    = s.id || 'custom';
+    $id('prof-saint-name').value  = s.name || '';
+    $id('prof-saint-feast').value = s.feast || '';
+    $id('prof-saint-lien').value  = s.lien  || '';
+    input.value = s.feast ? `${s.name} — ${s.feast}` : s.name;
+    results.classList.add('hidden');
+    refreshHeroPatron(s);
+  }
+  function clearSelection() {
+    $id('prof-saint-id').value    = 'aucun';
+    $id('prof-saint-name').value  = '';
+    $id('prof-saint-feast').value = '';
+    $id('prof-saint-lien').value  = '';
+    input.value = '';
+    results.classList.add('hidden');
+    refreshHeroPatron({ id: 'aucun' });
+  }
+
+  clearBtn?.addEventListener('click', () => { clearSelection(); input.focus(); });
+
+  input.addEventListener('focus', () => runSaintSearch(input.value.trim()));
+  input.addEventListener('input', () => {
+    clearTimeout(_saintSearchTimer);
+    const q = input.value.trim();
+    _saintSearchTimer = setTimeout(() => runSaintSearch(q), 220);
+  });
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.prof-saint-combobox')) results.classList.add('hidden');
+  });
+
+  async function runSaintSearch(q) {
+    const norm = q.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    const localMatches = SAINTS.filter(s => {
+      if (s.id === 'aucun') return false;
+      return s.name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').includes(norm);
+    }).slice(0, 6);
+
+    // Rend immédiatement les matches curated
+    renderResults(localMatches, [], q);
+
+    if (q.length < 2) return;
+
+    // Lance la recherche Nominis (debounced)
+    if (_saintSearchAbort) _saintSearchAbort.abort();
+    _saintSearchAbort = new AbortController();
+    try {
+      const resp = await fetch(`/api/saints-search?q=${encodeURIComponent(q)}`, { signal: _saintSearchAbort.signal });
+      if (!resp.ok) return;
+      const data = await resp.json();
+      const seen = new Set(localMatches.map(s => s.name.toLowerCase()));
+      const remote = (data.results || []).filter(r => !seen.has(r.name.toLowerCase())).slice(0, 12);
+      renderResults(localMatches, remote, q);
+    } catch (_) { /* abort */ }
+  }
+
+  function renderResults(local, remote, q) {
+    if (local.length === 0 && remote.length === 0) {
+      results.innerHTML = `<div class="prof-saint-empty">Aucun résultat${q ? ` pour « ${_esc(q)} »` : ''}.</div>`;
+      results.classList.remove('hidden');
+      return;
+    }
+    const localHTML = local.length ? `
+      <div class="prof-saint-group-label">Suggestions</div>
+      ${local.map(s => `
+        <button type="button" class="prof-saint-result" data-source="local" data-id="${_esc(s.id)}">
+          <span class="prof-saint-result-name">${_esc(s.name)}</span>
+          ${s.feast ? `<span class="prof-saint-result-feast">${_esc(s.feast)}</span>` : ''}
+        </button>
+      `).join('')}` : '';
+    const remoteHTML = remote.length ? `
+      <div class="prof-saint-group-label">Nominis (CEF)</div>
+      ${remote.map(r => `
+        <button type="button" class="prof-saint-result" data-source="nominis" data-id="${_esc(r.id)}" data-slug="${_esc(r.slug)}" data-name="${_esc(r.name)}" data-url="${_esc(r.url)}">
+          <span class="prof-saint-result-name">${_esc(r.name)}</span>
+          <span class="prof-saint-result-feast"><i class="fa-solid fa-arrow-up-right-from-square"></i> détails à charger</span>
+        </button>
+      `).join('')}` : '';
+    results.innerHTML = localHTML + remoteHTML;
+    results.classList.remove('hidden');
+
+    results.querySelectorAll('.prof-saint-result').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const source = btn.dataset.source;
+        if (source === 'local') {
+          const s = SAINTS.find(x => x.id === btn.dataset.id);
+          if (s) applySelection(s);
+        } else {
+          // Récupère le détail Nominis (date de fête)
+          btn.querySelector('.prof-saint-result-feast').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> chargement…';
+          const id   = btn.dataset.id;
+          const slug = btn.dataset.slug;
+          try {
+            const r = await fetch(`/api/saint-detail?id=${encodeURIComponent(id)}&slug=${encodeURIComponent(slug)}`);
+            const d = r.ok ? await r.json() : {};
+            applySelection({
+              id:    'custom',
+              name:  btn.dataset.name,
+              feast: d.feast || '',
+              lien:  btn.dataset.url,
+            });
+          } catch (_) {
+            applySelection({
+              id:    'custom',
+              name:  btn.dataset.name,
+              feast: '',
+              lien:  btn.dataset.url,
+            });
+          }
+        }
+      });
+    });
+  }
+}
+
+// Met à jour les blocs « saint patron » du hero (badge + bio + compteur)
+function refreshHeroPatron(s) {
+  let bloc = document.querySelector('.prof-patron');
+  const heroEl = document.querySelector('.prof-hero');
+  if (!s || s.id === 'aucun' || !s.name) {
+    bloc?.remove();
+    const bio = $id('prof-patron-bio');
+    if (bio) { bio.style.display = 'none'; bio.innerHTML = ''; }
+    updatePatronCountdown(null);
+    return;
+  }
+  const html = `<i class="fa-solid fa-star"></i> Saint patron : <strong>${_esc(s.name)}</strong>${s.feast ? ' <span class="prof-patron-feast">(' + _esc(s.feast) + ')</span>' : ''}`;
+  if (bloc) {
+    bloc.innerHTML = html;
+  } else if (heroEl) {
+    const div = document.createElement('div');
+    div.className = 'prof-patron';
+    div.innerHTML = html;
+    const bio = heroEl.querySelector('.prof-patron-bio');
+    const verse = heroEl.querySelector('.prof-verse');
+    if (bio) bio.before(div);
+    else if (verse) verse.before(div);
+    else heroEl.appendChild(div);
+  }
+  renderPatronBio(s);
+  updatePatronCountdown(s);
 }
 
 // Compte à rebours jusqu'à la prochaine fête du saint patron
@@ -684,7 +824,10 @@ async function saveProfilePerso() {
 
   const iconKey    = document.querySelector('.prof-ico-btn.active')?.dataset.icon || 'initial';
   const paletteKey = document.querySelector('.prof-pal-btn.active')?.dataset.palette || 'auto';
-  const saintId    = $id('prof-saint-select')?.value || 'aucun';
+  const saintId    = $id('prof-saint-id')?.value    || 'aucun';
+  const saintName  = $id('prof-saint-name')?.value  || '';
+  const saintFeast = $id('prof-saint-feast')?.value || '';
+  const saintLien  = $id('prof-saint-lien')?.value  || '';
   const verseTxt   = $id('prof-verse-input')?.value.trim().slice(0, 240) || '';
 
   btn.disabled = true;
@@ -694,10 +837,13 @@ async function saveProfilePerso() {
   try {
     const newMeta = {
       ...(_currentUser.user_metadata || {}),
-      avatar_icon:    iconKey,
-      avatar_palette: paletteKey,
-      patron_saint:   saintId,
-      favorite_verse: verseTxt,
+      avatar_icon:        iconKey,
+      avatar_palette:     paletteKey,
+      patron_saint:       saintId,
+      patron_saint_name:  saintName,
+      patron_saint_feast: saintFeast,
+      patron_saint_lien:  saintLien,
+      favorite_verse:     verseTxt,
     };
     const { data, error } = await _sb.auth.updateUser({ data: newMeta });
     if (error) throw error;

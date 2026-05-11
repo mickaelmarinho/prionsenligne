@@ -4201,9 +4201,11 @@ function initChat() {
     div.dataset.avatarIcon    = msg.avatar_icon    || 'initial';
     div.dataset.avatarPalette = msg.avatar_palette || 'auto';
     div.dataset.userName      = msg.user_name      || '';
-    div.dataset.patronSaint   = msg.patron_saint   || '';
-    div.dataset.favoriteVerse = msg.favorite_verse || '';
-    div.dataset.memberSince   = msg.member_since   || '';
+    div.dataset.patronSaint      = msg.patron_saint       || '';
+    div.dataset.patronSaintName  = msg.patron_saint_name  || '';
+    div.dataset.patronSaintFeast = msg.patron_saint_feast || '';
+    div.dataset.favoriteVerse    = msg.favorite_verse     || '';
+    div.dataset.memberSince      = msg.member_since       || '';
 
     // Avatar (caché en mode groupé via CSS)
     const avatar = document.createElement('span');
@@ -4284,11 +4286,18 @@ function initChat() {
     const data = bubbleEl.dataset;
     const userName    = data.userName || 'Anonyme';
     const saintId     = data.patronSaint || '';
+    const saintName   = data.patronSaintName  || '';
+    const saintFeast  = data.patronSaintFeast || '';
     const verse       = data.favoriteVerse || '';
     const memberSince = data.memberSince || '';
 
-    // Cherche le saint dans la liste exposée par auth.js
-    const saint = (window.pelSaintById && window.pelSaintById(saintId)) || null;
+    // Priorité aux données dénormalisées (saint custom), fallback sur la liste curated
+    let saint = null;
+    if (saintName) {
+      saint = { id: saintId || 'custom', name: saintName, feast: saintFeast };
+    } else if (saintId) {
+      saint = (window.pelSaintById && window.pelSaintById(saintId)) || null;
+    }
     const rank  = memberRank(memberSince);
 
     const pop = document.createElement('div');
@@ -4574,6 +4583,8 @@ function initChat() {
     const avatarIcon    = meta.avatar_icon    || 'initial';
     const avatarPalette = meta.avatar_palette || 'auto';
     const patronSaint   = meta.patron_saint   || '';
+    const patronSaintName  = meta.patron_saint_name  || '';
+    const patronSaintFeast = meta.patron_saint_feast || '';
     const favoriteVerse = (meta.favorite_verse || '').slice(0, 240);
     const memberSince   = user.created_at || null;
 
@@ -4585,9 +4596,11 @@ function initChat() {
       user_name: userName,
       avatar_icon:    avatarIcon,
       avatar_palette: avatarPalette,
-      patron_saint:   patronSaint,
-      favorite_verse: favoriteVerse,
-      member_since:   memberSince,
+      patron_saint:       patronSaint,
+      patron_saint_name:  patronSaintName,
+      patron_saint_feast: patronSaintFeast,
+      favorite_verse:     favoriteVerse,
+      member_since:       memberSince,
       message: text.trim(),
       created_at: new Date().toISOString(),
     };
@@ -4603,17 +4616,24 @@ function initChat() {
       user_name: userName,
       avatar_icon:    avatarIcon,
       avatar_palette: avatarPalette,
-      patron_saint:   patronSaint,
-      favorite_verse: favoriteVerse,
-      member_since:   memberSince,
+      patron_saint:       patronSaint,
+      patron_saint_name:  patronSaintName,
+      patron_saint_feast: patronSaintFeast,
+      favorite_verse:     favoriteVerse,
+      member_since:       memberSince,
       message:   text.trim(),
     };
     let { data, error } = await sb.from('prayer_intentions').insert(fullRow).select().single();
-    if (error && /member_since|patron_saint|favorite_verse|avatar_icon|avatar_palette|column/i.test(error.message || '')) {
+    if (error && /patron_saint_name|patron_saint_feast|member_since|patron_saint|favorite_verse|avatar_icon|avatar_palette|column/i.test(error.message || '')) {
       // Cascade de retraits si certaines colonnes ne sont pas (encore) en DB
       const trimmed = { ...fullRow };
-      delete trimmed.member_since;
+      delete trimmed.patron_saint_name;
+      delete trimmed.patron_saint_feast;
       ({ data, error } = await sb.from('prayer_intentions').insert(trimmed).select().single());
+      if (error && /member_since|column/i.test(error.message || '')) {
+        delete trimmed.member_since;
+        ({ data, error } = await sb.from('prayer_intentions').insert(trimmed).select().single());
+      }
       if (error && /patron_saint|favorite_verse|column/i.test(error.message || '')) {
         delete trimmed.patron_saint;
         delete trimmed.favorite_verse;
