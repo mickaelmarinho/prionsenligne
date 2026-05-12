@@ -5136,49 +5136,9 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
 
 .contact-form { margin-top: 4px; }
 
-.contact-types {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-.contact-type-pill {
-  position: relative;
-  cursor: pointer;
-}
-.contact-type-pill input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-.contact-type-pill > span {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  padding: 10px 12px;
-  background: white;
-  border: 1.5px solid var(--border-mid);
-  border-radius: 10px;
-  font-family: 'Outfit', sans-serif;
-  font-size: 13px;
-  color: var(--text-mid);
-  transition: all .15s;
-}
-.contact-type-pill:hover > span {
-  border-color: var(--navy-soft);
-  color: var(--navy);
-}
-.contact-type-pill input:checked + span {
-  background: var(--navy);
-  border-color: var(--navy);
-  color: white;
-  box-shadow: 0 2px 8px rgba(26,39,68,.2);
-}
-.contact-type-pill input:focus-visible + span {
-  outline: 2px solid var(--gold);
-  outline-offset: 2px;
-}
+/* (Anciens styles .contact-types / .contact-type-pill supprimés —
+   les boutons de catégorie ont été retirés pour simplifier le formulaire.
+   Le type est désormais détecté automatiquement côté serveur.) */
 
 .contact-group { margin-bottom: 14px; }
 .contact-group label {
@@ -5278,7 +5238,7 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
 }
 
 @media (max-width: 380px) {
-  .contact-types { grid-template-columns: 1fr; }
+  /* (ancien override .contact-types retiré) */
 }
 
 

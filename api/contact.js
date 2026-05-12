@@ -49,8 +49,29 @@ const TYPE_LABELS = {
   suggestion: '💡 Suggestion',
   bug:        '🐛 Bug',
   merci:      '❤️ Remerciement',
-  autre:      '💬 Autre',
+  autre:      '💬 Message',
 };
+
+// Détection automatique du type à partir du contenu du message.
+// Permet de classer les emails sans rien demander à l'utilisateur.
+function detectType(message) {
+  const m = (message || '').toLowerCase();
+  const norm = m.normalize('NFD').replace(/[̀-ͯ]/g, '');
+  // Bug : mots techniques évoquant un dysfonctionnement
+  if (/(bug|bogue|erreur|plante?\s|crashe?|fonctionne pas|ne marche pas|page blanche|404|impossible de|n'arrive pas\s+(à|a)\s+|probl[eè]me|defaut|defectueux|d[ée]connect[ée]|ne se charge|ne r[ée]pond)/i.test(m) ||
+      /(probleme|defaillance|erreur|crash)/i.test(norm)) {
+    return 'bug';
+  }
+  // Remerciement : gratitude, encouragement
+  if (/(merci|f[ée]licitations|f[eé]licite|encouragement|bravo|formidable|magnifique|que dieu vous|continuez|priez? pour|tr[èe]s beau site|tr[èe]s belle initiative|chapeau)/i.test(m)) {
+    return 'merci';
+  }
+  // Suggestion : "ce serait", "pourriez-vous", "il manque", "ajouter"...
+  if (/(suggest|pourriez[- ]vous|serait[- ]il possible|ce serait|il manque|j'aimerais|je voudrais|pourquoi pas|ajouter|am[ée]liorer|id[ée]e)/i.test(m)) {
+    return 'suggestion';
+  }
+  return 'autre';
+}
 
 export default async function handler(req, res) {
   const origin = req.headers.origin || '';
@@ -88,7 +109,10 @@ export default async function handler(req, res) {
     return;
   }
 
-  const type    = (data.type    || 'autre').toString().slice(0, 32);
+  // Type détecté automatiquement à partir du message (l'UI n'a plus de sélecteur)
+  // On accepte tout de même un `type` explicite si fourni (compatibilité).
+  let type = (data.type || '').toString().slice(0, 32);
+  if (!type || !TYPE_LABELS[type]) type = detectType(data.message || '');
   const email   = (data.email   || '').toString().slice(0, 200).trim();
   const message = (data.message || '').toString().trim().slice(0, 5000);
   const ua      = (data.ua      || '').toString().slice(0, 300);
