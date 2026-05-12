@@ -4653,6 +4653,33 @@ function initChat() {
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
+  // Affiche un bandeau discret quand la modération bloque un message
+  function showChatModerationBlock(reason) {
+    const formWrap = document.getElementById('chat-form-wrap');
+    if (!formWrap) return;
+    let bar = document.getElementById('chat-mod-bar');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'chat-mod-bar';
+      bar.className = 'chat-mod-bar';
+      formWrap.before(bar);
+    }
+    bar.innerHTML = `
+      <i class="fa-solid fa-shield-halved"></i>
+      <span class="chat-mod-text">
+        <strong>Message non publié.</strong> ${escHtml(reason)}
+      </span>
+      <button class="chat-mod-close" aria-label="Fermer">&times;</button>
+    `;
+    bar.classList.add('visible');
+    bar.querySelector('.chat-mod-close')?.addEventListener('click', () => {
+      bar.classList.remove('visible');
+    });
+    // Auto-disparition après 7s
+    clearTimeout(bar._timer);
+    bar._timer = setTimeout(() => bar?.classList.remove('visible'), 7000);
+  }
+
   function scrollBottom() {
     msgsEl.scrollTop = msgsEl.scrollHeight;
   }
@@ -4867,6 +4894,22 @@ function initChat() {
     const user = window._pelUser;
     if (!sb || !user || !currentOfficeId || !text.trim()) return;
 
+    // Modération préventive (Claude Haiku) — bloque les messages inappropriés
+    // AVANT l'INSERT Supabase. Fail open : si l'API moderation tombe, on
+    // laisse passer pour ne pas pénaliser l'utilisateur.
+    try {
+      const modResp = await fetch('/api/moderate-chat', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ text: text.trim() }),
+      });
+      const verdict = modResp.ok ? await modResp.json() : { allow: true };
+      if (verdict.allow === false) {
+        showChatModerationBlock(verdict.reason || 'Votre message ne respecte pas la charte de la communauté.');
+        return false;
+      }
+    } catch (_) { /* fail open */ }
+
     const meta = user.user_metadata || {};
     const cleanEmail = (user.email || '').split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     const userName = (meta.pseudo || meta.name || cleanEmail || 'Pèlerin').trim().slice(0, 30);
@@ -4962,8 +5005,18 @@ function initChat() {
       e.preventDefault();
       const text = input?.value?.trim();
       if (!text) return;
-      if (input) input.value = '';
-      await sendMessage(text);
+      // Désactive temporairement l'input pendant l'envoi + modération
+      if (input) input.disabled = true;
+      const sendBtn = document.getElementById('chat-send');
+      if (sendBtn) sendBtn.disabled = true;
+      try {
+        const sent = await sendMessage(text);
+        // Vide l'input uniquement si le message a été publié
+        if (sent !== false && input) input.value = '';
+      } finally {
+        if (input)  { input.disabled  = false; input.focus(); }
+        if (sendBtn) sendBtn.disabled = false;
+      }
     });
   }
 

@@ -4333,6 +4333,45 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
       color-mix(in srgb, var(--user-palette, var(--navy)) 60%, var(--navy)) 100%);
 }
 
+/* Bandeau de modération (message bloqué) */
+.chat-mod-bar {
+  display: none;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  margin: 0 14px 8px;
+  background: rgba(220, 60, 60, .12);
+  border: 1px solid rgba(220, 60, 60, .35);
+  border-radius: 10px;
+  color: rgba(245,240,232,.92);
+  font-size: 12.5px;
+  line-height: 1.45;
+  animation: modIn .2s ease;
+}
+.chat-mod-bar.visible { display: flex; }
+.chat-mod-bar > i {
+  color: #ff8a8a;
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.chat-mod-text { flex: 1; }
+.chat-mod-text strong { color: #ffb4b4; display: block; margin-bottom: 2px; }
+.chat-mod-close {
+  background: none;
+  border: none;
+  color: rgba(245,240,232,.5);
+  cursor: pointer;
+  font-size: 18px;
+  padding: 0 4px;
+  line-height: 1;
+}
+.chat-mod-close:hover { color: var(--cream); }
+@keyframes modIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* Formulaire */
 .chat-form-wrap {
   border-top: 1px solid var(--border-mid);
