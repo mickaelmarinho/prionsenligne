@@ -4901,7 +4901,12 @@ function initChat() {
       const modResp = await fetch('/api/moderate-chat', {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ text: text.trim() }),
+        body:    JSON.stringify({
+          text:       text.trim(),
+          user_id:    user.id,
+          user_name:  (user.user_metadata?.pseudo || user.user_metadata?.name || ''),
+          office_id:  currentOfficeId,
+        }),
       });
       const verdict = modResp.ok ? await modResp.json() : { allow: true };
       if (verdict.allow === false) {

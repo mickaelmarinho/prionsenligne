@@ -546,6 +546,22 @@
   <!-- ═══════════════════════════════════════════
        PANNEAU PROFIL
   ═══════════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════════
+       PANNEAU ADMIN (modération) — visible seulement si is_admin
+  ═══════════════════════════════════════════ -->
+  <div id="admin-overlay" class="profile-overlay"></div>
+  <div id="admin-panel" class="profile-panel" aria-hidden="true" role="dialog" aria-label="Modération">
+    <div class="profile-header">
+      <span class="profile-header-title"><i class="fa-solid fa-shield-halved"></i> Modération</span>
+      <button class="profile-close" id="admin-close" aria-label="Fermer">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="profile-body" id="admin-body">
+      <!-- Contenu chargé dynamiquement -->
+    </div>
+  </div>
+
   <div id="profile-overlay" class="profile-overlay"></div>
   <div id="profile-panel" class="profile-panel" aria-hidden="true" role="dialog" aria-label="Mon profil">
     <div class="profile-header">
@@ -931,6 +947,7 @@
   <!-- Supabase — build UMD explicite (évite que jsdelivr serve le build CJS/ESM) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="js/auth.js"></script>
+  <script src="js/admin.js"></script>
   <script>document.addEventListener('DOMContentLoaded', initAuth);</script>
 </body>
 </html>

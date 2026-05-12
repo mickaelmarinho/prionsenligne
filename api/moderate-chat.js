@@ -25,6 +25,25 @@ const ALLOWED_ORIGINS = [
 const MAX_LEN = 280;
 const MODEL   = 'claude-haiku-4-5';
 
+// Journalise une décision de modération dans Supabase (best effort, non bloquant)
+async function logModeration(entry) {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) return; // pas configuré → on n'écrit pas
+  try {
+    await fetch(`${url}/rest/v1/moderation_log`, {
+      method: 'POST',
+      headers: {
+        'apikey':         key,
+        'Authorization':  `Bearer ${key}`,
+        'Content-Type':   'application/json',
+        'Prefer':         'return=minimal',
+      },
+      body: JSON.stringify(entry),
+    });
+  } catch (_) { /* silent */ }
+}
+
 const SYSTEM = `Tu es un modérateur discret pour un site catholique de prière (PrionsEnLigne). Les utilisateurs partagent leurs intentions de prière avec la communauté.
 
 TON RÔLE : décider si un message peut être publié. Tu ne réponds JAMAIS à l'utilisateur, tu n'écris JAMAIS dans le tchat. Tu juges UNIQUEMENT le contenu.
@@ -72,28 +91,35 @@ export default async function handler(req, res) {
   if (typeof data === 'string') { try { data = JSON.parse(data); } catch (_) { data = {}; } }
   data = data || {};
 
-  const text = (data.text || data.message || '').toString().trim().slice(0, MAX_LEN);
+  const text      = (data.text      || data.message   || '').toString().trim().slice(0, MAX_LEN);
+  const userId    = (data.user_id   || null);
+  const userName  = (data.user_name || '').toString().slice(0, 60) || null;
+  const officeId  = (data.office_id || '').toString().slice(0, 80) || null;
   if (!text) {
     res.status(200).json({ allow: true });
     return;
   }
+  const baseEntry = { user_id: userId, user_name: userName, office_id: officeId, message: text };
 
   // Filtre rapide local : flood de caractères répétés (>15 mêmes char)
   if (/(.)\1{15,}/.test(text)) {
-    res.status(200).json({ allow: false, category: 'autre', reason: 'Caractères répétés en trop grand nombre.' });
+    const verdict = { allow: false, category: 'autre', reason: 'Caractères répétés en trop grand nombre.' };
+    await logModeration({ ...baseEntry, allowed: false, category: verdict.category, reason: verdict.reason, source: 'local-flood' });
+    res.status(200).json(verdict);
     return;
   }
   // Filtre rapide : URL flagrante (spam le plus courant)
-  // On accepte un seul lien tant qu'il n'est pas le seul contenu du message
   const urls = text.match(/https?:\/\/[^\s]+/gi) || [];
   if (urls.length > 2) {
-    res.status(200).json({ allow: false, category: 'spam', reason: 'Trop de liens dans le message.' });
+    const verdict = { allow: false, category: 'spam', reason: 'Trop de liens dans le message.' };
+    await logModeration({ ...baseEntry, allowed: false, category: verdict.category, reason: verdict.reason, source: 'local-url' });
+    res.status(200).json(verdict);
     return;
   }
 
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    // Pas de clé configurée → graceful degradation, on laisse passer
+    await logModeration({ ...baseEntry, allowed: true, category: 'ok', reason: 'Pas de clé Anthropic (fail-open).', source: 'fallback' });
     res.status(200).json({ allow: true, fallback: 'no_key' });
     return;
   }
@@ -125,17 +151,16 @@ export default async function handler(req, res) {
     if (!resp.ok) {
       const txt = await resp.text();
       console.error('[moderate-chat] Anthropic error:', resp.status, txt.slice(0, 200));
-      // En cas d'erreur API, on laisse passer (mieux qu'un faux positif gênant)
+      await logModeration({ ...baseEntry, allowed: true, category: 'ok', reason: 'API Anthropic en erreur (fail-open).', source: 'fallback' });
       res.status(200).json({ allow: true, fallback: 'api_error' });
       return;
     }
 
     const payload = await resp.json();
     const rawText = payload?.content?.[0]?.text || '';
-
-    // Cherche un JSON dans la réponse
     const jsonMatch = rawText.match(/\{[\s\S]*?\}/);
     if (!jsonMatch) {
+      await logModeration({ ...baseEntry, allowed: true, category: 'ok', reason: 'Réponse Claude non parsable.', source: 'fallback' });
       res.status(200).json({ allow: true, fallback: 'parse_error' });
       return;
     }
@@ -143,22 +168,23 @@ export default async function handler(req, res) {
     let verdict;
     try { verdict = JSON.parse(jsonMatch[0]); }
     catch (_) {
+      await logModeration({ ...baseEntry, allowed: true, category: 'ok', reason: 'JSON Claude invalide.', source: 'fallback' });
       res.status(200).json({ allow: true, fallback: 'parse_error' });
       return;
     }
 
     if (verdict.allow === false) {
-      res.status(200).json({
-        allow:    false,
-        category: (verdict.category || 'autre').toString().slice(0, 32),
-        reason:   (verdict.reason   || '').toString().slice(0, 140),
-      });
+      const category = (verdict.category || 'autre').toString().slice(0, 32);
+      const reason   = (verdict.reason   || '').toString().slice(0, 140);
+      await logModeration({ ...baseEntry, allowed: false, category, reason, source: 'claude' });
+      res.status(200).json({ allow: false, category, reason });
       return;
     }
+    await logModeration({ ...baseEntry, allowed: true, category: 'ok', source: 'claude' });
     res.status(200).json({ allow: true });
   } catch (err) {
     console.error('[moderate-chat] fetch error:', err.message);
-    // Fail open : laisser passer en cas de panne API
+    await logModeration({ ...baseEntry, allowed: true, category: 'ok', reason: 'Erreur réseau (fail-open).', source: 'fallback' });
     res.status(200).json({ allow: true, fallback: 'network_error' });
   }
 }
