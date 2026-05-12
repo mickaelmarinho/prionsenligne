@@ -4653,6 +4653,24 @@ function initChat() {
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
+  // ISO de début du jour courant en heure de Paris.
+  // Permet de remettre le tchat à zéro à chaque nouveau jour : seuls les
+  // messages postés aujourd'hui sont chargés et affichés.
+  function startOfTodayParisISO() {
+    const paris = getParisDate();
+    // Minuit local Paris exprimé en UTC ISO
+    const yr  = paris.getFullYear();
+    const mo  = paris.getMonth();
+    const dy  = paris.getDate();
+    const offsetMin = -paris.getTimezoneOffset(); // ex. +120 en CEST
+    // Construit "YYYY-MM-DDT00:00:00.000+HH:00"
+    const p = n => String(n).padStart(2, '0');
+    const sign = offsetMin >= 0 ? '+' : '-';
+    const oh = p(Math.floor(Math.abs(offsetMin) / 60));
+    const om = p(Math.abs(offsetMin) % 60);
+    return `${yr}-${p(mo + 1)}-${p(dy)}T00:00:00.000${sign}${oh}:${om}`;
+  }
+
   // Affiche un bandeau discret quand la modération bloque un message
   function showChatModerationBlock(reason) {
     const formWrap = document.getElementById('chat-form-wrap');
@@ -4696,6 +4714,7 @@ function initChat() {
       .from('prayer_intentions')
       .select('*')
       .eq('office_id', officeId)
+      .gte('created_at', startOfTodayParisISO())
       .order('created_at', { ascending: true })
       .limit(200);
 
@@ -4737,6 +4756,7 @@ function initChat() {
     });
 
     // Inserts (nouveaux messages)
+    const dayStartISO = startOfTodayParisISO();
     realtimeChannel.on('postgres_changes', {
       event: 'INSERT',
       schema: 'public',
@@ -4745,6 +4765,8 @@ function initChat() {
     }, payload => {
       const msg = payload.new;
       if (!msg) return;
+      // Filtre client : on ignore tout message antérieur au début du jour Paris
+      if (msg.created_at && msg.created_at < dayStartISO) return;
       // Si le visiteur est non connecté, on rafraîchit juste les stats
       if (!window._pelUser) { loadVisitorView(officeId); return; }
       const existing = msgsEl.querySelector('[data-id="' + msg.id + '"]');
@@ -4877,22 +4899,25 @@ function initChat() {
     if (countEl) countEl.textContent = '…';
     if (mosaicEl) mosaicEl.innerHTML = '';
 
-    // Total des intentions pour cet office
+    // Total des intentions DU JOUR pour cet office (le tchat redémarre vierge chaque jour)
+    const dayStart = startOfTodayParisISO();
     const { count } = await sb.from('prayer_intentions')
       .select('id', { count: 'exact', head: true })
-      .eq('office_id', officeId);
+      .eq('office_id', officeId)
+      .gte('created_at', dayStart);
 
     if (countEl) countEl.textContent = (count ?? 0).toString();
     if (labelEl) {
       labelEl.textContent = (count === 1)
-        ? 'intention partagée pour cet office'
-        : 'intentions partagées pour cet office';
+        ? 'intention partagée aujourd\'hui'
+        : 'intentions partagées aujourd\'hui';
     }
 
-    // Récupère les avatars uniques des derniers participants (max 10)
+    // Avatars uniques des participants du jour (max 10)
     const { data } = await sb.from('prayer_intentions')
       .select('user_id,avatar_icon,avatar_palette,user_name')
       .eq('office_id', officeId)
+      .gte('created_at', dayStart)
       .order('created_at', { ascending: false })
       .limit(40);
 
