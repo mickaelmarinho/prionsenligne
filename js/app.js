@@ -4786,6 +4786,54 @@ function initChat() {
     if (lbl) lbl.textContent = (count <= 1) ? 'en ligne' : 'en ligne';
   }
 
+  // Bannières d'accueil contextuelles par type d'office.
+  // Affichées entre l'en-tête et le fil des intentions, pour mettre en
+  // ambiance l'utilisateur sans intervention de bot interactif.
+  const WELCOME_BY_TYPE = {
+    laudes: {
+      title: 'Prière du matin — Laudes',
+      body:  "« Que ma prière, comme un encens, monte devant toi. » Confiez ici les intentions qui pèsent sur votre cœur au seuil de cette journée.",
+    },
+    matin: {
+      title: 'Prière du matin',
+      body:  "Au lever du jour, déposez ici vos intentions personnelles, professionnelles, familiales. Elles seront portées avec celles de la communauté.",
+    },
+    messe: {
+      title: 'Sainte Messe',
+      body:  "Le Christ s'offre pour le monde. Joignez vos intentions à l'offrande eucharistique — pour vos proches, les défunts, l'Église, la paix.",
+    },
+    chapelet: {
+      title: 'Chapelet',
+      body:  "« Confions toutes nos peines à Marie. » Partagez ici les intentions que vous souhaitez confier à la Sainte Vierge à travers ce chapelet.",
+    },
+    vepres: {
+      title: 'Prière du soir — Vêpres',
+      body:  "Au déclin du jour, l'Église rend grâce. Confiez ici vos intentions pour cette soirée et la nuit qui vient.",
+    },
+    soiree: {
+      title: 'Prière du soir',
+      body:  "Avant le repos, prenez un instant pour confier votre journée et celle de vos proches. Vos intentions rejoignent ici la prière commune.",
+    },
+    complies: {
+      title: 'Complies — Prière de la nuit',
+      body:  "« Sous ta protection, nous nous réfugions, sainte Mère de Dieu. » Pour les malades, les voyageurs, les âmes en peine — déposez ici vos intentions de la nuit.",
+    },
+  };
+
+  function showWelcomeBanner(officeId) {
+    const banner = document.getElementById('chat-welcome');
+    const title  = document.getElementById('chat-welcome-title');
+    const body   = document.getElementById('chat-welcome-body');
+    if (!banner || !title || !body) return;
+    // officeId est de la forme "messe_1000" → extrait le type avant le _
+    const type = (officeId || '').split('_')[0];
+    const entry = WELCOME_BY_TYPE[type];
+    if (!entry) { banner.style.display = 'none'; return; }
+    title.textContent = entry.title;
+    body.textContent  = entry.body;
+    banner.style.display = '';
+  }
+
   // ── Ouvrir le panneau ─────────────────────────────────────
   function openChat(officeId, officeName) {
     currentOfficeId = officeId;
@@ -4796,14 +4844,17 @@ function initChat() {
 
     // Afficher formulaire ou vue visiteur
     const user = window._pelUser;
+    const banner = document.getElementById('chat-welcome');
     if (user) {
       if (formWrap)  formWrap.style.display  = '';
       if (loginProm) loginProm.style.display = 'none';
       if (msgsEl)    msgsEl.style.display    = '';
+      showWelcomeBanner(officeId);
     } else {
       if (formWrap)  formWrap.style.display  = 'none';
       if (loginProm) loginProm.style.display = '';
       if (msgsEl)    msgsEl.style.display    = 'none'; // pas de lecture sans compte
+      if (banner)    banner.style.display    = 'none'; // pas de bannière pour visiteurs
       loadVisitorView(officeId);
     }
 

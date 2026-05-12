@@ -4512,6 +4512,40 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
       color-mix(in srgb, var(--user-palette, var(--navy)) 60%, var(--navy)) 100%);
 }
 
+/* Bannière d'accueil contextuelle au-dessus des intentions */
+.chat-welcome {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 18px;
+  margin: 0;
+  background: linear-gradient(180deg,
+    rgba(201,168,76,.10) 0%,
+    rgba(201,168,76,.04) 100%);
+  border-bottom: 1px solid rgba(201,168,76,.18);
+  flex-shrink: 0;
+}
+.chat-welcome-icon {
+  color: var(--gold);
+  font-size: 18px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+.chat-welcome-text { flex: 1; min-width: 0; }
+.chat-welcome-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px;
+  color: var(--gold);
+  letter-spacing: .01em;
+  margin-bottom: 3px;
+}
+.chat-welcome-body {
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: rgba(245,240,232,.75);
+  font-style: italic;
+}
+
 /* Bandeau de modération (message bloqué) */
 .chat-mod-bar {
   display: none;
