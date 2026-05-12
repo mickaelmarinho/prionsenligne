@@ -109,7 +109,15 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model:      MODEL,
         max_tokens: 80,
-        system:     SYSTEM,
+        // Prompt caching : le système (~500 tokens) est identique à chaque appel
+        // → après le 1er appel, le coût d'entrée chute d'environ 90 % pendant 5 min.
+        system: [
+          {
+            type: 'text',
+            text: SYSTEM,
+            cache_control: { type: 'ephemeral' },
+          },
+        ],
         messages: [{ role: 'user', content: text }],
       }),
     });
