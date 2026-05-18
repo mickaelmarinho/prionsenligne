@@ -2019,7 +2019,16 @@ function initNextOffice() {
     const now    = getParisDate();
     const dow    = now.getDay();
     const nowMin = now.getHours() * 60 + now.getMinutes();
-    const slots  = getDaySchedule(now);
+    const slots  = getDaySchedule(now) || [];
+    if (!Array.isArray(slots) || slots.length === 0) {
+      console.warn('[initNextOffice] slots vide, fallback affiché');
+      if (labelEl)     labelEl.textContent     = 'Prochaines Laudes';
+      prayerEl.textContent                     = 'Demain matin';
+      if (timeEl)      timeEl.textContent      = '7h00';
+      if (countdownEl) countdownEl.textContent = '';
+      if (srcsEl)      srcsEl.textContent      = 'Radio Maria · Radio N-Dame';
+      return;
+    }
 
     let found = null;
     outer: for (const slot of slots) {
@@ -3245,8 +3254,21 @@ function _dateISO(d) {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
-// Renvoie le planning d'un jour donné en appliquant les overrides actifs
+// Renvoie le planning d'un jour donné en appliquant les overrides actifs.
+// Tolérant aux erreurs : retombe toujours sur le planning de base si quelque
+// chose va de travers (overrides corrompus, données manquantes…).
 function getDaySchedule(date) {
+  try {
+    return _getDayScheduleInternal(date);
+  } catch (err) {
+    console.error('[getDaySchedule] erreur, fallback sur grille de base :', err);
+    const d = date || getParisDate();
+    const dow = d.getDay();
+    const base = WEEK_SCHEDULE[dow] ?? WEEK_SCHEDULE.ordinary;
+    return JSON.parse(JSON.stringify(base));
+  }
+}
+function _getDayScheduleInternal(date) {
   date = date || getParisDate();
   const dow = date.getDay();
   // Clone profond du planning de base pour ce jour
