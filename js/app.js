@@ -3246,7 +3246,8 @@ window._pelReloadScheduleOverrides = async () => {
   try { initBadges(); } catch (_) {}
   try { initWeek(); } catch (_) {}
 };
-window.getDaySchedule = (d) => getDaySchedule(d);
+// (Pas besoin d'exporter manuellement getDaySchedule : les function declarations
+//  top-level sont déjà accessibles via window dans les navigateurs.)
 
 // Renvoie une chaîne 'YYYY-MM-DD' d'une Date en heure de Paris
 function _dateISO(d) {
