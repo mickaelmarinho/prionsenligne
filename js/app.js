@@ -4016,7 +4016,8 @@ function initTodayTimeline() {
     const officeName = slot.label + ' — ' + entry.tl;
     const chatHtml   = `<div class="tl-chat-wrap">
         <button class="tl-chat-btn" data-action="chat"
-          data-office-id="${officeId}" data-office-name="${esc(officeName)}">
+          data-office-id="${officeId}" data-office-name="${esc(officeName)}"
+          data-office-time="${entry.t}" data-office-duration="${duration}">
           <i class="fa-solid fa-dove"></i> Intentions
         </button>
         <div class="tl-chat-time-info">
@@ -4653,23 +4654,51 @@ function initChat() {
       .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
-  // ISO de début du jour courant en heure de Paris.
-  // Permet de remettre le tchat à zéro à chaque nouveau jour : seuls les
-  // messages postés aujourd'hui sont chargés et affichés.
-  function startOfTodayParisISO() {
-    const paris = getParisDate();
-    // Minuit local Paris exprimé en UTC ISO
-    const yr  = paris.getFullYear();
-    const mo  = paris.getMonth();
-    const dy  = paris.getDate();
-    const offsetMin = -paris.getTimezoneOffset(); // ex. +120 en CEST
-    // Construit "YYYY-MM-DDT00:00:00.000+HH:00"
-    const p = n => String(n).padStart(2, '0');
-    const sign = offsetMin >= 0 ? '+' : '-';
-    const oh = p(Math.floor(Math.abs(offsetMin) / 60));
-    const om = p(Math.abs(offsetMin) % 60);
-    return `${yr}-${p(mo + 1)}-${p(dy)}T00:00:00.000${sign}${oh}:${om}`;
+  // Fenêtre active d'un office : [start - 30 min, start + duration + 30 min].
+  // Permet au tchat de chaque office d'être indépendant des autres jours,
+  // et de gérer correctement les offices qui chevauchent minuit (chapelet
+  // de minuit : la fenêtre va de 23h30 à 00h30 en heure de Paris).
+  // Si l'office n'a pas eu lieu aujourd'hui, on retombe sur l'occurrence du
+  // jour la plus pertinente (la plus récente passée, ou la prochaine à venir).
+  function officeWindow(officeTime, durationMin = 60) {
+    const now = getParisDate();
+    // officeTime "HH:MM" → minutes since midnight
+    const m = (officeTime || '').match(/^(\d{1,2}):(\d{2})$/);
+    if (!m) {
+      // Fallback : pas de temps connu → fenêtre = aujourd'hui Paris entier
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      return { start: today, end: new Date(today.getTime() + 24 * 3600 * 1000) };
+    }
+    const hh = parseInt(m[1], 10);
+    const mm = parseInt(m[2], 10);
+    // Candidat « aujourd'hui à HH:MM »
+    let candidate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh, mm, 0);
+    const winBefore = 30 * 60 * 1000;
+    const winAfter  = (durationMin + 30) * 60 * 1000;
+    // On choisit l'instance dont la fenêtre couvre maintenant, ou la plus proche
+    // S'il est plus tard que (candidate + winAfter), la fenêtre d'aujourd'hui est passée
+    // → on regarde demain pour les offices nocturnes (chapelet de minuit ouvert
+    //   à 23h30 doit pointer vers l'office du LENDEMAIN 00h00)
+    const tomorrow = new Date(candidate.getTime() + 24 * 3600 * 1000);
+    const yesterday = new Date(candidate.getTime() - 24 * 3600 * 1000);
+
+    function windowOf(c) {
+      return { center: c, start: new Date(c - winBefore), end: new Date(c.getTime() + winAfter) };
+    }
+    const wToday = windowOf(candidate);
+    const wTomorrow = windowOf(tomorrow);
+    const wYesterday = windowOf(yesterday);
+
+    // On préfère la fenêtre qui contient maintenant, sinon la plus proche dans le futur
+    if (now >= wToday.start && now <= wToday.end) return wToday;
+    if (now >= wTomorrow.start && now <= wTomorrow.end) return wTomorrow;
+    if (now >= wYesterday.start && now <= wYesterday.end) return wYesterday;
+    // Aucune fenêtre active : on retourne la prochaine occurrence
+    if (now < wToday.start) return wToday;
+    return wTomorrow;
   }
+
+  function toISO(d) { return d.toISOString(); }
 
   // Affiche un bandeau discret quand la modération bloque un message
   function showChatModerationBlock(reason) {
@@ -4710,11 +4739,17 @@ function initChat() {
     msgsEl.innerHTML = '';
     msgsEl.appendChild(emptyEl);
 
-    const { data, error } = await sb
+    const win = currentWindow;
+    let query = sb
       .from('prayer_intentions')
       .select('*')
-      .eq('office_id', officeId)
-      .gte('created_at', startOfTodayParisISO())
+      .eq('office_id', officeId);
+    if (win) {
+      query = query
+        .gte('created_at', toISO(win.start))
+        .lte('created_at', toISO(win.end));
+    }
+    const { data, error } = await query
       .order('created_at', { ascending: true })
       .limit(200);
 
@@ -4756,7 +4791,8 @@ function initChat() {
     });
 
     // Inserts (nouveaux messages)
-    const dayStartISO = startOfTodayParisISO();
+    const winStartISO = currentWindow ? toISO(currentWindow.start) : null;
+    const winEndISO   = currentWindow ? toISO(currentWindow.end)   : null;
     realtimeChannel.on('postgres_changes', {
       event: 'INSERT',
       schema: 'public',
@@ -4765,8 +4801,9 @@ function initChat() {
     }, payload => {
       const msg = payload.new;
       if (!msg) return;
-      // Filtre client : on ignore tout message antérieur au début du jour Paris
-      if (msg.created_at && msg.created_at < dayStartISO) return;
+      // Filtre client : on ignore tout message hors de la fenêtre active
+      if (winStartISO && msg.created_at < winStartISO) return;
+      if (winEndISO   && msg.created_at > winEndISO)   return;
       // Si le visiteur est non connecté, on rafraîchit juste les stats
       if (!window._pelUser) { loadVisitorView(officeId); return; }
       const existing = msgsEl.querySelector('[data-id="' + msg.id + '"]');
@@ -4856,10 +4893,22 @@ function initChat() {
     banner.style.display = '';
   }
 
+  // État local : fenêtre active de l'office en cours d'affichage
+  let currentWindow = null;
+
   // ── Ouvrir le panneau ─────────────────────────────────────
-  function openChat(officeId, officeName) {
+  function openChat(officeId, officeName, meta) {
     currentOfficeId = officeId;
     if (nameEl) nameEl.textContent = officeName;
+    // Calcule la fenêtre active : par défaut on extrait l'heure de l'officeId
+    // (format "type_HHMM") mais si l'appelant a fourni meta.time, on l'utilise.
+    let time = (meta && meta.time) || '';
+    if (!time) {
+      const parts = (officeId || '').split('_');
+      const t = parts[1] || '';
+      if (/^\d{4}$/.test(t)) time = t.substring(0, 2) + ':' + t.substring(2, 4);
+    }
+    currentWindow = officeWindow(time, (meta && meta.duration) || 60);
 
     // Cacher l'indicateur de présence à chaque ouverture (réactivé sur sync)
     document.getElementById('chat-presence')?.classList.add('hidden');
@@ -4899,12 +4948,13 @@ function initChat() {
     if (countEl) countEl.textContent = '…';
     if (mosaicEl) mosaicEl.innerHTML = '';
 
-    // Total des intentions DU JOUR pour cet office (le tchat redémarre vierge chaque jour)
-    const dayStart = startOfTodayParisISO();
-    const { count } = await sb.from('prayer_intentions')
+    // Total des intentions de la fenêtre active de l'office
+    const win = currentWindow;
+    let cQ = sb.from('prayer_intentions')
       .select('id', { count: 'exact', head: true })
-      .eq('office_id', officeId)
-      .gte('created_at', dayStart);
+      .eq('office_id', officeId);
+    if (win) cQ = cQ.gte('created_at', toISO(win.start)).lte('created_at', toISO(win.end));
+    const { count } = await cQ;
 
     if (countEl) countEl.textContent = (count ?? 0).toString();
     if (labelEl) {
@@ -4913,13 +4963,12 @@ function initChat() {
         : 'intentions partagées aujourd\'hui';
     }
 
-    // Avatars uniques des participants du jour (max 10)
-    const { data } = await sb.from('prayer_intentions')
+    // Avatars uniques des participants de la fenêtre (max 10)
+    let dQ = sb.from('prayer_intentions')
       .select('user_id,avatar_icon,avatar_palette,user_name')
-      .eq('office_id', officeId)
-      .gte('created_at', dayStart)
-      .order('created_at', { ascending: false })
-      .limit(40);
+      .eq('office_id', officeId);
+    if (win) dQ = dQ.gte('created_at', toISO(win.start)).lte('created_at', toISO(win.end));
+    const { data } = await dQ.order('created_at', { ascending: false }).limit(40);
 
     const seen = new Set();
     const uniqueAvatars = [];
@@ -5075,7 +5124,14 @@ function initChat() {
   document.addEventListener('click', e => {
     const btn = e.target.closest('[data-action="chat"]');
     if (!btn) return;
-    openChat(btn.dataset.officeId, btn.dataset.officeName);
+    openChat(
+      btn.dataset.officeId,
+      btn.dataset.officeName,
+      {
+        time:     btn.dataset.officeTime || '',
+        duration: parseInt(btn.dataset.officeDuration, 10) || 60,
+      }
+    );
   });
 
   if (closeBtn) closeBtn.addEventListener('click', closeChat);
