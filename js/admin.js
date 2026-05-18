@@ -62,6 +62,8 @@
   }
 
   let _filter = 'all';   // 'all' | 'blocked' | 'allowed'
+  let _adminTab = 'mod'; // 'mod' | 'planning'
+  let _planningDate = new Date();  // date affichée dans l'onglet Planning
 
   async function loadStats(sb) {
     if (!sb) return null;
@@ -149,6 +151,313 @@
     `).join('');
   }
 
+  // === ONGLET PLANNING =====================================
+  function dateISO(d) {
+    const p = n => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
+  function isoToDate(iso) {
+    const [y, m, d] = iso.split('-').map(Number);
+    return new Date(y, m - 1, d);
+  }
+  function fmtDayLong(d) {
+    return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  }
+  function shiftDate(d, days) {
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate() + days);
+  }
+
+  const OFFICE_TYPES = [
+    { id: 'laudes',   label: 'Laudes' },
+    { id: 'matin',    label: 'Prière du matin' },
+    { id: 'messe',    label: 'Sainte Messe' },
+    { id: 'chapelet', label: 'Chapelet' },
+    { id: 'vepres',   label: 'Vêpres' },
+    { id: 'soiree',   label: 'Prière du soir' },
+    { id: 'complies', label: 'Complies' },
+  ];
+
+  const SOURCE_CODES = [
+    { id: 'rm',  label: 'Radio Maria' },
+    { id: 'nd',  label: 'RCF Notre-Dame' },
+    { id: 'kto', label: 'KTO' },
+    { id: 'lou', label: 'Lourdes' },
+    { id: 'esp', label: 'Radio Espérance' },
+    { id: 'fid', label: 'Radio Fidélité' },
+    { id: 'rcf', label: 'RCF' },
+    { id: 'van', label: 'Vatican News' },
+    { id: 'ndp', label: 'Notre-Dame de Paris' },
+    { id: 'ars', label: 'Ars' },
+  ];
+
+  // Renvoie le planning effectif pour une date donnée (base + overrides appliqués)
+  function effectiveSchedule(date) {
+    if (typeof window.getDaySchedule === 'function') {
+      try { return window.getDaySchedule(date); } catch (_) {}
+    }
+    return [];
+  }
+
+  // Charge les overrides actifs pour la date donnée
+  async function loadOverridesForDate(sb, iso) {
+    const { data } = await sb.from('schedule_overrides')
+      .select('*')
+      .lte('date_start', iso)
+      .gte('date_end', iso)
+      .eq('enabled', true)
+      .order('created_at', { ascending: false });
+    return data || [];
+  }
+
+  function esc2(s) { return esc(s); }
+
+  function renderPlanning(date, slots, overrides) {
+    const iso = dateISO(date);
+    const todayISO = dateISO(new Date());
+    const isToday = (iso === todayISO);
+
+    // Liste tous les offices (entries aplaties)
+    const items = [];
+    for (const slot of slots) {
+      for (const e of slot.entries) {
+        items.push({
+          officeId: slot.type + '_' + e.t.replace(':', ''),
+          type:     slot.type,
+          label:    slot.label,
+          time:     e.t,
+          tl:       e.tl,
+          duration: e.dur || 30,
+          sources:  e.srcs || [],
+          desc:     slot.desc || '',
+        });
+      }
+    }
+    // Tri chronologique
+    items.sort((a, b) => {
+      const am = a.time.split(':').reduce((acc, v, i) => acc + (+v) * (i === 0 ? 60 : 1), 0);
+      const bm = b.time.split(':').reduce((acc, v, i) => acc + (+v) * (i === 0 ? 60 : 1), 0);
+      return am - bm;
+    });
+
+    // Mémorise quels offices sont issus d'un override
+    const overrideIds = new Map();
+    overrides.forEach(o => {
+      if (o.action === 'add') {
+        const id = (o.type || '') + '_' + (o.time || '').replace(':', '');
+        overrideIds.set(id, o);
+      }
+    });
+
+    const rowsHtml = items.length === 0
+      ? `<div class="mod-empty">Aucun office prévu ce jour-là (ou tout a été désactivé).</div>`
+      : items.map(it => {
+        const ov = overrideIds.get(it.officeId);
+        const isAdded = !!ov;
+        const srcLabels = it.sources.map(s => {
+          const found = SOURCE_CODES.find(x => x.id === s);
+          return found ? found.label : s;
+        }).join(' · ');
+        return `
+          <div class="adm-office-row" data-office-id="${esc(it.officeId)}" data-label="${esc(it.label)}">
+            <div class="adm-office-time">${esc(it.tl)}<span class="adm-office-dur">${it.duration} min</span></div>
+            <div class="adm-office-main">
+              <div class="adm-office-label">
+                ${isAdded ? '<span class="adm-office-badge adm-badge-added">Ajouté</span>' : ''}
+                ${esc(it.label)}
+              </div>
+              ${srcLabels ? `<div class="adm-office-sources">${esc(srcLabels)}</div>` : ''}
+            </div>
+            <div class="adm-office-actions">
+              ${isAdded
+                ? `<button class="adm-btn-icon adm-btn-restore" data-override-id="${esc(ov.id)}" title="Supprimer cet ajout">
+                     <i class="fa-solid fa-trash"></i>
+                   </button>`
+                : `<button class="adm-btn-icon adm-btn-disable" title="Désactiver pour ce jour">
+                     <i class="fa-solid fa-ban"></i>
+                   </button>`
+              }
+            </div>
+          </div>
+        `;
+      }).join('');
+
+    // Overrides "disable" : la liste des offices désactivés pour info
+    const disabledOverrides = overrides.filter(o => o.action === 'disable');
+    const disabledHtml = disabledOverrides.length === 0 ? '' : `
+      <div class="adm-disabled-section">
+        <div class="adm-disabled-label"><i class="fa-solid fa-ban"></i> Offices désactivés ce jour (${disabledOverrides.length})</div>
+        ${disabledOverrides.map(o => `
+          <div class="adm-disabled-row" data-override-id="${esc(o.id)}">
+            <span class="adm-disabled-info">${esc(o.target_office_id || '—')}${o.notes ? ` — ${esc(o.notes)}` : ''}</span>
+            <button class="adm-btn-mini adm-btn-restore">Réactiver</button>
+          </div>
+        `).join('')}
+      </div>
+    `;
+
+    return `
+      <div class="adm-planning">
+        <div class="adm-planning-nav">
+          <button class="adm-nav-btn" id="adm-prev-day"><i class="fa-solid fa-chevron-left"></i></button>
+          <div class="adm-planning-date">
+            <div class="adm-planning-day">${esc(fmtDayLong(date))}</div>
+            ${isToday ? '<span class="adm-planning-today">Aujourd\'hui</span>' : ''}
+          </div>
+          <button class="adm-nav-btn" id="adm-next-day"><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+        <input type="date" class="adm-planning-date-input" id="adm-date-input" value="${iso}">
+        <div class="adm-planning-actions">
+          <button class="adm-add-btn" id="adm-add-office">
+            <i class="fa-solid fa-plus"></i> Ajouter un office ce jour
+          </button>
+        </div>
+        ${disabledHtml}
+        <div class="adm-office-list">
+          ${rowsHtml}
+        </div>
+        <div class="adm-planning-hint">
+          <i class="fa-solid fa-info-circle"></i>
+          Les changements ne touchent que les jours sélectionnés. La grille « normale » reste intacte.
+        </div>
+      </div>
+    `;
+  }
+
+  function renderAddOfficeForm(date) {
+    const iso = dateISO(date);
+    return `
+      <div class="adm-modal-backdrop" id="adm-modal-backdrop">
+        <div class="adm-modal">
+          <div class="adm-modal-head">
+            <h3>Ajouter un office</h3>
+            <button class="profile-close" id="adm-modal-close"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <div class="adm-modal-body">
+            <div class="adm-field">
+              <label>Type</label>
+              <select id="adm-new-type">
+                ${OFFICE_TYPES.map(t => `<option value="${t.id}">${t.label}</option>`).join('')}
+              </select>
+            </div>
+            <div class="adm-field">
+              <label>Intitulé affiché</label>
+              <input type="text" id="adm-new-label" placeholder="Ex. Messe d'été à Cotignac" maxlength="80">
+            </div>
+            <div class="adm-field-row">
+              <div class="adm-field">
+                <label>Heure (HH:MM)</label>
+                <input type="time" id="adm-new-time" value="10:00">
+              </div>
+              <div class="adm-field">
+                <label>Durée (min)</label>
+                <input type="number" id="adm-new-duration" min="5" max="240" step="5" value="45">
+              </div>
+            </div>
+            <div class="adm-field">
+              <label>Sources radio</label>
+              <div class="adm-checkboxes">
+                ${SOURCE_CODES.map(s => `
+                  <label class="adm-check">
+                    <input type="checkbox" name="src" value="${s.id}">
+                    <span>${s.label}</span>
+                  </label>
+                `).join('')}
+              </div>
+            </div>
+            <div class="adm-field-row">
+              <div class="adm-field">
+                <label>Date de début</label>
+                <input type="date" id="adm-new-date-start" value="${iso}">
+              </div>
+              <div class="adm-field">
+                <label>Date de fin</label>
+                <input type="date" id="adm-new-date-end" value="${iso}">
+              </div>
+            </div>
+            <div class="adm-field">
+              <label>Note (mémo perso, optionnel)</label>
+              <input type="text" id="adm-new-notes" placeholder="Ex. Vacances été 2026" maxlength="120">
+            </div>
+            <div class="adm-modal-feedback" id="adm-modal-feedback"></div>
+          </div>
+          <div class="adm-modal-foot">
+            <button class="adm-btn-secondary" id="adm-modal-cancel">Annuler</button>
+            <button class="adm-btn-primary" id="adm-modal-save"><i class="fa-solid fa-check"></i> Enregistrer</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderDisableForm(officeRow, date) {
+    const iso = dateISO(date);
+    return `
+      <div class="adm-modal-backdrop" id="adm-modal-backdrop">
+        <div class="adm-modal">
+          <div class="adm-modal-head">
+            <h3>Désactiver un office</h3>
+            <button class="profile-close" id="adm-modal-close"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <div class="adm-modal-body">
+            <div class="adm-modal-info">
+              <strong>Office :</strong> ${esc(officeRow.dataset.label || '')}<br>
+              <span class="adm-modal-info-id">ID : ${esc(officeRow.dataset.officeId)}</span>
+            </div>
+            <div class="adm-field-row">
+              <div class="adm-field">
+                <label>Désactiver du</label>
+                <input type="date" id="adm-disable-date-start" value="${iso}">
+              </div>
+              <div class="adm-field">
+                <label>au</label>
+                <input type="date" id="adm-disable-date-end" value="${iso}">
+              </div>
+            </div>
+            <div class="adm-field">
+              <label>Note (raison)</label>
+              <input type="text" id="adm-disable-notes" placeholder="Ex. Pas de messe en août" maxlength="120">
+            </div>
+            <div class="adm-modal-feedback" id="adm-modal-feedback"></div>
+          </div>
+          <div class="adm-modal-foot">
+            <button class="adm-btn-secondary" id="adm-modal-cancel">Annuler</button>
+            <button class="adm-btn-primary" id="adm-modal-save"><i class="fa-solid fa-check"></i> Désactiver</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  async function showModal(htmlBuilder, onSave) {
+    const existing = document.getElementById('adm-modal-backdrop');
+    if (existing) existing.remove();
+    const body = $id('admin-body');
+    body.insertAdjacentHTML('beforeend', htmlBuilder);
+    const backdrop = $id('adm-modal-backdrop');
+    backdrop.querySelector('#adm-modal-close')?.addEventListener('click', () => backdrop.remove());
+    backdrop.querySelector('#adm-modal-cancel')?.addEventListener('click', () => backdrop.remove());
+    backdrop.addEventListener('click', e => { if (e.target === backdrop) backdrop.remove(); });
+    backdrop.querySelector('#adm-modal-save')?.addEventListener('click', async () => {
+      const ok = await onSave(backdrop);
+      if (ok) backdrop.remove();
+    });
+  }
+
+  async function saveOverride(payload) {
+    const sb = window._sbClient;
+    if (!sb) return { ok: false, error: 'Pas de client Supabase' };
+    const { error } = await sb.from('schedule_overrides').insert(payload).select().single();
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
+  }
+
+  async function deleteOverride(id) {
+    const sb = window._sbClient;
+    if (!sb) return false;
+    const { error } = await sb.from('schedule_overrides').delete().eq('id', id);
+    return !error;
+  }
+
   async function loadAdminPanel() {
     const body = $id('admin-body');
     const user = window._pelUser;
@@ -158,37 +467,163 @@
       body.innerHTML = `<div class="mod-empty">Accès réservé aux administrateurs.</div>`;
       return;
     }
-    body.innerHTML = `
-      <div class="mod-loading"><i class="fa-solid fa-spinner fa-spin"></i> Chargement…</div>
+
+    // Tabs
+    const tabsHtml = `
+      <div class="adm-tabs">
+        <button class="adm-tab ${_adminTab === 'mod' ? 'active' : ''}" data-tab="mod">
+          <i class="fa-solid fa-shield-halved"></i> Modération
+        </button>
+        <button class="adm-tab ${_adminTab === 'planning' ? 'active' : ''}" data-tab="planning">
+          <i class="fa-solid fa-calendar-days"></i> Planning
+        </button>
+      </div>
     `;
 
-    const [stats, entries] = await Promise.all([
-      loadStats(sb).catch(() => null),
-      loadEntries(sb, _filter).catch(() => []),
-    ]);
+    if (_adminTab === 'mod') {
+      body.innerHTML = tabsHtml + `<div class="mod-loading"><i class="fa-solid fa-spinner fa-spin"></i> Chargement…</div>`;
+      const [stats, entries] = await Promise.all([
+        loadStats(sb).catch(() => null),
+        loadEntries(sb, _filter).catch(() => []),
+      ]);
+      body.innerHTML = tabsHtml + `
+        <div class="mod-hero">
+          <div class="mod-hero-title">Journal de modération</div>
+          <div class="mod-hero-sub">Décisions du bot — table moderation_log</div>
+        </div>
+        ${renderStats(stats)}
+        <div class="mod-filters">
+          <button class="mod-filter ${_filter === 'all' ? 'active' : ''}" data-filter="all">Tout</button>
+          <button class="mod-filter ${_filter === 'blocked' ? 'active' : ''}" data-filter="blocked">Bloqués</button>
+          <button class="mod-filter ${_filter === 'allowed' ? 'active' : ''}" data-filter="allowed">Autorisés</button>
+          <button class="mod-refresh" id="mod-refresh" title="Rafraîchir"><i class="fa-solid fa-rotate"></i></button>
+        </div>
+        <div class="mod-entries">${renderEntries(entries)}</div>
+      `;
+      body.querySelectorAll('.mod-filter').forEach(btn => {
+        btn.addEventListener('click', () => { _filter = btn.dataset.filter; loadAdminPanel(); });
+      });
+      body.querySelector('#mod-refresh')?.addEventListener('click', loadAdminPanel);
+    } else {
+      // Onglet Planning
+      body.innerHTML = tabsHtml + `<div class="mod-loading"><i class="fa-solid fa-spinner fa-spin"></i> Chargement du planning…</div>`;
+      // Recharge les overrides à chaque affichage
+      if (typeof window._pelReloadScheduleOverrides === 'function') {
+        await window._pelReloadScheduleOverrides();
+      }
+      const iso = dateISO(_planningDate);
+      const [slots, overrides] = await Promise.all([
+        Promise.resolve(effectiveSchedule(_planningDate)),
+        loadOverridesForDate(sb, iso).catch(() => []),
+      ]);
+      body.innerHTML = tabsHtml + renderPlanning(_planningDate, slots, overrides);
 
-    body.innerHTML = `
-      <div class="mod-hero">
-        <div class="mod-hero-title">Journal de modération</div>
-        <div class="mod-hero-sub">Décisions du bot — table moderation_log</div>
-      </div>
-      ${renderStats(stats)}
-      <div class="mod-filters">
-        <button class="mod-filter ${_filter === 'all' ? 'active' : ''}" data-filter="all">Tout</button>
-        <button class="mod-filter ${_filter === 'blocked' ? 'active' : ''}" data-filter="blocked">Bloqués</button>
-        <button class="mod-filter ${_filter === 'allowed' ? 'active' : ''}" data-filter="allowed">Autorisés</button>
-        <button class="mod-refresh" id="mod-refresh" title="Rafraîchir"><i class="fa-solid fa-rotate"></i></button>
-      </div>
-      <div class="mod-entries">${renderEntries(entries)}</div>
-    `;
-    // Filtres
-    body.querySelectorAll('.mod-filter').forEach(btn => {
-      btn.addEventListener('click', () => {
-        _filter = btn.dataset.filter;
+      // Navigation par jour
+      body.querySelector('#adm-prev-day')?.addEventListener('click', () => { _planningDate = shiftDate(_planningDate, -1); loadAdminPanel(); });
+      body.querySelector('#adm-next-day')?.addEventListener('click', () => { _planningDate = shiftDate(_planningDate, 1); loadAdminPanel(); });
+      body.querySelector('#adm-date-input')?.addEventListener('change', e => {
+        if (!e.target.value) return;
+        _planningDate = isoToDate(e.target.value);
+        loadAdminPanel();
+      });
+
+      // Bouton "Ajouter un office"
+      body.querySelector('#adm-add-office')?.addEventListener('click', () => {
+        showModal(renderAddOfficeForm(_planningDate), async (modal) => {
+          const fb = modal.querySelector('#adm-modal-feedback');
+          const type     = modal.querySelector('#adm-new-type')?.value;
+          const label    = modal.querySelector('#adm-new-label')?.value.trim() || (OFFICE_TYPES.find(t => t.id === type)?.label || '');
+          const time     = modal.querySelector('#adm-new-time')?.value;
+          const duration = parseInt(modal.querySelector('#adm-new-duration')?.value, 10) || 30;
+          const ds       = modal.querySelector('#adm-new-date-start')?.value;
+          const de       = modal.querySelector('#adm-new-date-end')?.value || ds;
+          const notes    = modal.querySelector('#adm-new-notes')?.value.trim() || null;
+          const sources  = Array.from(modal.querySelectorAll('input[name="src"]:checked')).map(i => i.value);
+          if (!type || !time || !ds) {
+            if (fb) fb.textContent = 'Veuillez remplir type, heure et date de début.';
+            return false;
+          }
+          const result = await saveOverride({
+            date_start: ds, date_end: de,
+            action: 'add',
+            type, label, time, duration,
+            sources: sources.length ? sources : null,
+            notes,
+            created_by: window._pelUser?.id || null,
+          });
+          if (!result.ok) {
+            if (fb) fb.textContent = 'Erreur : ' + result.error;
+            return false;
+          }
+          // Force le rechargement des overrides côté app
+          if (typeof window._pelReloadScheduleOverrides === 'function') {
+            await window._pelReloadScheduleOverrides();
+          }
+          loadAdminPanel();
+          return true;
+        });
+      });
+
+      // Boutons "Désactiver"
+      body.querySelectorAll('.adm-btn-disable').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const row = btn.closest('.adm-office-row');
+          if (!row) return;
+          showModal(renderDisableForm(row, _planningDate), async (modal) => {
+            const fb = modal.querySelector('#adm-modal-feedback');
+            const ds = modal.querySelector('#adm-disable-date-start')?.value;
+            const de = modal.querySelector('#adm-disable-date-end')?.value || ds;
+            const notes = modal.querySelector('#adm-disable-notes')?.value.trim() || null;
+            if (!ds) {
+              if (fb) fb.textContent = 'Veuillez choisir une date.';
+              return false;
+            }
+            const result = await saveOverride({
+              date_start: ds, date_end: de,
+              action: 'disable',
+              target_office_id: row.dataset.officeId,
+              notes,
+              created_by: window._pelUser?.id || null,
+            });
+            if (!result.ok) {
+              if (fb) fb.textContent = 'Erreur : ' + result.error;
+              return false;
+            }
+            if (typeof window._pelReloadScheduleOverrides === 'function') {
+              await window._pelReloadScheduleOverrides();
+            }
+            loadAdminPanel();
+            return true;
+          });
+        });
+      });
+
+      // Boutons "Restaurer" (suppression d'override)
+      body.querySelectorAll('.adm-btn-restore').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const target = btn.closest('[data-override-id]');
+          if (!target) return;
+          if (!confirm('Supprimer cette modification du planning ?')) return;
+          const ok = await deleteOverride(target.dataset.overrideId);
+          if (ok) {
+            if (typeof window._pelReloadScheduleOverrides === 'function') {
+              await window._pelReloadScheduleOverrides();
+            }
+            loadAdminPanel();
+          } else {
+            alert('Erreur lors de la suppression.');
+          }
+        });
+      });
+    }
+
+    // Tabs : binding
+    body.querySelectorAll('.adm-tab').forEach(t => {
+      t.addEventListener('click', () => {
+        _adminTab = t.dataset.tab;
         loadAdminPanel();
       });
     });
-    body.querySelector('#mod-refresh')?.addEventListener('click', loadAdminPanel);
   }
 
   function openAdminPanel() {

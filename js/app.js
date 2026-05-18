@@ -2019,7 +2019,7 @@ function initNextOffice() {
     const now    = getParisDate();
     const dow    = now.getDay();
     const nowMin = now.getHours() * 60 + now.getMinutes();
-    const slots  = WEEK_SCHEDULE[dow] ?? WEEK_SCHEDULE.ordinary;
+    const slots  = getDaySchedule(now);
 
     let found = null;
     outer: for (const slot of slots) {
@@ -3203,6 +3203,128 @@ const MYST_DOW = {
   kibeho:    { 2:'glorieux' },
 };
 
+// ── Surcharges de planning (chargées depuis Supabase) ─────────────────────
+// Permet à l'admin d'ajouter/désactiver/modifier des offices sans toucher au code.
+// Chaque override s'applique sur une plage [date_start, date_end] et soit
+// désactive un office existant, soit en ajoute un nouveau, soit en modifie un.
+let _scheduleOverrides = [];        // [{ ...row }]
+let _scheduleOverridesFetchedAt = 0;
+async function loadScheduleOverrides(force = false) {
+  const sb = window._sbClient;
+  if (!sb) return [];
+  // Rafraîchit toutes les 5 minutes (force pour forcer)
+  if (!force && _scheduleOverrides.length && Date.now() - _scheduleOverridesFetchedAt < 5 * 60 * 1000) {
+    return _scheduleOverrides;
+  }
+  try {
+    const { data, error } = await sb
+      .from('schedule_overrides')
+      .select('*')
+      .eq('enabled', true);
+    if (!error && Array.isArray(data)) {
+      _scheduleOverrides = data;
+      _scheduleOverridesFetchedAt = Date.now();
+    }
+  } catch (_) { /* tolérance : on garde le cache précédent */ }
+  return _scheduleOverrides;
+}
+window._pelScheduleOverrides = () => _scheduleOverrides;
+window._pelReloadScheduleOverrides = async () => {
+  await loadScheduleOverrides(true);
+  // Re-render des vues qui dépendent du planning
+  try { initTodayTimeline(); } catch (_) {}
+  try { initFilters(); } catch (_) {}
+  try { initBadges(); } catch (_) {}
+  try { initWeek(); } catch (_) {}
+};
+window.getDaySchedule = (d) => getDaySchedule(d);
+
+// Renvoie une chaîne 'YYYY-MM-DD' d'une Date en heure de Paris
+function _dateISO(d) {
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+// Renvoie le planning d'un jour donné en appliquant les overrides actifs
+function getDaySchedule(date) {
+  date = date || getParisDate();
+  const dow = date.getDay();
+  // Clone profond du planning de base pour ce jour
+  const base = WEEK_SCHEDULE[dow] ?? WEEK_SCHEDULE.ordinary;
+  let slots = JSON.parse(JSON.stringify(base));
+  const iso = _dateISO(date);
+
+  // Sélectionne les overrides qui couvrent la date
+  const overrides = (_scheduleOverrides || []).filter(o =>
+    o.enabled && o.date_start <= iso && o.date_end >= iso
+  );
+  if (overrides.length === 0) return slots;
+
+  // Étape 1 : désactivations (retirent un office)
+  for (const o of overrides) {
+    if (o.action !== 'disable' || !o.target_office_id) continue;
+    slots = slots.map(slot => ({
+      ...slot,
+      entries: slot.entries.filter(e =>
+        (slot.type + '_' + e.t.replace(':', '')) !== o.target_office_id
+      ),
+    })).filter(slot => slot.entries.length > 0);
+  }
+
+  // Étape 2 : modifications (remplacent un office existant)
+  for (const o of overrides) {
+    if (o.action !== 'modify' || !o.target_office_id) continue;
+    slots = slots.map(slot => ({
+      ...slot,
+      entries: slot.entries.map(e => {
+        const id = slot.type + '_' + e.t.replace(':', '');
+        if (id !== o.target_office_id) return e;
+        const t = o.time || e.t;
+        return {
+          ...e,
+          t,
+          tl: t.replace(':', 'h').replace(/h(\d)$/, 'h0$1'),  // "10:00" → "10h00"
+          dur: o.duration || e.dur,
+          srcs: (Array.isArray(o.sources) && o.sources.length) ? o.sources : e.srcs,
+        };
+      }),
+    }));
+    // Si le label/type/description sont modifiés, on les applique au slot
+    slots = slots.map(slot => {
+      const stillHasModified = slot.entries.some(e =>
+        (slot.type + '_' + e.t.replace(':', '')) === o.target_office_id
+        || (o.time && slot.type + '_' + o.time.replace(':', '') === o.target_office_id)
+      );
+      if (!stillHasModified) return slot;
+      return {
+        ...slot,
+        label:       o.label       || slot.label,
+        description: o.description || slot.description || slot.desc,
+        desc:        o.description || slot.desc,
+      };
+    });
+  }
+
+  // Étape 3 : ajouts
+  for (const o of overrides) {
+    if (o.action !== 'add' || !o.type || !o.time) continue;
+    const t = o.time;
+    const tl = t.replace(':', 'h').replace(/h(\d)$/, 'h0$1');
+    slots.push({
+      type:  o.type,
+      label: o.label || (o.type.charAt(0).toUpperCase() + o.type.slice(1)),
+      desc:  o.description || '',
+      entries: [{
+        t, tl,
+        dur:  o.duration || 30,
+        srcs: Array.isArray(o.sources) ? o.sources : [],
+      }],
+    });
+  }
+
+  return slots;
+}
+
 const WEEK_SCHEDULE = {
 
   // Jeudi (4) — fallback aussi pour tout jour non défini
@@ -3778,7 +3900,7 @@ function initWeek() {
   // Panneaux par jour
   let panelsHtml = '<div class="wk-panels">';
   days.forEach(({ date, dow, isToday }, i) => {
-    const slots = WEEK_SCHEDULE[dow] ?? WEEK_SCHEDULE.ordinary;
+    const slots = getDaySchedule(date);
 
     // Dédupliquer les slots identiques (même type + même heure)
     let slotsHtml = '';
@@ -3945,7 +4067,7 @@ function initTodayTimeline() {
 
   const now  = getParisDate();
   const dow  = now.getDay();
-  const slots = WEEK_SCHEDULE[dow] ?? WEEK_SCHEDULE.ordinary;
+  const slots = getDaySchedule(now);
 
   // Aplatit toutes les entrées {slot, entry} et trie chronologiquement
   const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
@@ -5570,4 +5692,23 @@ document.addEventListener('DOMContentLoaded', () => {
   initContact();
   initGregorianPlayer();
   handleDeepLink();      // applique le filtre/onglet issu du hash URL (landing page)
+
+  // Charge les overrides de planning depuis Supabase, puis rafraîchit les vues
+  // qui dépendent du planning (timeline du jour + semaine + prochain office).
+  (async function reloadScheduleViews() {
+    // Attend que le client Supabase soit prêt (init asynchrone par auth.js)
+    let tries = 0;
+    while (!window._sbClient && tries < 20) {
+      await new Promise(r => setTimeout(r, 150));
+      tries++;
+    }
+    if (!window._sbClient) return;
+    await loadScheduleOverrides(true);
+    // Re-render des vues
+    try { initTodayTimeline(); } catch (_) {}
+    try { initFilters(); } catch (_) {}
+    try { initBadges(); } catch (_) {}
+    try { initWeek(); } catch (_) {}
+    document.dispatchEvent(new CustomEvent('pel:schedule-updated'));
+  })();
 });
