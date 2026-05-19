@@ -484,7 +484,7 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
 .tl-info-btn:hover { color: var(--gold); }
 .tl-info-btn.open { color: var(--gold); }
 
-/* Description dépliée */
+/* Description dépliée (ancien) — conservée pour rétrocompat éventuelle */
 .tl-desc {
   font-size: 12.5px;
   line-height: 1.5;
@@ -497,6 +497,28 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
   font-style: italic;
 }
 .tl-desc[hidden] { display: none; }
+
+/* Description inline (toujours visible, discrète, sous le titre) */
+.tl-desc-inline {
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-soft);
+  font-style: italic;
+  margin: 1px 0 6px;
+  /* Limite à 2 lignes max, ellipse, pour ne pas alourdir */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: default;
+}
+/* Au survol : développe le texte complet (pour lecture optionnelle) */
+.tl-item:hover .tl-desc-inline,
+.tl-item:focus-within .tl-desc-inline {
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
 
 .tl-marker {
   width: 10px; height: 10px;

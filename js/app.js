@@ -4383,14 +4383,12 @@ function initTodayTimeline() {
       ? `<span class="tl-dur">(${fmtDur(duration)})</span>`
       : '';
 
-    // Description : bouton "info" inline + panneau collapsible
-    const infoBtn = slot.desc
-      ? `<button class="tl-info-btn" type="button" aria-expanded="false" aria-label="Voir la description">
-           <i class="fa-solid fa-circle-info"></i>
-         </button>`
-      : '';
+    // Description : phrase discrète toujours visible sous le titre.
+    // Plus de bouton "i" / panneau collapsible — trop d'interactions cachées,
+    // pas accessible aux utilisateurs moins technophiles.
+    const infoBtn = '';
     const descPanel = slot.desc
-      ? `<div class="tl-desc" hidden>${esc(slot.desc)}</div>`
+      ? `<p class="tl-desc-inline">${esc(slot.desc)}</p>`
       : '';
 
     const art = document.createElement('article');
@@ -4494,27 +4492,8 @@ function initTodayTimeline() {
     downloadICS(filename, buildICS(events, calName));
   }
 
-  // Délégation : toggle de la description sur clic du bouton info
-  container.addEventListener('click', e => {
-    const btn = e.target.closest('.tl-info-btn');
-    if (!btn) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const item = btn.closest('.tl-item');
-    if (!item) return;
-    const desc = item.querySelector('.tl-desc');
-    if (!desc) return;
-    const isOpen = !desc.hasAttribute('hidden');
-    if (isOpen) {
-      desc.setAttribute('hidden', '');
-      btn.setAttribute('aria-expanded', 'false');
-      btn.classList.remove('open');
-    } else {
-      desc.removeAttribute('hidden');
-      btn.setAttribute('aria-expanded', 'true');
-      btn.classList.add('open');
-    }
-  });
+  // (Ancienne délégation tl-info-btn supprimée — les descriptions sont désormais
+  //  toujours visibles inline. Voir .tl-desc-inline dans le rendu.)
 
   // ── Teaser chat pour les visiteurs non connectés ──────────────
   // Affiché sous la timeline si l'utilisateur n'est pas encore connecté.
