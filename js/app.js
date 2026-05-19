@@ -1952,8 +1952,23 @@ function initHamburger() {
     // Toujours montrer l'entrée (on la cache uniquement après installation confirmée)
     hmInstall.style.display = '';
 
-    hmInstall.addEventListener('click', () => {
+    hmInstall.addEventListener('click', async () => {
       closeMenu();
+      // Si le prompt natif est dispo (Android/Chrome/Edge) → installation directe
+      if (_installPrompt) {
+        try {
+          const res = await _installPrompt.prompt();
+          if (res?.outcome === 'accepted') {
+            _installPrompt = null;
+            hmInstall.style.display = 'none';
+          }
+        } catch (_) {
+          // Si le prompt échoue, ouvre la modale d'instructions en fallback
+          if (window._openInstallModal) window._openInstallModal();
+        }
+        return;
+      }
+      // Sinon (iOS Safari, ou autre) → modale avec instructions adaptées
       if (window._openInstallModal) window._openInstallModal();
     });
 
