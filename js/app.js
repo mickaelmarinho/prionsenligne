@@ -5636,14 +5636,37 @@ function initInstallModal() {
     }
 
     // Desktop fallback
-    instrEl.innerHTML = `
-      <p class="install-platform"><i class="fa-solid fa-desktop"></i> Sur ordinateur (Chrome / Edge)</p>
-      <ol class="install-steps">
-        <li>Cherchez l'icône <strong>installer</strong> <i class="fa-solid fa-arrow-down"></i> dans la barre d'adresse à droite</li>
-        <li>Sinon, menu <strong>⋮</strong> → <strong>« Installer PrionsEnLigne… »</strong></li>
-        <li>Confirmez avec <strong>« Installer »</strong></li>
-      </ol>
-      <p class="install-note">Sur Firefox / Safari : pas d'installation native, mais vous pouvez créer un raccourci de bureau classique.</p>`;
+    const isFirefox = /firefox/i.test(ua);
+    const isSafari  = /safari/i.test(ua) && !/chrome|chromium|edg/i.test(ua);
+    if (isFirefox) {
+      instrEl.innerHTML = `
+        <p class="install-platform"><i class="fa-brands fa-firefox-browser"></i> Sur Firefox</p>
+        <p>Firefox ne propose pas d'installation native pour les applications web. Vous pouvez :</p>
+        <ol class="install-steps">
+          <li>Créer un <strong>raccourci de bureau</strong> classique vers prionsenligne.fr</li>
+          <li>Ou utiliser <strong>Chrome ou Edge</strong> pour une installation en un clic</li>
+        </ol>`;
+    } else if (isSafari) {
+      instrEl.innerHTML = `
+        <p class="install-platform"><i class="fa-brands fa-safari"></i> Sur Safari (Mac)</p>
+        <p>Depuis macOS Sonoma, Safari permet d'installer les applications web :</p>
+        <ol class="install-steps">
+          <li>Menu <strong>Fichier</strong> → <strong>« Ajouter au Dock »</strong></li>
+          <li>Confirmez l'ajout</li>
+        </ol>
+        <p class="install-note">Sur macOS plus ancien : créez un raccourci classique, ou utilisez Chrome/Edge.</p>`;
+    } else {
+      // Chrome / Edge / Brave / Opera desktop
+      instrEl.innerHTML = `
+        <p class="install-platform"><i class="fa-solid fa-desktop"></i> Sur ordinateur (Chrome / Edge / Brave)</p>
+        <p class="install-tip"><strong>Le plus rapide :</strong> regardez à droite dans la barre d'adresse. Si vous voyez l'icône <i class="fa-solid fa-circle-down" style="color:#1a2744"></i> ou <strong>⊕</strong>, cliquez dessus → installation en 1 clic.</p>
+        <ol class="install-steps">
+          <li>Sinon, ouvrez le menu <strong>⋮</strong> en haut à droite</li>
+          <li>Cherchez <strong>« Installer PrionsEnLigne »</strong> ou <strong>« Cast, enregistrer et partager → Installer »</strong></li>
+          <li>Confirmez avec <strong>« Installer »</strong></li>
+        </ol>
+        <p class="install-note">💡 Si l'installation directe ne s'est pas proposée auparavant, c'est probablement que vous l'avez déjà refusée ou installée. Vous pouvez quand même l'installer manuellement via le menu ⋮.</p>`;
+    }
     if (promptBtn) promptBtn.style.display = 'none';
   }
 
