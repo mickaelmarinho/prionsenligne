@@ -3235,6 +3235,82 @@ const MYST_DOW = {
   kibeho:    { 2:'glorieux' },
 };
 
+// ── Règles récurrentes / dates spéciales ──────────────────────────────
+// Permet d'encoder des offices qui ne se répètent PAS chaque semaine :
+//   - "1er jeudi du mois"  → { nthWeekday: { ordinal: 1, weekday: 4 } }
+//   - "1er vendredi du mois" → { nthWeekday: { ordinal: 1, weekday: 5 } }
+//   - "Dernier dimanche du mois" → { nthWeekday: { ordinal: -1, weekday: 0 } }
+//   - "Tous les vendredis" → { weekday: 5 }
+//   - "Tous les vendredis SAUF Carême" → { weekday: 5, excludeLent: true }
+//   - Date précise → { date: '2026-12-25' }
+//   - Période → { from: '2026-07-01', to: '2026-08-31', weekday: 0 }
+const RECURRING_RULES = [
+  // 1er jeudi du mois — Messe à la basilique d'Ars (Radio Espérance)
+  {
+    nthWeekday: { ordinal: 1, weekday: 4 },
+    slot: {
+      type: 'messe', label: "Messe à la basilique d'Ars (Espérance)",
+      desc: "Eucharistie en direct depuis le sanctuaire d'Ars, diffusée par Radio Espérance le 1er jeudi de chaque mois.",
+      entries: [{ t: '11:00', tl: '11h00', dur: 40, srcs: ['esp', 'ars'] }],
+    },
+  },
+  // 1er vendredi du mois — Messe Chapelle de la Visitation (Paray-le-Monial)
+  {
+    nthWeekday: { ordinal: 1, weekday: 5 },
+    slot: {
+      type: 'messe', label: 'Messe — Chapelle de la Visitation (Paray-le-Monial)',
+      desc: "Eucharistie en direct depuis la chapelle de la Visitation à Paray-le-Monial, lieu où le Cœur de Jésus s'est révélé à sainte Marguerite-Marie. Diffusée par Radio Espérance le 1er vendredi de chaque mois.",
+      entries: [{ t: '11:00', tl: '11h00', dur: 40, srcs: ['esp'] }],
+    },
+  },
+  // 1er vendredi du mois — Messe Sanctuaire de la Miséricorde (Vilnius, Lituanie)
+  {
+    nthWeekday: { ordinal: 1, weekday: 5 },
+    slot: {
+      type: 'messe', label: 'Messe — Sanctuaire de la Miséricorde (Vilnius)',
+      desc: "Eucharistie depuis le sanctuaire de la Miséricorde divine à Vilnius, où est exposée la Sainte Effigie du Christ Miséricordieux peinte selon les visions de sainte Faustine. Diffusée par Radio Espérance le 1er vendredi du mois à 17h.",
+      entries: [{ t: '17:00', tl: '17h00', dur: 60, srcs: ['esp'] }],
+    },
+  },
+];
+
+// Renvoie true si la date matche la règle.
+function _matchesRule(rule, date) {
+  // Date précise (YYYY-MM-DD)
+  if (rule.date) {
+    const iso = _dateISO ? _dateISO(date) : null;
+    if (!iso) return false;
+    return rule.date === iso;
+  }
+  // Plage de dates [from, to]
+  if (rule.from && rule.to) {
+    const iso = _dateISO ? _dateISO(date) : null;
+    if (!iso || iso < rule.from || iso > rule.to) return false;
+    // continue à vérifier weekday/nthWeekday si présents
+  }
+  // N-ième occurrence d'un jour de la semaine dans le mois
+  if (rule.nthWeekday) {
+    const { ordinal, weekday } = rule.nthWeekday;
+    if (date.getDay() !== weekday) return false;
+    const dayOfMonth = date.getDate();
+    if (ordinal > 0) {
+      const nth = Math.ceil(dayOfMonth / 7);
+      return nth === ordinal;
+    }
+    // ordinal négatif (-1 = dernier, -2 = avant-dernier…)
+    const lastOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+    const remaining = Math.ceil((lastOfMonth - dayOfMonth + 1) / 7);
+    return remaining === Math.abs(ordinal);
+  }
+  // Simple jour de la semaine récurrent
+  if (typeof rule.weekday === 'number') {
+    return date.getDay() === rule.weekday;
+  }
+  // Si on est ici avec from/to seulement (sans weekday/date), match
+  if (rule.from && rule.to) return true;
+  return false;
+}
+
 // ── Mystères des 3 chapelets quotidiens de Radio Espérance ────────────
 const ESP_MYST_DOW = {
   // Chapelet 8h30 — aux intentions du monde et de l'Église
@@ -3309,6 +3385,15 @@ function _getDayScheduleInternal(date) {
   const base = WEEK_SCHEDULE[dow] ?? WEEK_SCHEDULE.ordinary;
   let slots = JSON.parse(JSON.stringify(base));
   const iso = _dateISO(date);
+
+  // Étape 0 : règles récurrentes (1er jeudi du mois, etc.)
+  if (Array.isArray(RECURRING_RULES)) {
+    for (const rule of RECURRING_RULES) {
+      if (_matchesRule(rule, date)) {
+        slots.push(JSON.parse(JSON.stringify(rule.slot)));
+      }
+    }
+  }
 
   // Sélectionne les overrides qui couvrent la date
   const overrides = (_scheduleOverrides || []).filter(o =>
