@@ -787,16 +787,25 @@ async function renderPatronBio(saint) {
   if (currentSid && currentSid !== saint.id) return;
   if (!data) { bio.style.display = 'none'; return; }
 
-  // Si le saint du jour selon nominis ≠ notre patron, on cherche le bon lien dans le HTML
+  // PRIORITÉ : si l'utilisateur a sauvegardé un lien spécifique pour son saint patron
+  // (via patron_saint_lien dans user_metadata), on l'utilise. C'est essentiel pour
+  // les saints mineurs : Nominis renvoie le saint PRINCIPAL du jour via /api/nominis,
+  // qui peut être différent du saint patron choisi (ex: 12 juillet renvoie Nabor & Félix,
+  // pas Saint Jason — pourtant l'utilisateur a bien choisi Jason).
+  const savedLien = saint.lien || '';
   const apiKw  = _saintKeyword(data.nom || '');
   const ourKw  = _saintKeyword(saint.name);
-  let   lien   = data.lien || '';
-  // Strip HTML de la description courte (Nominis peut renvoyer "Vierge (III<sup>e</sup>...)")
+  let   lien   = savedLien || data.lien || '';
+  // Strip HTML de la description courte
   let   desc   = (data.description || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+  // Si le saint du jour selon Nominis ≠ notre patron, on cherche un lien plus pertinent
+  // dans le HTML, à défaut on conserve savedLien (s'il existe) ou on omet la description.
   if (apiKw && ourKw && apiKw !== ourKw) {
-    const altLien = _findNominisLinkFor(saint.name, data.contenu || '');
-    if (altLien) lien = altLien;
-    // La description courte du jour concerne un autre saint : on l'omet
+    if (!savedLien) {
+      const altLien = _findNominisLinkFor(saint.name, data.contenu || '');
+      if (altLien) lien = altLien;
+    }
+    // Description du jour concerne un autre saint : on l'omet pour ne pas tromper
     desc = '';
   }
 
