@@ -2552,8 +2552,10 @@ body:has(.chapelet-fab) .greg-btn { right: 88px; }   /* 54 (FAB) + 20 (marge dro
 /* Quand connecté, le bouton compte (avatar + nom + chevron) déroule
    le menu unifié → le hamburger séparé devient redondant. On le cache
    sur desktop ET mobile. Pour les visiteurs non connectés, on garde
-   le hamburger (point d'entrée vers la navigation). */
-.header-user.user-logged-in .hamburger-btn { display: none; }
+   le hamburger (point d'entrée vers la navigation).
+   `!important` car une règle mobile plus bas force `display: flex !important`. */
+.header-user.user-logged-in .hamburger-btn,
+.header-user.user-logged-in #hamburger-btn { display: none !important; }
 
 .header-acct-avatar {
   width: 26px; height: 26px;
