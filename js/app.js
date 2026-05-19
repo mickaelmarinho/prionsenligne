@@ -3207,6 +3207,22 @@ const RM_DESC = {
   intentions14:  "Chapelet aux intentions des auditeurs sur Radio Notre-Dame.",
 };
 
+// ── Descriptions Radio Espérance ────────────────────────────────────────
+const ESP_DESC = {
+  laudesGreg: "Laudes en grégorien chantées en direct par les moines de l'abbaye bénédictine Notre-Dame de Triors (Drôme). Premier temps de prière du jour, méditatif et contemplatif.",
+  morningPrayer703: "Prière du matin en direct des studios de Saint-Étienne. Louange du Seigneur, offrande de la journée et appui sur les lectures du jour.",
+  chapelet830: "Chapelet aux intentions du monde et de l'Église, médité en direct depuis les studios de Saint-Étienne. La base de la prière à Radio Espérance, depuis le premier jour d'émission.",
+  messeCrypteSE: "Saint Sacrifice de la messe en direct depuis la crypte Saint-Michel au patronage Saint-Joseph à Saint-Étienne, célébré par les prêtres de la communauté des religieux Saint-Vincent-de-Paul.",
+  chapelet1430: "Chapelet aux intentions des auditeurs, médité en direct. Confiez vos intentions et actions de grâce — elles seront présentées à Dieu et à la Vierge Marie.",
+  intercession1700: "Temps d'intercession et chapelet de la Miséricorde, en direct de l'oratoire de la radio à Saint-Étienne (du lundi au vendredi) ou des studios de Paray-le-Monial (le samedi).",
+  vepresBastia: "Vêpres en direct du couvent Saint-Antoine de Bastia. Office du soir.",
+  chapelet2030: "Chapelet pour les vocations, en direct des studios de Paray-le-Monial. La prière du soir pour les futures vocations.",
+  complies: "Complies — dernière prière de la journée. En direct des studios de Saint-Étienne (le vendredi : en direct depuis le studio d'Ars, avec les séminaristes).",
+  messeDominicale: "Messe dominicale en direct depuis la chapelle de l'Immaculée Conception à Saint-Étienne. Temps fort de l'eucharistie en communion fraternelle.",
+  vepresTriors: "Vêpres en grégorien et salut du Saint-Sacrement de l'abbaye bénédictine Notre-Dame de Triors (Drôme), tous les dimanches et les jours de solennité.",
+  chapeletMisericordeVend: "Chapelet de la Miséricorde après l'heure de la Miséricorde, depuis l'oratoire de Radio Espérance. (Hors temps de Carême.)",
+};
+
 // ── Mystères selon le jour pour les 3 chapelets RM principaux ──────────
 const MYST_DOW = {
   // Chapelet 0h00 — joyeux mar/ven, lumineux mer/dim, glorieux lun/jeu, douloureux sam
@@ -3217,6 +3233,16 @@ const MYST_DOW = {
   morning830:{ 0:'glorieux',   1:'joyeux',     2:'douloureux', 3:'glorieux',   4:'lumineux',   5:'lumineux',   6:'joyeux' },
   // Kibeho mardi 18h00 — toujours glorieux
   kibeho:    { 2:'glorieux' },
+};
+
+// ── Mystères des 3 chapelets quotidiens de Radio Espérance ────────────
+const ESP_MYST_DOW = {
+  // Chapelet 8h30 — aux intentions du monde et de l'Église
+  chapelet830:  { 0:'lumineux',   1:'douloureux', 2:'joyeux',     3:'lumineux',   4:'glorieux',   5:'joyeux',     6:'douloureux' },
+  // Chapelet 14h30 — aux intentions des auditeurs
+  chapelet1430: { 0:'douloureux', 1:'glorieux',   2:'lumineux',   3:'douloureux', 4:'joyeux',     5:'lumineux',   6:'glorieux' },
+  // Chapelet 20h30 — pour les vocations
+  chapelet2030: { 0:'glorieux',   1:'joyeux',     2:'douloureux', 3:'glorieux',   4:'lumineux',   5:'douloureux', 6:'joyeux' },
 };
 
 // ── Surcharges de planning (chargées depuis Supabase) ─────────────────────
@@ -3887,6 +3913,95 @@ const WEEK_SCHEDULE = {
     },
   ],
 };
+
+// ════════════════════════════════════════════════════════════════════════
+// Injection automatique du planning Radio Espérance dans chaque jour
+// (évite la duplication manuelle de ~9 slots × 7 jours)
+// ════════════════════════════════════════════════════════════════════════
+function _buildEspSlotsForDow(dow) {
+  // Slots quotidiens (tous les jours, dimanche inclus)
+  const slots = [
+    { type: 'laudes', label: 'Laudes en grégorien — Triors (Radio Espérance)',
+      desc: ESP_DESC.laudesGreg,
+      entries: [{ t: '6:00', tl: '6h00', dur: 40, srcs: ['esp'] }],
+    },
+    { type: 'matin', label: 'Prière du matin (Radio Espérance)',
+      desc: ESP_DESC.morningPrayer703,
+      entries: [{ t: '7:03', tl: '7h03', dur: 27, srcs: ['esp'] }],
+    },
+    { type: 'chapelet', label: "Chapelet aux intentions du monde et de l'Église (Espérance)",
+      desc: ESP_DESC.chapelet830, mystByDow: ESP_MYST_DOW.chapelet830,
+      entries: [{ t: '8:30', tl: '8h30', dur: 30, srcs: ['esp'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet aux intentions des auditeurs (Espérance)',
+      desc: ESP_DESC.chapelet1430, mystByDow: ESP_MYST_DOW.chapelet1430,
+      entries: [{ t: '14:30', tl: '14h30', dur: 30, srcs: ['esp'] }],
+    },
+    { type: 'chapelet', label: 'Chapelet pour les vocations (Espérance)',
+      desc: ESP_DESC.chapelet2030, mystByDow: ESP_MYST_DOW.chapelet2030,
+      entries: [{ t: '20:30', tl: '20h30', dur: 30, srcs: ['esp'] }],
+    },
+  ];
+
+  // Messe crypte Saint-Michel — lun-sam (pas dimanche)
+  if (dow !== 0) {
+    slots.push(
+      { type: 'messe', label: 'Messe — Crypte Saint-Michel (Saint-Étienne)',
+        desc: ESP_DESC.messeCrypteSE,
+        entries: [{ t: '11:30', tl: '11h30', dur: 30, srcs: ['esp'] }],
+      },
+      { type: 'chapelet', label: "Temps d'intercession et chapelet de la Miséricorde (Espérance)",
+        desc: ESP_DESC.intercession1700,
+        entries: [{ t: '17:00', tl: '17h00', dur: 35, srcs: ['esp'] }],
+      },
+    );
+  }
+
+  // Vêpres couvent Saint-Antoine Bastia — lun-ven uniquement
+  if (dow >= 1 && dow <= 5) {
+    slots.push({
+      type: 'vepres', label: 'Vêpres — Couvent Saint-Antoine (Bastia)',
+      desc: ESP_DESC.vepresBastia,
+      entries: [{ t: '18:35', tl: '18h35', dur: 15, srcs: ['esp'] }],
+    });
+  }
+
+  // Vendredi : chapelet de la Miséricorde à 15h10 (hors Carême)
+  if (dow === 5) {
+    slots.push({
+      type: 'chapelet', label: 'Chapelet de la Miséricorde (vendredi — Espérance)',
+      desc: ESP_DESC.chapeletMisericordeVend,
+      entries: [{ t: '15:10', tl: '15h10', dur: 10, srcs: ['esp'] }],
+    });
+  }
+
+  // Dimanche : messe dominicale + vêpres Triors
+  if (dow === 0) {
+    slots.push(
+      { type: 'messe', label: 'Messe dominicale (Saint-Étienne — Espérance)',
+        desc: ESP_DESC.messeDominicale,
+        entries: [{ t: '10:00', tl: '10h00', dur: 75, srcs: ['esp'] }],
+      },
+      { type: 'vepres', label: 'Vêpres en grégorien — Triors (Espérance)',
+        desc: ESP_DESC.vepresTriors,
+        entries: [{ t: '17:00', tl: '17h00', dur: 50, srcs: ['esp'] }],
+      },
+    );
+  }
+
+  return slots;
+}
+
+// Pousse les slots Espérance dans chaque jour défini de WEEK_SCHEDULE.
+// `ordinary` sert de fallback pour le jeudi (dow=4) et tout jour non défini.
+(function injectEsperanceSlots() {
+  Object.keys(WEEK_SCHEDULE).forEach(key => {
+    if (!Array.isArray(WEEK_SCHEDULE[key])) return;
+    const dow = (key === 'ordinary') ? 4 : parseInt(key, 10);
+    if (isNaN(dow)) return;
+    WEEK_SCHEDULE[key].push(..._buildEspSlotsForDow(dow));
+  });
+})();
 
 function initWeek() {
   const wrap = document.getElementById('week-cards');
