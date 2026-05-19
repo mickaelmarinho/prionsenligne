@@ -1952,31 +1952,12 @@ function initHamburger() {
     // Toujours montrer l'entrée (on la cache uniquement après installation confirmée)
     hmInstall.style.display = '';
 
-    hmInstall.addEventListener('click', async () => {
+    hmInstall.addEventListener('click', () => {
       closeMenu();
-      const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
-
-      if (_installPrompt) {
-        // Android / Chrome desktop : prompt natif disponible
-        const res = await _installPrompt.prompt();
-        if (res?.outcome === 'accepted') {
-          _installPrompt = null;
-          hmInstall.style.display = 'none';
-        }
-      } else {
-        // iOS ou prompt déjà utilisé → ouvrir la modale À propos avec instructions
-        if (window._openAbout) window._openAbout();
-        const wrap = document.getElementById('about-install-wrap');
-        if (wrap) wrap.style.display = '';
-        const note = document.getElementById('about-install-note');
-        if (note) {
-          note.textContent = isIOS
-            ? 'Sur iPhone/iPad : appuyez sur 📤 Partager puis « Sur l\'écran d\'accueil ».'
-            : 'Ouvrez ce site dans Chrome ou Edge, puis utilisez le menu du navigateur → « Installer ».';
-        }
-      }
+      if (window._openInstallModal) window._openInstallModal();
     });
 
+    // Cache l'entrée install après installation confirmée
     window.addEventListener('appinstalled', () => { hmInstall.style.display = 'none'; });
   }
 }
@@ -5548,8 +5529,6 @@ function initAbout() {
     overlay?.classList.remove('hidden');
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
-    // Met à jour dynamiquement le bloc install à chaque ouverture
-    _updateInstallBlock();
   }
 
   function closeAbout() {
@@ -5564,51 +5543,111 @@ function initAbout() {
     if (e.key === 'Escape') closeAbout();
   });
 
-  // Met à jour le bloc install selon l'environnement
-  function _updateInstallBlock() {
-    const wrap = document.getElementById('about-install-wrap');
-    const btn  = document.getElementById('about-install-btn');
-    const note = document.getElementById('about-install-note');
-    if (!wrap) return;
+  window._openAbout = openAbout;
+}
 
-    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+// Modal dédiée à l'installation PWA (séparée du À propos pour clarté).
+function initInstallModal() {
+  const overlay = document.getElementById('install-overlay');
+  const modal   = document.getElementById('install-modal');
+  const closeBtn = document.getElementById('install-close');
+  const instrEl = document.getElementById('install-instructions');
+  const promptBtn = document.getElementById('install-prompt-btn');
+  if (!modal) return;
+
+  function open() {
+    overlay?.classList.remove('hidden');
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    _renderInstructions();
+  }
+  function close() {
+    overlay?.classList.add('hidden');
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  function _renderInstructions() {
+    if (!instrEl) return;
+    const ua = navigator.userAgent;
+    const isIOS = /iphone|ipad|ipod/i.test(ua) && !window.MSStream;
+    const isAndroid = /android/i.test(ua);
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches
                       || window.navigator.standalone === true;
 
     if (isStandalone) {
-      // Déjà installé → masquer le bloc
-      wrap.style.display = 'none';
+      instrEl.innerHTML = `
+        <div class="install-success">
+          <i class="fa-solid fa-circle-check"></i>
+          <strong>L'application est déjà installée</strong>
+          <p>Vous y accédez actuellement via l'écran d'accueil. Rien à faire de plus !</p>
+        </div>`;
+      if (promptBtn) promptBtn.style.display = 'none';
       return;
     }
 
-    wrap.style.display = '';
+    if (_installPrompt) {
+      // Android / Chrome desktop : prompt natif disponible
+      instrEl.innerHTML = `
+        <p class="install-platform"><i class="fa-solid fa-circle-info"></i> Votre navigateur supporte l'installation directe.</p>
+        <p>Cliquez sur le bouton ci-dessous pour ajouter PrionsEnLigne à votre écran d'accueil.</p>`;
+      if (promptBtn) promptBtn.style.display = '';
+      return;
+    }
 
     if (isIOS) {
-      if (btn) btn.textContent = '📤 Comment installer';
-      if (note) note.textContent = 'Appuyez sur le bouton Partager en bas de Safari, puis choisissez « Sur l\'écran d\'accueil ».';
-    } else if (_installPrompt) {
-      if (btn) { btn.innerHTML = '<i class="fa-solid fa-download"></i> Ajouter à l\'écran d\'accueil'; }
-      if (note) note.textContent = 'Accès rapide depuis votre téléphone ou bureau, sans passer par le navigateur.';
-    } else {
-      if (btn) btn.innerHTML = '<i class="fa-solid fa-download"></i> Installer l\'application';
-      if (note) note.textContent = 'Dans Chrome ou Edge : menu ⋮ → « Installer l\'application » ou « Ajouter à l\'écran d\'accueil ».';
+      instrEl.innerHTML = `
+        <p class="install-platform"><i class="fa-brands fa-apple"></i> Sur iPhone / iPad (Safari)</p>
+        <ol class="install-steps">
+          <li>Appuyez sur le bouton <strong>Partager</strong> <i class="fa-solid fa-arrow-up-from-bracket"></i> en bas de Safari</li>
+          <li>Faites défiler et choisissez <strong>« Sur l'écran d'accueil »</strong></li>
+          <li>Confirmez avec <strong>« Ajouter »</strong> en haut à droite</li>
+        </ol>
+        <p class="install-note">Astuce : si vous utilisez un autre navigateur (Chrome, Firefox…), ouvrez d'abord cette page dans Safari pour installer.</p>`;
+      if (promptBtn) promptBtn.style.display = 'none';
+      return;
     }
+
+    if (isAndroid) {
+      instrEl.innerHTML = `
+        <p class="install-platform"><i class="fa-brands fa-android"></i> Sur Android (Chrome / Edge / Brave)</p>
+        <ol class="install-steps">
+          <li>Ouvrez le menu de votre navigateur <strong>⋮</strong> en haut à droite</li>
+          <li>Choisissez <strong>« Installer l'application »</strong> ou <strong>« Ajouter à l'écran d'accueil »</strong></li>
+          <li>Confirmez avec <strong>« Installer »</strong></li>
+        </ol>`;
+      if (promptBtn) promptBtn.style.display = 'none';
+      return;
+    }
+
+    // Desktop fallback
+    instrEl.innerHTML = `
+      <p class="install-platform"><i class="fa-solid fa-desktop"></i> Sur ordinateur (Chrome / Edge)</p>
+      <ol class="install-steps">
+        <li>Cherchez l'icône <strong>installer</strong> <i class="fa-solid fa-arrow-down"></i> dans la barre d'adresse à droite</li>
+        <li>Sinon, menu <strong>⋮</strong> → <strong>« Installer PrionsEnLigne… »</strong></li>
+        <li>Confirmez avec <strong>« Installer »</strong></li>
+      </ol>
+      <p class="install-note">Sur Firefox / Safari : pas d'installation native, mais vous pouvez créer un raccourci de bureau classique.</p>`;
+    if (promptBtn) promptBtn.style.display = 'none';
   }
 
-  // Bouton install dans la modale
-  document.getElementById('about-install-btn')?.addEventListener('click', async () => {
-    if (_installPrompt) {
-      const result = await _installPrompt.prompt();
-      if (result?.outcome === 'accepted') {
-        _installPrompt = null;
-        closeAbout();
-      }
+  promptBtn?.addEventListener('click', async () => {
+    if (!_installPrompt) return;
+    const r = await _installPrompt.prompt();
+    if (r?.outcome === 'accepted') {
+      _installPrompt = null;
+      close();
     }
-    // iOS : le texte explicatif est déjà affiché par _updateInstallBlock
   });
 
-  // Exposer openAbout globalement (utilisé par initHamburger)
-  window._openAbout = openAbout;
+  closeBtn?.addEventListener('click', close);
+  overlay?.addEventListener('click', close);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !modal.classList.contains('hidden')) close();
+  });
+
+  window._openInstallModal = open;
 }
 
 
@@ -5723,6 +5762,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initChat();
   initInstallBanner();
   initAbout();
+  initInstallModal();
   initContact();
   initGregorianPlayer();
   handleDeepLink();      // applique le filtre/onglet issu du hash URL (landing page)

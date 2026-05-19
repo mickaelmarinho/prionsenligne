@@ -4843,6 +4843,54 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
       color-mix(in srgb, var(--user-palette, var(--navy)) 60%, var(--navy)) 100%);
 }
 
+/* Modal installation PWA (séparée du À propos) */
+.install-panel .install-icon-big {
+  font-size: 56px;
+  color: var(--gold);
+  margin-bottom: 8px;
+  display: block;
+}
+.install-platform {
+  font-size: 13.5px;
+  color: var(--navy);
+  font-weight: 600;
+  margin: 14px 0 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+.install-platform > i { color: var(--gold); }
+.install-steps {
+  margin: 8px 0 12px;
+  padding-left: 22px;
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--text);
+}
+.install-steps li { margin-bottom: 6px; }
+.install-steps strong { color: var(--navy); }
+.install-steps i { color: var(--gold); margin: 0 2px; }
+.install-note {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: rgba(201,168,76,.08);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 6px 6px 0;
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--text-soft);
+  line-height: 1.5;
+}
+.install-success {
+  text-align: center;
+  padding: 12px;
+  background: rgba(45, 122, 68, .07);
+  border: 1px solid rgba(45, 122, 68, .25);
+  border-radius: 10px;
+  color: #2d7a44;
+}
+.install-success > i { font-size: 30px; color: #2d7a44; margin-bottom: 8px; }
+.install-success strong { display: block; margin: 6px 0 4px; font-size: 14px; color: var(--navy); }
+.install-success p { font-size: 12.5px; color: var(--text-soft); margin: 0; }
+
 /* Bannière d'accueil contextuelle au-dessus des intentions */
 .chat-welcome {
   display: flex;

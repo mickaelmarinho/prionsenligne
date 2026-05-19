@@ -85,11 +85,11 @@
       <!-- Dropdown menu burger -->
       <div id="hamburger-menu" class="hamburger-menu hidden" role="menu">
         <!-- Profil utilisateur (connecté) -->
-        <div class="hm-profile-row hidden" id="hm-profile-row">
+        <div class="hm-profile-row hidden" id="hm-profile-row" role="menuitem">
           <div class="hm-pr-avatar" id="hm-pr-avatar">?</div>
           <div class="hm-pr-info">
-            <div class="hm-pr-name" id="hm-pr-name">—</div>
-            <div class="hm-pr-email" id="hm-pr-email">—</div>
+            <div class="hm-pr-name">Mon compte</div>
+            <div class="hm-pr-email hm-pr-email-real" id="hm-pr-email">—</div>
           </div>
           <i class="fa-solid fa-chevron-right hm-pr-arrow"></i>
         </div>
@@ -778,6 +778,32 @@
   <!-- ═══════════════════════════════════════════
        MODAL À PROPOS
   ═══════════════════════════════════════════ -->
+  <!-- ═══════════════════════════════════════════
+       MODAL INSTALLATION (distincte de À propos)
+  ═══════════════════════════════════════════ -->
+  <div id="install-overlay" class="auth-overlay hidden"></div>
+  <div id="install-modal" class="about-modal hidden" role="dialog" aria-modal="true" aria-label="Ajouter à l'écran d'accueil">
+    <div class="about-panel install-panel">
+      <button class="auth-close" id="install-close" aria-label="Fermer"><i class="fa-solid fa-xmark"></i></button>
+      <div class="about-logo">
+        <i class="fa-solid fa-mobile-screen-button install-icon-big" aria-hidden="true"></i>
+        <h2 class="about-title">Ajouter à l'écran d'accueil</h2>
+        <p class="about-tagline">Installez PrionsEnLigne en un raccourci pour un accès instantané</p>
+      </div>
+      <div class="about-body">
+        <p>L'installation rend PrionsEnLigne disponible <strong>hors-ligne</strong>, plus rapide à ouvrir et accessible directement depuis votre écran d'accueil — comme une vraie application.</p>
+
+        <div id="install-instructions">
+          <!-- Contenu injecté dynamiquement selon le navigateur -->
+        </div>
+
+        <button class="about-install-btn" id="install-prompt-btn" style="display:none">
+          <i class="fa-solid fa-download"></i> Installer maintenant
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div id="about-overlay" class="auth-overlay hidden"></div>
   <div id="about-modal" class="about-modal hidden" role="dialog" aria-modal="true" aria-label="À propos de PrionsEnLigne">
     <div class="about-panel">
@@ -810,12 +836,7 @@
           <p>Aucune donnée personnelle n'est collectée sans votre consentement. La création de compte est optionnelle ; elle permet l'accès au chat des intentions de prière et la personnalisation de la Bible (surlignages et favoris). Les surlignages et favoris sont stockés sur votre appareil.</p>
         </div>
 
-        <div class="about-install" id="about-install-wrap">
-          <button class="about-install-btn" id="about-install-btn">
-            <i class="fa-solid fa-download"></i> Ajouter à l'écran d'accueil
-          </button>
-          <p class="about-install-note" id="about-install-note"></p>
-        </div>
+        <!-- (Le bloc d'installation est désormais dans une modale dédiée, voir #install-modal.) -->
       </div>
       <div class="about-footer">
         <span>© 2026 PrionsEnLigne</span>

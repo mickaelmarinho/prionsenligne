@@ -239,13 +239,13 @@ function updateHeaderUI(user) {
     }
 
     // Ligne profil dans le menu burger — avec icône perso
+    // On garde le libellé statique « Mon compte » comme label principal,
+    // l'email est affiché en sous-texte pour identifier le compte connecté.
     if (hmProfileRow) {
       hmProfileRow.classList.remove('hidden');
       const av = $id('hm-pr-avatar');
-      const nm = $id('hm-pr-name');
       const em = $id('hm-pr-email');
       applyAvatarTo(av, user);
-      if (nm) nm.textContent = name;
       if (em) em.textContent = email;
     }
     if (hmPrDivider) hmPrDivider.classList.remove('hidden');
