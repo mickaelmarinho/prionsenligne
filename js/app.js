@@ -1905,9 +1905,20 @@ function initHamburger() {
     menu.classList.contains('hidden') ? openMenu() : closeMenu();
   }
 
-  btn?.addEventListener('click',    toggleMenu);
-  bnBtn?.addEventListener('click',  toggleMenu);
-  overlay?.addEventListener('click', closeMenu);
+  // Synchronise aria-expanded sur les boutons déclencheurs
+  function syncAria() {
+    const open = !menu.classList.contains('hidden');
+    document.getElementById('header-btn-account')?.setAttribute('aria-expanded', open ? 'true' : 'false');
+    btn?.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  function toggleMenuAria(e) { toggleMenu(e); syncAria(); }
+  function closeMenuAria() { closeMenu(); syncAria(); }
+
+  btn?.addEventListener('click',    toggleMenuAria);
+  bnBtn?.addEventListener('click',  toggleMenuAria);
+  // Le bouton "compte" (avatar + nom + chevron) ouvre aussi ce menu unifié
+  document.getElementById('header-btn-account')?.addEventListener('click', toggleMenuAria);
+  overlay?.addEventListener('click', closeMenuAria);
 
   // Liens de navigation dans le drawer (visibles sur mobile)
   menu.querySelectorAll('.hm-nav-item').forEach(item => {

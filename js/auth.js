@@ -981,8 +981,9 @@ function initProfilePanel() {
     openProfilePanel();
   });
 
-  // Bouton compte desktop
-  $id('header-btn-account')?.addEventListener('click', openProfilePanel);
+  // (Le bouton compte du header n'ouvre plus le profil directement —
+  //  il déroule désormais le menu unifié géré par initHamburger.
+  //  L'accès au profil se fait via le bandeau « hm-profile-row » dans ce menu.)
 
   // ESC ferme le panneau
   document.addEventListener('keydown', e => {

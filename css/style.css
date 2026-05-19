@@ -2527,6 +2527,24 @@ body:has(.chapelet-fab) .greg-btn { right: 88px; }   /* 54 (FAB) + 20 (marge dro
 }
 .nav-account-btn:hover { background: rgba(255,255,255,.18); }
 .nav-account-btn.hidden { display: none !important; }
+/* Chevron du bouton compte unifié — pivote quand le menu est ouvert */
+.nav-account-chevron {
+  font-size: 10px;
+  margin-left: 4px;
+  color: rgba(245,240,232,.55);
+  transition: transform .2s ease, color .15s;
+}
+.nav-account-btn:hover .nav-account-chevron { color: var(--cream); }
+.nav-account-btn[aria-expanded="true"] .nav-account-chevron {
+  transform: rotate(180deg);
+  color: var(--gold);
+}
+/* Quand connecté, cacher le bouton hamburger séparé sur desktop —
+   le bouton compte assume désormais ce rôle. Sur mobile, on garde
+   le hamburger pour les visiteurs non connectés. */
+@media (min-width: 641px) {
+  .header-user.user-logged-in .hamburger-btn { display: none; }
+}
 
 .header-acct-avatar {
   width: 26px; height: 26px;

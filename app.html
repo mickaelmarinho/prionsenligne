@@ -67,10 +67,11 @@
         <!-- IDs préservés pour compat (handleDeepLink, contact form, etc.) — invisibles -->
         <button class="hidden-auth-shim" id="header-btn-login" aria-hidden="true" tabindex="-1"></button>
         <button class="hidden-auth-shim" id="header-btn-signup" aria-hidden="true" tabindex="-1"></button>
-        <!-- Bouton compte desktop — affiché uniquement quand connecté -->
-        <button class="nav-account-btn hidden" id="header-btn-account" title="Mon profil">
+        <!-- Bouton compte unifié — avatar + nom + chevron, ouvre le menu déroulant -->
+        <button class="nav-account-btn hidden" id="header-btn-account" title="Mon compte et menu" aria-expanded="false" aria-haspopup="menu">
           <span class="header-acct-avatar" id="header-acct-avatar">?</span>
           <span id="header-acct-name">Mon compte</span>
+          <i class="fa-solid fa-chevron-down nav-account-chevron" aria-hidden="true"></i>
         </button>
         <!-- Bouton déconnexion desktop — affiché uniquement quand connecté (fallback) -->
         <button class="nav-auth-btn nav-logout-btn hidden" id="header-btn-logout">
