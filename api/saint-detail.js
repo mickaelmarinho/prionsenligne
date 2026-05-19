@@ -61,22 +61,54 @@ export default async function handler(req, res) {
     return;
   }
 
-  const url = `https://nominis.cef.fr/contenus/${kind}/${id}/${slug}.html`;
-  try {
-    const upstream = await fetch(url, {
+  let url = `https://nominis.cef.fr/contenus/${kind}/${id}/${slug}.html`;
+
+  // Pour les pages prénom : on les utilise pour TROUVER le saint correspondant,
+  // puis on fetch la VRAIE fiche saint. La page prénom affiche le saint du jour
+  // par défaut (pas le saint de ce prénom-là).
+  async function fetchHtml(u) {
+    const r = await fetch(u, {
       headers: { 'User-Agent': 'Mozilla/5.0 PrionsEnLigne (https://prionsenligne.fr)' },
     });
-    if (!upstream.ok) {
-      res.status(upstream.status).json({ error: `Nominis: HTTP ${upstream.status}` });
-      return;
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    return await r.text();
+  }
+
+  try {
+    let html;
+
+    if (kind === 'prenom') {
+      // 1) Charge la page prénom et cherche les liens vers /contenus/saint/...
+      //    qui devraient être les saints associés à ce prénom.
+      const prenomHtml = await fetchHtml(url);
+      // Cherche un lien direct vers un saint dont le nom CONTIENT le slug du prénom
+      // (ex: pour le prénom "Jason", on cherche un lien "/contenus/saint/...Jason..." )
+      const wanted = slug.toLowerCase().replace(/[%_-]/g, '').replace(/\d+/g, '');
+      const linkRe = /<a[^>]+href="(\/contenus\/saint\/(\d+)\/([^"]+)\.html)"/gi;
+      let bestUrl = null;
+      let m;
+      while ((m = linkRe.exec(prenomHtml)) !== null) {
+        const saintSlug = decodeURIComponent(m[3]).toLowerCase().replace(/[%_-]/g, '');
+        if (saintSlug.includes(wanted) && wanted.length >= 3) {
+          bestUrl = 'https://nominis.cef.fr' + m[1];
+          break;
+        }
+      }
+      if (bestUrl) {
+        url = bestUrl;
+        html = await fetchHtml(url);
+      } else {
+        // Pas de saint match → on garde la page prénom (mieux que rien)
+        html = prenomHtml;
+      }
+    } else {
+      html = await fetchHtml(url);
     }
-    const html  = await upstream.text();
+
     const feast = extractFeast(html);
-    // Extrait court : 1er <p> du contenu
     let summary = '';
     const pMatch = html.match(/<p[^>]*>([\s\S]*?)<\/p>/i);
     if (pMatch) summary = stripTags(pMatch[1]).slice(0, 220);
-    // Nom : <h1>...</h1>
     let name = '';
     const h1 = html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i);
     if (h1) name = stripTags(h1[1]);

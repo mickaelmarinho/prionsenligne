@@ -697,8 +697,9 @@ function initSaintCombobox() {
         applySelection({
           id:    'custom',
           name:  btn.dataset.name,
+          // d.lien peut être le lien réel du saint (pour les prénoms qui pointent vers une fiche saint distincte)
           feast: d.feast || '',
-          lien:  btn.dataset.url,
+          lien:  d.lien || btn.dataset.url,
         });
       } catch (_) {
         if (bioEl) bioEl.innerHTML = prevHTML || '';
