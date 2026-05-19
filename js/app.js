@@ -4479,6 +4479,20 @@ function initBadges() {
      app.html#sources → onglet Sources
 ──────────────────────────────────────────────*/
 function handleDeepLink() {
+  // Query param ?install=1 → ouvre directement la modale d'installation
+  // (utilisé par la landing page pour rediriger vers l'agenda + install)
+  const params = new URLSearchParams(location.search);
+  if (params.get('install') === '1') {
+    setTimeout(() => {
+      if (window._openInstallModal) window._openInstallModal();
+      // Nettoie le query param de l'URL
+      const url = new URL(location.href);
+      url.searchParams.delete('install');
+      history.replaceState(null, '', url.pathname + url.hash);
+    }, 350);
+    return;
+  }
+
   const hash = location.hash.replace('#', '').toLowerCase();
   if (!hash) return;
 
