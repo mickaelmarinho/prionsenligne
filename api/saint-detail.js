@@ -15,11 +15,21 @@ const MONTHS = '(janvier|février|fevrier|mars|avril|mai|juin|juillet|août|aout
 
 function extractFeast(html) {
   if (!html) return '';
-  // Cherche des patterns du type "12 juillet", "1er octobre", "Fête le 22 mai"
-  const reFete = new RegExp('F[êe]te[^0-9]{0,30}(1er|\\d{1,2})\\s+' + MONTHS, 'i');
+  // 1) PRIORITÉ : encadré officiel "Dates de fête" (le plus fiable)
+  //    Structure Nominis : <span ...>Dates de fête</span><a ...>JJ mois...</a>
+  //    ou : <h4>Dates de fête</h4>... DATE
+  const headerMatch = html.match(/Dates? de f[êe]te[\s\S]{0,500}/i);
+  if (headerMatch) {
+    const window = headerMatch[0];
+    const re = new RegExp('(1er|\\d{1,2})\\s+' + MONTHS, 'i');
+    const m = window.match(re);
+    if (m) return `${m[1]} ${m[2]}`;
+  }
+  // 2) Patterns du type "Fête le 22 mai" / "Fêté le 12 juillet"
+  const reFete = new RegExp('F[êe]t[eé][^0-9]{0,30}(1er|\\d{1,2})\\s+' + MONTHS, 'i');
   const m1 = html.match(reFete);
   if (m1) return `${m1[1]} ${m1[2]}`;
-  // Fallback : première occurrence d'une date claire
+  // 3) Fallback : première occurrence (peut être imprécis)
   const re = new RegExp('(1er|\\d{1,2})\\s+' + MONTHS, 'i');
   const m2 = html.match(re);
   if (m2) return `${m2[1]} ${m2[2]}`;

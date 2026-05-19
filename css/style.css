@@ -350,7 +350,17 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
 .pf-complies.active{ background: var(--complies); }
 
 /* Timeline */
-.timeline { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; flex: 1; min-width: 0; }
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+  flex: 1;
+  min-width: 0;
+  /* Espace bas pour que les boutons flottants (Grégorien + FAB Chapelet)
+     ne masquent jamais les actions du dernier office. */
+  padding-bottom: 96px;
+}
 
 .tl-item {
   background: white;
@@ -2539,12 +2549,11 @@ body:has(.chapelet-fab) .greg-btn { right: 88px; }   /* 54 (FAB) + 20 (marge dro
   transform: rotate(180deg);
   color: var(--gold);
 }
-/* Quand connecté, cacher le bouton hamburger séparé sur desktop —
-   le bouton compte assume désormais ce rôle. Sur mobile, on garde
-   le hamburger pour les visiteurs non connectés. */
-@media (min-width: 641px) {
-  .header-user.user-logged-in .hamburger-btn { display: none; }
-}
+/* Quand connecté, le bouton compte (avatar + nom + chevron) déroule
+   le menu unifié → le hamburger séparé devient redondant. On le cache
+   sur desktop ET mobile. Pour les visiteurs non connectés, on garde
+   le hamburger (point d'entrée vers la navigation). */
+.header-user.user-logged-in .hamburger-btn { display: none; }
 
 .header-acct-avatar {
   width: 26px; height: 26px;
@@ -6570,15 +6579,20 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   min-height: 400px;
 }
 
-/* Empêche tout débordement horizontal du conteneur Bible (essentiel sur mobile) */
-#bible-content,
-.bible-app,
-.bible-welcome,
-.bible-shelf-wrap {
+/* Empêche tout débordement horizontal — cause majeure du décalage page sur mobile */
+#tab-bible,
+#tab-bible .bible-header,
+#tab-bible .bible-toolbar,
+#tab-bible .bible-layout,
+#tab-bible .bible-reader,
+#tab-bible .bible-welcome {
   max-width: 100%;
   overflow-x: hidden;
 }
-.bible-shelf-wrap { overflow-x: hidden; } /* parent du shelf gère le clip */
+/* Le body lui-même : pas de scroll horizontal sur mobile, jamais */
+@media (max-width: 640px) {
+  body, html { overflow-x: hidden; max-width: 100vw; }
+}
 
 /* Welcome screen — étagère avec 3 Bibles */
 .bible-welcome {
