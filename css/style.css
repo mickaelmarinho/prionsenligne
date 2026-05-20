@@ -7562,30 +7562,35 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   .bible-trans-selector { width: 100%; }
   .bible-trans-btn { flex: 1; padding: 9px 8px; font-size: 12px; }
   .bible-tool-btn { width: 100%; justify-content: center; padding: 10px 14px; }
-  /* Couvertures : scroll horizontal sur mobile + dimensions adaptées */
+  /* Couvertures : 3 côte à côte qui rentrent toutes sur l'écran (pas de scroll) */
   .bible-shelf {
-    gap: 14px;
-    padding: 12px 14px 18px;
-    justify-content: flex-start;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-  }
-  .bible-shelf::after {
-    content: '';
-    flex: 0 0 14px;
+    gap: 8px;
+    padding: 22px 8px 18px;  /* padding-top généreux pour ne pas couper le badge "Sélectionnée" */
+    justify-content: center;
+    overflow: visible;
+    flex-wrap: nowrap;
   }
   .bible-cover {
-    width: 110px;
-    height: 152px;
-    flex: 0 0 auto;
-    scroll-snap-align: center;
+    /* Largeur fluide : 3 covers prennent ~95% de la largeur dispo, gap inclus */
+    width: calc((100% - 16px) / 3);
+    max-width: 110px;
+    min-width: 0;
+    aspect-ratio: 130 / 180;   /* préserve les proportions iniciales */
+    height: auto;
+    flex: 1 1 auto;
   }
   .bible-cover:hover { transform: translateY(-4px) rotateY(-8deg); }
-  .bible-cover-bible { font-size: 20px; }
-  .bible-cover-version { font-size: 11px; }
+  .bible-cover-bible { font-size: 18px; }
+  .bible-cover-version { font-size: 10.5px; }
   .bible-cover-the,
-  .bible-cover-year { font-size: 8px; }
+  .bible-cover-year { font-size: 7.5px; }
+  /* Badge "Sélectionnée" plus petit sur mobile pour ne pas dépasser */
+  .bible-cover-active-badge {
+    font-size: 8.5px;
+    padding: 3px 7px;
+    top: -6px;
+    right: -4px;
+  }
   .bible-welcome { padding: 16px 8px; }
   .bible-welcome-title { font-size: 21px; }
   .bible-welcome-trans-info { padding: 14px 16px; }
