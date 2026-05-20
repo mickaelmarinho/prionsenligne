@@ -22,9 +22,10 @@ let _formMode        = 'login';
 let _lastSignupEmail = '';     // mémorisé pour pouvoir renvoyer l'email de confirmation
 
 // ── hCaptcha (anti-bot sur l'inscription) ──
-// Site key publique d'hCaptcha — à remplir une fois ton compte hCaptcha créé.
-// Si vide, le captcha n'est pas affiché (signup sans protection — fallback gracieux).
-const HCAPTCHA_SITE_KEY = '';
+// Site key publique d'hCaptcha — site « prionsenligne fr » (production).
+// La Secret Key correspondante est configurée côté Supabase (Auth → Captcha).
+// Si on vide cette constante, le captcha n'est plus affiché (fallback gracieux).
+const HCAPTCHA_SITE_KEY = 'b6826716-4f82-48e4-87ba-22c4f816ce34';
 let _hcaptchaWidgetId = null;
 let _hcaptchaToken    = null;
 
