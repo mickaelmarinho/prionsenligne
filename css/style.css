@@ -2217,6 +2217,18 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
 }
 .auth-forgot button:hover { color: var(--navy); }
 
+/* hCaptcha — wrapper centré, légèrement décollé du champ password */
+.auth-captcha-wrap {
+  display: flex;
+  justify-content: center;
+  margin: 14px 0 4px;
+}
+.auth-captcha-wrap > div { max-width: 100%; }
+@media (max-width: 360px) {
+  /* Mode compact pour petits écrans : hCaptcha standard ≈ 303 px */
+  .auth-captcha-wrap iframe { transform: scale(.88); transform-origin: top center; }
+}
+
 /* En-tête modes réinitialisation */
 .auth-reset-header {
   padding: 4px 0 16px;

@@ -502,6 +502,10 @@
             <input type="password" id="auth-confirm" placeholder="••••••••" autocomplete="new-password" minlength="6">
           </div>
           <div id="auth-error" class="auth-error hidden"></div>
+          <!-- hCaptcha (anti-bot) — visible uniquement en mode inscription -->
+          <div id="auth-captcha-wrap" class="auth-captcha-wrap" style="display:none">
+            <div id="auth-captcha"></div>
+          </div>
           <div class="auth-forgot" id="auth-forgot">
             <button type="button" id="auth-forgot-btn">Mot de passe oublié&nbsp;?</button>
           </div>
@@ -976,6 +980,8 @@
   <script src="js/bible.js"></script>
   <!-- Supabase — build UMD explicite (évite que jsdelivr serve le build CJS/ESM) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <!-- hCaptcha — anti-bot sur l'inscription (chargé en async pour ne pas bloquer le rendu) -->
+  <script src="https://js.hcaptcha.com/1/api.js?render=explicit&onload=onHCaptchaLoad" async defer></script>
   <script src="js/auth.js"></script>
   <script src="js/admin.js"></script>
   <script>document.addEventListener('DOMContentLoaded', initAuth);</script>

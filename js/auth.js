@@ -21,6 +21,52 @@ let _currentUser     = null;
 let _formMode        = 'login';
 let _lastSignupEmail = '';     // mémorisé pour pouvoir renvoyer l'email de confirmation
 
+// ── hCaptcha (anti-bot sur l'inscription) ──
+// Site key publique d'hCaptcha — à remplir une fois ton compte hCaptcha créé.
+// Si vide, le captcha n'est pas affiché (signup sans protection — fallback gracieux).
+const HCAPTCHA_SITE_KEY = '';
+let _hcaptchaWidgetId = null;
+let _hcaptchaToken    = null;
+
+// Callback exposé globalement, appelé par le script hCaptcha quand il termine de charger
+window.onHCaptchaLoad = function () {
+  // Le widget sera réellement rendu quand on entre en mode signup
+};
+
+function _renderCaptchaIfNeeded() {
+  if (!HCAPTCHA_SITE_KEY) return;
+  if (!window.hcaptcha) return;             // script pas encore chargé
+  if (_hcaptchaWidgetId !== null) return;   // déjà rendu
+  const container = $id('auth-captcha');
+  if (!container) return;
+  try {
+    _hcaptchaWidgetId = window.hcaptcha.render(container, {
+      sitekey: HCAPTCHA_SITE_KEY,
+      theme:   'light',
+      size:    'normal',
+      callback:  token => { _hcaptchaToken = token; },
+      'expired-callback': () => { _hcaptchaToken = null; },
+      'error-callback':   () => { _hcaptchaToken = null; },
+    });
+  } catch (_) { /* tolérance */ }
+}
+
+function _resetCaptcha() {
+  _hcaptchaToken = null;
+  if (window.hcaptcha && _hcaptchaWidgetId !== null) {
+    try { window.hcaptcha.reset(_hcaptchaWidgetId); } catch (_) {}
+  }
+}
+
+function _showCaptcha(show) {
+  const wrap = $id('auth-captcha-wrap');
+  if (!wrap) return;
+  // Si pas de site key, on n'affiche jamais (graceful degradation)
+  if (!HCAPTCHA_SITE_KEY) { wrap.style.display = 'none'; return; }
+  wrap.style.display = show ? '' : 'none';
+  if (show) _renderCaptchaIfNeeded();
+}
+
 /* ════════════════════════════════════════════
    PROFIL — COULEUR AVATAR
 ═════════════════════════════════════════════*/
@@ -1113,6 +1159,9 @@ function setMode(mode) {
     submitBtn.dataset.label = submitBtn.textContent;
   }
 
+  // Captcha : visible uniquement en mode inscription (les bots ciblent surtout signUp)
+  _showCaptcha(isSignup);
+
   clearAuthError();
 }
 
@@ -1343,11 +1392,20 @@ function initAuthUI() {
       if (!email || !password) { showAuthError('Veuillez remplir tous les champs.'); return; }
       if (password.length < 6) { showAuthError('Le mot de passe doit comporter au moins 6 caractères.'); return; }
       if (password !== confirm) { showAuthError('Les mots de passe ne correspondent pas.'); return; }
+      // Vérifie le captcha si activé
+      if (HCAPTCHA_SITE_KEY && !_hcaptchaToken) {
+        showAuthError('Veuillez compléter la vérification anti-robot.');
+        return;
+      }
       setAuthLoading(true);
+      const signUpOpts = { data: { name: name || email.split('@')[0] } };
+      if (_hcaptchaToken) signUpOpts.captchaToken = _hcaptchaToken;
       const { data: signUpData, error } = await _sb.auth.signUp({
         email, password,
-        options: { data: { name: name || email.split('@')[0] } },
+        options: signUpOpts,
       });
+      // Reset le captcha après tentative (un token = une utilisation)
+      _resetCaptcha();
       setAuthLoading(false);
       if (error) { showAuthError(translateSupabaseError(error)); return; }
       // Si la confirmation email est désactivée → session immédiate → on ferme le modal
