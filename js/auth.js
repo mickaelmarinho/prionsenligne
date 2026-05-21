@@ -1495,4 +1495,65 @@ async function initAuth() {
 
   // Expose le client Supabase pour app.js
   window._sbClient = _sb;
+
+  // Démarre le suivi de présence global (visiteurs + connectés)
+  _initSitePresence();
 }
+
+// ════════════════════════════════════════════════════════════════════
+// Présence globale du site (Supabase Realtime Presence)
+// Permet à l'admin de voir en temps réel combien de personnes visitent
+// le site, et qui parmi elles est connecté.
+// ════════════════════════════════════════════════════════════════════
+let _presenceChannel = null;
+function _initSitePresence() {
+  if (!_sb || _presenceChannel) return;
+  // Clé de présence : user_id si connecté, sinon anon-<random>
+  const user = _currentUser;
+  const presenceKey = user?.id || 'anon-' + Math.random().toString(36).slice(2, 12);
+  _presenceChannel = _sb.channel('site_presence', {
+    config: { presence: { key: presenceKey } },
+  });
+  _presenceChannel.subscribe(async (status) => {
+    if (status !== 'SUBSCRIBED') return;
+    const meta = user?.user_metadata || {};
+    const cleanEmail = user
+      ? (user.email || '').split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+      : '';
+    await _presenceChannel.track({
+      user_id:   user?.id || null,
+      isAnon:    !user,
+      name:      user ? (meta.pseudo || meta.name || cleanEmail || 'Fidèle') : null,
+      email:     user?.email || null,
+      joined_at: new Date().toISOString(),
+      avatar_icon:    meta.avatar_icon    || 'initial',
+      avatar_palette: meta.avatar_palette || 'auto',
+    });
+  });
+  // Untrack à la fermeture / mise en arrière-plan prolongée
+  window.addEventListener('beforeunload', () => {
+    try { _presenceChannel?.untrack(); } catch (_) {}
+  });
+}
+
+// À chaque changement d'auth (connexion/déconnexion), on relance le track
+// avec la nouvelle identité (anon → connecté ou inversement)
+document.addEventListener('pel:authchange', () => {
+  if (!_presenceChannel || !_sb) return;
+  const u = window._pelUser;
+  const meta = u?.user_metadata || {};
+  const cleanEmail = u
+    ? (u.email || '').split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+    : '';
+  try {
+    _presenceChannel.track({
+      user_id:   u?.id || null,
+      isAnon:    !u,
+      name:      u ? (meta.pseudo || meta.name || cleanEmail || 'Fidèle') : null,
+      email:     u?.email || null,
+      joined_at: new Date().toISOString(),
+      avatar_icon:    meta.avatar_icon    || 'initial',
+      avatar_palette: meta.avatar_palette || 'auto',
+    });
+  } catch (_) {}
+});

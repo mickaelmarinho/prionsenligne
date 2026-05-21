@@ -2841,6 +2841,125 @@ body:has(.chapelet-fab) .greg-btn { right: 88px; }   /* 54 (FAB) + 20 (marge dro
 /* ══════════════════════════════════════════════
    PANNEAU ADMIN — Modération
 ══════════════════════════════════════════════ */
+/* Carte présence temps réel */
+.adm-presence-card {
+  margin: 14px;
+  background: linear-gradient(135deg, var(--navy) 0%, #2a3a5c 100%);
+  color: var(--cream);
+  border-radius: 12px;
+  padding: 16px 18px;
+  box-shadow: 0 4px 18px rgba(26,39,68,.18);
+}
+.adm-presence-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.adm-presence-icon {
+  color: var(--gold);
+  font-size: 18px;
+}
+.adm-presence-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 17px;
+  color: var(--gold);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.adm-presence-pulse {
+  width: 8px; height: 8px;
+  background: #4ade80;
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(74, 222, 128, .7);
+  animation: admPulse 1.8s infinite;
+}
+@keyframes admPulse {
+  0%   { box-shadow: 0 0 0 0 rgba(74, 222, 128, .7); }
+  70%  { box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+}
+.adm-presence-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.adm-pres-stat {
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.10);
+  border-radius: 8px;
+  padding: 10px 8px;
+  text-align: center;
+}
+.adm-pres-val {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 26px;
+  color: var(--gold);
+  line-height: 1;
+  margin-bottom: 3px;
+}
+.adm-pres-lbl {
+  font-size: 10.5px;
+  color: rgba(245,240,232,.65);
+  letter-spacing: .02em;
+}
+.adm-presence-empty {
+  font-size: 12px;
+  color: rgba(245,240,232,.5);
+  font-style: italic;
+  text-align: center;
+  padding: 8px;
+}
+.adm-presence-sublabel {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: rgba(245,240,232,.55);
+  margin-bottom: 8px;
+}
+.adm-presence-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 6px;
+}
+.adm-pres-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+.adm-pres-avatar-wrap .chat-msg-avatar,
+.adm-pres-avatar-wrap span {
+  width: 26px !important; height: 26px !important;
+  font-size: 11px !important;
+}
+.adm-pres-avatar {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+  flex-shrink: 0;
+}
+.adm-pres-info { min-width: 0; flex: 1; }
+.adm-pres-name {
+  font-size: 12px;
+  color: var(--cream);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.adm-pres-since {
+  font-size: 10px;
+  color: rgba(245,240,232,.5);
+}
+
+
 .mod-loading {
   display: flex; align-items: center; justify-content: center;
   gap: 8px;

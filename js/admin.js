@@ -62,6 +62,94 @@
   }
 
   let _filter = 'all';   // 'all' | 'blocked' | 'allowed'
+
+  // ── Présence live (abonnement à la chaîne site_presence) ────────────
+  let _presenceChannelAdmin = null;
+  function _startPresenceLiveUpdate() {
+    const sb = window._sbClient;
+    if (!sb) return;
+    if (_presenceChannelAdmin) return; // déjà abonné
+    // Clé unique pour l'admin (pour ne pas dédoublonner avec sa propre présence)
+    const adminKey = (window._pelUser?.id || 'admin') + '-monitor-' + Math.random().toString(36).slice(2, 8);
+    _presenceChannelAdmin = sb.channel('site_presence', {
+      config: { presence: { key: adminKey } },
+    });
+    _presenceChannelAdmin.on('presence', { event: 'sync' }, _updatePresenceCard);
+    _presenceChannelAdmin.subscribe(async (status) => {
+      if (status !== 'SUBSCRIBED') return;
+      // Track avec un marqueur "monitor" pour ne pas être compté dans la liste
+      await _presenceChannelAdmin.track({ _monitor: true });
+      _updatePresenceCard(); // initial render
+    });
+  }
+  function _stopPresenceLiveUpdate() {
+    const sb = window._sbClient;
+    if (_presenceChannelAdmin && sb) {
+      try { sb.removeChannel(_presenceChannelAdmin); } catch (_) {}
+    }
+    _presenceChannelAdmin = null;
+  }
+
+  function _updatePresenceCard() {
+    if (!_presenceChannelAdmin) return;
+    const state = _presenceChannelAdmin.presenceState() || {};
+    // Aplatit : { key1: [{...}, ...], key2: [...] } → liste de {key, ...meta}
+    const entries = [];
+    for (const key of Object.keys(state)) {
+      const arr = state[key] || [];
+      for (const meta of arr) {
+        if (meta?._monitor) continue; // exclut les admins en mode monitoring
+        entries.push({ key, ...meta });
+      }
+    }
+    // Dédoublonne par key (un user peut avoir plusieurs onglets → on garde le 1er)
+    const dedup = new Map();
+    for (const e of entries) {
+      if (!dedup.has(e.key)) dedup.set(e.key, e);
+    }
+    const list = Array.from(dedup.values());
+    const logged = list.filter(e => !e.isAnon);
+    const anon   = list.filter(e => e.isAnon);
+
+    const $ = id => document.getElementById(id);
+    if ($('adm-pres-total'))  $('adm-pres-total').textContent  = list.length;
+    if ($('adm-pres-logged')) $('adm-pres-logged').textContent = logged.length;
+    if ($('adm-pres-anon'))   $('adm-pres-anon').textContent   = anon.length;
+    const listEl = $('adm-presence-list');
+    if (!listEl) return;
+    if (logged.length === 0) {
+      listEl.innerHTML = `<div class="adm-presence-empty">Aucun utilisateur connecté actuellement.</div>`;
+      return;
+    }
+    listEl.innerHTML = `
+      <div class="adm-presence-sublabel">${logged.length} utilisateur${logged.length > 1 ? 's' : ''} connecté${logged.length > 1 ? 's' : ''} :</div>
+      <div class="adm-presence-grid">
+        ${logged.map(u => {
+          const avatar = document.createElement('span');
+          avatar.className = 'adm-pres-avatar';
+          if (window.pelRenderAvatar) {
+            window.pelRenderAvatar(avatar, {
+              icon:    u.avatar_icon,
+              palette: u.avatar_palette,
+              name:    u.name,
+            });
+          } else {
+            avatar.textContent = (u.name || '?').charAt(0).toUpperCase();
+          }
+          const since = u.joined_at
+            ? new Date(u.joined_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+            : '';
+          return `<div class="adm-pres-user" title="${esc(u.email || '')}">
+            <span class="adm-pres-avatar-wrap">${avatar.outerHTML}</span>
+            <div class="adm-pres-info">
+              <div class="adm-pres-name">${esc(u.name || 'Anonyme')}</div>
+              <div class="adm-pres-since">depuis ${esc(since)}</div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    `;
+  }
   let _adminTab = 'mod'; // 'mod' | 'planning'
   let _planningDate = new Date();  // date affichée dans l'onglet Planning
 
@@ -491,6 +579,30 @@
           <div class="mod-hero-title">Journal de modération</div>
           <div class="mod-hero-sub">Décisions du bot — table moderation_log</div>
         </div>
+        <div id="adm-presence-card" class="adm-presence-card">
+          <div class="adm-presence-header">
+            <i class="fa-solid fa-tower-broadcast adm-presence-icon"></i>
+            <div class="adm-presence-title">
+              <span class="adm-presence-pulse"></span>
+              En direct sur le site
+            </div>
+          </div>
+          <div class="adm-presence-stats">
+            <div class="adm-pres-stat">
+              <div class="adm-pres-val" id="adm-pres-total">—</div>
+              <div class="adm-pres-lbl">Total connectés</div>
+            </div>
+            <div class="adm-pres-stat">
+              <div class="adm-pres-val" id="adm-pres-logged">—</div>
+              <div class="adm-pres-lbl">Avec compte</div>
+            </div>
+            <div class="adm-pres-stat">
+              <div class="adm-pres-val" id="adm-pres-anon">—</div>
+              <div class="adm-pres-lbl">Visiteurs anonymes</div>
+            </div>
+          </div>
+          <div class="adm-presence-list" id="adm-presence-list"></div>
+        </div>
         ${renderStats(stats)}
         <div class="mod-filters">
           <button class="mod-filter ${_filter === 'all' ? 'active' : ''}" data-filter="all">Tout</button>
@@ -504,7 +616,11 @@
         btn.addEventListener('click', () => { _filter = btn.dataset.filter; loadAdminPanel(); });
       });
       body.querySelector('#mod-refresh')?.addEventListener('click', loadAdminPanel);
+      // Live presence — abonnement Realtime à chaque (ré)ouverture du panneau
+      _startPresenceLiveUpdate();
     } else {
+      // Arrête le suivi presence quand on quitte l'onglet
+      _stopPresenceLiveUpdate();
       // Onglet Planning
       body.innerHTML = tabsHtml + `<div class="mod-loading"><i class="fa-solid fa-spinner fa-spin"></i> Chargement du planning…</div>`;
       // Recharge les overrides à chaque affichage
@@ -644,6 +760,7 @@
     $id('admin-panel')?.setAttribute('aria-hidden', 'true');
     $id('admin-overlay')?.classList.remove('show');
     document.body.style.overflow = '';
+    _stopPresenceLiveUpdate();   // libère le channel websocket
   }
 
   function showAdminButtonIfAdmin() {
