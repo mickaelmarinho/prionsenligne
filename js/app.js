@@ -4507,6 +4507,12 @@ function initTodayTimeline() {
               <label class="rec-pill"><input type="radio" name="duration" value="12" ><span>3 mois</span></label>
               <label class="rec-pill"><input type="radio" name="duration" value="26" ><span>6 mois</span></label>
               <label class="rec-pill"><input type="radio" name="duration" value="52" ><span>1 an</span></label>
+              <label class="rec-pill rec-pill--custom"><input type="radio" name="duration" value="custom"><span><i class="fa-regular fa-calendar"></i> Autre…</span></label>
+            </div>
+            <div class="rec-custom-wrap" id="rec-custom-wrap" style="display:none">
+              <label class="rec-custom-label" for="rec-custom-date">Jusqu'à quelle date ?</label>
+              <input type="date" id="rec-custom-date" class="rec-custom-date" min="" max="">
+              <small class="rec-custom-hint">Choisissez n'importe quelle date dans les 5 prochaines années.</small>
             </div>
           </div>
           <div class="rec-foot">
@@ -4525,6 +4531,22 @@ function initTodayTimeline() {
     backdrop.querySelector('#rec-cancel')?.addEventListener('click', close);
     backdrop.addEventListener('click', e => { if (e.target === backdrop) close(); });
 
+    // Initialise les bornes du date picker "Autre…"
+    const customInput = backdrop.querySelector('#rec-custom-date');
+    if (customInput) {
+      const min = new Date(today.getTime() + 1 * 24 * 3600 * 1000); // demain min
+      const max = new Date(today.getFullYear() + 5, today.getMonth(), today.getDate());
+      const iso = d => {
+        const p = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+      };
+      customInput.min = iso(min);
+      customInput.max = iso(max);
+      // Valeur par défaut : dans 2 mois
+      const def = new Date(today.getTime() + 60 * 24 * 3600 * 1000);
+      customInput.value = iso(def);
+    }
+
     // Désactive la section "durée" si "une seule fois"
     function syncDurationDisabled() {
       const freq = backdrop.querySelector('input[name="freq"]:checked')?.value;
@@ -4535,28 +4557,54 @@ function initTodayTimeline() {
       );
       backdrop.querySelector('.rec-section-label--duration')
         ?.classList.toggle('rec-section-label--disabled', isOnce);
+      if (isOnce) {
+        backdrop.querySelector('#rec-custom-wrap').style.display = 'none';
+      }
+    }
+    function syncCustomVisibility() {
+      const duration = backdrop.querySelector('input[name="duration"]:checked')?.value;
+      const wrap = backdrop.querySelector('#rec-custom-wrap');
+      if (!wrap) return;
+      wrap.style.display = (duration === 'custom') ? '' : 'none';
     }
     backdrop.querySelectorAll('input[name="freq"]').forEach(i =>
       i.addEventListener('change', syncDurationDisabled));
+    backdrop.querySelectorAll('input[name="duration"]').forEach(i =>
+      i.addEventListener('change', syncCustomVisibility));
     syncDurationDisabled();
+    syncCustomVisibility();
 
     backdrop.querySelector('#rec-confirm')?.addEventListener('click', () => {
       const freq = backdrop.querySelector('input[name="freq"]:checked')?.value || 'once';
-      const weeks = parseInt(backdrop.querySelector('input[name="duration"]:checked')?.value, 10) || 4;
+      const durationVal = backdrop.querySelector('input[name="duration"]:checked')?.value || '4';
+      let untilDate = null;
+      let weeks = parseInt(durationVal, 10);
+      if (durationVal === 'custom') {
+        const iso = customInput?.value;
+        if (!iso) {
+          alert('Veuillez choisir une date de fin.');
+          return;
+        }
+        const [y, m, d] = iso.split('-').map(Number);
+        untilDate = new Date(y, m - 1, d, 23, 59, 59);
+        weeks = 0; // sera ignoré au profit de untilDate
+      }
       close();
-      buildAndDownloadICS(items, mode, freq, weeks);
+      buildAndDownloadICS(items, mode, freq, weeks, untilDate);
     });
   }
 
-  function buildAndDownloadICS(items, mode, freq, durationWeeks) {
+  function buildAndDownloadICS(items, mode, freq, durationWeeks, untilDate) {
     const today = getParisDate();
     // Date de fin pour la récurrence (UTC, format YYYYMMDDTHHMMSSZ)
     let untilStr = null;
     if (freq !== 'once') {
-      const until = new Date(today.getTime() + durationWeeks * 7 * 24 * 3600 * 1000);
-      until.setHours(23, 59, 59, 999);
+      const until = untilDate || new Date(today.getTime() + durationWeeks * 7 * 24 * 3600 * 1000);
+      // Toujours fin de journée pour englober l'occurrence du dernier jour
+      const finalUntil = new Date(until);
+      finalUntil.setHours(23, 59, 59, 999);
       const p = n => String(n).padStart(2, '0');
-      untilStr = `${until.getUTCFullYear()}${p(until.getUTCMonth() + 1)}${p(until.getUTCDate())}T235959Z`;
+      untilStr = `${finalUntil.getUTCFullYear()}${p(finalUntil.getUTCMonth() + 1)}${p(finalUntil.getUTCDate())}T235959Z`;
     }
     const rrule = freq === 'weekly' ? `FREQ=WEEKLY;UNTIL=${untilStr}`
                 : freq === 'daily'  ? `FREQ=DAILY;UNTIL=${untilStr}`
@@ -4581,7 +4629,10 @@ function initTodayTimeline() {
       const isoDay = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
       // Suffixe unique pour les UID quand on récurre (évite collision si l'utilisateur
       // ré-importe un fichier différent du même office)
-      const recurSuffix = freq === 'once' ? '' : `-${freq}-${durationWeeks}w`;
+      const recurTag = untilDate
+        ? `${freq}-until-${untilDate.getFullYear()}${String(untilDate.getMonth() + 1).padStart(2, '0')}${String(untilDate.getDate()).padStart(2, '0')}`
+        : `${freq}-${durationWeeks}w`;
+      const recurSuffix = freq === 'once' ? '' : `-${recurTag}`;
       return {
         uid: `pel-${(item.dataset.type || 'priere')}-${item.dataset.start || ''}-${isoDay}${recurSuffix}@prionsenligne.fr`,
         start, end,

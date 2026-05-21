@@ -4984,6 +4984,49 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   background: var(--navy); border-color: var(--navy); color: white;
 }
 .rec-pill--disabled { opacity: .4; pointer-events: none; }
+/* Pill "Autre…" légèrement distinct (subtilement) */
+.rec-pill--custom span { font-style: italic; }
+.rec-pill--custom span i { font-size: 11px; margin-right: 3px; }
+
+/* Champ date personnalisé révélé sur sélection "Autre…" */
+.rec-custom-wrap {
+  margin-top: 4px;
+  padding: 10px 12px 4px;
+  background: rgba(201,168,76,.08);
+  border-radius: 8px;
+  border-left: 2px solid var(--gold);
+  animation: fadeIn .15s ease;
+}
+.rec-custom-label {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--text-soft);
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+.rec-custom-date {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: var(--font-ui);
+  border: 1.5px solid var(--border-mid);
+  border-radius: 8px;
+  background: white;
+  color: var(--navy);
+}
+.rec-custom-date:focus {
+  outline: none;
+  border-color: var(--gold);
+}
+.rec-custom-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--text-soft);
+  font-style: italic;
+}
 
 .rec-foot {
   padding: 14px 20px 20px;
