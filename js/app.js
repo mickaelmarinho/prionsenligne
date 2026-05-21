@@ -3184,10 +3184,10 @@ const SOURCES = {
   esp: { n: 'Espérance',        s: 'https://esperance.streamakaci.com/esperance.mp3', w: 'https://radio-esperance.fr' },
   // Flux dédié chant grégorien d'Espérance (même que le bouton "Grégorien" en bas du site)
   espg: { n: 'Espérance Grégorien', s: 'https://esperance.streamakaci.com/gregorien.mp3', w: 'https://radio-esperance.fr' },
-  fid: { n: 'Fidélité',         s: '', w: 'https://www.radiofidelite.fr/player/' },
+  fid: { n: 'Fidélité',         s: '', w: 'https://radio-fidelite.fr' },
   kto: { n: 'KTO',              s: '', w: 'https://www.ktotv.com' },
   lou: { n: 'Lourdes',          s: '', w: 'https://www.lourdes-france.com/lourdesplus/' },
-  vat: { n: 'Vatican News',     s: '', w: 'https://www.vaticannews.va/fr/video.html' },
+  vat: { n: 'Vatican News',     s: '', w: 'https://www.vaticannews.va/fr.html' },
   // jer (Fraternités de Jérusalem) retiré : pas de retransmission live trouvée
   // sol (Solesmes) retiré : ne diffuse pas en live sur internet
   ndp: { n: 'N-D de Paris',     s: '', w: 'https://www.notredamedeparis.fr/la-cathedrale/en-direct/' },

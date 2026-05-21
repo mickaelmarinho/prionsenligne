@@ -1675,6 +1675,61 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
   transform: translateY(-2px);
   border-color: var(--gold-pale);
 }
+
+/* Carte source combinée (ex: RCF Notre-Dame + RCF national dans une seule carte) */
+.src-card-combo {
+  display: block;
+  cursor: default;
+}
+.src-combo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+.src-combo-item {
+  display: block;
+  background: rgba(0,0,0,.025);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  text-decoration: none;
+  color: inherit;
+  transition: background .15s, border-color .15s, transform .12s;
+}
+.src-combo-item:hover {
+  background: rgba(201,168,76,.08);
+  border-color: var(--gold-pale);
+  transform: translateX(2px);
+}
+.src-combo-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-bottom: 3px;
+}
+.src-combo-head > strong {
+  font-size: 13.5px;
+  color: var(--navy);
+}
+.src-combo-badge {
+  font-size: 9.5px;
+  background: rgba(45,122,68,.15);
+  color: #2d7a44;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+.src-combo-info {
+  display: block;
+  font-size: 11.5px;
+  color: var(--text-soft);
+  margin-bottom: 6px;
+}
+.src-card-combo .src-tags { margin-top: 4px; }
 .src-card-link .src-name { color: var(--text); }
 .src-card-link::after {
   content: '↗';
