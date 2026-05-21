@@ -2065,7 +2065,7 @@ function initNextOffice() {
 
     if (labelEl)     labelEl.textContent     = 'Prochain office';
     prayerEl.textContent                     = found.slot.label;
-    if (timeEl)      timeEl.textContent      = found.entry.tl;
+    if (timeEl)      timeEl.textContent      = formatOfficeTime(found.entry.t).display;
     if (countdownEl) countdownEl.textContent = countdown;
     if (srcsEl)      srcsEl.textContent      = srcNames;
   }
@@ -3321,6 +3321,120 @@ const ESP_MYST_DOW = {
   chapelet2030: { 0:'glorieux',   1:'joyeux',     2:'douloureux', 3:'glorieux',   4:'lumineux',   5:'douloureux', 6:'joyeux' },
 };
 
+// ════════════════════════════════════════════════════════════════════════
+// LOCALISATION HORAIRE — Convertit les offices Paris vers l'heure locale
+// de l'utilisateur (Québec, Belgique, Cameroun, etc.). Reste référence Paris
+// dans la base de données ; conversion uniquement à l'affichage.
+// ════════════════════════════════════════════════════════════════════════
+function _userTimezone() {
+  try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Paris'; }
+  catch (_) { return 'Europe/Paris'; }
+}
+
+// Zone "Paris" : France, Belgique, Suisse, Italie, Espagne, etc. — toutes
+// utilisent CET/CEST donc même heure que Paris. Pas de conversion nécessaire.
+function _isParisTimezone(tz) {
+  return /^Europe\/(Paris|Brussels|Luxembourg|Madrid|Rome|Berlin|Vienna|Amsterdam|Monaco|Andorra|Malta|Vatican|Vaduz|Zurich|Geneva)$/.test(tz || '');
+}
+
+// Convertit "HH:MM" Paris en Date locale équivalente (pour aujourd'hui).
+function _convertParisToLocal(parisHHMM, refDate) {
+  refDate = refDate || new Date();
+  const [h, m] = parisHHMM.split(':').map(Number);
+  // Différence entre Paris et heure locale (gère DST automatiquement)
+  const parisStr = refDate.toLocaleString('en-US', { timeZone: 'Europe/Paris' });
+  const localStr = refDate.toLocaleString('en-US');
+  const diffMs = new Date(parisStr).getTime() - new Date(localStr).getTime();
+  // refDate aujourd'hui à HH:MM "comme si local", ajusté du décalage
+  const pretend = new Date(refDate.getFullYear(), refDate.getMonth(), refDate.getDate(), h, m, 0);
+  return new Date(pretend.getTime() - diffMs);
+}
+
+// Préférence de l'utilisateur : 'local' (défaut) ou 'paris'
+function _getTimeDisplayPref() {
+  const meta = window._pelUser?.user_metadata || {};
+  return meta.time_display === 'paris' ? 'paris' : 'local';
+}
+
+// Formate une heure d'office Paris (HH:MM) pour affichage.
+// Retourne { display: '10h00', isShifted: bool, parisHHMM, dayShift }
+//   isShifted : true si l'heure diffère de Paris (utilisateur hors zone CET/CEST)
+//   dayShift  : -1, 0, +1 — décalage de jour (utile pour le chapelet de minuit)
+function formatOfficeTime(parisHHMM, refDate) {
+  if (!parisHHMM) return { display: '—', isShifted: false };
+  const tz = _userTimezone();
+  const pref = _getTimeDisplayPref();
+  // Pad → "10h00"
+  const padParis = parisHHMM.replace(':', 'h').replace(/h(\d)$/, 'h0$1');
+  // Si l'utilisateur est en zone Paris ou préfère l'heure de Paris → tel quel
+  if (pref === 'paris' || _isParisTimezone(tz)) {
+    return { display: padParis, isShifted: false, parisHHMM };
+  }
+  const local = _convertParisToLocal(parisHHMM, refDate);
+  const h = local.getHours();
+  const m = local.getMinutes();
+  const hh = String(h).padStart(1, '0');
+  const mm = String(m).padStart(2, '0');
+  // Décalage de jour : compare la date locale avec refDate
+  const refDay = (refDate || new Date()).getDate();
+  let dayShift = local.getDate() - refDay;
+  // Si refDate est le 1er et local est le 31 du mois précédent : -1
+  // (heuristique simple : si diff > 1 c'est un wrap fin de mois)
+  if (Math.abs(dayShift) > 1) dayShift = dayShift > 0 ? -1 : 1;
+  return {
+    display: `${hh}h${mm}`,
+    isShifted: true,
+    parisHHMM,
+    dayShift,
+    tz,
+  };
+}
+
+// Renvoie un label court de la zone (ex: "Montréal", "Yaoundé", "Dakar")
+function _shortTzLabel(tz) {
+  const map = {
+    'America/Montreal': 'Montréal',
+    'America/Toronto':  'Montréal',
+    'America/Halifax':  'Halifax',
+    'America/Argentina/Buenos_Aires': 'Buenos Aires',
+    'Africa/Yaoundé':   'Yaoundé',
+    'Africa/Douala':    'Yaoundé',
+    'Africa/Dakar':     'Dakar',
+    'Africa/Abidjan':   'Abidjan',
+    'Africa/Kinshasa':  'Kinshasa',
+    'Africa/Lubumbashi':'Kinshasa',
+    'Africa/Lome':      'Lomé',
+    'Africa/Cotonou':   'Cotonou',
+    'Africa/Ouagadougou':'Ouagadougou',
+    'Africa/Bangui':    'Bangui',
+    'Africa/Brazzaville':'Brazzaville',
+    'Africa/Antananarivo':'Tananarive',
+    'Indian/Reunion':   'La Réunion',
+    'America/Martinique':'Martinique',
+    'America/Guadeloupe':'Guadeloupe',
+    'America/Port-au-Prince':'Port-au-Prince',
+    'America/Cayenne':  'Cayenne',
+    'Pacific/Noumea':   'Nouméa',
+    'Pacific/Tahiti':   'Papeete',
+  };
+  if (map[tz]) return map[tz];
+  // Fallback : prend la dernière partie du nom (ex: "America/New_York" → "New York")
+  const last = (tz || '').split('/').pop() || '';
+  return last.replace(/_/g, ' ');
+}
+
+window.formatOfficeTime = formatOfficeTime;
+window._isParisTimezone = _isParisTimezone;
+window._userTimezone = _userTimezone;
+window._shortTzLabel = _shortTzLabel;
+window._getTimeDisplayPref = _getTimeDisplayPref;
+// Helper pour forcer le re-render des vues quand la pref horaire change
+window._pelRerenderTimeViews = function () {
+  try { initTodayTimeline(); } catch (_) {}
+  try { initWeek(); } catch (_) {}
+  try { initNextOffice(); } catch (_) {}
+};
+
 // ── Surcharges de planning (chargées depuis Supabase) ─────────────────────
 // Permet à l'admin d'ajouter/désactiver/modifier des offices sans toucher au code.
 // Chaque override s'applique sur une plage [date_start, date_end] et soit
@@ -4137,7 +4251,7 @@ function initWeek() {
     for (const slot of slots) {
       const icon = TYPE_ICON[slot.type] || 'fa-circle';
       const firstEntry = slot.entries[0];
-      const allTimes = slot.entries.map(e => e.tl).join(' · ');
+      const allTimes = slot.entries.map(e => formatOfficeTime(e.t, date).display).join(' · ');
 
       // Sources (tous les entries fusionnés)
       let srcsHtml = '';
@@ -4368,7 +4482,7 @@ function initTodayTimeline() {
 
     // Identifiant unique pour cet office (type + heure)
     const officeId   = slot.type + '_' + entry.t.replace(':', '');
-    const officeName = slot.label + ' — ' + entry.tl;
+    const officeName = slot.label + ' — ' + formatOfficeTime(entry.t).display;
     const chatHtml   = `<div class="tl-chat-wrap">
         <button class="tl-chat-btn" data-action="chat"
           data-office-id="${officeId}" data-office-name="${esc(officeName)}"
@@ -4384,6 +4498,12 @@ function initTodayTimeline() {
     // Durée affichée à côté de l'heure
     const durHtml = duration
       ? `<span class="tl-dur">(${fmtDur(duration)})</span>`
+      : '';
+
+    // Heure d'affichage : locale par défaut, avec mention discrète (Paris) si décalage
+    const timeInfo = formatOfficeTime(entry.t);
+    const timeBadge = timeInfo.isShifted
+      ? `<span class="tl-time-paris" title="Heure de diffusion : ${esc(entry.tl)} (Paris)">${esc(entry.tl)} Paris</span>`
       : '';
 
     // Description : phrase discrète toujours visible sous le titre.
@@ -4403,8 +4523,9 @@ function initTodayTimeline() {
     art.dataset.desc     = slot.desc || '';
     art.innerHTML = `
       <div class="tl-time">
-        <span class="tl-time-h">${entry.tl}</span>
+        <span class="tl-time-h">${esc(timeInfo.display)}</span>
         ${durHtml}
+        ${timeBadge}
         <button class="tl-cal-btn" type="button" data-action="cal-one"
                 title="Ajouter cette prière à mon calendrier" aria-label="Ajouter au calendrier">
           <i class="fa-regular fa-calendar-plus"></i>
@@ -4423,6 +4544,33 @@ function initTodayTimeline() {
       </div>`;
     container.appendChild(art);
   });
+
+  // ── Bannière de localisation horaire (seulement hors zone Paris) ──
+  // Affichée une seule fois en haut de la timeline, peut être fermée.
+  if (!_isParisTimezone(_userTimezone()) && _getTimeDisplayPref() === 'local'
+      && !sessionStorage.getItem('pel_tz_banner_dismissed')) {
+    const existingBanner = document.getElementById('tl-tz-banner');
+    if (!existingBanner) {
+      const tz = _userTimezone();
+      const tzLabel = _shortTzLabel(tz);
+      const banner = document.createElement('div');
+      banner.id = 'tl-tz-banner';
+      banner.className = 'tl-tz-banner';
+      banner.innerHTML = `
+        <i class="fa-solid fa-globe"></i>
+        <span class="tl-tz-text">
+          Les horaires affichés sont en <strong>heure locale (${esc(tzLabel)})</strong>.
+          Les offices sont diffusés en heure de Paris.
+        </span>
+        <button class="tl-tz-close" id="tl-tz-close" aria-label="Fermer">&times;</button>
+      `;
+      container.prepend(banner);
+      banner.querySelector('#tl-tz-close')?.addEventListener('click', () => {
+        banner.remove();
+        sessionStorage.setItem('pel_tz_banner_dismissed', '1');
+      });
+    }
+  }
 
   // ── Bouton "Ajouter ma journée au calendrier" — au-dessus du flux ──
   // Inséré DANS la colonne timeline (sinon il s'intercale entre filtres et flux en desktop)

@@ -382,6 +382,10 @@ async function loadProfileContent() {
   const currentSaint   = meta.patron_saint   || 'aucun';
   const currentVerse   = meta.favorite_verse || '';
   const currentPseudo  = meta.pseudo         || '';
+  const currentTimeDisplay = meta.time_display === 'paris' ? 'paris' : 'local';
+  const userTZ = typeof window._userTimezone === 'function' ? window._userTimezone() : 'Europe/Paris';
+  const isParisTZ = typeof window._isParisTimezone === 'function' ? window._isParisTimezone(userTZ) : true;
+  const tzLabel = typeof window._shortTzLabel === 'function' ? window._shortTzLabel(userTZ) : 'Local';
 
   // HTML pour la grille des icônes
   const iconsGridHTML = Object.entries(AVATAR_ICONS).map(([key, ico]) => {
@@ -489,6 +493,21 @@ async function loadProfileContent() {
       <textarea class="prof-input prof-verse-input" id="prof-verse-input"
                 rows="2" maxlength="240"
                 placeholder="« Que votre cœur ne se trouble pas… » — Jean 14:1">${_esc(currentVerse)}</textarea>
+
+      ${isParisTZ ? '' : `
+      <div class="prof-perso-label" style="margin-top:14px"><i class="fa-solid fa-globe"></i> Affichage des horaires</div>
+      <div class="prof-tz-toggle">
+        <label class="prof-tz-opt${currentTimeDisplay === 'local' ? ' active' : ''}">
+          <input type="radio" name="prof-time-display" value="local"${currentTimeDisplay === 'local' ? ' checked' : ''}>
+          <span><strong>Heure locale</strong><small>${_esc(tzLabel)}</small></span>
+        </label>
+        <label class="prof-tz-opt${currentTimeDisplay === 'paris' ? ' active' : ''}">
+          <input type="radio" name="prof-time-display" value="paris"${currentTimeDisplay === 'paris' ? ' checked' : ''}>
+          <span><strong>Heure de Paris</strong><small>Référence de diffusion</small></span>
+        </label>
+      </div>
+      `}
+
       <button class="prof-save-btn" id="prof-perso-save">
         <i class="fa-solid fa-check"></i> Enregistrer mes préférences
       </button>
@@ -893,6 +912,8 @@ async function saveProfilePerso() {
   const saintFeast = $id('prof-saint-feast')?.value || '';
   const saintLien  = $id('prof-saint-lien')?.value  || '';
   const verseTxt   = $id('prof-verse-input')?.value.trim().slice(0, 240) || '';
+  const timeDisplay = document.querySelector('input[name="prof-time-display"]:checked')?.value
+                      || (_currentUser?.user_metadata?.time_display || 'local');
 
   btn.disabled = true;
   const oldHTML = btn.innerHTML;
@@ -908,6 +929,7 @@ async function saveProfilePerso() {
       patron_saint_feast: saintFeast,
       patron_saint_lien:  saintLien,
       favorite_verse:     verseTxt,
+      time_display:       timeDisplay,
     };
     const { data, error } = await _sb.auth.updateUser({ data: newMeta });
     if (error) throw error;
@@ -916,6 +938,8 @@ async function saveProfilePerso() {
     updateHeaderUI(_currentUser);
     applyAvatarTo($id('prof-avatar-display'), _currentUser);
     _showProfFeedback(fb, '✓ Préférences enregistrées', 'success');
+    // Re-render des vues qui dépendent de la préférence horaire
+    try { window._pelRerenderTimeViews?.(); } catch (_) {}
   } catch (err) {
     _showProfFeedback(fb, err.message || 'Erreur, réessayez.', 'error');
   } finally {

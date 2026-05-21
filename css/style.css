@@ -408,6 +408,75 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
   font-weight: 400;
 }
 
+/* Bannière de localisation horaire (visible hors zone Paris) */
+.tl-tz-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  margin: 0 0 10px;
+  background: linear-gradient(135deg, rgba(99,102,241,.10), rgba(99,102,241,.04));
+  border: 1px solid rgba(99,102,241,.30);
+  border-left-width: 3px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  color: var(--text);
+  line-height: 1.45;
+}
+.tl-tz-banner > i { color: #6366f1; font-size: 14px; }
+.tl-tz-text { flex: 1; }
+.tl-tz-text strong { color: var(--navy); }
+.tl-tz-close {
+  background: none; border: none;
+  color: var(--text-soft);
+  font-size: 18px; line-height: 1;
+  padding: 0 6px; cursor: pointer;
+}
+.tl-tz-close:hover { color: var(--navy); }
+
+/* Petit badge "10h00 Paris" à côté de l'heure locale */
+.tl-time-paris {
+  font-size: 9.5px;
+  color: var(--text-soft);
+  font-style: italic;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: rgba(0,0,0,.04);
+  margin-top: 1px;
+  white-space: nowrap;
+  letter-spacing: .01em;
+}
+
+/* Toggle "Heure locale / Heure de Paris" dans le profil */
+.prof-tz-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.prof-tz-opt {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: white;
+  border: 1.5px solid var(--border-mid);
+  border-radius: 10px;
+  padding: 9px 12px;
+  cursor: pointer;
+  transition: border-color .12s, background .12s;
+}
+.prof-tz-opt:hover { border-color: var(--gold); }
+.prof-tz-opt.active,
+.prof-tz-opt:has(input:checked) {
+  border-color: var(--gold);
+  background: rgba(201,168,76,.08);
+}
+.prof-tz-opt input { accent-color: var(--gold); }
+.prof-tz-opt span { display: flex; flex-direction: column; }
+.prof-tz-opt strong { font-size: 12.5px; color: var(--navy); }
+.prof-tz-opt small  { font-size: 10.5px; color: var(--text-soft); }
+
 /* Bouton calendrier compact (par item) */
 .tl-cal-btn {
   background: transparent;
