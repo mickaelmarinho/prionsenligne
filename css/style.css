@@ -1681,6 +1681,16 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
   display: block;
   cursor: default;
 }
+/* Sur desktop : la carte combinée prend 2 colonnes de la grille pour que ses
+   2 sous-items soient côte à côte → même hauteur que les autres cartes radio. */
+@media (min-width: 720px) {
+  .src-card-combo { grid-column: span 2; }
+  .src-combo-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+}
 .src-combo-list {
   display: flex;
   flex-direction: column;
@@ -1692,7 +1702,7 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
   background: rgba(0,0,0,.025);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 9px 12px;
+  padding: 9px 11px;
   text-decoration: none;
   color: inherit;
   transition: background .15s, border-color .15s, transform .12s;
@@ -1700,36 +1710,40 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
 .src-combo-item:hover {
   background: rgba(201,168,76,.08);
   border-color: var(--gold-pale);
-  transform: translateX(2px);
+  transform: translateY(-1px);
 }
 .src-combo-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 6px;
-  margin-bottom: 3px;
+  flex-wrap: wrap;
+  margin-bottom: 2px;
 }
 .src-combo-head > strong {
-  font-size: 13.5px;
+  font-size: 13px;
   color: var(--navy);
+  font-family: var(--font-serif);
+  font-weight: 500;
 }
 .src-combo-badge {
-  font-size: 9.5px;
+  font-size: 9px;
   background: rgba(45,122,68,.15);
   color: #2d7a44;
-  padding: 2px 7px;
+  padding: 1px 6px;
   border-radius: 999px;
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: .02em;
   white-space: nowrap;
 }
 .src-combo-info {
   display: block;
-  font-size: 11.5px;
+  font-size: 11px;
   color: var(--text-soft);
-  margin-bottom: 6px;
+  margin-bottom: 5px;
 }
-.src-card-combo .src-tags { margin-top: 4px; }
+.src-card-combo .src-tags { margin-top: 2px; gap: 4px; }
+.src-card-combo .src-tags .stag { font-size: 10px; padding: 2px 7px; }
 .src-card-link .src-name { color: var(--text); }
 .src-card-link::after {
   content: '↗';
