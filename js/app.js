@@ -4267,6 +4267,9 @@ function buildICS(events, calName = 'PrionsEnLigne — Prières') {
     if (ev.description) lines.push(`DESCRIPTION:${_icsEscape(ev.description)}`);
     if (ev.url)         lines.push(`URL:${_icsEscape(ev.url)}`);
     if (ev.location)    lines.push(`LOCATION:${_icsEscape(ev.location)}`);
+    // Récurrence (RRULE) — optionnel : permet aux apps calendrier de répéter
+    // l'événement automatiquement (chaque jour, chaque semaine, jusqu'à une date)
+    if (ev.rrule) lines.push(`RRULE:${ev.rrule}`);
     // Rappel 10 min avant
     lines.push(
       'BEGIN:VALARM',
@@ -4455,14 +4458,116 @@ function initTodayTimeline() {
   // Construit un .ics à partir d'une liste d'items de timeline et déclenche le download
   function exportTimelineItems(items, mode) {
     if (!items.length) return;
+    // Ouvre une modale qui demande la récurrence (une fois / quotidien / hebdo)
+    // avant de générer et télécharger le .ics.
+    openRecurrenceModal(items, mode);
+  }
+
+  // Construit un libellé "Tous les lundis", "Tous les jours"…
+  const DOW_LABELS = ['dimanches', 'lundis', 'mardis', 'mercredis', 'jeudis', 'vendredis', 'samedis'];
+
+  function openRecurrenceModal(items, mode) {
     const today = getParisDate();
+    const todayDow = today.getDay();
+    const officeLabel = items.length > 1
+      ? `votre journée du ${today.toLocaleDateString('fr-FR')}`
+      : (items[0].dataset.label || 'cet office');
+
+    // Si une modale est déjà ouverte, on la retire
+    document.getElementById('rec-modal-backdrop')?.remove();
+
+    const html = `
+      <div class="rec-modal-backdrop" id="rec-modal-backdrop">
+        <div class="rec-modal" role="dialog" aria-modal="true" aria-label="Récurrence">
+          <button class="rec-close" id="rec-close" aria-label="Fermer"><i class="fa-solid fa-xmark"></i></button>
+          <div class="rec-head">
+            <i class="fa-regular fa-calendar-plus"></i>
+            <h3>Ajouter au calendrier</h3>
+            <p class="rec-sub">${esc(officeLabel)}</p>
+          </div>
+          <div class="rec-body">
+            <div class="rec-section-label">À quelle fréquence ?</div>
+            <label class="rec-opt">
+              <input type="radio" name="freq" value="once" checked>
+              <div><strong>Une seule fois</strong><small>${esc(today.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long' }))}</small></div>
+            </label>
+            <label class="rec-opt">
+              <input type="radio" name="freq" value="weekly">
+              <div><strong>Tous les ${DOW_LABELS[todayDow]}</strong><small>Chaque semaine à la même heure</small></div>
+            </label>
+            <label class="rec-opt">
+              <input type="radio" name="freq" value="daily">
+              <div><strong>Tous les jours</strong><small>Si vous voulez prier quotidiennement à cette heure</small></div>
+            </label>
+
+            <div class="rec-section-label rec-section-label--duration">Pendant combien de temps ?</div>
+            <div class="rec-duration">
+              <label class="rec-pill"><input type="radio" name="duration" value="2"  ><span>2 semaines</span></label>
+              <label class="rec-pill"><input type="radio" name="duration" value="4" checked><span>1 mois</span></label>
+              <label class="rec-pill"><input type="radio" name="duration" value="12" ><span>3 mois</span></label>
+              <label class="rec-pill"><input type="radio" name="duration" value="26" ><span>6 mois</span></label>
+              <label class="rec-pill"><input type="radio" name="duration" value="52" ><span>1 an</span></label>
+            </div>
+          </div>
+          <div class="rec-foot">
+            <button class="rec-btn-secondary" id="rec-cancel">Annuler</button>
+            <button class="rec-btn-primary" id="rec-confirm">
+              <i class="fa-solid fa-download"></i> Télécharger
+            </button>
+          </div>
+        </div>
+      </div>`;
+    document.body.insertAdjacentHTML('beforeend', html);
+
+    const backdrop = document.getElementById('rec-modal-backdrop');
+    const close = () => backdrop?.remove();
+    backdrop.querySelector('#rec-close')?.addEventListener('click', close);
+    backdrop.querySelector('#rec-cancel')?.addEventListener('click', close);
+    backdrop.addEventListener('click', e => { if (e.target === backdrop) close(); });
+
+    // Désactive la section "durée" si "une seule fois"
+    function syncDurationDisabled() {
+      const freq = backdrop.querySelector('input[name="freq"]:checked')?.value;
+      const isOnce = freq === 'once';
+      backdrop.querySelectorAll('input[name="duration"]').forEach(i => i.disabled = isOnce);
+      backdrop.querySelectorAll('.rec-pill').forEach(p =>
+        p.classList.toggle('rec-pill--disabled', isOnce)
+      );
+      backdrop.querySelector('.rec-section-label--duration')
+        ?.classList.toggle('rec-section-label--disabled', isOnce);
+    }
+    backdrop.querySelectorAll('input[name="freq"]').forEach(i =>
+      i.addEventListener('change', syncDurationDisabled));
+    syncDurationDisabled();
+
+    backdrop.querySelector('#rec-confirm')?.addEventListener('click', () => {
+      const freq = backdrop.querySelector('input[name="freq"]:checked')?.value || 'once';
+      const weeks = parseInt(backdrop.querySelector('input[name="duration"]:checked')?.value, 10) || 4;
+      close();
+      buildAndDownloadICS(items, mode, freq, weeks);
+    });
+  }
+
+  function buildAndDownloadICS(items, mode, freq, durationWeeks) {
+    const today = getParisDate();
+    // Date de fin pour la récurrence (UTC, format YYYYMMDDTHHMMSSZ)
+    let untilStr = null;
+    if (freq !== 'once') {
+      const until = new Date(today.getTime() + durationWeeks * 7 * 24 * 3600 * 1000);
+      until.setHours(23, 59, 59, 999);
+      const p = n => String(n).padStart(2, '0');
+      untilStr = `${until.getUTCFullYear()}${p(until.getUTCMonth() + 1)}${p(until.getUTCDate())}T235959Z`;
+    }
+    const rrule = freq === 'weekly' ? `FREQ=WEEKLY;UNTIL=${untilStr}`
+                : freq === 'daily'  ? `FREQ=DAILY;UNTIL=${untilStr}`
+                : null;
+
     const events = items.map(item => {
       const [h, m]  = (item.dataset.start || '0:0').split(':').map(Number);
       const dur     = parseInt(item.dataset.duration, 10) || 30;
       const start   = new Date(today.getFullYear(), today.getMonth(), today.getDate(), h, m, 0);
       const end     = new Date(start.getTime() + dur * 60000);
       const label   = item.dataset.label || item.querySelector('.tl-prayer')?.textContent?.trim().replace(/[ⓘ\s]+$/, '') || 'Prière';
-      // Liste des sources affichées sous chaque office
       const srcNames = Array.from(item.querySelectorAll('.tl-src'))
         .map(a => a.textContent.trim().replace(/^\s*[▶ ]+/, ''))
         .filter(Boolean)
@@ -4474,21 +4579,29 @@ function initTodayTimeline() {
         'Via prionsenligne.fr',
       ].filter(Boolean).join('\n');
       const isoDay = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
+      // Suffixe unique pour les UID quand on récurre (évite collision si l'utilisateur
+      // ré-importe un fichier différent du même office)
+      const recurSuffix = freq === 'once' ? '' : `-${freq}-${durationWeeks}w`;
       return {
-        uid: `pel-${(item.dataset.type || 'priere')}-${item.dataset.start || ''}-${isoDay}@prionsenligne.fr`,
+        uid: `pel-${(item.dataset.type || 'priere')}-${item.dataset.start || ''}-${isoDay}${recurSuffix}@prionsenligne.fr`,
         start, end,
         summary: label,
         description: desc,
         url: 'https://prionsenligne.fr/agenda',
+        rrule,
       };
     });
+
     const isoDayStr = today.toISOString().slice(0, 10);
+    const recurLabel = freq === 'once' ? '' :
+                      freq === 'weekly' ? '-hebdo' :
+                      '-quotidien';
     const calName = mode === 'journée'
       ? `PrionsEnLigne — Prières du ${today.toLocaleDateString('fr-FR')}`
       : `PrionsEnLigne — ${events[0].summary}`;
     const filename = mode === 'journée'
-      ? `prionsenligne-journee-${isoDayStr}.ics`
-      : `prionsenligne-${(events[0].summary || 'priere').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${isoDayStr}.ics`;
+      ? `prionsenligne-journee-${isoDayStr}${recurLabel}.ics`
+      : `prionsenligne-${(events[0].summary || 'priere').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${isoDayStr}${recurLabel}.ics`;
     downloadICS(filename, buildICS(events, calName));
   }
 

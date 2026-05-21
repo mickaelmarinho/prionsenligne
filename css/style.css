@@ -4877,6 +4877,137 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
       color-mix(in srgb, var(--user-palette, var(--navy)) 60%, var(--navy)) 100%);
 }
 
+/* Modal récurrence (export calendrier) */
+.rec-modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.55);
+  z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+  animation: fadeIn .15s ease;
+}
+.rec-modal {
+  background: var(--cream);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 440px;
+  max-height: 92vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 14px 50px rgba(0,0,0,.32);
+  animation: recPopIn .2s ease-out;
+}
+@keyframes recPopIn {
+  from { opacity: 0; transform: translateY(8px) scale(.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.rec-close {
+  position: absolute; top: 10px; right: 10px;
+  width: 32px; height: 32px;
+  background: rgba(0,0,0,.05); border: none; border-radius: 50%;
+  cursor: pointer; color: var(--text-soft);
+  display: flex; align-items: center; justify-content: center;
+}
+.rec-close:hover { background: rgba(0,0,0,.10); color: var(--navy); }
+.rec-head {
+  text-align: center;
+  padding: 24px 20px 8px;
+}
+.rec-head > i {
+  font-size: 30px; color: var(--gold);
+  margin-bottom: 6px; display: block;
+}
+.rec-head h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+  color: var(--navy);
+  margin: 0 0 4px;
+}
+.rec-sub {
+  font-size: 13px;
+  color: var(--text-soft);
+  margin: 0;
+  font-style: italic;
+}
+.rec-body { padding: 8px 20px 4px; }
+.rec-section-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--text-soft);
+  font-weight: 600;
+  margin: 18px 0 8px;
+}
+.rec-section-label--duration { margin-top: 20px; }
+.rec-section-label--disabled { opacity: .4; }
+.rec-opt {
+  display: flex; align-items: flex-start; gap: 11px;
+  padding: 11px 13px;
+  background: white;
+  border: 1.5px solid var(--border-mid);
+  border-radius: 10px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: border-color .12s, background .12s;
+}
+.rec-opt:hover { border-color: var(--gold); }
+.rec-opt:has(input:checked) {
+  border-color: var(--gold);
+  background: rgba(201,168,76,.06);
+}
+.rec-opt input { margin-top: 3px; accent-color: var(--gold); }
+.rec-opt > div { flex: 1; }
+.rec-opt strong { display: block; font-size: 13.5px; color: var(--navy); }
+.rec-opt small  { display: block; font-size: 12px; color: var(--text-soft); margin-top: 1px; }
+
+.rec-duration {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-bottom: 12px;
+}
+.rec-pill {
+  cursor: pointer;
+}
+.rec-pill input { display: none; }
+.rec-pill span {
+  display: inline-block;
+  background: white;
+  border: 1.5px solid var(--border-mid);
+  border-radius: 18px;
+  padding: 7px 14px;
+  font-size: 12.5px;
+  color: var(--text-mid);
+  font-family: var(--font-ui);
+  transition: all .12s;
+}
+.rec-pill:hover span { border-color: var(--gold); color: var(--navy); }
+.rec-pill input:checked + span {
+  background: var(--navy); border-color: var(--navy); color: white;
+}
+.rec-pill--disabled { opacity: .4; pointer-events: none; }
+
+.rec-foot {
+  padding: 14px 20px 20px;
+  display: flex; gap: 10px; justify-content: flex-end;
+  border-top: 1px solid var(--border);
+  margin-top: 14px;
+}
+.rec-btn-secondary, .rec-btn-primary {
+  font-family: 'Outfit', sans-serif;
+  font-size: 13.5px;
+  font-weight: 500;
+  border: none;
+  border-radius: 22px;
+  padding: 10px 20px;
+  cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
+  transition: background .15s;
+}
+.rec-btn-secondary { background: transparent; color: var(--text-soft); border: 1px solid var(--border-mid); }
+.rec-btn-secondary:hover { background: rgba(0,0,0,.04); color: var(--navy); }
+.rec-btn-primary { background: var(--gold); color: var(--navy); font-weight: 600; }
+.rec-btn-primary:hover { background: #d4af5a; }
+.rec-btn-primary > i { font-size: 12px; }
+
 /* Modal installation PWA (séparée du À propos) */
 .install-panel .install-icon-big {
   font-size: 56px;
