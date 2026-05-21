@@ -1736,11 +1736,13 @@ function initBreviary() {
   document.addEventListener('click', e => {
     const btn = e.target.closest('.tl-breviary-btn');
     if (!btn) return;
-    // Office monastique → modale pédagogique dédiée (Triors etc.)
+    // Office monastique → modale pédagogique dédiée (Triors, Saint-Wandrille, etc.)
     if (btn.dataset.action === 'monastic') {
       e.preventDefault();
       e.stopPropagation();
-      if (window._openMonasticModal) window._openMonasticModal(btn.dataset.label || 'Office monastique');
+      if (window._openMonasticModal) {
+        window._openMonasticModal(btn.dataset.label || 'Office monastique', btn.dataset.kind || 'laudes');
+      }
       return;
     }
     // Messe en latin (Saint-Wandrille, etc.) → modale Ordinaire de la messe
@@ -3239,6 +3241,7 @@ const ESP_DESC = {
   chapeletMisericordeVend: "Chapelet de la Miséricorde après l'heure de la Miséricorde, depuis l'oratoire de Radio Espérance. (Hors temps de Carême.)",
   messeStWandrille:        "Eucharistie chantée en latin et grégorien depuis l'abbaye Saint-Wandrille de Fontenelle (Normandie), communauté bénédictine fondée en 649. Les lectures du jour sont les mêmes que pour la messe en français (Liturgie de l'AELF).",
   messeStWandrilleDim:     "Messe dominicale solennelle (1h30) chantée en grégorien depuis l'abbaye Saint-Wandrille de Fontenelle. Liturgie romaine en latin. Les jours de solennité, l'office est également à cette heure.",
+  vepresStWandrille:       "Office monastique des Vêpres chanté en grégorien depuis l'abbaye Saint-Wandrille de Fontenelle. Office du soir suivant la Règle de saint Benoît : hymne, psalmodie, capitule, répons bref, cantique du Magnificat, intercessions.",
 };
 
 // ── Mystères selon le jour pour les 3 chapelets RM principaux ──────────
@@ -3600,11 +3603,12 @@ function _getDayScheduleInternal(date) {
     }
   }
 
-  // Étape 0.5 : ajustement automatique aux solennités liturgiques
-  // → la messe de Saint-Wandrille passe de 9h45 (45 min) à 10h00 (1h30) en semaine,
-  //   comme le dimanche, car les jours de solennité sont des jours d'obligation.
+  // Étape 0.5 : ajustement automatique aux solennités liturgiques (hors dimanche)
+  // → la messe de Saint-Wandrille passe de 9h45 (45 min) à 10h00 (1h30)
+  // → les vêpres de Saint-Wandrille passent à 17h00 (comme le dimanche)
   if (date.getDay() !== 0 && _isLiturgicalSolemnity(date)) {
     slots = slots.map(slot => {
+      // Messe : 9h45 → 10h00 / 1h30
       if (slot.label === 'Messe en grégorien — Abbaye Saint-Wandrille') {
         return {
           ...slot,
@@ -3616,6 +3620,17 @@ function _getDayScheduleInternal(date) {
             t:   '10:00',
             tl:  '10h00',
             dur: 90,
+          })),
+        };
+      }
+      // Vêpres : 17h30 ou 18h45 → 17h00
+      if (slot.label === 'Vêpres en grégorien — Abbaye Saint-Wandrille') {
+        return {
+          ...slot,
+          entries: slot.entries.map(e => ({
+            ...e,
+            t:  '17:00',
+            tl: '17h00',
           })),
         };
       }
@@ -4240,6 +4255,7 @@ function _buildEspSlotsForDow(dow) {
       // hymnes du Liber Hymnarius). Cache le bouton "Bréviaire" (AELF romain
       // incompatible) et affiche un bouton "Office monastique" → panneau pédagogique.
       monasticOffice: true,
+      officeKind: 'laudes',  // → cantique du Benedictus dans le panneau
       entries: [{ t: '6:05', tl: '6h05', dur: 40, srcs: ['esp', 'espg'] }],
     },
     { type: 'matin', label: 'Prière du matin (Radio Espérance)',
@@ -4269,6 +4285,21 @@ function _buildEspSlotsForDow(dow) {
       entries: [{ t: '9:45', tl: '9h45', dur: 45, srcs: ['espg'] }],
     });
   }
+
+  // Vêpres Saint-Wandrille — grégorien (horaire variable selon le jour)
+  // dim : 17h00 · mar/jeu : 18h45 · lun/mer/ven/sam : 17h30
+  // Sur solennités : ajustement automatique à 17h00 (cf. _getDayScheduleInternal)
+  let vepT, vepTl;
+  if (dow === 0)                     { vepT = '17:00'; vepTl = '17h00'; }
+  else if (dow === 2 || dow === 4)   { vepT = '18:45'; vepTl = '18h45'; }
+  else                               { vepT = '17:30'; vepTl = '17h30'; }
+  slots.push({
+    type: 'vepres', label: 'Vêpres en grégorien — Abbaye Saint-Wandrille',
+    desc: ESP_DESC.vepresStWandrille,
+    monasticOffice: true,  // → bouton "Office monastique" + cache bréviaire AELF
+    officeKind: 'vepres',  // → indique au panneau la structure des vêpres (Magnificat)
+    entries: [{ t: vepT, tl: vepTl, dur: 30, srcs: ['espg'] }],
+  });
 
   // Messe crypte Saint-Michel — lun-sam (pas dimanche)
   if (dow !== 0) {
@@ -4616,7 +4647,7 @@ function initTodayTimeline() {
            <i class="fa-solid fa-book-open"></i> ${brevLabel}
          </button>`
       : slot.monasticOffice
-        ? `<button class="tl-breviary-btn tl-monastic-btn" data-action="monastic" data-label="${esc(slot.label)}">
+        ? `<button class="tl-breviary-btn tl-monastic-btn" data-action="monastic" data-label="${esc(slot.label)}" data-kind="${esc(slot.officeKind || slot.type || 'laudes')}">
              <i class="fa-solid fa-book-quran"></i> Office monastique
            </button>`
         : '';
@@ -6229,9 +6260,9 @@ function initMonasticModal() {
   const bodyEl   = document.getElementById('monastic-body');
   if (!modal || !bodyEl) return;
 
-  function open(officeLabel) {
+  function open(officeLabel, kind) {
     if (titleEl) titleEl.textContent = officeLabel || 'Office monastique';
-    bodyEl.innerHTML = _renderMonasticContent();
+    bodyEl.innerHTML = _renderMonasticContent(kind || 'laudes');
     overlay?.classList.remove('hidden');
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
@@ -6418,12 +6449,16 @@ function _renderLatinMassContent() {
   `;
 }
 
-function _renderMonasticContent() {
+function _renderMonasticContent(kind) {
+  kind = kind || 'laudes';
   // Parties FIXES de l'office monastique (latine + traduction)
-  // Sources : Liber Usualis, Liber Hymnarius, Antiphonale Monasticum, AELF (Benedictus)
+  // Sources : Liber Usualis, Liber Hymnarius, Antiphonale Monasticum
+  const isVepres = (kind === 'vepres');
+  const officeName = isVepres ? 'Vêpres' : 'Laudes';
+  const officeMoment = isVepres ? 'office du soir' : 'office matinal';
   return `
     <div class="mono-intro">
-      <p>Les Laudes monastiques sont l'<strong>office matinal</strong> chanté en grégorien par les moines bénédictins. Elles suivent la <strong>Règle de saint Benoît</strong> (VI<sup>e</sup> siècle) et le <strong>psautier monastique</strong> — distinct du bréviaire romain post-Concile.</p>
+      <p>Les ${officeName} monastiques sont l'<strong>${officeMoment}</strong> chanté en grégorien par les moines bénédictins. Elles suivent la <strong>Règle de saint Benoît</strong> (VI<sup>e</sup> siècle) et le <strong>psautier monastique</strong> — distinct du bréviaire romain post-Concile.</p>
       <p class="mono-warning"><i class="fa-solid fa-circle-info"></i> Les psaumes, antiennes et hymnes varient chaque jour selon le temps liturgique. <strong>Suivez les moines à l'écoute</strong> — ce panneau présente uniquement la structure et les parties qui reviennent tous les jours.</p>
     </div>
 
@@ -6445,7 +6480,9 @@ function _renderMonasticContent() {
       <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> 2. Hymne <span class="mono-var-tag">Variable</span></h3>
       <div class="mono-section-body">
         <p>Hymne propre au temps liturgique (Avent, Noël, Carême, Pâques, Temps ordinaire, fêtes).</p>
-        <p class="mono-rubric">Pour les jours ordinaires, l'hymne est souvent <em>Æterne rerum cónditor</em> (saint Ambroise, IV<sup>e</sup> siècle) ou <em>Splendor patérnæ glóriæ</em>. Source officielle : <em>Liber Hymnarius</em> (Solesmes).</p>
+        <p class="mono-rubric">${isVepres
+          ? 'Pour les vêpres ordinaires, l\'hymne est souvent <em>Deus Creátor ómnium</em> (saint Ambroise) ou <em>Lucis Creátor óptime</em>. Source : <em>Liber Hymnarius</em> (Solesmes).'
+          : 'Pour les laudes ordinaires, l\'hymne est souvent <em>Æterne rerum cónditor</em> (saint Ambroise, IV<sup>e</sup> siècle) ou <em>Splendor patérnæ glóriæ</em>. Source : <em>Liber Hymnarius</em> (Solesmes).'}</p>
       </div>
     </div>
 
@@ -6462,12 +6499,21 @@ function _renderMonasticContent() {
       </div>
     </div>
 
+    ${isVepres ? `
+    <div class="mono-section">
+      <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> 4. Cantique du Nouveau Testament <span class="mono-var-tag">Variable</span></h3>
+      <div class="mono-section-body">
+        <p>Un cantique néotestamentaire (épîtres pauliniennes, Apocalypse), propre au jour de la semaine.</p>
+      </div>
+    </div>
+    ` : `
     <div class="mono-section">
       <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> 4. Cantique de l'Ancien Testament <span class="mono-var-tag">Variable</span></h3>
       <div class="mono-section-body">
         <p>Un cantique tiré de l'AT, propre au jour de la semaine (par ex. cantique d'Isaïe, de Moïse, des Trois Jeunes Gens dans la fournaise…).</p>
       </div>
     </div>
+    `}
 
     <div class="mono-section">
       <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> 5. Capitule <span class="mono-var-tag">Variable</span></h3>
@@ -6483,6 +6529,53 @@ function _renderMonasticContent() {
       </div>
     </div>
 
+    ${isVepres ? `
+    <div class="mono-section">
+      <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> 7. Cantique de la Vierge — Magnificat <span class="mono-fixed-tag">Le sommet de l'office</span></h3>
+      <div class="mono-section-body">
+        <p class="mono-rubric">Tous se lèvent et font le signe de croix sur eux-mêmes. (Luc 1, 46-55)</p>
+        <p class="mono-latin">Magníficat *<br>
+        ánima mea Dóminum,<br>
+        et exsultávit spíritus meus *<br>
+        in Deo salutári meo,<br>
+        quia respéxit humilitátem ancíllæ suæ. *<br>
+        Ecce enim ex hoc beátam me dicent omnes generatiónes,<br>
+        quia fecit mihi magna qui potens est, *<br>
+        et sanctum nomen ejus,<br>
+        et misericórdia ejus a progénie in progénies *<br>
+        timéntibus eum.<br>
+        Fecit poténtiam in bráchio suo, *<br>
+        dispérsit supérbos mente cordis sui ;<br>
+        depósuit poténtes de sede *<br>
+        et exaltávit húmiles ;<br>
+        esuriéntes implévit bonis *<br>
+        et dívites dimísit inánes.<br>
+        Suscépit Israel púerum suum, *<br>
+        recordátus misericórdiæ suæ,<br>
+        sicut locútus est ad patres nostros, *<br>
+        Abraham et sémini ejus in sǽcula.</p>
+        <p class="mono-french">Mon âme exalte le Seigneur, *<br>
+        exulte mon esprit en Dieu, mon Sauveur !<br>
+        Il s'est penché sur son humble servante ; *<br>
+        désormais tous les âges me diront bienheureuse.<br>
+        Le Puissant fit pour moi des merveilles ; *<br>
+        Saint est son nom !<br>
+        Son amour s'étend d'âge en âge *<br>
+        sur ceux qui le craignent.<br>
+        Déployant la force de son bras, *<br>
+        il disperse les superbes.<br>
+        Il renverse les puissants de leurs trônes, *<br>
+        il élève les humbles.<br>
+        Il comble de biens les affamés, *<br>
+        renvoie les riches les mains vides.<br>
+        Il relève Israël, son serviteur, *<br>
+        il se souvient de son amour,<br>
+        de la promesse faite à nos pères, *<br>
+        en faveur d'Abraham et de sa race, à jamais.</p>
+        <p class="mono-rubric">Gloria Patri… (comme à l'ouverture)</p>
+      </div>
+    </div>
+    ` : `
     <div class="mono-section">
       <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> 7. Cantique de Zacharie — Benedictus <span class="mono-fixed-tag">Le sommet de l'office</span></h3>
       <div class="mono-section-body">
@@ -6516,6 +6609,7 @@ function _renderMonasticContent() {
         <p class="mono-rubric">Gloria Patri… (comme à l'ouverture)</p>
       </div>
     </div>
+    `}
 
     <div class="mono-section">
       <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> 8. Préces / Intercessions <span class="mono-var-tag">Variable</span></h3>
