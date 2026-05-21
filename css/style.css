@@ -5365,6 +5365,18 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   border-color: var(--gold) !important;
 }
 
+/* Bouton "Latin" — visuel discret, distinct du bouton Textes */
+.tl-latin-btn {
+  background: rgba(139, 92, 246, .08) !important;
+  border-color: rgba(139, 92, 246, .30) !important;
+  color: #6d28d9 !important;
+}
+.tl-latin-btn:hover {
+  background: rgba(139, 92, 246, .18) !important;
+  border-color: rgba(139, 92, 246, .50) !important;
+}
+.tl-latin-btn > i { color: #7c3aed !important; }
+
 /* Modal installation PWA (séparée du À propos) */
 .install-panel .install-icon-big {
   font-size: 56px;

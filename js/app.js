@@ -1743,6 +1743,13 @@ function initBreviary() {
       if (window._openMonasticModal) window._openMonasticModal(btn.dataset.label || 'Office monastique');
       return;
     }
+    // Messe en latin (Saint-Wandrille, etc.) → modale Ordinaire de la messe
+    if (btn.dataset.action === 'latin-mass') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (window._openLatinMassModal) window._openLatinMassModal(btn.dataset.label || 'Messe en latin');
+      return;
+    }
     openBreviary(btn.dataset.prayer, btn.dataset.label || '');
   });
 
@@ -3603,6 +3610,7 @@ function _getDayScheduleInternal(date) {
           ...slot,
           label: 'Messe solennelle en grégorien — Abbaye Saint-Wandrille',
           desc:  ESP_DESC.messeStWandrilleDim,
+          latinMass: true,
           entries: slot.entries.map(e => ({
             ...e,
             t:   '10:00',
@@ -4257,6 +4265,7 @@ function _buildEspSlotsForDow(dow) {
     slots.push({
       type: 'messe', label: 'Messe en grégorien — Abbaye Saint-Wandrille',
       desc: ESP_DESC.messeStWandrille,
+      latinMass: true,  // → ajoute le bouton "Suivre en latin"
       entries: [{ t: '9:45', tl: '9h45', dur: 45, srcs: ['espg'] }],
     });
   }
@@ -4302,6 +4311,7 @@ function _buildEspSlotsForDow(dow) {
       },
       { type: 'messe', label: 'Messe dominicale en grégorien — Abbaye Saint-Wandrille',
         desc: ESP_DESC.messeStWandrilleDim,
+        latinMass: true,  // → ajoute le bouton "Suivre en latin"
         entries: [{ t: '10:00', tl: '10h00', dur: 90, srcs: ['espg'] }],
       },
       { type: 'vepres', label: 'Vêpres en grégorien — Triors (Espérance)',
@@ -4601,7 +4611,7 @@ function initTodayTimeline() {
     // un bréviaire monastique différent du Romain de l'AELF — on cache le bouton
     // standard et on propose à la place un panneau pédagogique "Office monastique".
     const hideBreviary = slot.noBreviary || slot.monasticOffice;
-    const brevHtml  = (brevLabel && !hideBreviary)
+    let brevHtml = (brevLabel && !hideBreviary)
       ? `<button class="tl-breviary-btn" data-prayer="${slot.type}" data-label="${esc(slot.label)}" data-myst-dow='${slot.mystByDow ? JSON.stringify(slot.mystByDow) : ''}'>
            <i class="fa-solid fa-book-open"></i> ${brevLabel}
          </button>`
@@ -4610,6 +4620,14 @@ function initTodayTimeline() {
              <i class="fa-solid fa-book-quran"></i> Office monastique
            </button>`
         : '';
+
+    // Pour les messes en latin/grégorien : bouton complémentaire "Suivre en latin"
+    // (ordinaire de la messe en latin + traduction française) en plus de "Textes"
+    if (slot.latinMass) {
+      brevHtml += `<button class="tl-breviary-btn tl-latin-btn" data-action="latin-mass" data-label="${esc(slot.label)}" title="Ordinaire de la messe en latin + traduction">
+             <i class="fa-solid fa-language"></i> Latin
+           </button>`;
+    }
 
     // Identifiant unique pour cet office (type + heure)
     const officeId   = slot.type + '_' + entry.t.replace(':', '');
@@ -6240,6 +6258,166 @@ function initMonasticModal() {
   window._openMonasticModal = open;
 }
 
+// ════════════════════════════════════════════════════════════════════
+// Modal "Suivre la messe en latin" — Ordinaire de la messe
+// ════════════════════════════════════════════════════════════════════
+function initLatinMassModal() {
+  const overlay = document.getElementById('latin-mass-overlay');
+  const modal   = document.getElementById('latin-mass-modal');
+  const closeBtn = document.getElementById('latin-mass-close');
+  const titleEl  = document.getElementById('latin-mass-title');
+  const bodyEl   = document.getElementById('latin-mass-body');
+  if (!modal || !bodyEl) return;
+
+  function open(officeLabel) {
+    if (titleEl) titleEl.textContent = officeLabel || 'Suivre la messe en latin';
+    bodyEl.innerHTML = _renderLatinMassContent();
+    overlay?.classList.remove('hidden');
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    bodyEl.querySelectorAll('.mono-section-title').forEach(t => {
+      t.addEventListener('click', () => {
+        const sec = t.closest('.mono-section');
+        sec?.classList.toggle('mono-section-open');
+      });
+    });
+  }
+  function close() {
+    overlay?.classList.add('hidden');
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+  closeBtn?.addEventListener('click', close);
+  overlay?.addEventListener('click', close);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !modal.classList.contains('hidden')) close();
+  });
+  window._openLatinMassModal = open;
+}
+
+function _renderLatinMassContent() {
+  return `
+    <div class="mono-intro">
+      <p>L'<strong>Ordinaire de la messe</strong> (parties qui ne changent jamais) en latin et français. Les <em>lectures du jour</em> et les <em>propres</em> (introït, graduel, alléluia, offertoire, communion) varient — utilisez le bouton <strong>Textes</strong> pour les lire en français.</p>
+      <p class="mono-warning"><i class="fa-solid fa-circle-info"></i> Suivez les moines à l'écoute — les chants grégoriens sont magnifiques pour la prière, même sans tout comprendre.</p>
+    </div>
+
+    <div class="mono-section">
+      <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> Rites d'introduction <span class="mono-fixed-tag">Fixe</span></h3>
+      <div class="mono-section-body">
+        <p class="mono-rubric">Signe de croix</p>
+        <p class="mono-latin">℣. In nómine Patris, et Fílii, et Spíritus Sancti.</p>
+        <p class="mono-french">℣. Au nom du Père, et du Fils, et du Saint-Esprit.</p>
+        <p class="mono-latin">℟. Amen.</p>
+        <p class="mono-rubric">Salutation</p>
+        <p class="mono-latin">℣. Dóminus vobíscum.</p>
+        <p class="mono-french">℣. Le Seigneur soit avec vous.</p>
+        <p class="mono-latin">℟. Et cum spíritu tuo.</p>
+        <p class="mono-french">℟. Et avec votre esprit.</p>
+        <p class="mono-rubric">Acte pénitentiel — Confíteor</p>
+        <p class="mono-latin">Confíteor Deo omnipoténti et vobis, fratres, quia peccávi nimis cogitatióne, verbo, ópere et omissióne : mea culpa, mea culpa, mea máxima culpa…</p>
+        <p class="mono-french">Je confesse à Dieu tout-puissant et à vous aussi, mes frères, que j'ai péché en pensée, en parole, par action et par omission : oui, j'ai vraiment péché…</p>
+        <p class="mono-rubric">Kyrie (le diacre ou prêtre chante)</p>
+        <p class="mono-latin">Kýrie, eléison. — Christe, eléison. — Kýrie, eléison.</p>
+        <p class="mono-french">Seigneur, prends pitié. — Ô Christ, prends pitié. — Seigneur, prends pitié.</p>
+      </div>
+    </div>
+
+    <div class="mono-section">
+      <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> Gloria <span class="mono-fixed-tag">Fixe — sauf Avent & Carême</span></h3>
+      <div class="mono-section-body">
+        <p class="mono-latin">Glória in excélsis Deo, et in terra pax homínibus bonæ voluntátis. Laudámus te, benedícimus te, adorámus te, glorificámus te, grátias ágimus tibi propter magnam glóriam tuam. Dómine Deus, Rex cæléstis, Deus Pater omnípotens. Dómine, Fili unigénite, Iesu Christe, Dómine Deus, Agnus Dei, Fílius Patris : qui tollis peccáta mundi, miserére nobis ; qui tollis peccáta mundi, súscipe deprecatiónem nostram ; qui sedes ad déxteram Patris, miserére nobis. Quóniam tu solus Sanctus, tu solus Dóminus, tu solus Altíssimus, Iesu Christe, cum Sancto Spíritu, in glória Dei Patris. Amen.</p>
+        <p class="mono-french">Gloire à Dieu, au plus haut des cieux, et paix sur la terre aux hommes qu'il aime. Nous te louons, nous te bénissons, nous t'adorons, nous te glorifions, nous te rendons grâce, pour ton immense gloire, Seigneur Dieu, Roi du ciel, Dieu le Père tout-puissant. Seigneur, Fils unique, Jésus Christ, Seigneur Dieu, Agneau de Dieu, le Fils du Père ; toi qui enlèves les péchés du monde, prends pitié de nous ; toi qui enlèves les péchés du monde, reçois notre prière ; toi qui es assis à la droite du Père, prends pitié de nous. Car toi seul es saint, toi seul es Seigneur, toi seul es le Très-Haut, Jésus Christ, avec le Saint-Esprit, dans la gloire de Dieu le Père. Amen.</p>
+      </div>
+    </div>
+
+    <div class="mono-section">
+      <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> Liturgie de la Parole <span class="mono-var-tag">Lectures variables</span></h3>
+      <div class="mono-section-body">
+        <p>Les lectures (1<sup>re</sup> lecture, psaume, 2<sup>e</sup> lecture, évangile) varient chaque jour. <strong>Consultez le bouton « Textes »</strong> sur la carte de la messe pour les lire en français.</p>
+        <p class="mono-rubric">Avant l'évangile</p>
+        <p class="mono-latin">℣. Dóminus vobíscum. ℟. Et cum spíritu tuo.<br>℣. Léctio sancti Evangélii secúndum N. ℟. Glória tibi, Dómine.</p>
+        <p class="mono-french">℣. Le Seigneur soit avec vous. ℟. Et avec votre esprit.<br>℣. Évangile de Jésus Christ selon saint N. ℟. Gloire à toi, Seigneur.</p>
+        <p class="mono-rubric">Après l'évangile</p>
+        <p class="mono-latin">℣. Verbum Dómini. ℟. Laus tibi, Christe.</p>
+        <p class="mono-french">℣. Acclamons la Parole de Dieu. ℟. Louange à toi, Seigneur Jésus.</p>
+      </div>
+    </div>
+
+    <div class="mono-section">
+      <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> Credo (Symbole de Nicée) <span class="mono-fixed-tag">Dimanche & solennités</span></h3>
+      <div class="mono-section-body">
+        <p class="mono-latin">Credo in unum Deum, Patrem omnipoténtem, factórem cæli et terræ, visibílium ómnium et invisibílium. Et in unum Dóminum Iesum Christum, Fílium Dei unigénitum, et ex Patre natum ante ómnia sǽcula. Deum de Deo, lumen de lúmine, Deum verum de Deo vero, génitum, non factum, consubstantiálem Patri : per quem ómnia facta sunt…</p>
+        <p class="mono-french">Je crois en un seul Dieu, le Père tout-puissant, créateur du ciel et de la terre, de l'univers visible et invisible. Je crois en un seul Seigneur, Jésus Christ, le Fils unique de Dieu, né du Père avant tous les siècles : il est Dieu, né de Dieu, lumière, née de la lumière, vrai Dieu, né du vrai Dieu, engendré, non pas créé, consubstantiel au Père ; et par lui tout a été fait…</p>
+        <p class="mono-rubric">Texte intégral très long — voir <a href="https://www.aelf.org" target="_blank" rel="noopener">aelf.org</a> ou un missel pour la suite (« Et incarnátus est… »).</p>
+      </div>
+    </div>
+
+    <div class="mono-section">
+      <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> Sanctus <span class="mono-fixed-tag">Fixe</span></h3>
+      <div class="mono-section-body">
+        <p class="mono-rubric">Dialogue de la préface</p>
+        <p class="mono-latin">℣. Dóminus vobíscum. ℟. Et cum spíritu tuo.<br>℣. Sursum corda. ℟. Habémus ad Dóminum.<br>℣. Grátias agámus Dómino Deo nostro. ℟. Dignum et iustum est.</p>
+        <p class="mono-french">℣. Le Seigneur soit avec vous. ℟. Et avec votre esprit.<br>℣. Élevons notre cœur. ℟. Nous le tournons vers le Seigneur.<br>℣. Rendons grâce au Seigneur notre Dieu. ℟. Cela est juste et bon.</p>
+        <p class="mono-rubric">Sanctus (à la fin de la préface)</p>
+        <p class="mono-latin">Sanctus, Sanctus, Sanctus, Dóminus Deus Sábaoth. Pleni sunt cæli et terra glória tua. Hosánna in excélsis. Benedíctus qui venit in nómine Dómini. Hosánna in excélsis.</p>
+        <p class="mono-french">Saint, Saint, Saint, le Seigneur, Dieu de l'univers. Le ciel et la terre sont remplis de ta gloire. Hosanna au plus haut des cieux. Béni soit celui qui vient au nom du Seigneur. Hosanna au plus haut des cieux.</p>
+      </div>
+    </div>
+
+    <div class="mono-section">
+      <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> Pater Noster <span class="mono-fixed-tag">Fixe</span></h3>
+      <div class="mono-section-body">
+        <p class="mono-latin">Pater noster, qui es in cælis : sanctificétur nomen tuum ; advéniat regnum tuum ; fiat volúntas tua, sicut in cælo, et in terra. Panem nostrum cotidiánum da nobis hódie ; et dimítte nobis débita nostra, sicut et nos dimíttimus debitóribus nostris ; et ne nos indúcas in tentatiónem ; sed líbera nos a malo.</p>
+        <p class="mono-french">Notre Père, qui es aux cieux, que ton nom soit sanctifié, que ton règne vienne, que ta volonté soit faite sur la terre comme au ciel. Donne-nous aujourd'hui notre pain de ce jour. Pardonne-nous nos offenses, comme nous pardonnons aussi à ceux qui nous ont offensés. Et ne nous laisse pas entrer en tentation, mais délivre-nous du Mal.</p>
+      </div>
+    </div>
+
+    <div class="mono-section">
+      <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> Agnus Dei <span class="mono-fixed-tag">Fixe</span></h3>
+      <div class="mono-section-body">
+        <p class="mono-latin">Agnus Dei, qui tollis peccáta mundi : miserére nobis.<br>Agnus Dei, qui tollis peccáta mundi : miserére nobis.<br>Agnus Dei, qui tollis peccáta mundi : dona nobis pacem.</p>
+        <p class="mono-french">Agneau de Dieu, qui enlèves le péché du monde, prends pitié de nous.<br>Agneau de Dieu, qui enlèves le péché du monde, prends pitié de nous.<br>Agneau de Dieu, qui enlèves le péché du monde, donne-nous la paix.</p>
+      </div>
+    </div>
+
+    <div class="mono-section">
+      <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> Communion <span class="mono-fixed-tag">Fixe</span></h3>
+      <div class="mono-section-body">
+        <p class="mono-latin">℣. Dómine, non sum dignus ut intres sub tectum meum : sed tantum dic verbo, et sanábitur ánima mea.</p>
+        <p class="mono-french">℣. Seigneur, je ne suis pas digne de te recevoir ; mais dis seulement une parole et je serai guéri.</p>
+        <p class="mono-rubric">À la communion</p>
+        <p class="mono-latin">℣. Corpus Christi. ℟. Amen.</p>
+        <p class="mono-french">℣. Le Corps du Christ. ℟. Amen.</p>
+      </div>
+    </div>
+
+    <div class="mono-section">
+      <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> Rites de conclusion <span class="mono-fixed-tag">Fixe</span></h3>
+      <div class="mono-section-body">
+        <p class="mono-rubric">Bénédiction</p>
+        <p class="mono-latin">℣. Benedícat vos omnípotens Deus, Pater, et Fílius, et Spíritus Sanctus.</p>
+        <p class="mono-french">℣. Que Dieu tout-puissant vous bénisse, le Père, le Fils, et le Saint-Esprit.</p>
+        <p class="mono-latin">℟. Amen.</p>
+        <p class="mono-rubric">Renvoi</p>
+        <p class="mono-latin">℣. Ite, missa est.</p>
+        <p class="mono-french">℣. Allez, dans la paix du Christ.</p>
+        <p class="mono-latin">℟. Deo grátias.</p>
+        <p class="mono-french">℟. Nous rendons grâce à Dieu.</p>
+      </div>
+    </div>
+
+    <div class="mono-resources">
+      <h3><i class="fa-solid fa-link"></i> Pour aller plus loin</h3>
+      <ul>
+        <li><a href="https://abbaye-saintwandrille.fr" target="_blank" rel="noopener">Abbaye Saint-Wandrille de Fontenelle</a> — la communauté qui chante cette messe</li>
+        <li><em>Graduale Romanum</em> (Solesmes) — livre de chant officiel des propres de la messe</li>
+        <li><em>Kyriale</em> — recueil des Ordinaires (Gloria, Sanctus, Agnus, Credo)</li>
+      </ul>
+    </div>
+  `;
+}
+
 function _renderMonasticContent() {
   // Parties FIXES de l'office monastique (latine + traduction)
   // Sources : Liber Usualis, Liber Hymnarius, Antiphonale Monasticum, AELF (Benedictus)
@@ -6634,6 +6812,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initAbout();
   initInstallModal();
   initMonasticModal();
+  initLatinMassModal();
   initContact();
   initGregorianPlayer();
   handleDeepLink();      // applique le filtre/onglet issu du hash URL (landing page)

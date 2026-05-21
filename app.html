@@ -802,6 +802,25 @@
   </div>
 
   <!-- ═══════════════════════════════════════════
+       MODAL MESSE EN LATIN (Ordinaire fixe, Latin + Français)
+       Pour les messes grégoriennes (Saint-Wandrille, etc.)
+  ═══════════════════════════════════════════ -->
+  <div id="latin-mass-overlay" class="auth-overlay hidden"></div>
+  <div id="latin-mass-modal" class="about-modal hidden" role="dialog" aria-modal="true" aria-label="Suivre la messe en latin">
+    <div class="about-panel monastic-panel">
+      <button class="auth-close" id="latin-mass-close" aria-label="Fermer"><i class="fa-solid fa-xmark"></i></button>
+      <div class="about-logo">
+        <i class="fa-solid fa-language monastic-icon-big" aria-hidden="true"></i>
+        <h2 class="about-title" id="latin-mass-title">Suivre la messe en latin</h2>
+        <p class="about-tagline">Ordinaire de la messe — Latin et traduction française</p>
+      </div>
+      <div class="about-body" id="latin-mass-body">
+        <!-- Contenu injecté par initLatinMassModal() -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
        MODAL INSTALLATION (distincte de À propos)
   ═══════════════════════════════════════════ -->
   <div id="install-overlay" class="auth-overlay hidden"></div>
