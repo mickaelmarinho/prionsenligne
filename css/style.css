@@ -5239,6 +5239,132 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
 .rec-btn-primary:hover { background: #d4af5a; }
 .rec-btn-primary > i { font-size: 12px; }
 
+/* Modal Office Monastique (Triors grégorien) */
+.monastic-panel .monastic-icon-big {
+  font-size: 56px;
+  color: var(--gold);
+  margin-bottom: 8px;
+  display: block;
+}
+.mono-intro {
+  padding: 8px 0 4px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text);
+}
+.mono-intro p { margin: 0 0 10px; }
+.mono-warning {
+  background: rgba(201,168,76,.08);
+  border-left: 3px solid var(--gold);
+  padding: 10px 12px;
+  border-radius: 0 8px 8px 0;
+  font-size: 12.5px;
+  color: var(--text-mid);
+}
+.mono-warning > i { color: var(--gold); margin-right: 5px; }
+.mono-section {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin: 10px 0;
+  overflow: hidden;
+  background: white;
+}
+.mono-section-title {
+  margin: 0;
+  padding: 11px 14px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--navy);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--cream);
+  transition: background .12s;
+  user-select: none;
+}
+.mono-section-title:hover { background: rgba(201,168,76,.10); }
+.mono-chev {
+  font-size: 11px;
+  color: var(--gold);
+  transition: transform .2s ease;
+}
+.mono-section-open .mono-chev { transform: rotate(90deg); }
+.mono-fixed-tag, .mono-var-tag {
+  font-family: 'Outfit', sans-serif;
+  font-size: 9.5px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  margin-left: auto;
+}
+.mono-fixed-tag { background: rgba(45, 122, 68, .14); color: #2d7a44; }
+.mono-var-tag   { background: rgba(100, 116, 139, .14); color: #475569; }
+.mono-section-body {
+  padding: 0 16px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .25s ease, padding .25s ease;
+}
+.mono-section-open .mono-section-body {
+  padding: 12px 16px 14px;
+  max-height: 1500px;
+}
+.mono-section-body p {
+  margin: 0 0 8px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text);
+}
+.mono-latin {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 14.5px !important;
+  color: var(--navy) !important;
+  font-style: italic;
+}
+.mono-french {
+  color: var(--text-mid) !important;
+  font-size: 12.5px !important;
+  padding-left: 12px;
+  border-left: 2px solid var(--gold-pale, rgba(201,168,76,.4));
+}
+.mono-rubric {
+  font-size: 11.5px !important;
+  color: var(--text-soft) !important;
+  font-style: italic;
+}
+.mono-list { padding-left: 20px; margin: 6px 0; font-size: 13px; line-height: 1.6; }
+.mono-resources {
+  margin-top: 16px;
+  padding: 12px 14px;
+  background: var(--cream);
+  border-radius: 8px;
+}
+.mono-resources h3 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 15px;
+  color: var(--navy);
+  margin: 0 0 8px;
+}
+.mono-resources h3 > i { color: var(--gold); margin-right: 5px; font-size: 13px; }
+.mono-resources ul { padding-left: 18px; margin: 0; }
+.mono-resources li { font-size: 12.5px; margin: 4px 0; line-height: 1.5; }
+.mono-resources a { color: var(--navy); }
+.mono-resources a:hover { color: var(--gold); }
+
+/* Bouton "Office monastique" — distinct visuellement du bouton Bréviaire */
+.tl-monastic-btn {
+  background: rgba(201,168,76,.10) !important;
+  border-color: rgba(201,168,76,.35) !important;
+}
+.tl-monastic-btn:hover {
+  background: rgba(201,168,76,.20) !important;
+  border-color: var(--gold) !important;
+}
+
 /* Modal installation PWA (séparée du À propos) */
 .install-panel .install-icon-big {
   font-size: 56px;

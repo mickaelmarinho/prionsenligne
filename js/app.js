@@ -1736,6 +1736,13 @@ function initBreviary() {
   document.addEventListener('click', e => {
     const btn = e.target.closest('.tl-breviary-btn');
     if (!btn) return;
+    // Office monastique → modale pédagogique dédiée (Triors etc.)
+    if (btn.dataset.action === 'monastic') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (window._openMonasticModal) window._openMonasticModal(btn.dataset.label || 'Office monastique');
+      return;
+    }
     openBreviary(btn.dataset.prayer, btn.dataset.label || '');
   });
 
@@ -4124,9 +4131,10 @@ function _buildEspSlotsForDow(dow) {
   const slots = [
     { type: 'laudes', label: 'Laudes en grégorien — Triors (Radio Espérance)',
       desc: ESP_DESC.laudesGreg,
-      // noBreviary : office monastique en grégorien — les textes ne correspondent
-      // pas au bréviaire romain de l'AELF, donc on cache le bouton "Bréviaire".
-      noBreviary: true,
+      // monasticOffice : office bénédictin en grégorien (psautier de saint Benoît,
+      // hymnes du Liber Hymnarius). Cache le bouton "Bréviaire" (AELF romain
+      // incompatible) et affiche un bouton "Office monastique" → panneau pédagogique.
+      monasticOffice: true,
       entries: [{ t: '6:05', tl: '6h05', dur: 40, srcs: ['esp', 'espg'] }],
     },
     { type: 'matin', label: 'Prière du matin (Radio Espérance)',
@@ -4481,12 +4489,17 @@ function initTodayTimeline() {
     const brevLabel = BREV_LABEL[slot.type];
     // Certains offices (ex: Laudes monastiques en grégorien de Triors) utilisent
     // un bréviaire monastique différent du Romain de l'AELF — on cache le bouton
-    // pour ne pas afficher des textes qui ne correspondent pas à la diffusion.
-    const brevHtml  = (brevLabel && !slot.noBreviary)
+    // standard et on propose à la place un panneau pédagogique "Office monastique".
+    const hideBreviary = slot.noBreviary || slot.monasticOffice;
+    const brevHtml  = (brevLabel && !hideBreviary)
       ? `<button class="tl-breviary-btn" data-prayer="${slot.type}" data-label="${esc(slot.label)}" data-myst-dow='${slot.mystByDow ? JSON.stringify(slot.mystByDow) : ''}'>
            <i class="fa-solid fa-book-open"></i> ${brevLabel}
          </button>`
-      : '';
+      : slot.monasticOffice
+        ? `<button class="tl-breviary-btn tl-monastic-btn" data-action="monastic" data-label="${esc(slot.label)}">
+             <i class="fa-solid fa-book-quran"></i> Office monastique
+           </button>`
+        : '';
 
     // Identifiant unique pour cet office (type + heure)
     const officeId   = slot.type + '_' + entry.t.replace(':', '');
@@ -6074,6 +6087,202 @@ function initAbout() {
   window._openAbout = openAbout;
 }
 
+// ════════════════════════════════════════════════════════════════════
+// Modal "Office monastique" — panneau pédagogique pour les laudes/vêpres
+// en grégorien diffusées en direct depuis l'abbaye de Triors. Le bréviaire
+// romain de l'AELF ne correspond pas à ces offices monastiques : ce panneau
+// présente la structure et les textes fixes (parties qui ne changent jamais).
+// ════════════════════════════════════════════════════════════════════
+function initMonasticModal() {
+  const overlay = document.getElementById('monastic-overlay');
+  const modal   = document.getElementById('monastic-modal');
+  const closeBtn = document.getElementById('monastic-close');
+  const titleEl  = document.getElementById('monastic-title');
+  const bodyEl   = document.getElementById('monastic-body');
+  if (!modal || !bodyEl) return;
+
+  function open(officeLabel) {
+    if (titleEl) titleEl.textContent = officeLabel || 'Office monastique';
+    bodyEl.innerHTML = _renderMonasticContent();
+    overlay?.classList.remove('hidden');
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    // Toggle des sections dépliables
+    bodyEl.querySelectorAll('.mono-section-title').forEach(t => {
+      t.addEventListener('click', () => {
+        const sec = t.closest('.mono-section');
+        sec?.classList.toggle('mono-section-open');
+      });
+    });
+  }
+  function close() {
+    overlay?.classList.add('hidden');
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
+  }
+
+  closeBtn?.addEventListener('click', close);
+  overlay?.addEventListener('click', close);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !modal.classList.contains('hidden')) close();
+  });
+
+  window._openMonasticModal = open;
+}
+
+function _renderMonasticContent() {
+  // Parties FIXES de l'office monastique (latine + traduction)
+  // Sources : Liber Usualis, Liber Hymnarius, Antiphonale Monasticum, AELF (Benedictus)
+  return `
+    <div class="mono-intro">
+      <p>Les Laudes monastiques sont l'<strong>office matinal</strong> chanté en grégorien par les moines bénédictins. Elles suivent la <strong>Règle de saint Benoît</strong> (VI<sup>e</sup> siècle) et le <strong>psautier monastique</strong> — distinct du bréviaire romain post-Concile.</p>
+      <p class="mono-warning"><i class="fa-solid fa-circle-info"></i> Les psaumes, antiennes et hymnes varient chaque jour selon le temps liturgique. <strong>Suivez les moines à l'écoute</strong> — ce panneau présente uniquement la structure et les parties qui reviennent tous les jours.</p>
+    </div>
+
+    <div class="mono-section">
+      <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> 1. Ouverture <span class="mono-fixed-tag">Toujours identique</span></h3>
+      <div class="mono-section-body">
+        <p class="mono-rubric">Tous se signent en disant :</p>
+        <p class="mono-latin">℣. Deus, in adjutórium meum inténde.</p>
+        <p class="mono-french">℣. Ô Dieu, viens à mon aide.</p>
+        <p class="mono-latin">℟. Dómine, ad adjuvándum me festína.</p>
+        <p class="mono-french">℟. Seigneur, à mon secours hâte-toi.</p>
+        <p class="mono-latin">Gloria Patri, et Fílio, et Spirítui Sancto. Sicut erat in princípio, et nunc, et semper, et in sǽcula sæculórum. Amen. Alleluia.</p>
+        <p class="mono-french">Gloire au Père, et au Fils, et au Saint-Esprit, comme il était au commencement, maintenant et toujours, et dans les siècles des siècles. Amen. Alléluia.</p>
+        <p class="mono-rubric">L'« Alleluia » est omis du début du Carême au Samedi Saint.</p>
+      </div>
+    </div>
+
+    <div class="mono-section">
+      <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> 2. Hymne <span class="mono-var-tag">Variable</span></h3>
+      <div class="mono-section-body">
+        <p>Hymne propre au temps liturgique (Avent, Noël, Carême, Pâques, Temps ordinaire, fêtes).</p>
+        <p class="mono-rubric">Pour les jours ordinaires, l'hymne est souvent <em>Æterne rerum cónditor</em> (saint Ambroise, IV<sup>e</sup> siècle) ou <em>Splendor patérnæ glóriæ</em>. Source officielle : <em>Liber Hymnarius</em> (Solesmes).</p>
+      </div>
+    </div>
+
+    <div class="mono-section">
+      <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> 3. Psalmodie <span class="mono-var-tag">Variable</span></h3>
+      <div class="mono-section-body">
+        <p>Selon le psautier monastique de saint Benoît, chaque jour de la semaine a sa distribution propre des psaumes :</p>
+        <ul class="mono-list">
+          <li><strong>Lundi à samedi</strong> : 4 psaumes encadrés d'antiennes propres</li>
+          <li><strong>Dimanches et solennités</strong> : structure enrichie (psaumes 66, 50, psaumes festifs)</li>
+        </ul>
+        <p>Chaque psaume est précédé et suivi d'une <em>antienne</em> brève qui en donne la clé d'interprétation pour le jour.</p>
+        <p class="mono-rubric">Toute la semaine, les 150 psaumes sont chantés intégralement (vs 4 semaines dans le bréviaire romain).</p>
+      </div>
+    </div>
+
+    <div class="mono-section">
+      <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> 4. Cantique de l'Ancien Testament <span class="mono-var-tag">Variable</span></h3>
+      <div class="mono-section-body">
+        <p>Un cantique tiré de l'AT, propre au jour de la semaine (par ex. cantique d'Isaïe, de Moïse, des Trois Jeunes Gens dans la fournaise…).</p>
+      </div>
+    </div>
+
+    <div class="mono-section">
+      <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> 5. Capitule <span class="mono-var-tag">Variable</span></h3>
+      <div class="mono-section-body">
+        <p>Lecture brève (1 à 3 versets) tirée de l'Écriture, propre au temps liturgique.</p>
+      </div>
+    </div>
+
+    <div class="mono-section">
+      <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> 6. Répons bref <span class="mono-var-tag">Variable</span></h3>
+      <div class="mono-section-body">
+        <p>Court répons chanté qui prolonge la méditation du capitule.</p>
+      </div>
+    </div>
+
+    <div class="mono-section">
+      <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> 7. Cantique de Zacharie — Benedictus <span class="mono-fixed-tag">Le sommet de l'office</span></h3>
+      <div class="mono-section-body">
+        <p class="mono-rubric">Tous se lèvent et font le signe de croix sur eux-mêmes. (Luc 1, 68-79)</p>
+        <p class="mono-latin">Benedíctus Dóminus, Deus Israël, *<br>
+        quia visitávit et fecit redemptiónem plebis suæ.<br>
+        Et eréxit cornu salútis nobis *<br>
+        in domo David, púeri sui.<br>
+        Sicut locútus est per os sanctórum, *<br>
+        qui a sǽculo sunt, prophetárum ejus :<br>
+        Salútem ex inimícis nostris *<br>
+        et de manu ómnium qui odérunt nos.<br>
+        […]<br>
+        Per víscera misericórdiæ Dei nostri, *<br>
+        in quibus visitábit nos óriens ex alto,<br>
+        illumináre his qui in ténebris et in umbra mortis sedent, *<br>
+        ad dirigéndos pedes nostros in viam pacis.</p>
+        <p class="mono-french">Béni soit le Seigneur, le Dieu d'Israël, *<br>
+        qui visite et rachète son peuple.<br>
+        Il a fait surgir la force qui nous sauve *<br>
+        dans la maison de David, son serviteur,<br>
+        comme il l'avait dit par la bouche des saints, *<br>
+        par ses prophètes, depuis les temps anciens :<br>
+        salut qui nous arrache à l'ennemi, *<br>
+        à la main de tous nos oppresseurs.<br>
+        […]<br>
+        Grâce à la tendresse, à l'amour de notre Dieu, *<br>
+        quand nous visite l'astre d'en haut,<br>
+        pour illuminer ceux qui habitent les ténèbres et l'ombre de la mort, *<br>
+        pour conduire nos pas au chemin de la paix.</p>
+        <p class="mono-rubric">Gloria Patri… (comme à l'ouverture)</p>
+      </div>
+    </div>
+
+    <div class="mono-section">
+      <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> 8. Préces / Intercessions <span class="mono-var-tag">Variable</span></h3>
+      <div class="mono-section-body">
+        <p>Litanie d'intercession pour l'Église, le monde, les vivants et les morts. Les intentions varient.</p>
+      </div>
+    </div>
+
+    <div class="mono-section">
+      <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> 9. Notre Père <span class="mono-fixed-tag">Toujours identique</span></h3>
+      <div class="mono-section-body">
+        <p class="mono-latin">Pater noster, qui es in cælis, sanctificétur nomen tuum.<br>
+        Advéniat regnum tuum.<br>
+        Fiat volúntas tua, sicut in cælo et in terra.<br>
+        Panem nostrum cotidiánum da nobis hódie,<br>
+        et dimítte nobis débita nostra, sicut et nos dimíttimus debitóribus nostris.<br>
+        Et ne nos indúcas in tentatiónem, sed líbera nos a malo. Amen.</p>
+        <p class="mono-french">Notre Père, qui es aux cieux, que ton nom soit sanctifié,<br>
+        que ton règne vienne,<br>
+        que ta volonté soit faite sur la terre comme au ciel.<br>
+        Donne-nous aujourd'hui notre pain de ce jour.<br>
+        Pardonne-nous nos offenses, comme nous pardonnons aussi à ceux qui nous ont offensés.<br>
+        Et ne nous laisse pas entrer en tentation, mais délivre-nous du Mal. Amen.</p>
+      </div>
+    </div>
+
+    <div class="mono-section">
+      <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> 10. Oraison conclusive <span class="mono-var-tag">Variable</span></h3>
+      <div class="mono-section-body">
+        <p>Oraison liée au temps liturgique ou à la fête du jour.</p>
+      </div>
+    </div>
+
+    <div class="mono-section">
+      <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> 11. Conclusion <span class="mono-fixed-tag">Toujours identique</span></h3>
+      <div class="mono-section-body">
+        <p class="mono-latin">℣. Benedicámus Dómino.</p>
+        <p class="mono-french">℣. Bénissons le Seigneur.</p>
+        <p class="mono-latin">℟. Deo grátias.</p>
+        <p class="mono-french">℟. Nous rendons grâce à Dieu.</p>
+      </div>
+    </div>
+
+    <div class="mono-resources">
+      <h3><i class="fa-solid fa-link"></i> Pour aller plus loin</h3>
+      <ul>
+        <li><a href="https://abbayedetriors.com" target="_blank" rel="noopener">Abbaye Notre-Dame de Triors</a> — la communauté qui chante cet office</li>
+        <li><a href="https://www.solesmes.com" target="_blank" rel="noopener">Abbaye de Solesmes</a> — référence du chant grégorien et éditeur du <em>Liber Hymnarius</em></li>
+        <li><em>Liber Hymnarius</em> et <em>Antiphonale Monasticum</em> (Solesmes) — livres de chant officiels, disponibles à l'achat</li>
+        <li><a href="https://www.aelf.org" target="_blank" rel="noopener">AELF</a> — pour le bréviaire <strong>romain</strong> (différent du monastique)</li>
+      </ul>
+    </div>
+  `;
+}
+
 // Modal dédiée à l'installation PWA (séparée du À propos pour clarté).
 function initInstallModal() {
   const overlay = document.getElementById('install-overlay');
@@ -6314,6 +6523,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initInstallBanner();
   initAbout();
   initInstallModal();
+  initMonasticModal();
   initContact();
   initGregorianPlayer();
   handleDeepLink();      // applique le filtre/onglet issu du hash URL (landing page)

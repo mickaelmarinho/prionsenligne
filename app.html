@@ -783,6 +783,25 @@
        MODAL À PROPOS
   ═══════════════════════════════════════════ -->
   <!-- ═══════════════════════════════════════════
+       MODAL OFFICE MONASTIQUE (Laudes/Vêpres grégoriennes Triors)
+       Panneau pédagogique : structure de l'office bénédictin + textes fixes
+  ═══════════════════════════════════════════ -->
+  <div id="monastic-overlay" class="auth-overlay hidden"></div>
+  <div id="monastic-modal" class="about-modal hidden" role="dialog" aria-modal="true" aria-label="Office monastique">
+    <div class="about-panel monastic-panel">
+      <button class="auth-close" id="monastic-close" aria-label="Fermer"><i class="fa-solid fa-xmark"></i></button>
+      <div class="about-logo">
+        <i class="fa-solid fa-book-quran monastic-icon-big" aria-hidden="true"></i>
+        <h2 class="about-title" id="monastic-title">Office monastique</h2>
+        <p class="about-tagline">Abbaye bénédictine Notre-Dame de Triors — chant grégorien</p>
+      </div>
+      <div class="about-body" id="monastic-body">
+        <!-- Contenu injecté dynamiquement par initMonasticModal() -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
        MODAL INSTALLATION (distincte de À propos)
   ═══════════════════════════════════════════ -->
   <div id="install-overlay" class="auth-overlay hidden"></div>
