@@ -3242,6 +3242,8 @@ const ESP_DESC = {
   messeStWandrille:        "Eucharistie chantée en latin et grégorien depuis l'abbaye Saint-Wandrille de Fontenelle (Normandie), communauté bénédictine fondée en 649. Les lectures du jour sont les mêmes que pour la messe en français (Liturgie de l'AELF).",
   messeStWandrilleDim:     "Messe dominicale solennelle (1h30) chantée en grégorien depuis l'abbaye Saint-Wandrille de Fontenelle. Liturgie romaine en latin. Les jours de solennité, l'office est également à cette heure.",
   vepresStWandrille:       "Office monastique des Vêpres chanté en grégorien depuis l'abbaye Saint-Wandrille de Fontenelle. Office du soir suivant la Règle de saint Benoît : hymne, psalmodie, capitule, répons bref, cantique du Magnificat, intercessions.",
+  compliesStWandrille:     "Office monastique des Complies chanté en grégorien depuis l'abbaye Saint-Wandrille de Fontenelle. Dernière prière de la journée monastique : examen de conscience, psaumes du soir (4, 90, 133), hymne, capitule, cantique de Siméon (Nunc Dimittis), antienne mariale.",
+  vigilesPentecote:        "Office des Vigiles de la Pentecôte chanté en grégorien depuis l'abbaye Saint-Wandrille de Fontenelle. Veillée solennelle qui prépare la grande fête de l'effusion de l'Esprit-Saint sur les Apôtres au Cénacle.",
 };
 
 // ── Mystères selon le jour pour les 3 chapelets RM principaux ──────────
@@ -3600,6 +3602,30 @@ function _getDayScheduleInternal(date) {
       if (_matchesRule(rule, date)) {
         slots.push(JSON.parse(JSON.stringify(rule.slot)));
       }
+    }
+  }
+
+  // Étape 0.4 : Vigiles de la Pentecôte (samedi avant Pentecôte = Pâques + 48 j)
+  // → remplace les Complies de Saint-Wandrille par l'office des Vigiles (1h)
+  {
+    const easter = _easterDate(date.getFullYear());
+    const vigPent = new Date(easter.getTime() + 48 * 24 * 3600 * 1000);
+    const isVigilesPent = date.getFullYear() === vigPent.getFullYear()
+                       && date.getMonth() === vigPent.getMonth()
+                       && date.getDate() === vigPent.getDate();
+    if (isVigilesPent) {
+      slots = slots.map(slot => {
+        if (slot.label === 'Complies en grégorien — Abbaye Saint-Wandrille') {
+          return {
+            ...slot,
+            label: 'Office des Vigiles de la Pentecôte — Abbaye Saint-Wandrille',
+            desc:  ESP_DESC.vigilesPentecote,
+            officeKind: 'vigiles',
+            entries: slot.entries.map(e => ({ ...e, dur: 60 })),
+          };
+        }
+        return slot;
+      });
     }
   }
 
@@ -4299,6 +4325,17 @@ function _buildEspSlotsForDow(dow) {
     monasticOffice: true,  // → bouton "Office monastique" + cache bréviaire AELF
     officeKind: 'vepres',  // → indique au panneau la structure des vêpres (Magnificat)
     entries: [{ t: vepT, tl: vepTl, dur: 30, srcs: ['espg'] }],
+  });
+
+  // Complies Saint-Wandrille — grégorien, tous les jours à 20h30 (15 min)
+  // Exception : Vigiles de la Pentecôte (samedi avant Pentecôte) — voir
+  // _getDayScheduleInternal pour le remplacement à cette date précise.
+  slots.push({
+    type: 'complies', label: 'Complies en grégorien — Abbaye Saint-Wandrille',
+    desc: ESP_DESC.compliesStWandrille,
+    monasticOffice: true,
+    officeKind: 'complies',  // → cantique Nunc Dimittis dans le panneau
+    entries: [{ t: '20:30', tl: '20h30', dur: 15, srcs: ['espg'] }],
   });
 
   // Messe crypte Saint-Michel — lun-sam (pas dimanche)
@@ -6453,9 +6490,11 @@ function _renderMonasticContent(kind) {
   kind = kind || 'laudes';
   // Parties FIXES de l'office monastique (latine + traduction)
   // Sources : Liber Usualis, Liber Hymnarius, Antiphonale Monasticum
-  const isVepres = (kind === 'vepres');
-  const officeName = isVepres ? 'Vêpres' : 'Laudes';
-  const officeMoment = isVepres ? 'office du soir' : 'office matinal';
+  const isVepres   = (kind === 'vepres');
+  const isComplies = (kind === 'complies');
+  const isVigiles  = (kind === 'vigiles');
+  const officeName = isComplies ? 'Complies' : isVigiles ? 'Vigiles' : isVepres ? 'Vêpres' : 'Laudes';
+  const officeMoment = isComplies ? 'dernière prière de la journée' : isVigiles ? 'veillée solennelle' : isVepres ? 'office du soir' : 'office matinal';
   return `
     <div class="mono-intro">
       <p>Les ${officeName} monastiques sont l'<strong>${officeMoment}</strong> chanté en grégorien par les moines bénédictins. Elles suivent la <strong>Règle de saint Benoît</strong> (VI<sup>e</sup> siècle) et le <strong>psautier monastique</strong> — distinct du bréviaire romain post-Concile.</p>
@@ -6480,9 +6519,11 @@ function _renderMonasticContent(kind) {
       <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> 2. Hymne <span class="mono-var-tag">Variable</span></h3>
       <div class="mono-section-body">
         <p>Hymne propre au temps liturgique (Avent, Noël, Carême, Pâques, Temps ordinaire, fêtes).</p>
-        <p class="mono-rubric">${isVepres
-          ? 'Pour les vêpres ordinaires, l\'hymne est souvent <em>Deus Creátor ómnium</em> (saint Ambroise) ou <em>Lucis Creátor óptime</em>. Source : <em>Liber Hymnarius</em> (Solesmes).'
-          : 'Pour les laudes ordinaires, l\'hymne est souvent <em>Æterne rerum cónditor</em> (saint Ambroise, IV<sup>e</sup> siècle) ou <em>Splendor patérnæ glóriæ</em>. Source : <em>Liber Hymnarius</em> (Solesmes).'}</p>
+        <p class="mono-rubric">${isComplies
+          ? 'Pour les complies, l\'hymne est traditionnellement <em>Te lucis ante términum</em> (anonyme, VIII<sup>e</sup> siècle) — invocation pour une nuit en paix sous la garde de Dieu.'
+          : isVepres
+            ? 'Pour les vêpres ordinaires, l\'hymne est souvent <em>Deus Creátor ómnium</em> (saint Ambroise) ou <em>Lucis Creátor óptime</em>. Source : <em>Liber Hymnarius</em> (Solesmes).'
+            : 'Pour les laudes ordinaires, l\'hymne est souvent <em>Æterne rerum cónditor</em> (saint Ambroise, IV<sup>e</sup> siècle) ou <em>Splendor patérnæ glóriæ</em>. Source : <em>Liber Hymnarius</em> (Solesmes).'}</p>
       </div>
     </div>
 
@@ -6529,7 +6570,31 @@ function _renderMonasticContent(kind) {
       </div>
     </div>
 
-    ${isVepres ? `
+    ${isComplies ? `
+    <div class="mono-section">
+      <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> 7. Cantique de Siméon — Nunc Dimittis <span class="mono-fixed-tag">Le sommet de l'office</span></h3>
+      <div class="mono-section-body">
+        <p class="mono-rubric">Tous se lèvent. (Luc 2, 29-32)</p>
+        <p class="mono-latin">Nunc dimíttis servum tuum, Dómine, *<br>
+        secúndum verbum tuum in pace ;<br>
+        quia vidérunt óculi mei *<br>
+        salutáre tuum,<br>
+        quod parásti *<br>
+        ante fáciem ómnium populórum,<br>
+        lumen ad revelatiónem géntium *<br>
+        et glóriam plebis tuæ Israel.</p>
+        <p class="mono-french">Maintenant, ô Maître souverain, *<br>
+        tu peux laisser ton serviteur s'en aller en paix selon ta parole.<br>
+        Car mes yeux ont vu *<br>
+        le salut<br>
+        que tu préparais *<br>
+        à la face des peuples :<br>
+        lumière qui se révèle aux nations *<br>
+        et donne gloire à ton peuple Israël.</p>
+        <p class="mono-rubric">Gloria Patri… (comme à l'ouverture)</p>
+      </div>
+    </div>
+    ` : isVepres ? `
     <div class="mono-section">
       <h3 class="mono-section-title"><i class="fa-solid fa-chevron-right mono-chev"></i> 7. Cantique de la Vierge — Magnificat <span class="mono-fixed-tag">Le sommet de l'office</span></h3>
       <div class="mono-section-body">
