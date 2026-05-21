@@ -3503,6 +3503,79 @@ function getDaySchedule(date) {
     return JSON.parse(JSON.stringify(base));
   }
 }
+// ════════════════════════════════════════════════════════════════════
+// SOLENNITÉS LITURGIQUES — Détection automatique des fêtes majeures
+// ════════════════════════════════════════════════════════════════════
+// Algorithme de Butcher pour calculer la date de Pâques (catholique).
+// Source : Astronomical Algorithms (Jean Meeus, 1991).
+function _easterDate(year) {
+  const a = year % 19;
+  const b = Math.floor(year / 100);
+  const c = year % 100;
+  const d = Math.floor(b / 4);
+  const e = b % 4;
+  const f = Math.floor((b + 8) / 25);
+  const g = Math.floor((b - f + 1) / 3);
+  const h = (19 * a + b - d - g + 15) % 30;
+  const i = Math.floor(c / 4);
+  const k = c % 4;
+  const l = (32 + 2 * e + 2 * i - h - k) % 7;
+  const m = Math.floor((a + 11 * h + 22 * l) / 451);
+  const month = Math.floor((h + l - 7 * m + 114) / 31);
+  const day = ((h + l - 7 * m + 114) % 31) + 1;
+  return new Date(year, month - 1, day);
+}
+
+// Solennités à date fixe (mois-jour)
+const _FIXED_SOLEMNITIES = [
+  '01-01', // Sainte Marie, Mère de Dieu
+  '01-06', // Épiphanie (date traditionnelle ; en France paroisse = dim. proche)
+  '03-19', // Saint Joseph
+  '03-25', // Annonciation du Seigneur
+  '06-24', // Nativité de saint Jean-Baptiste
+  '06-29', // Saints Pierre et Paul
+  '08-06', // Transfiguration
+  '08-15', // Assomption de la Vierge Marie
+  '11-01', // Toussaint
+  '11-02', // Commémoration des défunts (jour particulier, pas solennité stricte mais souvent honoré ainsi)
+  '12-08', // Immaculée Conception
+  '12-25', // Nativité du Seigneur (Noël)
+  '12-26', // Saint Étienne (octave de Noël)
+];
+
+// Renvoie true si la date est une solennité majeure (calendrier monastique romain)
+function _isLiturgicalSolemnity(date) {
+  if (!date) return false;
+  const md = String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+  if (_FIXED_SOLEMNITIES.includes(md)) return true;
+
+  // Solennités mobiles dérivées de Pâques
+  const easter = _easterDate(date.getFullYear());
+  const easterTs = easter.getTime();
+  const dayMs = 24 * 3600 * 1000;
+  // Toutes ces dates sont jour férié monastique → horaire dominical
+  const movableOffsets = [
+    0,    // Dimanche de Pâques
+    1,    // Lundi de Pâques (octave)
+    39,   // Ascension (jeudi)
+    49,   // Pentecôte (dimanche)
+    50,   // Lundi de Pentecôte
+    56,   // Sainte Trinité (dimanche après Pentecôte)
+    60,   // Saint Sacrement / Fête-Dieu (jeudi après Trinité, calendrier monastique)
+    68,   // Sacré-Cœur de Jésus (vendredi après Fête-Dieu)
+  ];
+  for (const offset of movableOffsets) {
+    const d = new Date(easterTs + offset * dayMs);
+    if (d.getFullYear() === date.getFullYear()
+        && d.getMonth() === date.getMonth()
+        && d.getDate() === date.getDate()) {
+      return true;
+    }
+  }
+  return false;
+}
+window._isLiturgicalSolemnity = _isLiturgicalSolemnity;
+
 function _getDayScheduleInternal(date) {
   date = date || getParisDate();
   const dow = date.getDay();
@@ -3518,6 +3591,28 @@ function _getDayScheduleInternal(date) {
         slots.push(JSON.parse(JSON.stringify(rule.slot)));
       }
     }
+  }
+
+  // Étape 0.5 : ajustement automatique aux solennités liturgiques
+  // → la messe de Saint-Wandrille passe de 9h45 (45 min) à 10h00 (1h30) en semaine,
+  //   comme le dimanche, car les jours de solennité sont des jours d'obligation.
+  if (date.getDay() !== 0 && _isLiturgicalSolemnity(date)) {
+    slots = slots.map(slot => {
+      if (slot.label === 'Messe en grégorien — Abbaye Saint-Wandrille') {
+        return {
+          ...slot,
+          label: 'Messe solennelle en grégorien — Abbaye Saint-Wandrille',
+          desc:  ESP_DESC.messeStWandrilleDim,
+          entries: slot.entries.map(e => ({
+            ...e,
+            t:   '10:00',
+            tl:  '10h00',
+            dur: 90,
+          })),
+        };
+      }
+      return slot;
+    });
   }
 
   // Sélectionne les overrides qui couvrent la date
