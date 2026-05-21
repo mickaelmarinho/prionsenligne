@@ -3230,6 +3230,8 @@ const ESP_DESC = {
   messeDominicale: "Messe dominicale en direct depuis la chapelle de l'Immaculée Conception à Saint-Étienne. Temps fort de l'eucharistie en communion fraternelle.",
   vepresTriors: "Vêpres en grégorien et salut du Saint-Sacrement de l'abbaye bénédictine Notre-Dame de Triors (Drôme), tous les dimanches et les jours de solennité.",
   chapeletMisericordeVend: "Chapelet de la Miséricorde après l'heure de la Miséricorde, depuis l'oratoire de Radio Espérance. (Hors temps de Carême.)",
+  messeStWandrille:        "Eucharistie chantée en latin et grégorien depuis l'abbaye Saint-Wandrille de Fontenelle (Normandie), communauté bénédictine fondée en 649. Les lectures du jour sont les mêmes que pour la messe en français (Liturgie de l'AELF).",
+  messeStWandrilleDim:     "Messe dominicale solennelle (1h30) chantée en grégorien depuis l'abbaye Saint-Wandrille de Fontenelle. Liturgie romaine en latin. Les jours de solennité, l'office est également à cette heure.",
 };
 
 // ── Mystères selon le jour pour les 3 chapelets RM principaux ──────────
@@ -4155,6 +4157,15 @@ function _buildEspSlotsForDow(dow) {
     },
   ];
 
+  // Messe Saint-Wandrille — grégorien (lun-sam à 9h45, dimanche à 10h00 ci-dessous)
+  if (dow >= 1 && dow <= 6) {
+    slots.push({
+      type: 'messe', label: 'Messe en grégorien — Abbaye Saint-Wandrille',
+      desc: ESP_DESC.messeStWandrille,
+      entries: [{ t: '9:45', tl: '9h45', dur: 45, srcs: ['espg'] }],
+    });
+  }
+
   // Messe crypte Saint-Michel — lun-sam (pas dimanche)
   if (dow !== 0) {
     slots.push(
@@ -4187,12 +4198,16 @@ function _buildEspSlotsForDow(dow) {
     });
   }
 
-  // Dimanche : messe dominicale + vêpres Triors
+  // Dimanche : messe dominicale + messe grégorienne Saint-Wandrille + vêpres Triors
   if (dow === 0) {
     slots.push(
       { type: 'messe', label: 'Messe dominicale (Saint-Étienne — Espérance)',
         desc: ESP_DESC.messeDominicale,
         entries: [{ t: '10:00', tl: '10h00', dur: 75, srcs: ['esp'] }],
+      },
+      { type: 'messe', label: 'Messe dominicale en grégorien — Abbaye Saint-Wandrille',
+        desc: ESP_DESC.messeStWandrilleDim,
+        entries: [{ t: '10:00', tl: '10h00', dur: 90, srcs: ['espg'] }],
       },
       { type: 'vepres', label: 'Vêpres en grégorien — Triors (Espérance)',
         desc: ESP_DESC.vepresTriors,
