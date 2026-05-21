@@ -3166,6 +3166,8 @@ const SOURCES = {
   nd:  { n: 'RCF Notre-Dame',   s: 'https://windu.radionotredame.net/RadioNotreDame-Fm.mp3', w: 'https://www.rcf.fr/radio-notre-dame' },
   rcf: { n: 'RCF',              s: '', w: 'https://rcf.fr/radios/ecouter-rcf' },
   esp: { n: 'Espérance',        s: 'https://esperance.streamakaci.com/esperance.mp3', w: 'https://radio-esperance.fr' },
+  // Flux dédié chant grégorien d'Espérance (même que le bouton "Grégorien" en bas du site)
+  espg: { n: 'Espérance Grégorien', s: 'https://esperance.streamakaci.com/gregorien.mp3', w: 'https://radio-esperance.fr' },
   fid: { n: 'Fidélité',         s: '', w: 'https://www.radiofidelite.fr/player/' },
   kto: { n: 'KTO',              s: '', w: 'https://www.ktotv.com' },
   lou: { n: 'Lourdes',          s: '', w: 'https://www.lourdes-france.com/lourdesplus/' },
@@ -4122,7 +4124,10 @@ function _buildEspSlotsForDow(dow) {
   const slots = [
     { type: 'laudes', label: 'Laudes en grégorien — Triors (Radio Espérance)',
       desc: ESP_DESC.laudesGreg,
-      entries: [{ t: '6:00', tl: '6h00', dur: 40, srcs: ['esp'] }],
+      // noBreviary : office monastique en grégorien — les textes ne correspondent
+      // pas au bréviaire romain de l'AELF, donc on cache le bouton "Bréviaire".
+      noBreviary: true,
+      entries: [{ t: '6:05', tl: '6h05', dur: 40, srcs: ['esp', 'espg'] }],
     },
     { type: 'matin', label: 'Prière du matin (Radio Espérance)',
       desc: ESP_DESC.morningPrayer703,
@@ -4474,7 +4479,10 @@ function initTodayTimeline() {
     }
 
     const brevLabel = BREV_LABEL[slot.type];
-    const brevHtml  = brevLabel
+    // Certains offices (ex: Laudes monastiques en grégorien de Triors) utilisent
+    // un bréviaire monastique différent du Romain de l'AELF — on cache le bouton
+    // pour ne pas afficher des textes qui ne correspondent pas à la diffusion.
+    const brevHtml  = (brevLabel && !slot.noBreviary)
       ? `<button class="tl-breviary-btn" data-prayer="${slot.type}" data-label="${esc(slot.label)}" data-myst-dow='${slot.mystByDow ? JSON.stringify(slot.mystByDow) : ''}'>
            <i class="fa-solid fa-book-open"></i> ${brevLabel}
          </button>`
