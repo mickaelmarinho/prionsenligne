@@ -3184,7 +3184,7 @@ const SOURCES = {
   esp: { n: 'Espérance',        s: 'https://esperance.streamakaci.com/esperance.mp3', w: 'https://radio-esperance.fr' },
   // Flux dédié chant grégorien d'Espérance (même que le bouton "Grégorien" en bas du site)
   espg: { n: 'Espérance Grégorien', s: 'https://esperance.streamakaci.com/gregorien.mp3', w: 'https://radio-esperance.fr' },
-  fid: { n: 'Fidélité',         s: '', w: 'https://radio-fidelite.fr' },
+  fid: { n: 'Fidélité',         s: 'https://diffusion.lafrap.fr/fidelite.mp3', w: 'https://radio-fidelite.fr' },
   kto: { n: 'KTO',              s: '', w: 'https://www.ktotv.com' },
   lou: { n: 'Lourdes',          s: '', w: 'https://www.lourdes-france.com/lourdesplus/' },
   vat: { n: 'Vatican News',     s: '', w: 'https://www.vaticannews.va/fr.html' },
@@ -3208,6 +3208,11 @@ const RCF_DESC = {
   morningPrayer: "Chaque matin, l'Évangile du jour commenté par un prêtre ou un pasteur. Un temps de méditation qui s'achève par la proclamation du Notre Père.",
   malades:       "Messe en direct depuis la Basilique Notre-Dame des Victoires, Paris.",
   lourdes:       "Chapelet de Lourdes diffusé chaque jour sur RCF Notre-Dame.",
+};
+
+// ── Descriptions Radio Fidélité (Angers) ───────────────────────────────
+const FID_DESC = {
+  morningPrayer: "Prière du matin sur Radio Fidélité — méditation de l'Évangile du jour, intentions de prière et Notre Père. Diffusée depuis Angers (Maine-et-Loire).",
 };
 
 // ── Descriptions partagées Radio Maria (sources : radiomaria.fr) ────────
@@ -4400,6 +4405,32 @@ function _buildEspSlotsForDow(dow) {
     const dow = (key === 'ordinary') ? 4 : parseInt(key, 10);
     if (isNaN(dow)) return;
     WEEK_SCHEDULE[key].push(..._buildEspSlotsForDow(dow));
+  });
+})();
+
+// ════════════════════════════════════════════════════════════════════
+// Radio Fidélité (Angers) — slots quotidiens
+// ════════════════════════════════════════════════════════════════════
+function _buildFidSlotsForDow(dow) {
+  const slots = [];
+  // Prière du matin : lun-ven 6h30, samedi 7h00, dimanche 8h00 — durée 15 min
+  let t, tl;
+  if      (dow === 0) { t = '8:00'; tl = '8h00'; }
+  else if (dow === 6) { t = '7:00'; tl = '7h00'; }
+  else                { t = '6:30'; tl = '6h30'; }
+  slots.push({
+    type: 'matin', label: 'Prière du matin (Radio Fidélité)',
+    desc: FID_DESC.morningPrayer,
+    entries: [{ t, tl, dur: 15, srcs: ['fid'] }],
+  });
+  return slots;
+}
+(function injectFideliteSlots() {
+  Object.keys(WEEK_SCHEDULE).forEach(key => {
+    if (!Array.isArray(WEEK_SCHEDULE[key])) return;
+    const dow = (key === 'ordinary') ? 4 : parseInt(key, 10);
+    if (isNaN(dow)) return;
+    WEEK_SCHEDULE[key].push(..._buildFidSlotsForDow(dow));
   });
 })();
 
