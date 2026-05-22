@@ -3192,6 +3192,8 @@ const SOURCES = {
   // sol (Solesmes) retiré : ne diffuse pas en live sur internet
   ndp: { n: 'N-D de Paris',     s: '', w: 'https://www.notredamedeparis.fr/la-cathedrale/en-direct/' },
   ars: { n: 'Sct. d\'Ars',      s: '', w: 'https://www.saintcure-ars.fr' },
+  // Paroisse Notre-Dame de La Salette (Paris 15e) — YouTube live
+  pnds: { n: 'ND La Salette',   s: '', w: 'https://www.youtube.com/@paroissenotre-damedelasale5572/streams' },
 };
 
 /*
@@ -3208,6 +3210,12 @@ const RCF_DESC = {
   morningPrayer: "Chaque matin, l'Évangile du jour commenté par un prêtre ou un pasteur. Un temps de méditation qui s'achève par la proclamation du Notre Père.",
   malades:       "Messe en direct depuis la Basilique Notre-Dame des Victoires, Paris.",
   lourdes:       "Chapelet de Lourdes diffusé chaque jour sur RCF Notre-Dame.",
+};
+
+// ── Description Paroisse Notre-Dame de La Salette (Paris 15ᵉ) ─────────
+const PNDLS_DESC = {
+  messe:    "Messe en direct depuis la Paroisse Notre-Dame de La Salette (Paris 15ᵉ), diffusée sur la chaîne YouTube de la paroisse. Cliquez pour rejoindre la diffusion en direct.",
+  messeDim: "Messe dominicale (1h15) en direct depuis la Paroisse Notre-Dame de La Salette (Paris 15ᵉ). Diffusée sur YouTube — cliquez pour rejoindre la communauté en ligne.",
 };
 
 // ── Descriptions Radio Fidélité (Angers) ───────────────────────────────
@@ -4453,6 +4461,46 @@ function _buildFidSlotsForDow(dow) {
     const dow = (key === 'ordinary') ? 4 : parseInt(key, 10);
     if (isNaN(dow)) return;
     WEEK_SCHEDULE[key].push(..._buildFidSlotsForDow(dow));
+  });
+})();
+
+// ════════════════════════════════════════════════════════════════════
+// Paroisse Notre-Dame de La Salette (Paris 15ᵉ) — YouTube live
+// ════════════════════════════════════════════════════════════════════
+function _buildPNDLSSlotsForDow(dow) {
+  const slots = [];
+  // Lun-ven : 19h00 (40 min)
+  if (dow >= 1 && dow <= 5) {
+    slots.push({
+      type: 'messe', label: 'Messe — Paroisse Notre-Dame de La Salette',
+      desc: PNDLS_DESC.messe,
+      entries: [{ t: '19:00', tl: '19h00', dur: 40, srcs: ['pnds'] }],
+    });
+  }
+  // Samedi : 9h15 (40 min)
+  if (dow === 6) {
+    slots.push({
+      type: 'messe', label: 'Messe — Paroisse Notre-Dame de La Salette',
+      desc: PNDLS_DESC.messe,
+      entries: [{ t: '9:15', tl: '9h15', dur: 40, srcs: ['pnds'] }],
+    });
+  }
+  // Dimanche : 11h00 (1h15)
+  if (dow === 0) {
+    slots.push({
+      type: 'messe', label: 'Messe dominicale — Paroisse Notre-Dame de La Salette',
+      desc: PNDLS_DESC.messeDim,
+      entries: [{ t: '11:00', tl: '11h00', dur: 75, srcs: ['pnds'] }],
+    });
+  }
+  return slots;
+}
+(function injectPNDLSSlots() {
+  Object.keys(WEEK_SCHEDULE).forEach(key => {
+    if (!Array.isArray(WEEK_SCHEDULE[key])) return;
+    const dow = (key === 'ordinary') ? 4 : parseInt(key, 10);
+    if (isNaN(dow)) return;
+    WEEK_SCHEDULE[key].push(..._buildPNDLSSlotsForDow(dow));
   });
 })();
 
