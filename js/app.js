@@ -3212,6 +3212,12 @@ const RCF_DESC = {
   lourdes:       "Chapelet de Lourdes diffusé chaque jour sur RCF Notre-Dame.",
 };
 
+// ── Descriptions KTO Télévision ────────────────────────────────────────
+const KTO_DESC = {
+  messeNDGardeLun:    "Messe en direct depuis la basilique Notre-Dame de la Garde à Marseille, diffusée sur KTO. Le lundi, la messe seule (sans laudes intégrées).",
+  messeNDGardeMarSam: "Messe précédée des Laudes en direct depuis la basilique Notre-Dame de la Garde à Marseille. Diffusée sur KTO du mardi au samedi : les laudes sont chantées avant l'eucharistie, en un office continu.",
+};
+
 // ── Description Paroisse Notre-Dame de La Salette (Paris 15ᵉ) ─────────
 const PNDLS_DESC = {
   messe:    "Messe en direct depuis la Paroisse Notre-Dame de La Salette (Paris 15ᵉ), diffusée sur la chaîne YouTube de la paroisse. Cliquez pour rejoindre la diffusion en direct.",
@@ -4501,6 +4507,38 @@ function _buildPNDLSSlotsForDow(dow) {
     const dow = (key === 'ordinary') ? 4 : parseInt(key, 10);
     if (isNaN(dow)) return;
     WEEK_SCHEDULE[key].push(..._buildPNDLSSlotsForDow(dow));
+  });
+})();
+
+// ════════════════════════════════════════════════════════════════════
+// KTO — Messe quotidienne depuis Notre-Dame de la Garde (Marseille)
+// ════════════════════════════════════════════════════════════════════
+function _buildKtoSlotsForDow(dow) {
+  const slots = [];
+  // Lundi 7h25 : messe seule (sans laudes)
+  if (dow === 1) {
+    slots.push({
+      type: 'messe', label: 'Messe — Notre-Dame de la Garde (Marseille)',
+      desc: KTO_DESC.messeNDGardeLun,
+      entries: [{ t: '7:25', tl: '7h25', dur: 30, srcs: ['kto'] }],
+    });
+  }
+  // Mardi à samedi 7h25 : messe avec laudes intégrées
+  if (dow >= 2 && dow <= 6) {
+    slots.push({
+      type: 'messe', label: 'Messe avec laudes — Notre-Dame de la Garde (Marseille)',
+      desc: KTO_DESC.messeNDGardeMarSam,
+      entries: [{ t: '7:25', tl: '7h25', dur: 45, srcs: ['kto'] }],
+    });
+  }
+  return slots;
+}
+(function injectKtoSlots() {
+  Object.keys(WEEK_SCHEDULE).forEach(key => {
+    if (!Array.isArray(WEEK_SCHEDULE[key])) return;
+    const dow = (key === 'ordinary') ? 4 : parseInt(key, 10);
+    if (isNaN(dow)) return;
+    WEEK_SCHEDULE[key].push(..._buildKtoSlotsForDow(dow));
   });
 })();
 
