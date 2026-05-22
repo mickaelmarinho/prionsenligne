@@ -3214,6 +3214,7 @@ const RCF_DESC = {
 const FID_DESC = {
   morningPrayer: "Prière du matin sur Radio Fidélité — méditation de l'Évangile du jour, intentions de prière et Notre Père. Diffusée depuis Angers (Maine-et-Loire).",
   morningMass:   "Messe en direct du matin sur Radio Fidélité, depuis une paroisse du diocèse d'Angers. Eucharistie quotidienne accessible à ceux qui ne peuvent se déplacer.",
+  complies:      "Office des Complies sur Radio Fidélité — dernière prière de la journée, méditation et confiance avant la nuit. Depuis le diocèse d'Angers.",
 };
 
 // ── Descriptions partagées Radio Maria (sources : radiomaria.fr) ────────
@@ -4432,6 +4433,12 @@ function _buildFidSlotsForDow(dow) {
       entries: [{ t: '9:00', tl: '9h00', dur: 45, srcs: ['fid'] }],
     });
   }
+  // Complies : tous les jours à 20h00 (45 min)
+  slots.push({
+    type: 'complies', label: 'Complies (Radio Fidélité)',
+    desc: FID_DESC.complies,
+    entries: [{ t: '20:00', tl: '20h00', dur: 45, srcs: ['fid'] }],
+  });
   return slots;
 }
 (function injectFideliteSlots() {
