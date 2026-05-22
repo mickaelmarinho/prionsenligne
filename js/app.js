@@ -4540,7 +4540,7 @@ function _buildKtoSlotsForDow(dow) {
       desc: KTO_DESC.vepresNDParis,
       monasticOffice: true,
       officeKind: 'vepres',
-      entries: [{ t: '17:30', tl: '17h30', dur: 30, srcs: ['kto'] }],
+      entries: [{ t: '17:30', tl: '17h30', dur: 25, srcs: ['kto'] }],
     });
   }
   if (dow === 6) {
@@ -4549,7 +4549,7 @@ function _buildKtoSlotsForDow(dow) {
       desc: KTO_DESC.vepresNDParis,
       monasticOffice: true,
       officeKind: 'vepres',
-      entries: [{ t: '17:15', tl: '17h15', dur: 30, srcs: ['kto'] }],
+      entries: [{ t: '17:15', tl: '17h15', dur: 25, srcs: ['kto'] }],
     });
   }
   return slots;
