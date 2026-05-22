@@ -3194,6 +3194,8 @@ const SOURCES = {
   ars: { n: 'Sct. d\'Ars',      s: '', w: 'https://www.saintcure-ars.fr' },
   // Paroisse Notre-Dame de La Salette (Paris 15e) — YouTube live
   pnds: { n: 'ND La Salette',   s: '', w: 'https://www.youtube.com/@paroissenotre-damedelasale5572/streams' },
+  // Sanctuaire Notre-Dame du Laus — YouTube live
+  ndlaus: { n: 'ND du Laus',    s: '', w: 'https://www.youtube.com/@NotreDameduLausSanctuaire/streams' },
 };
 
 /*
@@ -3218,6 +3220,15 @@ const KTO_DESC = {
   messeNDGardeMarSam: "Messe précédée des Laudes en direct depuis la basilique Notre-Dame de la Garde à Marseille. Diffusée sur KTO du mardi au samedi : les laudes sont chantées avant l'eucharistie, en un office continu.",
   vepresNDParis:      "Vêpres en direct de la cathédrale Notre-Dame de Paris, diffusées sur KTO. Office du soir centré sur le Magnificat, chanté par les chantres de Notre-Dame.",
   messeNDParis:       "Messe en direct de la cathédrale Notre-Dame de Paris, diffusée chaque jour à 18h sur KTO depuis la réouverture de la cathédrale.",
+};
+
+const NDLAUS_DESC = {
+  laudes:    "Office des Laudes en direct du Sanctuaire Notre-Dame du Laus (Hautes-Alpes), diffusé chaque jour sur YouTube. Office matinal de louange centré sur le Benedictus.",
+  chapelet:  "Chapelet quotidien en direct du Sanctuaire Notre-Dame du Laus, lieu d'apparitions mariales reconnues. Diffusé chaque jour à 9h sur YouTube.",
+  messe:     "Messe de semaine en direct du Sanctuaire Notre-Dame du Laus (Hautes-Alpes), lieu d'apparitions mariales à Benoîte Rencurel. Diffusée chaque jour sur YouTube.",
+  chapMiseri:"Chapelet de la Miséricorde Divine en direct du Sanctuaire Notre-Dame du Laus, chaque vendredi à 15h sur YouTube — heure de la Miséricorde.",
+  vepres:    "Vêpres en direct du Sanctuaire Notre-Dame du Laus, office du soir centré sur le Magnificat. Diffusées chaque jour sur YouTube.",
+  complies:  "Complies en direct du Sanctuaire Notre-Dame du Laus, dernier office de la journée centré sur le Nunc dimittis. Diffusées chaque jour sur YouTube.",
 };
 
 // ── Description Paroisse Notre-Dame de La Salette (Paris 15ᵉ) ─────────
@@ -4567,6 +4578,63 @@ function _buildKtoSlotsForDow(dow) {
     const dow = (key === 'ordinary') ? 4 : parseInt(key, 10);
     if (isNaN(dow)) return;
     WEEK_SCHEDULE[key].push(..._buildKtoSlotsForDow(dow));
+  });
+})();
+
+// ════════════════════════════════════════════════════════════════════
+// Sanctuaire Notre-Dame du Laus (Hautes-Alpes) — YouTube live
+// ════════════════════════════════════════════════════════════════════
+function _buildNDLausSlotsForDow(dow) {
+  const slots = [];
+  // Laudes — tous les jours 8h10 (30 min)
+  slots.push({
+    type: 'laudes', label: 'Laudes — Sanctuaire Notre-Dame du Laus',
+    desc: NDLAUS_DESC.laudes,
+    monasticOffice: true, officeKind: 'laudes',
+    entries: [{ t: '8:10', tl: '8h10', dur: 30, srcs: ['ndlaus'] }],
+  });
+  // Chapelet — tous les jours 9h00 (45 min)
+  slots.push({
+    type: 'chapelet', label: 'Chapelet — Sanctuaire Notre-Dame du Laus',
+    desc: NDLAUS_DESC.chapelet,
+    entries: [{ t: '9:00', tl: '9h00', dur: 45, srcs: ['ndlaus'] }],
+  });
+  // Messe — tous les jours 11h15 (50 min)
+  slots.push({
+    type: 'messe', label: 'Messe — Sanctuaire Notre-Dame du Laus',
+    desc: NDLAUS_DESC.messe,
+    entries: [{ t: '11:15', tl: '11h15', dur: 50, srcs: ['ndlaus'] }],
+  });
+  // Chapelet de la Miséricorde — vendredi 15h00 (15 min)
+  if (dow === 5) {
+    slots.push({
+      type: 'chapelet', label: 'Chapelet de la Miséricorde — Sanctuaire Notre-Dame du Laus',
+      desc: NDLAUS_DESC.chapMiseri,
+      entries: [{ t: '15:00', tl: '15h00', dur: 15, srcs: ['ndlaus'] }],
+    });
+  }
+  // Vêpres — tous les jours 18h30 (30 min)
+  slots.push({
+    type: 'vepres', label: 'Vêpres — Sanctuaire Notre-Dame du Laus',
+    desc: NDLAUS_DESC.vepres,
+    monasticOffice: true, officeKind: 'vepres',
+    entries: [{ t: '18:30', tl: '18h30', dur: 30, srcs: ['ndlaus'] }],
+  });
+  // Complies — tous les jours 21h15 (20 min)
+  slots.push({
+    type: 'complies', label: 'Complies — Sanctuaire Notre-Dame du Laus',
+    desc: NDLAUS_DESC.complies,
+    monasticOffice: true, officeKind: 'complies',
+    entries: [{ t: '21:15', tl: '21h15', dur: 20, srcs: ['ndlaus'] }],
+  });
+  return slots;
+}
+(function injectNDLausSlots() {
+  Object.keys(WEEK_SCHEDULE).forEach(key => {
+    if (!Array.isArray(WEEK_SCHEDULE[key])) return;
+    const dow = (key === 'ordinary') ? 4 : parseInt(key, 10);
+    if (isNaN(dow)) return;
+    WEEK_SCHEDULE[key].push(..._buildNDLausSlotsForDow(dow));
   });
 })();
 
