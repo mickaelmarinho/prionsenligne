@@ -3802,9 +3802,15 @@ const WEEK_SCHEDULE = {
       desc: RM_DESC.divineMercy15,
       entries: [{ t: '15:00', tl: '15h00', dur: 15, srcs: ['rm'] }],
     },
+    // JEUDI : Fidélité diffuse la Messe des malades au lieu du Chapelet de Lourdes
+    // → fid retiré du Chapelet de Lourdes ce jour, ajouté à la nouvelle messe ci-dessous.
     { type: 'chapelet', label: 'Chapelet de Lourdes',
       desc: RM_DESC.lourdesCh,
-      entries: [{ t: '15:30', tl: '15h30', dur: 40, srcs: ['rm', 'lou', 'nd', 'fid'] }],
+      entries: [{ t: '15:30', tl: '15h30', dur: 40, srcs: ['rm', 'lou', 'nd'] }],
+    },
+    { type: 'messe', label: 'Messe des malades (Radio Fidélité)',
+      desc: "Messe des malades en direct sur Radio Fidélité depuis le diocèse d'Angers. Eucharistie célébrée tous les jeudis aux intentions des personnes malades, des soignants et de leurs familles.",
+      entries: [{ t: '15:30', tl: '15h30', dur: 45, srcs: ['fid'] }],
     },
     { type: 'vepres', label: 'Vêpres',
       desc: RM_DESC.vespers,
