@@ -3216,6 +3216,7 @@ const RCF_DESC = {
 const KTO_DESC = {
   messeNDGardeLun:    "Messe en direct depuis la basilique Notre-Dame de la Garde à Marseille, diffusée sur KTO. Le lundi, la messe seule (sans laudes intégrées).",
   messeNDGardeMarSam: "Messe précédée des Laudes en direct depuis la basilique Notre-Dame de la Garde à Marseille. Diffusée sur KTO du mardi au samedi : les laudes sont chantées avant l'eucharistie, en un office continu.",
+  vepresNDParis:      "Vêpres en direct de la cathédrale Notre-Dame de Paris, diffusées sur KTO. Office du soir centré sur le Magnificat, chanté par les chantres de Notre-Dame.",
 };
 
 // ── Description Paroisse Notre-Dame de La Salette (Paris 15ᵉ) ─────────
@@ -4529,6 +4530,26 @@ function _buildKtoSlotsForDow(dow) {
       type: 'messe', label: 'Messe avec laudes — Notre-Dame de la Garde (Marseille)',
       desc: KTO_DESC.messeNDGardeMarSam,
       entries: [{ t: '7:25', tl: '7h25', dur: 45, srcs: ['kto'] }],
+    });
+  }
+  // Vêpres en direct de Notre-Dame de Paris
+  // Lun-ven 17h30, samedi 17h15
+  if (dow >= 1 && dow <= 5) {
+    slots.push({
+      type: 'vepres', label: 'Vêpres — Notre-Dame de Paris',
+      desc: KTO_DESC.vepresNDParis,
+      monasticOffice: true,
+      officeKind: 'vepres',
+      entries: [{ t: '17:30', tl: '17h30', dur: 30, srcs: ['kto'] }],
+    });
+  }
+  if (dow === 6) {
+    slots.push({
+      type: 'vepres', label: 'Vêpres — Notre-Dame de Paris',
+      desc: KTO_DESC.vepresNDParis,
+      monasticOffice: true,
+      officeKind: 'vepres',
+      entries: [{ t: '17:15', tl: '17h15', dur: 30, srcs: ['kto'] }],
     });
   }
   return slots;
