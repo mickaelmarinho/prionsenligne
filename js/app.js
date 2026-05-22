@@ -3217,6 +3217,7 @@ const KTO_DESC = {
   messeNDGardeLun:    "Messe en direct depuis la basilique Notre-Dame de la Garde à Marseille, diffusée sur KTO. Le lundi, la messe seule (sans laudes intégrées).",
   messeNDGardeMarSam: "Messe précédée des Laudes en direct depuis la basilique Notre-Dame de la Garde à Marseille. Diffusée sur KTO du mardi au samedi : les laudes sont chantées avant l'eucharistie, en un office continu.",
   vepresNDParis:      "Vêpres en direct de la cathédrale Notre-Dame de Paris, diffusées sur KTO. Office du soir centré sur le Magnificat, chanté par les chantres de Notre-Dame.",
+  messeNDParis:       "Messe en direct de la cathédrale Notre-Dame de Paris, diffusée chaque jour à 18h sur KTO depuis la réouverture de la cathédrale.",
 };
 
 // ── Description Paroisse Notre-Dame de La Salette (Paris 15ᵉ) ─────────
@@ -4552,6 +4553,12 @@ function _buildKtoSlotsForDow(dow) {
       entries: [{ t: '17:15', tl: '17h15', dur: 25, srcs: ['kto'] }],
     });
   }
+  // Messe en direct de Notre-Dame de Paris — tous les jours à 18h
+  slots.push({
+    type: 'messe', label: 'Messe — Notre-Dame de Paris',
+    desc: KTO_DESC.messeNDParis,
+    entries: [{ t: '18:00', tl: '18h00', dur: 45, srcs: ['kto'] }],
+  });
   return slots;
 }
 (function injectKtoSlots() {
