@@ -630,12 +630,16 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
   min-height: 32px; /* cible tactile */
 }
 
-/* Drapeau du pays de la source (Québec, Vatican, etc.) */
+/* Drapeau du pays de la source (image flagcdn.com — rendu identique tous OS) */
 .src-flag {
-  font-size: 14px;
-  margin-left: 4px;
-  line-height: 1;
-  font-family: "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;
+  display: inline-block;
+  width: 14px;
+  height: 10px;
+  margin-left: 5px;
+  vertical-align: middle;
+  border-radius: 1px;
+  box-shadow: 0 0 0 0.5px rgba(0,0,0,.15);
+  object-fit: cover;
 }
 
 .tl-src.radio {

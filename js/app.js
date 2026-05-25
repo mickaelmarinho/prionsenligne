@@ -3187,7 +3187,6 @@ const SOURCES = {
   fid: { n: 'Fidélité',         s: 'https://diffusion.lafrap.fr/fidelite.mp3', w: 'https://radio-fidelite.fr' },
   kto: { n: 'KTO',              s: '', w: 'https://www.ktotv.com' },
   lou: { n: 'Lourdes',          s: '', w: 'https://www.lourdes-france.com/lourdesplus/' },
-  vat: { n: 'Vatican News',     f: '🇻🇦', s: '', w: 'https://www.vaticannews.va/fr.html' },
   // jer (Fraternités de Jérusalem) retiré : pas de retransmission live trouvée
   // sol (Solesmes) retiré : ne diffuse pas en live sur internet
   ndp: { n: 'N-D de Paris',     s: '', w: 'https://www.notredamedeparis.fr/la-cathedrale/en-direct/' },
@@ -3197,11 +3196,11 @@ const SOURCES = {
   // Sanctuaire Notre-Dame du Laus — YouTube live
   ndlaus: { n: 'ND du Laus',    s: '', w: 'https://www.youtube.com/@NotreDameduLausSanctuaire/streams' },
   // Radio Galilée — Québec (CKJI-FM Saint-Augustin-de-Desmaures) — UTC-5/-4, horaires stockés en heure de Paris (+6h)
-  gal: { n: 'Radio Galilée',    f: '🇨🇦', s: 'https://stream.zeno.fm/y9p44u8gn7zuv', w: 'https://radiogalilee.com/ecoute-en-direct/' },
+  gal: { n: 'Radio Galilée',    f: 'ca', s: 'https://stream.zeno.fm/y9p44u8gn7zuv', w: 'https://radiogalilee.com/ecoute-en-direct/' },
   // Radio Ville-Marie — Montréal (Québec) — UTC-5/-4, horaires stockés en heure de Paris (+6h)
-  rvm: { n: 'Radio Ville-Marie', f: '🇨🇦', s: '', w: 'https://radiovm.com/ecoute-en-direct/' },
+  rvm: { n: 'Radio Ville-Marie', f: 'ca', s: '', w: 'https://radiovm.com/ecoute-en-direct/' },
   // Sel + Lumière TV — Toronto/Montréal (Québec) — chaîne catholique francophone, UTC-5/-4
-  slm: { n: 'Sel + Lumière',    f: '🇨🇦', s: '', w: 'https://slmedia.org/fr/slplus/w/2984/en-direct' },
+  slm: { n: 'Sel + Lumière',    f: 'ca', s: '', w: 'https://slmedia.org/fr/slplus/w/2984/en-direct' },
 };
 
 /*
@@ -4012,7 +4011,7 @@ const WEEK_SCHEDULE = {
     },
     { type: 'messe', label: 'Audience papale',
       desc: "Audience générale du Pape, en direct depuis Rome.",
-      entries: [{ t: '10:30', tl: '10h30', dur: 90, srcs: ['vat', 'kto'] }],
+      entries: [{ t: '10:30', tl: '10h30', dur: 90, srcs: ['kto'] }],
     },
     { type: 'messe', label: 'Messe — Notre-Dame du Laus',
       desc: "Messe en direct du Sanctuaire Notre-Dame du Laus (Hautes-Alpes).",
@@ -4309,7 +4308,7 @@ const WEEK_SCHEDULE = {
     },
     { type: 'chapelet', label: 'Angélus',
       desc: "Prière mariale traditionnelle de midi, en union avec le Pape depuis Saint-Pierre de Rome.",
-      entries: [{ t: '12:00', tl: '12h00', dur: 15, srcs: ['vat', 'kto'] }],
+      entries: [{ t: '12:00', tl: '12h00', dur: 15, srcs: ['kto'] }],
     },
     { type: 'chapelet', label: 'Chapelet de la Divine Miséricorde',
       desc: "Le chapelet de la Divine Miséricorde diffusé sur plusieurs sources le dimanche.",
@@ -4922,7 +4921,7 @@ function initWeek() {
         for (const key of entry.srcs) {
           const src = SOURCES[key];
           if (!src) continue;
-          const flagHtml = src.f ? `<span class="src-flag">${src.f}</span>` : '';
+          const flagHtml = src.f ? `<img class="src-flag" src="https://flagcdn.com/w20/${src.f}.png" srcset="https://flagcdn.com/w40/${src.f}.png 2x" width="14" height="10" alt="" aria-hidden="true">` : '';
           if (src.s) {
             srcsHtml += `<button class="wc-src-btn wc-radio" data-action="radio"
               data-stream="${src.s}" data-web="${src.w}"
@@ -5124,7 +5123,7 @@ function initTodayTimeline() {
     for (const key of entry.srcs) {
       const src = SOURCES[key];
       if (!src) continue;
-      const flagHtml = src.f ? `<span class="src-flag">${src.f}</span>` : '';
+      const flagHtml = src.f ? `<img class="src-flag" src="https://flagcdn.com/w20/${src.f}.png" srcset="https://flagcdn.com/w40/${src.f}.png 2x" width="14" height="10" alt="" aria-hidden="true">` : '';
       if (src.s) {
         srcsHtml += `<button class="tl-src radio" data-action="radio"
           data-stream="${src.s}" data-web="${src.w}"
