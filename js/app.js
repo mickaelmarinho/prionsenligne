@@ -3200,6 +3200,8 @@ const SOURCES = {
   gal: { n: 'Radio Galilée',    s: 'https://stream.zeno.fm/y9p44u8gn7zuv', w: 'https://radiogalilee.com/ecoute-en-direct/' },
   // Radio Ville-Marie — Montréal (Québec) — UTC-5/-4, horaires stockés en heure de Paris (+6h)
   rvm: { n: 'Radio Ville-Marie', s: '', w: 'https://radiovm.com/ecoute-en-direct/' },
+  // Sel + Lumière TV — Toronto/Montréal (Québec) — chaîne catholique francophone, UTC-5/-4
+  slm: { n: 'Sel + Lumière',    s: '', w: 'https://slmedia.org/fr/slplus/w/2984/en-direct' },
 };
 
 /*
@@ -3238,6 +3240,15 @@ const RVM_DESC = {
   messe:    "Messe en direct de la crypte de l'Oratoire Saint-Joseph du Mont-Royal (Montréal), diffusée sur Radio Ville-Marie du lundi au vendredi à 19h00 heure du Québec, soit 01h00 (jour suivant) heure de Paris.",
   complies: "« Signe de nuit » — les Complies en direct de l'Abbaye Saint-Benoît-du-Lac (Québec), avec Henri Laban (coord.), sur Radio Ville-Marie. Diffusées du lundi au vendredi à 23h15 heure du Québec, soit 05h15 (jour suivant) heure de Paris.",
   messeDim: "Messe dominicale en direct de l'Oratoire Saint-Joseph du Mont-Royal (Montréal), diffusée sur Radio Ville-Marie chaque dimanche de 11h00 à 12h30 heure du Québec, soit 17h00 à 18h30 heure de Paris.",
+};
+
+const SLM_DESC = {
+  joyeux:    "Chapelet — Mystères joyeux. Diffusé en direct sur Sel + Lumière Télévision (Québec) le lundi à 8h heure du Québec, soit 14h heure de Paris. Mystères : Annonciation, Visitation, Nativité, Présentation au temple, Recouvrement au temple.",
+  joyeuxSam: "Chapelet — Mystères joyeux. Diffusé en direct sur Sel + Lumière Télévision (Québec) le samedi à 8h heure du Québec, soit 14h heure de Paris.",
+  douloureux:"Chapelet — Mystères douloureux. Diffusé en direct sur Sel + Lumière Télévision (Québec) le mardi et le vendredi à 8h heure du Québec, soit 14h heure de Paris. Mystères : Agonie de Jésus, Flagellation, Couronnement d'épines, Portement de Croix, Crucifixion.",
+  glorieuxMer:"Chapelet — Mystères glorieux. Diffusé en direct sur Sel + Lumière Télévision (Québec) le mercredi à 8h heure du Québec, soit 14h heure de Paris. Mystères : Résurrection, Ascension, Pentecôte, Assomption, Couronnement de Marie.",
+  glorieuxDim:"Chapelet — Mystères glorieux. Diffusé en direct sur Sel + Lumière Télévision (Québec) le dimanche à 7h30 heure du Québec, soit 13h30 heure de Paris. Mystères : Résurrection, Ascension, Pentecôte, Assomption, Couronnement de Marie.",
+  lumineux:  "Chapelet — Mystères lumineux. Diffusé en direct sur Sel + Lumière Télévision (Québec) le jeudi à 8h heure du Québec, soit 14h heure de Paris. Mystères : Baptême de Jésus, Noces de Cana, Annonce du Royaume, Transfiguration, Institution de l'Eucharistie.",
 };
 
 const NDLAUS_DESC = {
@@ -4692,6 +4703,47 @@ function _buildRvmSlotsForDow(dow) {
     const dow = (key === 'ordinary') ? 4 : parseInt(key, 10);
     if (isNaN(dow)) return;
     WEEK_SCHEDULE[key].push(..._buildRvmSlotsForDow(dow));
+  });
+})();
+
+// ════════════════════════════════════════════════════════════════════
+// Sel + Lumière TV (Québec) — chapelet quotidien, mystères selon le jour
+// Lun-sam 8h Qc → 14h Paris (même jour) / Dim 7h30 Qc → 13h30 Paris
+// ════════════════════════════════════════════════════════════════════
+function _buildSlmSlotsForDow(dow) {
+  const slots = [];
+  let desc, label;
+  // Rotation des mystères selon le jour (rotation traditionnelle SLM)
+  if (dow === 0) {
+    // Dimanche : glorieux à 7h30 Qc → 13h30 Paris
+    slots.push({
+      type: 'chapelet', label: 'Chapelet — Mystères glorieux — Sel + Lumière TV (Québec)',
+      desc: SLM_DESC.glorieuxDim,
+      entries: [{ t: '13:30', tl: '13h30', dur: 30, srcs: ['slm'] }],
+    });
+    return slots;
+  }
+  // Lun-sam : 8h Qc → 14h00 Paris
+  if (dow === 1) { label = 'Chapelet — Mystères joyeux — Sel + Lumière TV (Québec)';     desc = SLM_DESC.joyeux; }
+  if (dow === 2) { label = 'Chapelet — Mystères douloureux — Sel + Lumière TV (Québec)'; desc = SLM_DESC.douloureux; }
+  if (dow === 3) { label = 'Chapelet — Mystères glorieux — Sel + Lumière TV (Québec)';   desc = SLM_DESC.glorieuxMer; }
+  if (dow === 4) { label = 'Chapelet — Mystères lumineux — Sel + Lumière TV (Québec)';   desc = SLM_DESC.lumineux; }
+  if (dow === 5) { label = 'Chapelet — Mystères douloureux — Sel + Lumière TV (Québec)'; desc = SLM_DESC.douloureux; }
+  if (dow === 6) { label = 'Chapelet — Mystères joyeux — Sel + Lumière TV (Québec)';     desc = SLM_DESC.joyeuxSam; }
+  if (label) {
+    slots.push({
+      type: 'chapelet', label, desc,
+      entries: [{ t: '14:00', tl: '14h00', dur: 30, srcs: ['slm'] }],
+    });
+  }
+  return slots;
+}
+(function injectSlmSlots() {
+  Object.keys(WEEK_SCHEDULE).forEach(key => {
+    if (!Array.isArray(WEEK_SCHEDULE[key])) return;
+    const dow = (key === 'ordinary') ? 4 : parseInt(key, 10);
+    if (isNaN(dow)) return;
+    WEEK_SCHEDULE[key].push(..._buildSlmSlotsForDow(dow));
   });
 })();
 
