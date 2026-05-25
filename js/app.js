@@ -3249,6 +3249,8 @@ const SLM_DESC = {
   glorieuxMer:"Chapelet — Mystères glorieux. Diffusé en direct sur Sel + Lumière Télévision (Québec) le mercredi à 8h heure du Québec, soit 14h heure de Paris. Mystères : Résurrection, Ascension, Pentecôte, Assomption, Couronnement de Marie.",
   glorieuxDim:"Chapelet — Mystères glorieux. Diffusé en direct sur Sel + Lumière Télévision (Québec) le dimanche à 7h30 heure du Québec, soit 13h30 heure de Paris. Mystères : Résurrection, Ascension, Pentecôte, Assomption, Couronnement de Marie.",
   lumineux:  "Chapelet — Mystères lumineux. Diffusé en direct sur Sel + Lumière Télévision (Québec) le jeudi à 8h heure du Québec, soit 14h heure de Paris. Mystères : Baptême de Jésus, Noces de Cana, Annonce du Royaume, Transfiguration, Institution de l'Eucharistie.",
+  messeSem:  "Messe du jour en la Cathédrale Marie-Reine-du-Monde de Montréal, diffusée en direct sur Sel + Lumière Télévision (Québec) du lundi au samedi à 7h30 heure du Québec, soit 13h30 heure de Paris.",
+  messeDim:  "Messe dominicale en la Cathédrale Marie-Reine-du-Monde de Montréal, diffusée en direct sur Sel + Lumière Télévision (Québec) le dimanche à 9h30 heure du Québec, soit 15h30 heure de Paris.",
 };
 
 const NDLAUS_DESC = {
@@ -4713,6 +4715,22 @@ function _buildRvmSlotsForDow(dow) {
 function _buildSlmSlotsForDow(dow) {
   const slots = [];
   let desc, label;
+  // Messe Cathédrale Marie-Reine-du-Monde de Montréal
+  // Lun-sam 7h30 Qc → 13h30 Paris (30 min) / Dim 9h30 Qc → 15h30 Paris (60 min)
+  if (dow >= 1 && dow <= 6) {
+    slots.push({
+      type: 'messe', label: 'Messe — Cathédrale Marie-Reine-du-Monde (Montréal)',
+      desc: SLM_DESC.messeSem,
+      entries: [{ t: '13:30', tl: '13h30', dur: 30, srcs: ['slm'] }],
+    });
+  }
+  if (dow === 0) {
+    slots.push({
+      type: 'messe', label: 'Messe dominicale — Cathédrale Marie-Reine-du-Monde (Montréal)',
+      desc: SLM_DESC.messeDim,
+      entries: [{ t: '15:30', tl: '15h30', dur: 60, srcs: ['slm'] }],
+    });
+  }
   // Rotation des mystères selon le jour (rotation traditionnelle SLM)
   if (dow === 0) {
     // Dimanche : glorieux à 7h30 Qc → 13h30 Paris
