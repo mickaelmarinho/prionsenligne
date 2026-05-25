@@ -3198,6 +3198,8 @@ const SOURCES = {
   ndlaus: { n: 'ND du Laus',    s: '', w: 'https://www.youtube.com/@NotreDameduLausSanctuaire/streams' },
   // Radio Galilée — Québec (CKJI-FM Saint-Augustin-de-Desmaures) — UTC-5/-4, horaires stockés en heure de Paris (+6h)
   gal: { n: 'Radio Galilée',    s: 'https://stream.zeno.fm/y9p44u8gn7zuv', w: 'https://radiogalilee.com/ecoute-en-direct/' },
+  // Radio Ville-Marie — Montréal (Québec) — UTC-5/-4, horaires stockés en heure de Paris (+6h)
+  rvm: { n: 'Radio Ville-Marie', s: '', w: 'https://radiovm.com/ecoute-en-direct/' },
 };
 
 /*
@@ -3229,6 +3231,12 @@ const GAL_DESC = {
   chapeletApMidi: "Chapelet médité en direct sur Radio Galilée (Québec). Diffusé du lundi au samedi à 15h30 heure du Québec, soit 21h30 heure de Paris. Provenance occasionnelle de Lourdes (deux fois par mois).",
   chapeletDim:    "Chapelet médité dominical en direct sur Radio Galilée (Québec). Diffusé le dimanche à 11h heure du Québec, soit 17h heure de Paris. Animation par familles, groupes et communautés.",
   messe:          "Messe « En mémoire de Lui » en direct sur Radio Galilée (Québec), célébrée en studio. Tous les mercredis à 14h30 heure du Québec, soit 20h30 heure de Paris.",
+};
+
+const RVM_DESC = {
+  chapelet: "Chapelet médité en direct sur Radio Ville-Marie (Montréal). Diffusé du lundi au vendredi à 18h35 heure du Québec, soit 00h35 (jour suivant) heure de Paris.",
+  messe:    "Messe en direct de la crypte de l'Oratoire Saint-Joseph du Mont-Royal (Montréal), diffusée sur Radio Ville-Marie du lundi au vendredi à 19h00 heure du Québec, soit 01h00 (jour suivant) heure de Paris.",
+  complies: "« Signe de nuit » — les Complies en direct de l'Abbaye Saint-Benoît-du-Lac (Québec), avec Henri Laban (coord.), sur Radio Ville-Marie. Diffusées du lundi au vendredi à 23h15 heure du Québec, soit 05h15 (jour suivant) heure de Paris.",
 };
 
 const NDLAUS_DESC = {
@@ -4636,6 +4644,45 @@ function _buildGalSlotsForDow(dow) {
     const dow = (key === 'ordinary') ? 4 : parseInt(key, 10);
     if (isNaN(dow)) return;
     WEEK_SCHEDULE[key].push(..._buildGalSlotsForDow(dow));
+  });
+})();
+
+// ════════════════════════════════════════════════════════════════════
+// Radio Ville-Marie (Montréal) — horaires en heure de Paris.
+// ATTENTION : Québec lun-ven en soirée → Paris mar-sam tôt le matin (+1 jour)
+// ════════════════════════════════════════════════════════════════════
+function _buildRvmSlotsForDow(dow) {
+  const slots = [];
+  // Quebec lun-ven (Paris dow 2..6 = mar-sam) :
+  if (dow >= 2 && dow <= 6) {
+    // Chapelet médité — 18h35 Québec → 00h35 Paris (25 min)
+    slots.push({
+      type: 'chapelet', label: 'Chapelet médité — Radio Ville-Marie (Montréal)',
+      desc: RVM_DESC.chapelet,
+      entries: [{ t: '0:35', tl: '0h35', dur: 25, srcs: ['rvm'] }],
+    });
+    // Messe Oratoire St-Joseph du Mont-Royal — 19h00 Québec → 01h00 Paris (30 min)
+    slots.push({
+      type: 'messe', label: 'Messe — Oratoire Saint-Joseph du Mont-Royal (Montréal)',
+      desc: RVM_DESC.messe,
+      entries: [{ t: '1:00', tl: '1h00', dur: 30, srcs: ['rvm'] }],
+    });
+    // Complies (Abbaye St-Benoît-du-Lac) — 23h15 Québec → 05h15 Paris (15 min)
+    slots.push({
+      type: 'complies', label: 'Complies — Abbaye Saint-Benoît-du-Lac (Québec)',
+      desc: RVM_DESC.complies,
+      monasticOffice: true, officeKind: 'complies',
+      entries: [{ t: '5:15', tl: '5h15', dur: 15, srcs: ['rvm'] }],
+    });
+  }
+  return slots;
+}
+(function injectRvmSlots() {
+  Object.keys(WEEK_SCHEDULE).forEach(key => {
+    if (!Array.isArray(WEEK_SCHEDULE[key])) return;
+    const dow = (key === 'ordinary') ? 4 : parseInt(key, 10);
+    if (isNaN(dow)) return;
+    WEEK_SCHEDULE[key].push(..._buildRvmSlotsForDow(dow));
   });
 })();
 
