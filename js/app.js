@@ -3251,6 +3251,10 @@ const SLM_DESC = {
   lumineux:  "Chapelet — Mystères lumineux. Diffusé en direct sur Sel + Lumière Télévision (Québec) le jeudi à 8h heure du Québec, soit 14h heure de Paris. Mystères : Baptême de Jésus, Noces de Cana, Annonce du Royaume, Transfiguration, Institution de l'Eucharistie.",
   messeSem:  "Messe du jour en la Cathédrale Marie-Reine-du-Monde de Montréal, diffusée en direct sur Sel + Lumière Télévision (Québec) du lundi au samedi à 7h30 heure du Québec, soit 13h30 heure de Paris.",
   messeDim:  "Messe dominicale en la Cathédrale Marie-Reine-du-Monde de Montréal, diffusée en direct sur Sel + Lumière Télévision (Québec) le dimanche à 9h30 heure du Québec, soit 15h30 heure de Paris.",
+  messeRediff:    "Rediffusion de la messe du jour en la Cathédrale Marie-Reine-du-Monde de Montréal, sur Sel + Lumière Télévision (Québec). Du lundi au vendredi à 16h heure du Québec, soit 22h heure de Paris.",
+  messeRediffSam: "Rediffusion de la messe en la Cathédrale Marie-Reine-du-Monde de Montréal, sur Sel + Lumière Télévision (Québec) le samedi à 14h heure du Québec, soit 20h heure de Paris.",
+  messeRediffDim: "Rediffusion de la messe dominicale en la Cathédrale Marie-Reine-du-Monde de Montréal, sur Sel + Lumière Télévision (Québec) le dimanche à 16h heure du Québec, soit 22h heure de Paris.",
+  chapeletAprem:  "Chapelet quotidien sur Sel + Lumière Télévision (Québec) à 17h heure du Québec, soit 23h heure de Paris. Mystères selon le jour de la semaine. Diffusion suspendue les jours de solennité et grandes fêtes liturgiques.",
 };
 
 const NDLAUS_DESC = {
@@ -4730,6 +4734,48 @@ function _buildSlmSlotsForDow(dow) {
       desc: SLM_DESC.messeDim,
       entries: [{ t: '15:30', tl: '15h30', dur: 60, srcs: ['slm'] }],
     });
+  }
+  // Rediffusions messe :
+  // Lun-ven 16h Qc → 22h Paris (30 min) / Sam 14h Qc → 20h Paris (30 min) / Dim 16h Qc → 22h Paris (60 min)
+  if (dow >= 1 && dow <= 5) {
+    slots.push({
+      type: 'messe', label: 'Messe (rediffusion) — Cathédrale Marie-Reine-du-Monde (Montréal)',
+      desc: SLM_DESC.messeRediff,
+      entries: [{ t: '22:00', tl: '22h00', dur: 30, srcs: ['slm'] }],
+    });
+  }
+  if (dow === 6) {
+    slots.push({
+      type: 'messe', label: 'Messe (rediffusion) — Cathédrale Marie-Reine-du-Monde (Montréal)',
+      desc: SLM_DESC.messeRediffSam,
+      entries: [{ t: '20:00', tl: '20h00', dur: 30, srcs: ['slm'] }],
+    });
+  }
+  if (dow === 0) {
+    slots.push({
+      type: 'messe', label: 'Messe dominicale (rediffusion) — Cathédrale Marie-Reine-du-Monde (Montréal)',
+      desc: SLM_DESC.messeRediffDim,
+      entries: [{ t: '22:00', tl: '22h00', dur: 60, srcs: ['slm'] }],
+    });
+  }
+  // Chapelet quotidien 17h Qc → 23h Paris (30 min) — mystères selon le jour
+  // Note : diffusion suspendue les jours de solennité (caveat dans desc)
+  {
+    let labelChap;
+    if (dow === 0) labelChap = 'Chapelet — Mystères glorieux — Sel + Lumière TV (Québec)';
+    if (dow === 1) labelChap = 'Chapelet — Mystères joyeux — Sel + Lumière TV (Québec)';
+    if (dow === 2) labelChap = 'Chapelet — Mystères douloureux — Sel + Lumière TV (Québec)';
+    if (dow === 3) labelChap = 'Chapelet — Mystères glorieux — Sel + Lumière TV (Québec)';
+    if (dow === 4) labelChap = 'Chapelet — Mystères lumineux — Sel + Lumière TV (Québec)';
+    if (dow === 5) labelChap = 'Chapelet — Mystères douloureux — Sel + Lumière TV (Québec)';
+    if (dow === 6) labelChap = 'Chapelet — Mystères joyeux — Sel + Lumière TV (Québec)';
+    if (labelChap) {
+      slots.push({
+        type: 'chapelet', label: labelChap,
+        desc: SLM_DESC.chapeletAprem,
+        entries: [{ t: '23:00', tl: '23h00', dur: 30, srcs: ['slm'] }],
+      });
+    }
   }
   // Rotation des mystères selon le jour (rotation traditionnelle SLM)
   if (dow === 0) {
