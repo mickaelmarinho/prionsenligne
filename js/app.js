@@ -3237,6 +3237,7 @@ const RVM_DESC = {
   chapelet: "Chapelet médité en direct sur Radio Ville-Marie (Montréal). Diffusé du lundi au vendredi à 18h35 heure du Québec, soit 00h35 (jour suivant) heure de Paris.",
   messe:    "Messe en direct de la crypte de l'Oratoire Saint-Joseph du Mont-Royal (Montréal), diffusée sur Radio Ville-Marie du lundi au vendredi à 19h00 heure du Québec, soit 01h00 (jour suivant) heure de Paris.",
   complies: "« Signe de nuit » — les Complies en direct de l'Abbaye Saint-Benoît-du-Lac (Québec), avec Henri Laban (coord.), sur Radio Ville-Marie. Diffusées du lundi au vendredi à 23h15 heure du Québec, soit 05h15 (jour suivant) heure de Paris.",
+  messeDim: "Messe dominicale en direct de l'Oratoire Saint-Joseph du Mont-Royal (Montréal), diffusée sur Radio Ville-Marie chaque dimanche de 11h00 à 12h30 heure du Québec, soit 17h00 à 18h30 heure de Paris.",
 };
 
 const NDLAUS_DESC = {
@@ -4673,6 +4674,14 @@ function _buildRvmSlotsForDow(dow) {
       desc: RVM_DESC.complies,
       monasticOffice: true, officeKind: 'complies',
       entries: [{ t: '5:15', tl: '5h15', dur: 15, srcs: ['rvm'] }],
+    });
+  }
+  // Messe dominicale — Québec dim 11h-12h30 → Paris dim 17h00 (90 min, même jour)
+  if (dow === 0) {
+    slots.push({
+      type: 'messe', label: 'Messe dominicale — Oratoire Saint-Joseph du Mont-Royal (Montréal)',
+      desc: RVM_DESC.messeDim,
+      entries: [{ t: '17:00', tl: '17h00', dur: 90, srcs: ['rvm'] }],
     });
   }
   return slots;
