@@ -3196,6 +3196,8 @@ const SOURCES = {
   pnds: { n: 'ND La Salette',   s: '', w: 'https://www.youtube.com/@paroissenotre-damedelasale5572/streams' },
   // Sanctuaire Notre-Dame du Laus — YouTube live
   ndlaus: { n: 'ND du Laus',    s: '', w: 'https://www.youtube.com/@NotreDameduLausSanctuaire/streams' },
+  // Radio Galilée — Québec (CKJI-FM Saint-Augustin-de-Desmaures) — UTC-5/-4, horaires stockés en heure de Paris (+6h)
+  gal: { n: 'Radio Galilée',    s: 'https://stream.zeno.fm/y9p44u8gn7zuv', w: 'https://radiogalilee.com/ecoute-en-direct/' },
 };
 
 /*
@@ -3220,6 +3222,13 @@ const KTO_DESC = {
   messeNDGardeMarSam: "Messe précédée des Laudes en direct depuis la basilique Notre-Dame de la Garde à Marseille. Diffusée sur KTO du mardi au samedi : les laudes sont chantées avant l'eucharistie, en un office continu.",
   vepresNDParis:      "Vêpres en direct de la cathédrale Notre-Dame de Paris, diffusées sur KTO. Office du soir centré sur le Magnificat, chanté par les chantres de Notre-Dame.",
   messeNDParis:       "Messe en direct de la cathédrale Notre-Dame de Paris, diffusée chaque jour à 18h sur KTO depuis la réouverture de la cathédrale.",
+};
+
+const GAL_DESC = {
+  chapeletMatin:  "Chapelet médité en direct sur Radio Galilée (Québec). Diffusé chaque jour à 6h heure du Québec, soit 12h heure de Paris. Animation : abbé Denis Veilleux (du lundi au samedi), familles & communautés le dimanche.",
+  chapeletApMidi: "Chapelet médité en direct sur Radio Galilée (Québec). Diffusé du lundi au samedi à 15h30 heure du Québec, soit 21h30 heure de Paris. Provenance occasionnelle de Lourdes (deux fois par mois).",
+  chapeletDim:    "Chapelet médité dominical en direct sur Radio Galilée (Québec). Diffusé le dimanche à 11h heure du Québec, soit 17h heure de Paris. Animation par familles, groupes et communautés.",
+  messe:          "Messe « En mémoire de Lui » en direct sur Radio Galilée (Québec), célébrée en studio. Tous les mercredis à 14h30 heure du Québec, soit 20h30 heure de Paris.",
 };
 
 const NDLAUS_DESC = {
@@ -4584,6 +4593,52 @@ function _buildKtoSlotsForDow(dow) {
 // ════════════════════════════════════════════════════════════════════
 // Sanctuaire Notre-Dame du Laus (Hautes-Alpes) — YouTube live
 // ════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════
+// Radio Galilée (Québec) — horaires en heure de Paris (Québec +6h)
+// ════════════════════════════════════════════════════════════════════
+function _buildGalSlotsForDow(dow) {
+  const slots = [];
+  // Chapelet médité matin — tous les jours 6h Québec → 12h00 Paris (30 min)
+  slots.push({
+    type: 'chapelet', label: 'Chapelet médité — Radio Galilée (Québec)',
+    desc: GAL_DESC.chapeletMatin,
+    entries: [{ t: '12:00', tl: '12h00', dur: 30, srcs: ['gal'] }],
+  });
+  // Messe « En mémoire de Lui » — mercredi 14h30 Québec → 20h30 Paris (30 min)
+  if (dow === 3) {
+    slots.push({
+      type: 'messe', label: 'Messe « En mémoire de Lui » — Radio Galilée (Québec)',
+      desc: GAL_DESC.messe,
+      entries: [{ t: '20:30', tl: '20h30', dur: 30, srcs: ['gal'] }],
+    });
+  }
+  // Chapelet médité après-midi — lun-sam 15h30 Québec → 21h30 Paris (30 min)
+  if (dow >= 1 && dow <= 6) {
+    slots.push({
+      type: 'chapelet', label: 'Chapelet médité — Radio Galilée (Québec)',
+      desc: GAL_DESC.chapeletApMidi,
+      entries: [{ t: '21:30', tl: '21h30', dur: 30, srcs: ['gal'] }],
+    });
+  }
+  // Chapelet médité dominical — dimanche 11h Québec → 17h00 Paris (30 min)
+  if (dow === 0) {
+    slots.push({
+      type: 'chapelet', label: 'Chapelet médité dominical — Radio Galilée (Québec)',
+      desc: GAL_DESC.chapeletDim,
+      entries: [{ t: '17:00', tl: '17h00', dur: 30, srcs: ['gal'] }],
+    });
+  }
+  return slots;
+}
+(function injectGalSlots() {
+  Object.keys(WEEK_SCHEDULE).forEach(key => {
+    if (!Array.isArray(WEEK_SCHEDULE[key])) return;
+    const dow = (key === 'ordinary') ? 4 : parseInt(key, 10);
+    if (isNaN(dow)) return;
+    WEEK_SCHEDULE[key].push(..._buildGalSlotsForDow(dow));
+  });
+})();
+
 function _buildNDLausSlotsForDow(dow) {
   const slots = [];
   // Laudes — tous les jours 8h10 (30 min)
