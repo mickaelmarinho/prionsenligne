@@ -3187,7 +3187,7 @@ const SOURCES = {
   fid: { n: 'Fidélité',         s: 'https://diffusion.lafrap.fr/fidelite.mp3', w: 'https://radio-fidelite.fr' },
   kto: { n: 'KTO',              s: '', w: 'https://www.ktotv.com' },
   lou: { n: 'Lourdes',          s: '', w: 'https://www.lourdes-france.com/lourdesplus/' },
-  vat: { n: 'Vatican News',     s: '', w: 'https://www.vaticannews.va/fr.html' },
+  vat: { n: 'Vatican News',     f: '🇻🇦', s: '', w: 'https://www.vaticannews.va/fr.html' },
   // jer (Fraternités de Jérusalem) retiré : pas de retransmission live trouvée
   // sol (Solesmes) retiré : ne diffuse pas en live sur internet
   ndp: { n: 'N-D de Paris',     s: '', w: 'https://www.notredamedeparis.fr/la-cathedrale/en-direct/' },
@@ -3197,11 +3197,11 @@ const SOURCES = {
   // Sanctuaire Notre-Dame du Laus — YouTube live
   ndlaus: { n: 'ND du Laus',    s: '', w: 'https://www.youtube.com/@NotreDameduLausSanctuaire/streams' },
   // Radio Galilée — Québec (CKJI-FM Saint-Augustin-de-Desmaures) — UTC-5/-4, horaires stockés en heure de Paris (+6h)
-  gal: { n: 'Radio Galilée',    s: 'https://stream.zeno.fm/y9p44u8gn7zuv', w: 'https://radiogalilee.com/ecoute-en-direct/' },
+  gal: { n: 'Radio Galilée',    f: '🇨🇦', s: 'https://stream.zeno.fm/y9p44u8gn7zuv', w: 'https://radiogalilee.com/ecoute-en-direct/' },
   // Radio Ville-Marie — Montréal (Québec) — UTC-5/-4, horaires stockés en heure de Paris (+6h)
-  rvm: { n: 'Radio Ville-Marie', s: '', w: 'https://radiovm.com/ecoute-en-direct/' },
+  rvm: { n: 'Radio Ville-Marie', f: '🇨🇦', s: '', w: 'https://radiovm.com/ecoute-en-direct/' },
   // Sel + Lumière TV — Toronto/Montréal (Québec) — chaîne catholique francophone, UTC-5/-4
-  slm: { n: 'Sel + Lumière',    s: '', w: 'https://slmedia.org/fr/slplus/w/2984/en-direct' },
+  slm: { n: 'Sel + Lumière',    f: '🇨🇦', s: '', w: 'https://slmedia.org/fr/slplus/w/2984/en-direct' },
 };
 
 /*
@@ -4922,15 +4922,16 @@ function initWeek() {
         for (const key of entry.srcs) {
           const src = SOURCES[key];
           if (!src) continue;
+          const flagHtml = src.f ? `<span class="src-flag">${src.f}</span>` : '';
           if (src.s) {
             srcsHtml += `<button class="wc-src-btn wc-radio" data-action="radio"
               data-stream="${src.s}" data-web="${src.w}"
               data-name="${src.n}" data-prayer="${slot.label}" data-time="${entry.tl}">
-              <i class="fa-solid fa-play"></i>${src.n}
+              <i class="fa-solid fa-play"></i>${src.n}${flagHtml}
             </button>`;
           } else {
             srcsHtml += `<a class="wc-src-btn wc-link" href="${src.w}" target="_blank" rel="noopener">
-              <i class="fa-solid fa-arrow-up-right-from-square"></i>${src.n}
+              <i class="fa-solid fa-arrow-up-right-from-square"></i>${src.n}${flagHtml}
             </a>`;
           }
         }
@@ -5123,15 +5124,16 @@ function initTodayTimeline() {
     for (const key of entry.srcs) {
       const src = SOURCES[key];
       if (!src) continue;
+      const flagHtml = src.f ? `<span class="src-flag">${src.f}</span>` : '';
       if (src.s) {
         srcsHtml += `<button class="tl-src radio" data-action="radio"
           data-stream="${src.s}" data-web="${src.w}"
           data-name="${src.n}" data-prayer="${esc(slot.label)}" data-time="${entry.tl}">
-          <i class="fa-solid fa-play"></i> ${src.n}
+          <i class="fa-solid fa-play"></i> ${src.n}${flagHtml}
         </button>`;
       } else {
         srcsHtml += `<a class="tl-src youtube" href="${src.w}" target="_blank" rel="noopener">
-          <i class="fa-solid fa-arrow-up-right-from-square"></i> ${src.n}
+          <i class="fa-solid fa-arrow-up-right-from-square"></i> ${src.n}${flagHtml}
         </a>`;
       }
     }
