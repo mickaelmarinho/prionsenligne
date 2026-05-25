@@ -10,6 +10,41 @@
       "source": "/app.html",
       "destination": "/agenda",
       "permanent": true
+    },
+    {
+      "source": "/chapelets",
+      "destination": "/agenda",
+      "permanent": true
+    },
+    {
+      "source": "/vepres",
+      "destination": "/agenda",
+      "permanent": true
+    },
+    {
+      "source": "/laudes",
+      "destination": "/agenda",
+      "permanent": true
+    },
+    {
+      "source": "/complies",
+      "destination": "/agenda",
+      "permanent": true
+    },
+    {
+      "source": "/messe",
+      "destination": "/agenda",
+      "permanent": true
+    },
+    {
+      "source": "/messes",
+      "destination": "/agenda",
+      "permanent": true
+    },
+    {
+      "source": "/chapelet",
+      "destination": "/agenda",
+      "permanent": true
     }
   ],
   "rewrites": [
