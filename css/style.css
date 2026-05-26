@@ -5996,6 +5996,69 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
    SEMAINE — VUE TABULAIRE
 ══════════════════════════════════════════════ */
 
+/* Filtres pays + type */
+.wk-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  background: #fbfaf6;
+}
+.wk-filt-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.wk-filt-label {
+  font-family: 'Outfit', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b6357;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.wk-filt-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: #8a8275;
+  cursor: pointer;
+  transition: all .15s;
+  user-select: none;
+}
+.wk-filt-pill:hover { border-color: var(--gold); color: #1e1c18; }
+.wk-filt-pill.active {
+  background: var(--gold-light, #fff4d6);
+  border-color: var(--gold);
+  color: #1e1c18;
+  font-weight: 500;
+}
+.wk-filt-pill .src-flag { margin-left: 0; }
+.wk-filt-hint {
+  font-family: 'Outfit', sans-serif;
+  font-size: 12px;
+  color: #8a8275;
+  font-style: italic;
+  margin-left: auto;
+}
+
+/* Logique de masquage par filtre */
+.wk-panels.hide-fr        .wk-row.country-fr    { display: none; }
+.wk-panels.hide-ca        .wk-row.country-ca    { display: none; }
+.wk-panels.hide-messes    .wk-row.type-messes   { display: none; }
+.wk-panels.hide-offices   .wk-row.type-offices  { display: none; }
+.wk-panels.hide-chapelets .wk-row.type-chapelets{ display: none; }
+.wk-panels.hide-autres    .wk-row.type-autres   { display: none; }
+
 /* Barre d'onglets jours */
 .wk-tabs {
   display: flex;

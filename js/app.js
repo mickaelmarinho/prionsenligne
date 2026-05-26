@@ -4893,6 +4893,33 @@ function initWeek() {
     days.push({ date, dow, isToday });
   }
 
+  // Filtres (pays + type d'office) — état persisté localStorage
+  const FILTERS_KEY = 'pel.weekFilters.v1';
+  const FILTERS_DEFAULT = { fr: true, ca: false, messes: true, offices: true, chapelets: true, autres: true };
+  let filters;
+  try { filters = Object.assign({}, FILTERS_DEFAULT, JSON.parse(localStorage.getItem(FILTERS_KEY) || '{}')); }
+  catch { filters = { ...FILTERS_DEFAULT }; }
+
+  const filtersHtml = `<div class="wk-filters" role="group" aria-label="Filtres">
+    <div class="wk-filt-group" data-group="country">
+      <span class="wk-filt-label">Pays&nbsp;:</span>
+      <button class="wk-filt-pill${filters.fr ? ' active' : ''}" data-filter="fr" aria-pressed="${filters.fr}">
+        <img class="src-flag" src="https://flagcdn.com/w20/fr.png" srcset="https://flagcdn.com/w40/fr.png 2x" width="14" height="10" alt="" aria-hidden="true"> France
+      </button>
+      <button class="wk-filt-pill${filters.ca ? ' active' : ''}" data-filter="ca" aria-pressed="${filters.ca}">
+        <img class="src-flag" src="https://flagcdn.com/w20/ca.png" srcset="https://flagcdn.com/w40/ca.png 2x" width="14" height="10" alt="" aria-hidden="true"> Québec
+      </button>
+    </div>
+    <div class="wk-filt-group" data-group="type">
+      <span class="wk-filt-label">Type&nbsp;:</span>
+      <button class="wk-filt-pill${filters.messes ? ' active' : ''}" data-filter="messes" aria-pressed="${filters.messes}"><i class="fa-solid fa-church"></i> Messes</button>
+      <button class="wk-filt-pill${filters.offices ? ' active' : ''}" data-filter="offices" aria-pressed="${filters.offices}"><i class="fa-solid fa-sun"></i> Offices</button>
+      <button class="wk-filt-pill${filters.chapelets ? ' active' : ''}" data-filter="chapelets" aria-pressed="${filters.chapelets}"><i class="fa-solid fa-circle-dot"></i> Chapelets</button>
+      <button class="wk-filt-pill${filters.autres ? ' active' : ''}" data-filter="autres" aria-pressed="${filters.autres}"><i class="fa-solid fa-hands-praying"></i> Autres</button>
+    </div>
+    <div class="wk-filt-hint" id="wk-filt-hint" aria-live="polite"></div>
+  </div>`;
+
   // Onglets de jours
   let tabsHtml = '<div class="wk-tabs" role="tablist">';
   days.forEach(({ date, dow, isToday }, i) => {
@@ -4903,10 +4930,33 @@ function initWeek() {
   });
   tabsHtml += '</div>';
 
+  // Helpers de classification pour les filtres
+  const TYPE_GROUP = { messe: 'messes', laudes: 'offices', vepres: 'offices', complies: 'offices', chapelet: 'chapelets' };
+  function slotCountry(slot) {
+    // 'fr' si au moins une source française, sinon la première autre nationalité ('ca'...)
+    let foreign = null;
+    for (const entry of slot.entries) {
+      for (const key of entry.srcs) {
+        const src = SOURCES[key];
+        if (!src) continue;
+        if (!src.f) return 'fr';           // une source FR suffit
+        if (!foreign) foreign = src.f;
+      }
+    }
+    return foreign || 'fr';
+  }
+  function slotTypeGroup(slot) { return TYPE_GROUP[slot.type] || 'autres'; }
+  function slotMinutes(slot) {
+    const [h, m] = (slot.entries[0]?.t || '0:00').split(':').map(Number);
+    return h * 60 + (m || 0);
+  }
+
   // Panneaux par jour
   let panelsHtml = '<div class="wk-panels">';
   days.forEach(({ date, dow, isToday }, i) => {
-    const slots = getDaySchedule(date);
+    let slots = getDaySchedule(date);
+    // Tri chronologique par heure du premier créneau
+    slots = [...slots].sort((a, b) => slotMinutes(a) - slotMinutes(b));
 
     // Dédupliquer les slots identiques (même type + même heure)
     let slotsHtml = '';
@@ -4914,6 +4964,8 @@ function initWeek() {
       const icon = TYPE_ICON[slot.type] || 'fa-circle';
       const firstEntry = slot.entries[0];
       const allTimes = slot.entries.map(e => formatOfficeTime(e.t, date).display).join(' · ');
+      const country = slotCountry(slot);
+      const typeGroup = slotTypeGroup(slot);
 
       // Sources (tous les entries fusionnés)
       let srcsHtml = '';
@@ -4936,7 +4988,7 @@ function initWeek() {
         }
       }
 
-      slotsHtml += `<div class="wk-row ${slot.type}">
+      slotsHtml += `<div class="wk-row ${slot.type} country-${country} type-${typeGroup}" data-country="${country}" data-type="${typeGroup}">
         <div class="wk-row-main" ${srcsHtml ? 'data-expandable' : ''}>
           <span class="wk-row-time">${allTimes}</span>
           <i class="fa-solid ${icon} wk-row-icon"></i>
@@ -4955,7 +5007,40 @@ function initWeek() {
   });
   panelsHtml += '</div>';
 
-  wrap.innerHTML = tabsHtml + panelsHtml;
+  wrap.innerHTML = filtersHtml + tabsHtml + panelsHtml;
+
+  // Application initiale des filtres + handler
+  const panelsEl = wrap.querySelector('.wk-panels');
+  const hintEl   = wrap.querySelector('#wk-filt-hint');
+  function applyFilters() {
+    if (!panelsEl) return;
+    panelsEl.classList.toggle('hide-fr',         !filters.fr);
+    panelsEl.classList.toggle('hide-ca',         !filters.ca);
+    panelsEl.classList.toggle('hide-messes',     !filters.messes);
+    panelsEl.classList.toggle('hide-offices',    !filters.offices);
+    panelsEl.classList.toggle('hide-chapelets',  !filters.chapelets);
+    panelsEl.classList.toggle('hide-autres',     !filters.autres);
+    // Compteur de slots cachés dans le panneau actif
+    const activePanel = panelsEl.querySelector('.wk-panel.active');
+    if (activePanel && hintEl) {
+      const total = activePanel.querySelectorAll('.wk-row').length;
+      const hidden = [...activePanel.querySelectorAll('.wk-row')]
+        .filter(r => getComputedStyle(r).display === 'none').length;
+      hintEl.textContent = hidden > 0 ? `${hidden} créneau${hidden > 1 ? 'x' : ''} masqué${hidden > 1 ? 's' : ''} par les filtres` : '';
+    }
+  }
+  applyFilters();
+
+  wrap.querySelectorAll('.wk-filt-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.filter;
+      filters[key] = !filters[key];
+      btn.classList.toggle('active', filters[key]);
+      btn.setAttribute('aria-pressed', String(filters[key]));
+      try { localStorage.setItem(FILTERS_KEY, JSON.stringify(filters)); } catch {}
+      applyFilters();
+    });
+  });
 
   // Switcher d'onglets
   wrap.querySelectorAll('.wk-tab').forEach(tab => {
@@ -4966,6 +5051,7 @@ function initWeek() {
       tab.classList.add('active');
       tab.setAttribute('aria-selected','true');
       wrap.querySelector(`.wk-panel[data-day="${day}"]`).classList.add('active');
+      applyFilters(); // recalcul du compteur masqué pour le nouveau jour
     });
   });
 
