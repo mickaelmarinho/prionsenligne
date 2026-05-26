@@ -3201,6 +3201,8 @@ const SOURCES = {
   rvm: { n: 'Radio Ville-Marie', f: 'ca', s: '', w: 'https://radiovm.com/ecoute-en-direct/' },
   // Sel + Lumière TV — Toronto/Montréal (Québec) — chaîne catholique francophone, UTC-5/-4
   slm: { n: 'Sel + Lumière',    f: 'ca', s: '', w: 'https://slmedia.org/fr/slplus/w/2984/en-direct' },
+  // RCF Bruxelles — Belgique (Europe/Brussels = même TZ que Paris)
+  rcfbe: { n: 'RCF Bruxelles',  f: 'be', s: '', w: 'https://www.rcf.be/wp-content/maradio/RCF-Bruxelles/' },
 };
 
 /*
@@ -3254,6 +3256,11 @@ const SLM_DESC = {
   messeRediffSam: "Rediffusion de la messe en la Cathédrale Marie-Reine-du-Monde de Montréal, sur Sel + Lumière Télévision (Québec) le samedi à 14h heure du Québec, soit 20h heure de Paris.",
   messeRediffDim: "Rediffusion de la messe dominicale en la Cathédrale Marie-Reine-du-Monde de Montréal, sur Sel + Lumière Télévision (Québec) le dimanche à 16h heure du Québec, soit 22h heure de Paris.",
   chapeletAprem:  "Chapelet quotidien sur Sel + Lumière Télévision (Québec) à 17h heure du Québec, soit 23h heure de Paris. Mystères selon le jour de la semaine. Diffusion suspendue les jours de solennité et grandes fêtes liturgiques.",
+};
+
+const RCFBE_DESC = {
+  matin:    "Prière du matin diffusée sur RCF Bruxelles (Belgique). En semaine, trois courts moments de prière à 6h50, 7h50 et 8h50 (10 min chacun), aux mêmes horaires qu'à Paris.",
+  soir:     "Chapelet suivi de la prière du soir, en direct sur RCF Bruxelles (Belgique). Tous les soirs de 20h à 21h. Belgique et France partagent le même fuseau horaire (Europe/Brussels).",
 };
 
 const NDLAUS_DESC = {
@@ -4810,6 +4817,40 @@ function _buildSlmSlotsForDow(dow) {
   });
 })();
 
+// ════════════════════════════════════════════════════════════════════
+// RCF Bruxelles (Belgique) — même fuseau que Paris, pas de conversion
+// ════════════════════════════════════════════════════════════════════
+function _buildRcfBeSlotsForDow(dow) {
+  const slots = [];
+  // Lun-ven : 3 petites prières du matin (6h50, 7h50, 8h50) — 10 min
+  if (dow >= 1 && dow <= 5) {
+    slots.push({
+      type: 'matin', label: 'Prière du matin — RCF Bruxelles',
+      desc: RCFBE_DESC.matin,
+      entries: [
+        { t: '6:50', tl: '6h50', dur: 10, srcs: ['rcfbe'] },
+        { t: '7:50', tl: '7h50', dur: 10, srcs: ['rcfbe'] },
+        { t: '8:50', tl: '8h50', dur: 10, srcs: ['rcfbe'] },
+      ],
+    });
+  }
+  // Tous les jours : chapelet + prière du soir 20h-21h (60 min)
+  slots.push({
+    type: 'chapelet', label: 'Chapelet + prière du soir — RCF Bruxelles',
+    desc: RCFBE_DESC.soir,
+    entries: [{ t: '20:00', tl: '20h00', dur: 60, srcs: ['rcfbe'] }],
+  });
+  return slots;
+}
+(function injectRcfBeSlots() {
+  Object.keys(WEEK_SCHEDULE).forEach(key => {
+    if (!Array.isArray(WEEK_SCHEDULE[key])) return;
+    const dow = (key === 'ordinary') ? 4 : parseInt(key, 10);
+    if (isNaN(dow)) return;
+    WEEK_SCHEDULE[key].push(..._buildRcfBeSlotsForDow(dow));
+  });
+})();
+
 function _buildNDLausSlotsForDow(dow) {
   const slots = [];
   // Laudes — tous les jours 8h10 (30 min)
@@ -4894,8 +4935,8 @@ function initWeek() {
   }
 
   // Filtres (pays + type d'office) — état persisté localStorage
-  const FILTERS_KEY = 'pel.weekFilters.v1';
-  const FILTERS_DEFAULT = { fr: true, ca: false, messes: true, offices: true, chapelets: true, autres: true };
+  const FILTERS_KEY = 'pel.weekFilters.v2';
+  const FILTERS_DEFAULT = { fr: true, be: true, ca: false, messes: true, offices: true, chapelets: true, autres: true };
   let filters;
   try { filters = Object.assign({}, FILTERS_DEFAULT, JSON.parse(localStorage.getItem(FILTERS_KEY) || '{}')); }
   catch { filters = { ...FILTERS_DEFAULT }; }
@@ -4905,6 +4946,9 @@ function initWeek() {
       <span class="wk-filt-label">Pays&nbsp;:</span>
       <button class="wk-filt-pill${filters.fr ? ' active' : ''}" data-filter="fr" aria-pressed="${filters.fr}">
         <img class="src-flag" src="https://flagcdn.com/w20/fr.png" srcset="https://flagcdn.com/w40/fr.png 2x" width="14" height="10" alt="" aria-hidden="true"> France
+      </button>
+      <button class="wk-filt-pill${filters.be ? ' active' : ''}" data-filter="be" aria-pressed="${filters.be}">
+        <img class="src-flag" src="https://flagcdn.com/w20/be.png" srcset="https://flagcdn.com/w40/be.png 2x" width="14" height="10" alt="" aria-hidden="true"> Belgique
       </button>
       <button class="wk-filt-pill${filters.ca ? ' active' : ''}" data-filter="ca" aria-pressed="${filters.ca}">
         <img class="src-flag" src="https://flagcdn.com/w20/ca.png" srcset="https://flagcdn.com/w40/ca.png 2x" width="14" height="10" alt="" aria-hidden="true"> Québec
@@ -5015,6 +5059,7 @@ function initWeek() {
   function applyFilters() {
     if (!panelsEl) return;
     panelsEl.classList.toggle('hide-fr',         !filters.fr);
+    panelsEl.classList.toggle('hide-be',         !filters.be);
     panelsEl.classList.toggle('hide-ca',         !filters.ca);
     panelsEl.classList.toggle('hide-messes',     !filters.messes);
     panelsEl.classList.toggle('hide-offices',    !filters.offices);

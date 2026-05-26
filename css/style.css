@@ -6053,6 +6053,7 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
 
 /* Logique de masquage par filtre */
 .wk-panels.hide-fr        .wk-row.country-fr    { display: none; }
+.wk-panels.hide-be        .wk-row.country-be    { display: none; }
 .wk-panels.hide-ca        .wk-row.country-ca    { display: none; }
 .wk-panels.hide-messes    .wk-row.type-messes   { display: none; }
 .wk-panels.hide-offices   .wk-row.type-offices  { display: none; }
