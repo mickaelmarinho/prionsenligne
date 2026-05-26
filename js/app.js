@@ -3223,10 +3223,10 @@ const RCF_DESC = {
 
 // ── Descriptions KTO Télévision ────────────────────────────────────────
 const KTO_DESC = {
-  messeNDGardeLun:    "Messe en direct depuis la basilique Notre-Dame de la Garde à Marseille, diffusée sur KTO. Le lundi, la messe seule (sans laudes intégrées).",
-  messeNDGardeMarSam: "Messe précédée des Laudes en direct depuis la basilique Notre-Dame de la Garde à Marseille. Diffusée sur KTO du mardi au samedi : les laudes sont chantées avant l'eucharistie, en un office continu.",
-  vepresNDParis:      "Vêpres en direct de la cathédrale Notre-Dame de Paris, diffusées sur KTO. Office du soir centré sur le Magnificat, chanté par les chantres de Notre-Dame.",
-  messeNDParis:       "Messe en direct de la cathédrale Notre-Dame de Paris, diffusée chaque jour à 18h sur KTO depuis la réouverture de la cathédrale.",
+  laudesNDGarde: "Laudes en direct depuis la basilique Notre-Dame de la Garde à Marseille, diffusées sur KTO juste avant la messe. Office matinal de louange centré sur le Benedictus.",
+  messeNDGarde:  "Messe en direct depuis la basilique Notre-Dame de la Garde à Marseille, diffusée sur KTO du lundi au vendredi, à la suite des laudes.",
+  vepresNDParis: "Vêpres en direct de la cathédrale Notre-Dame de Paris, diffusées sur KTO. Office du soir centré sur le Magnificat, chanté par les chantres de Notre-Dame.",
+  messeNDParis:  "Messe en direct de la cathédrale Notre-Dame de Paris, diffusée chaque jour à 18h sur KTO depuis la réouverture de la cathédrale.",
 };
 
 const GAL_DESC = {
@@ -4569,20 +4569,27 @@ function _buildPNDLSSlotsForDow(dow) {
 // ════════════════════════════════════════════════════════════════════
 function _buildKtoSlotsForDow(dow) {
   const slots = [];
-  // Lundi 7h25 : messe seule (sans laudes)
-  if (dow === 1) {
+  // Notre-Dame de la Garde (Marseille) — Laudes + Messe, horaires variables selon le jour
+  // Lundi    : 07h25-07h45 Laudes (20 min) puis 07h45-08h20 Messe (35 min)
+  // Mardi    : 07h10-07h30 Laudes (20 min) puis 07h30-08h05 Messe (35 min)
+  // Mer/Jeu/Ven : 07h00-07h20 Laudes (20 min) puis 07h20-08h00 Messe (40 min)
+  let laudesT, messeT, messeDur;
+  if (dow === 1)               { laudesT = '7:25'; messeT = '7:45'; messeDur = 35; }
+  else if (dow === 2)          { laudesT = '7:10'; messeT = '7:30'; messeDur = 35; }
+  else if (dow >= 3 && dow <= 5) { laudesT = '7:00'; messeT = '7:20'; messeDur = 40; }
+  if (laudesT) {
+    const laudesTl = laudesT.replace(':', 'h');
+    const messeTl  = messeT.replace(':', 'h');
+    slots.push({
+      type: 'laudes', label: 'Laudes — Notre-Dame de la Garde (Marseille)',
+      desc: KTO_DESC.laudesNDGarde,
+      monasticOffice: true, officeKind: 'laudes',
+      entries: [{ t: laudesT, tl: laudesTl, dur: 20, srcs: ['kto'] }],
+    });
     slots.push({
       type: 'messe', label: 'Messe — Notre-Dame de la Garde (Marseille)',
-      desc: KTO_DESC.messeNDGardeLun,
-      entries: [{ t: '7:25', tl: '7h25', dur: 30, srcs: ['kto'] }],
-    });
-  }
-  // Mardi à samedi 7h25 : messe avec laudes intégrées
-  if (dow >= 2 && dow <= 6) {
-    slots.push({
-      type: 'messe', label: 'Messe avec laudes — Notre-Dame de la Garde (Marseille)',
-      desc: KTO_DESC.messeNDGardeMarSam,
-      entries: [{ t: '7:25', tl: '7h25', dur: 45, srcs: ['kto'] }],
+      desc: KTO_DESC.messeNDGarde,
+      entries: [{ t: messeT, tl: messeTl, dur: messeDur, srcs: ['kto'] }],
     });
   }
   // Vêpres en direct de Notre-Dame de Paris
