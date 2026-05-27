@@ -6236,11 +6236,18 @@ function initChat() {
       ? `<span class="chat-msg-rank ${rank.cls}" title="${rank.label} — membre depuis ${escHtml(formatLongDate(msg.member_since))}"><i class="fa-solid ${rank.icon}"></i></span>`
       : '';
 
+    // Drapeau pays (optionnel) — code ISO-2 stocké dans la colonne country
+    const ctry = (msg.country || '').toLowerCase().replace(/[^a-z]/g, '').slice(0, 2);
+    const countryFlag = (ctry && ctry.length === 2)
+      ? `<img class="src-flag chat-msg-flag" src="https://flagcdn.com/w20/${ctry}.png" srcset="https://flagcdn.com/w40/${ctry}.png 2x" width="14" height="10" alt="" aria-hidden="true">`
+      : '';
+
     const body = document.createElement('div');
     body.className = 'chat-msg-body';
     body.innerHTML = `
       <div class="chat-msg-meta">
         <button type="button" class="chat-msg-author" data-popover="1"${authorColor ? ` style="--author-color:${authorColor}"` : ''}>${escHtml(msg.user_name)}</button>
+        ${countryFlag}
         ${rankHTML}
         <span class="chat-msg-time">${formatTime(msg.created_at)}</span>
       </div>
@@ -6762,6 +6769,7 @@ function initChat() {
     const patronSaintFeast = meta.patron_saint_feast || '';
     const favoriteVerse = (meta.favorite_verse || '').slice(0, 240);
     const memberSince   = user.created_at || null;
+    const country       = (meta.country || '').toLowerCase().slice(0, 4) || null;
 
     // Optimistic UI
     const optimistic = {
@@ -6776,6 +6784,7 @@ function initChat() {
       patron_saint_feast: patronSaintFeast,
       favorite_verse:     favoriteVerse,
       member_since:       memberSince,
+      country:            country,
       message: text.trim(),
       created_at: new Date().toISOString(),
     };
@@ -6796,9 +6805,16 @@ function initChat() {
       patron_saint_feast: patronSaintFeast,
       favorite_verse:     favoriteVerse,
       member_since:       memberSince,
+      country:            country,
       message:   text.trim(),
     };
     let { data, error } = await sb.from('prayer_intentions').insert(fullRow).select().single();
+    // Cascade : retire d'abord 'country' (nouvelle colonne) si l'erreur l'indique
+    if (error && /country|column/i.test(error.message || '')) {
+      const noCountry = { ...fullRow };
+      delete noCountry.country;
+      ({ data, error } = await sb.from('prayer_intentions').insert(noCountry).select().single());
+    }
     if (error && /patron_saint_name|patron_saint_feast|member_since|patron_saint|favorite_verse|avatar_icon|avatar_palette|column/i.test(error.message || '')) {
       // Cascade de retraits si certaines colonnes ne sont pas (encore) en DB
       const trimmed = { ...fullRow };

@@ -21,6 +21,89 @@ let _currentUser     = null;
 let _formMode        = 'login';
 let _lastSignupEmail = '';     // mémorisé pour pouvoir renvoyer l'email de confirmation
 
+// ── Liste des pays francophones (signup + profil + chat) ──
+// Code ISO-2 (utilisé par flagcdn pour le drapeau)
+// Ordre : Europe d'abord, Amériques, Afrique alphabétique, Océan Indien/Pacifique.
+const FRANCOPHONE_COUNTRIES = [
+  // Europe francophone
+  { code: 'fr', name: 'France' },
+  { code: 'be', name: 'Belgique' },
+  { code: 'ch', name: 'Suisse' },
+  { code: 'lu', name: 'Luxembourg' },
+  { code: 'mc', name: 'Monaco' },
+  // Amériques
+  { code: 'ca', name: 'Canada (Québec, Acadie…)' },
+  { code: 'ht', name: 'Haïti' },
+  // Afrique francophone
+  { code: 'bj', name: 'Bénin' },
+  { code: 'bf', name: 'Burkina Faso' },
+  { code: 'bi', name: 'Burundi' },
+  { code: 'cm', name: 'Cameroun' },
+  { code: 'cf', name: 'Centrafrique' },
+  { code: 'km', name: 'Comores' },
+  { code: 'cg', name: 'Congo (Brazzaville)' },
+  { code: 'cd', name: 'Congo (RDC, Kinshasa)' },
+  { code: 'ci', name: 'Côte d\'Ivoire' },
+  { code: 'dj', name: 'Djibouti' },
+  { code: 'ga', name: 'Gabon' },
+  { code: 'gn', name: 'Guinée' },
+  { code: 'mg', name: 'Madagascar' },
+  { code: 'ml', name: 'Mali' },
+  { code: 'mr', name: 'Mauritanie' },
+  { code: 'ne', name: 'Niger' },
+  { code: 'rw', name: 'Rwanda' },
+  { code: 'sn', name: 'Sénégal' },
+  { code: 'td', name: 'Tchad' },
+  { code: 'tg', name: 'Togo' },
+  // Océan Indien & Pacifique
+  { code: 'mu', name: 'Maurice' },
+  { code: 'sc', name: 'Seychelles' },
+  { code: 'vu', name: 'Vanuatu' },
+  // Joker
+  { code: 'other', name: 'Autre / Préférer ne pas dire' },
+];
+
+// Map TZ Intl → code pays par défaut, pour pré-sélectionner au signup
+const TZ_TO_COUNTRY = {
+  'Europe/Paris': 'fr',           'Europe/Brussels': 'be',
+  'Europe/Luxembourg': 'lu',      'Europe/Monaco': 'mc',
+  'Europe/Zurich': 'ch',          'Europe/Geneva': 'ch',
+  'America/Toronto': 'ca',        'America/Montreal': 'ca',
+  'America/Halifax': 'ca',        'America/Winnipeg': 'ca',
+  'America/Vancouver': 'ca',
+  'America/Port-au-Prince': 'ht',
+  'Africa/Abidjan': 'ci',         'Africa/Dakar': 'sn',
+  'Africa/Douala': 'cm',          'Africa/Yaoundé': 'cm',
+  'Africa/Kinshasa': 'cd',        'Africa/Lubumbashi': 'cd',
+  'Africa/Brazzaville': 'cg',
+  'Africa/Ouagadougou': 'bf',     'Africa/Bamako': 'ml',
+  'Africa/Cotonou': 'bj',         'Africa/Lome': 'tg',
+  'Africa/Niamey': 'ne',          'Africa/Ndjamena': 'td',
+  'Africa/Conakry': 'gn',         'Africa/Antananarivo': 'mg',
+  'Indian/Antananarivo': 'mg',
+  'Africa/Kigali': 'rw',          'Africa/Bujumbura': 'bi',
+  'Africa/Libreville': 'ga',      'Africa/Nouakchott': 'mr',
+  'Africa/Bangui': 'cf',          'Africa/Djibouti': 'dj',
+  'Indian/Mauritius': 'mu',       'Indian/Mahe': 'sc',
+  'Indian/Comoro': 'km',          'Pacific/Efate': 'vu',
+};
+
+// Renvoie le code pays par défaut selon la TZ courante (fr si non reconnu)
+function _detectCountryFromTz() {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+    return TZ_TO_COUNTRY[tz] || 'fr';
+  } catch (_) { return 'fr'; }
+}
+
+// HTML <option> list pour les <select> pays (avec drapeau émoji optionnel via name)
+function _countryOptionsHTML(selected) {
+  return FRANCOPHONE_COUNTRIES.map(c => {
+    const sel = c.code === selected ? ' selected' : '';
+    return `<option value="${c.code}"${sel}>${c.name}</option>`;
+  }).join('');
+}
+
 // ── hCaptcha (anti-bot sur l'inscription) ──
 // Site key publique d'hCaptcha — site « prionsenligne fr » (production).
 // La Secret Key correspondante est configurée côté Supabase (Auth → Captcha).
@@ -383,6 +466,7 @@ async function loadProfileContent() {
   const currentVerse   = meta.favorite_verse || '';
   const currentPseudo  = meta.pseudo         || '';
   const currentTimeDisplay = meta.time_display === 'paris' ? 'paris' : 'local';
+  const currentCountry = meta.country || '';
   const userTZ = typeof window._userTimezone === 'function' ? window._userTimezone() : 'Europe/Paris';
   const isParisTZ = typeof window._isParisTimezone === 'function' ? window._isParisTimezone(userTZ) : true;
   const tzLabel = typeof window._shortTzLabel === 'function' ? window._shortTzLabel(userTZ) : 'Local';
@@ -488,6 +572,13 @@ async function loadProfileContent() {
         <input type="hidden" id="prof-saint-lien"  value="${_esc(selectedSaint?.lien  || '')}">
       </div>
       <div class="prof-saint-hint">Tapez pour rechercher parmi plus de 10 000 saints du calendrier romain (Nominis — CEF).</div>
+
+      <div class="prof-perso-label"><i class="fa-solid fa-globe"></i> D'où priez-vous&nbsp;? <span class="auth-optional">(facultatif)</span></div>
+      <select class="prof-input" id="prof-country">
+        <option value="">— Non précisé —</option>
+        ${_countryOptionsHTML(currentCountry || '')}
+      </select>
+      <div class="prof-saint-hint">Affiche un petit drapeau à côté de votre pseudo dans le chat des intentions, pour favoriser la communion francophone.</div>
 
       <div class="prof-perso-label">Citation favorite (Bible, saint…)</div>
       <textarea class="prof-input prof-verse-input" id="prof-verse-input"
@@ -914,6 +1005,9 @@ async function saveProfilePerso() {
   const verseTxt   = $id('prof-verse-input')?.value.trim().slice(0, 240) || '';
   const timeDisplay = document.querySelector('input[name="prof-time-display"]:checked')?.value
                       || (_currentUser?.user_metadata?.time_display || 'local');
+  const countrySel = $id('prof-country')?.value || '';
+  // "other" et "" sont équivalents (pas de drapeau affiché)
+  const country = (countrySel && countrySel !== 'other') ? countrySel : null;
 
   btn.disabled = true;
   const oldHTML = btn.innerHTML;
@@ -930,6 +1024,7 @@ async function saveProfilePerso() {
       patron_saint_lien:  saintLien,
       favorite_verse:     verseTxt,
       time_display:       timeDisplay,
+      country:            country,
     };
     const { data, error } = await _sb.auth.updateUser({ data: newMeta });
     if (error) throw error;
@@ -1147,6 +1242,15 @@ function setMode(mode) {
 
   const nameGrp = $id('auth-name-group');
   if (nameGrp) nameGrp.style.display = isSignup ? '' : 'none';
+
+  // Pays (optionnel) — visible uniquement à l'inscription, prépeuplé selon TZ
+  const countryGrp = $id('auth-country-group');
+  const countrySel = $id('auth-country');
+  if (countryGrp) countryGrp.style.display = isSignup ? '' : 'none';
+  if (countrySel && isSignup && !countrySel.dataset.populated) {
+    countrySel.innerHTML = _countryOptionsHTML(_detectCountryFromTz());
+    countrySel.dataset.populated = '1';
+  }
 
   const emailGrp = $id('auth-email-group');
   if (emailGrp) emailGrp.style.display = isResetPw ? 'none' : '';
@@ -1423,7 +1527,12 @@ function initAuthUI() {
         return;
       }
       setAuthLoading(true);
-      const signUpOpts = { data: { name: name || email.split('@')[0] } };
+      // Pays choisi (optionnel) — ignoré si "other" pour ne pas stocker un drapeau "neutre"
+      const countryVal = $id('auth-country')?.value || '';
+      const countryToSave = (countryVal && countryVal !== 'other') ? countryVal : null;
+      const signUpMeta = { name: name || email.split('@')[0] };
+      if (countryToSave) signUpMeta.country = countryToSave;
+      const signUpOpts = { data: signUpMeta };
       if (_hcaptchaToken) signUpOpts.captchaToken = _hcaptchaToken;
       const { data: signUpData, error } = await _sb.auth.signUp({
         email, password,

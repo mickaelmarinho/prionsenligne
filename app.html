@@ -554,6 +554,11 @@
             <label for="auth-confirm" id="auth-confirm-label"><i class="fa-solid fa-lock"></i> Confirmer le mot de passe</label>
             <input type="password" id="auth-confirm" placeholder="••••••••" autocomplete="new-password" minlength="6">
           </div>
+          <div class="auth-group" id="auth-country-group" style="display:none">
+            <label for="auth-country"><i class="fa-solid fa-globe"></i> D'où priez-vous&nbsp;? <span class="auth-optional">(facultatif)</span></label>
+            <select id="auth-country" class="auth-input"></select>
+            <div class="auth-hint">Un petit drapeau sera affiché à côté de votre pseudo dans le chat des intentions. Modifiable plus tard dans votre profil.</div>
+          </div>
           <div id="auth-error" class="auth-error hidden"></div>
           <!-- hCaptcha (anti-bot) — visible uniquement en mode inscription -->
           <div id="auth-captcha-wrap" class="auth-captcha-wrap" style="display:none">
