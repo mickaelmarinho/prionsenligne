@@ -3203,6 +3203,8 @@ const SOURCES = {
   slm: { n: 'Sel + Lumière',    f: 'ca', s: '', w: 'https://slmedia.org/fr/slplus/w/2984/en-direct' },
   // RCF Bruxelles — Belgique (Europe/Brussels = même TZ que Paris)
   rcfbe: { n: 'RCF Bruxelles',  f: 'be', s: '', w: 'https://www.rcf.be/wp-content/maradio/RCF-Bruxelles/' },
+  // RTS Religion — Suisse (Europe/Zurich = même TZ que Paris)
+  rts: { n: 'RTS Religion',     f: 'ch', s: '', w: 'https://www.rts.ch/religion/' },
 };
 
 /*
@@ -3257,6 +3259,10 @@ const SLM_DESC = {
   messeRediffSam: "Rediffusion de la messe en la Cathédrale Marie-Reine-du-Monde de Montréal, sur Sel + Lumière Télévision (Québec) le samedi à 14h heure du Québec, soit 20h heure de Paris.",
   messeRediffDim: "Rediffusion de la messe dominicale en la Cathédrale Marie-Reine-du-Monde de Montréal, sur Sel + Lumière Télévision (Québec) le dimanche à 16h heure du Québec, soit 22h heure de Paris.",
   chapeletAprem:  "Chapelet quotidien sur Sel + Lumière Télévision (Québec) à 17h heure du Québec, soit 23h heure de Paris. Mystères selon le jour de la semaine. Diffusion suspendue les jours de solennité et grandes fêtes liturgiques.",
+};
+
+const RTS_DESC = {
+  messe: "Messe radio-TV diffusée sur RTS Religion (Radio Télévision Suisse) chaque dimanche à 9h03. Célébrée dans une église différente chaque semaine à travers la Suisse romande.",
 };
 
 const RCFBE_DESC = {
@@ -4828,6 +4834,30 @@ function _buildSlmSlotsForDow(dow) {
 // ════════════════════════════════════════════════════════════════════
 // RCF Bruxelles (Belgique) — même fuseau que Paris, pas de conversion
 // ════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════
+// RTS Religion (Suisse) — Messe radio dominicale (Europe/Zurich = Paris)
+// ════════════════════════════════════════════════════════════════════
+function _buildRtsSlotsForDow(dow) {
+  const slots = [];
+  // Messe radio — dimanche 09h03 (50 min) — église variable chaque semaine
+  if (dow === 0) {
+    slots.push({
+      type: 'messe', label: 'Messe radio — RTS Religion (Suisse)',
+      desc: RTS_DESC.messe,
+      entries: [{ t: '9:03', tl: '9h03', dur: 50, srcs: ['rts'] }],
+    });
+  }
+  return slots;
+}
+(function injectRtsSlots() {
+  Object.keys(WEEK_SCHEDULE).forEach(key => {
+    if (!Array.isArray(WEEK_SCHEDULE[key])) return;
+    const dow = (key === 'ordinary') ? 4 : parseInt(key, 10);
+    if (isNaN(dow)) return;
+    WEEK_SCHEDULE[key].push(..._buildRtsSlotsForDow(dow));
+  });
+})();
+
 function _buildRcfBeSlotsForDow(dow) {
   const slots = [];
   // Lun-ven : 3 petites prières du matin (6h50, 7h50, 8h50) — 10 min
@@ -4943,8 +4973,8 @@ function initWeek() {
   }
 
   // Filtres (pays + type d'office) — état persisté localStorage
-  const FILTERS_KEY = 'pel.weekFilters.v2';
-  const FILTERS_DEFAULT = { fr: true, be: true, ca: false, messes: true, offices: true, chapelets: true, autres: true };
+  const FILTERS_KEY = 'pel.weekFilters.v3';
+  const FILTERS_DEFAULT = { fr: true, be: true, ch: true, ca: false, messes: true, offices: true, chapelets: true, autres: true };
   let filters;
   try { filters = Object.assign({}, FILTERS_DEFAULT, JSON.parse(localStorage.getItem(FILTERS_KEY) || '{}')); }
   catch { filters = { ...FILTERS_DEFAULT }; }
@@ -4957,6 +4987,9 @@ function initWeek() {
       </button>
       <button class="wk-filt-pill${filters.be ? ' active' : ''}" data-filter="be" aria-pressed="${filters.be}">
         <img class="src-flag" src="https://flagcdn.com/w20/be.png" srcset="https://flagcdn.com/w40/be.png 2x" width="14" height="10" alt="" aria-hidden="true"> Belgique
+      </button>
+      <button class="wk-filt-pill${filters.ch ? ' active' : ''}" data-filter="ch" aria-pressed="${filters.ch}">
+        <img class="src-flag" src="https://flagcdn.com/w20/ch.png" srcset="https://flagcdn.com/w40/ch.png 2x" width="14" height="10" alt="" aria-hidden="true"> Suisse
       </button>
       <button class="wk-filt-pill${filters.ca ? ' active' : ''}" data-filter="ca" aria-pressed="${filters.ca}">
         <img class="src-flag" src="https://flagcdn.com/w20/ca.png" srcset="https://flagcdn.com/w40/ca.png 2x" width="14" height="10" alt="" aria-hidden="true"> Québec
@@ -5068,6 +5101,7 @@ function initWeek() {
     if (!panelsEl) return;
     panelsEl.classList.toggle('hide-fr',         !filters.fr);
     panelsEl.classList.toggle('hide-be',         !filters.be);
+    panelsEl.classList.toggle('hide-ch',         !filters.ch);
     panelsEl.classList.toggle('hide-ca',         !filters.ca);
     panelsEl.classList.toggle('hide-messes',     !filters.messes);
     panelsEl.classList.toggle('hide-offices',    !filters.offices);
