@@ -6056,6 +6056,7 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
 .wk-panels.hide-be        .wk-row.country-be    { display: none; }
 .wk-panels.hide-ch        .wk-row.country-ch    { display: none; }
 .wk-panels.hide-ca        .wk-row.country-ca    { display: none; }
+.wk-panels.hide-ci        .wk-row.country-ci    { display: none; }
 .wk-panels.hide-messes    .wk-row.type-messes   { display: none; }
 .wk-panels.hide-offices   .wk-row.type-offices  { display: none; }
 .wk-panels.hide-chapelets .wk-row.type-chapelets{ display: none; }

@@ -2056,7 +2056,9 @@ function initNextOffice() {
     let found = null;
     outer: for (const slot of slots) {
       for (const entry of slot.entries) {
-        const [h, m] = entry.t.split(':').map(Number);
+        // Convertit en heure de Paris si srcTz présent (sources africaines, etc.)
+        const tParis = entry.srcTz ? _convertSrcLocalToParis(entry.t, entry.srcTz, now) : entry.t;
+        const [h, m] = tParis.split(':').map(Number);
         if (h * 60 + m > nowMin) { found = { slot, entry, startMin: h * 60 + m }; break outer; }
       }
     }
@@ -2081,7 +2083,7 @@ function initNextOffice() {
 
     if (labelEl)     labelEl.textContent     = 'Prochain office';
     prayerEl.textContent                     = found.slot.label;
-    if (timeEl)      timeEl.textContent      = formatOfficeTime(found.entry.t).display;
+    if (timeEl)      timeEl.textContent      = formatOfficeTime(found.entry.t, undefined, found.entry.srcTz).display;
     if (countdownEl) countdownEl.textContent = countdown;
     if (srcsEl)      srcsEl.textContent      = srcNames;
   }
@@ -3205,6 +3207,9 @@ const SOURCES = {
   rcfbe: { n: 'RCF Bruxelles',  f: 'be', s: '', w: 'https://www.rcf.be/wp-content/maradio/RCF-Bruxelles/' },
   // RTS Religion — Suisse (Europe/Zurich = même TZ que Paris)
   rts: { n: 'RTS Religion',     f: 'ch', s: '', w: 'https://www.rts.ch/religion/' },
+  // Radio Maria Côte d'Ivoire — Africa/Abidjan (UTC+0 fixe, pas de DST). Horaires
+  // stockés en heure locale Abidjan via srcTz : convertis dynamiquement à l'affichage.
+  rmci: { n: 'Radio Maria CI',  f: 'ci', s: 'https://dreamsiteradiocp6.com/proxy/rmcosta?mp=/stream', w: 'https://www.radiomaria.ci' },
 };
 
 /*
@@ -3263,6 +3268,12 @@ const SLM_DESC = {
 
 const RTS_DESC = {
   messe: "Messe radio-TV diffusée sur RTS Religion (Radio Télévision Suisse) chaque dimanche à 9h03. Célébrée dans une église différente chaque semaine à travers la Suisse romande.",
+};
+
+const RMCI_DESC = {
+  chapeletMatin: "Chapelet en direct sur Radio Maria Côte d'Ivoire. Diffusé chaque matin à 8h heure locale d'Abidjan, soit 9h en heure de Paris (hiver) ou 10h (été) — le décalage varie selon le changement d'heure en France.",
+  chapeletAprem: "Chapelet en direct sur Radio Maria Côte d'Ivoire. Diffusé à 15h15 heure locale d'Abidjan, soit 16h15 Paris (hiver) ou 17h15 (été).",
+  chapeletSoir:  "Chapelet en direct sur Radio Maria Côte d'Ivoire. Diffusé en début de soirée à 19h heure locale d'Abidjan, soit 20h Paris (hiver) ou 21h (été).",
 };
 
 const RCFBE_DESC = {
@@ -3455,18 +3466,41 @@ function _convertParisToLocal(parisHHMM, refDate) {
   return new Date(pretend.getTime() - diffMs);
 }
 
+// Convertit "HH:MM" exprimée dans un fuseau source (ex: 'Africa/Abidjan') en
+// heure de Paris ("HH:MM" string). Gère DST côté Paris automatiquement.
+// Utilisé pour les sources africaines (UTC fixe) dont l'heure varie en Paris
+// selon la saison.
+function _convertSrcLocalToParis(srcHHMM, srcTz, refDate) {
+  refDate = refDate || new Date();
+  const [h, m] = srcHHMM.split(':').map(Number);
+  // Décalage entre srcTz et Paris à cette date (gère DST)
+  const srcStr   = refDate.toLocaleString('en-US', { timeZone: srcTz });
+  const parisStr = refDate.toLocaleString('en-US', { timeZone: 'Europe/Paris' });
+  const diffMs = new Date(parisStr).getTime() - new Date(srcStr).getTime();
+  // "Faux" Date à HH:MM (UTC) puis +diffMs pour obtenir l'heure Paris
+  const pretendUtc = Date.UTC(refDate.getUTCFullYear(), refDate.getUTCMonth(), refDate.getUTCDate(), h, m, 0);
+  const parisMs = pretendUtc + diffMs;
+  const d = new Date(parisMs);
+  return `${d.getUTCHours()}:${String(d.getUTCMinutes()).padStart(2,'0')}`;
+}
+
 // Préférence de l'utilisateur : 'local' (défaut) ou 'paris'
 function _getTimeDisplayPref() {
   const meta = window._pelUser?.user_metadata || {};
   return meta.time_display === 'paris' ? 'paris' : 'local';
 }
 
-// Formate une heure d'office Paris (HH:MM) pour affichage.
+// Formate une heure d'office pour affichage.
+// Args :
+//   tHHMM   : "HH:MM" — exprimée en heure de Paris par défaut, OU dans srcTz si fourni
+//   refDate : Date de référence (pour gérer DST)
+//   srcTz   : (optionnel) fuseau source — ex 'Africa/Abidjan'. Si fourni, tHHMM est
+//             dans ce fuseau et sera converti en Paris avant le reste du traitement.
 // Retourne { display: '10h00', isShifted: bool, parisHHMM, dayShift }
-//   isShifted : true si l'heure diffère de Paris (utilisateur hors zone CET/CEST)
-//   dayShift  : -1, 0, +1 — décalage de jour (utile pour le chapelet de minuit)
-function formatOfficeTime(parisHHMM, refDate) {
-  if (!parisHHMM) return { display: '—', isShifted: false };
+function formatOfficeTime(tHHMM, refDate, srcTz) {
+  if (!tHHMM) return { display: '—', isShifted: false };
+  // Si la source a un fuseau dédié (Afrique, etc.), on convertit d'abord en Paris
+  const parisHHMM = srcTz ? _convertSrcLocalToParis(tHHMM, srcTz, refDate) : tHHMM;
   const tz = _userTimezone();
   const pref = _getTimeDisplayPref();
   // Pad → "10h00"
@@ -4837,6 +4871,46 @@ function _buildSlmSlotsForDow(dow) {
 // ════════════════════════════════════════════════════════════════════
 // RTS Religion (Suisse) — Messe radio dominicale (Europe/Zurich = Paris)
 // ════════════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════════════
+// Radio Maria Côte d'Ivoire — fuseau Africa/Abidjan (UTC+0 fixe).
+// Les entries portent srcTz: 'Africa/Abidjan' et les heures sont en local CI.
+// La conversion vers Paris se fait dynamiquement (DST-aware) à l'affichage.
+// Schedule (chapelets uniquement, aucune messe trouvée publiquement) :
+//   Lun  8h00, 15h15
+//   Mar  8h00, 15h15
+//   Mer  19h00
+//   Jeu  8h00, 19h00
+//   Ven  8h00, 15h15
+//   Sam  15h15
+//   Dim  19h00
+// ════════════════════════════════════════════════════════════════════
+function _buildRmciSlotsForDow(dow) {
+  const slots = [];
+  const TZ = 'Africa/Abidjan';
+  function pushChap(t, tl, descKey) {
+    slots.push({
+      type: 'chapelet', label: 'Chapelet — Radio Maria Côte d\'Ivoire',
+      desc: RMCI_DESC[descKey],
+      entries: [{ t, tl, dur: 30, srcs: ['rmci'], srcTz: TZ }],
+    });
+  }
+  // 8h00 local : Lun, Mar, Jeu, Ven
+  if (dow === 1 || dow === 2 || dow === 4 || dow === 5) pushChap('8:00', '8h00', 'chapeletMatin');
+  // 15h15 local : Lun, Mar, Ven, Sam
+  if (dow === 1 || dow === 2 || dow === 5 || dow === 6) pushChap('15:15','15h15','chapeletAprem');
+  // 19h00 local : Mer, Jeu, Dim
+  if (dow === 3 || dow === 4 || dow === 0) pushChap('19:00','19h00','chapeletSoir');
+  return slots;
+}
+(function injectRmciSlots() {
+  Object.keys(WEEK_SCHEDULE).forEach(key => {
+    if (!Array.isArray(WEEK_SCHEDULE[key])) return;
+    const dow = (key === 'ordinary') ? 4 : parseInt(key, 10);
+    if (isNaN(dow)) return;
+    WEEK_SCHEDULE[key].push(..._buildRmciSlotsForDow(dow));
+  });
+})();
+
 function _buildRtsSlotsForDow(dow) {
   const slots = [];
   // Messe radio — dimanche 09h03 (50 min) — église variable chaque semaine
@@ -4973,8 +5047,8 @@ function initWeek() {
   }
 
   // Filtres (pays + type d'office) — état persisté localStorage
-  const FILTERS_KEY = 'pel.weekFilters.v3';
-  const FILTERS_DEFAULT = { fr: true, be: true, ch: true, ca: false, messes: true, offices: true, chapelets: true, autres: true };
+  const FILTERS_KEY = 'pel.weekFilters.v4';
+  const FILTERS_DEFAULT = { fr: true, be: true, ch: true, ca: false, ci: false, messes: true, offices: true, chapelets: true, autres: true };
   let filters;
   try { filters = Object.assign({}, FILTERS_DEFAULT, JSON.parse(localStorage.getItem(FILTERS_KEY) || '{}')); }
   catch { filters = { ...FILTERS_DEFAULT }; }
@@ -4993,6 +5067,9 @@ function initWeek() {
       </button>
       <button class="wk-filt-pill${filters.ca ? ' active' : ''}" data-filter="ca" aria-pressed="${filters.ca}">
         <img class="src-flag" src="https://flagcdn.com/w20/ca.png" srcset="https://flagcdn.com/w40/ca.png 2x" width="14" height="10" alt="" aria-hidden="true"> Québec
+      </button>
+      <button class="wk-filt-pill${filters.ci ? ' active' : ''}" data-filter="ci" aria-pressed="${filters.ci}">
+        <img class="src-flag" src="https://flagcdn.com/w20/ci.png" srcset="https://flagcdn.com/w40/ci.png 2x" width="14" height="10" alt="" aria-hidden="true"> Côte d'Ivoire
       </button>
     </div>
     <div class="wk-filt-group" data-group="type">
@@ -5031,8 +5108,12 @@ function initWeek() {
     return foreign || 'fr';
   }
   function slotTypeGroup(slot) { return TYPE_GROUP[slot.type] || 'autres'; }
-  function slotMinutes(slot) {
-    const [h, m] = (slot.entries[0]?.t || '0:00').split(':').map(Number);
+  // Minutes Paris du 1er créneau, en tenant compte du srcTz éventuel
+  function slotMinutes(slot, refDate) {
+    const e = slot.entries[0];
+    if (!e) return 0;
+    const t = e.srcTz ? _convertSrcLocalToParis(e.t, e.srcTz, refDate) : e.t;
+    const [h, m] = t.split(':').map(Number);
     return h * 60 + (m || 0);
   }
 
@@ -5040,15 +5121,15 @@ function initWeek() {
   let panelsHtml = '<div class="wk-panels">';
   days.forEach(({ date, dow, isToday }, i) => {
     let slots = getDaySchedule(date);
-    // Tri chronologique par heure du premier créneau
-    slots = [...slots].sort((a, b) => slotMinutes(a) - slotMinutes(b));
+    // Tri chronologique par heure du premier créneau (en heure de Paris)
+    slots = [...slots].sort((a, b) => slotMinutes(a, date) - slotMinutes(b, date));
 
     // Dédupliquer les slots identiques (même type + même heure)
     let slotsHtml = '';
     for (const slot of slots) {
       const icon = TYPE_ICON[slot.type] || 'fa-circle';
       const firstEntry = slot.entries[0];
-      const allTimes = slot.entries.map(e => formatOfficeTime(e.t, date).display).join(' · ');
+      const allTimes = slot.entries.map(e => formatOfficeTime(e.t, date, e.srcTz).display).join(' · ');
       const country = slotCountry(slot);
       const typeGroup = slotTypeGroup(slot);
 
@@ -5103,6 +5184,7 @@ function initWeek() {
     panelsEl.classList.toggle('hide-be',         !filters.be);
     panelsEl.classList.toggle('hide-ch',         !filters.ch);
     panelsEl.classList.toggle('hide-ca',         !filters.ca);
+    panelsEl.classList.toggle('hide-ci',         !filters.ci);
     panelsEl.classList.toggle('hide-messes',     !filters.messes);
     panelsEl.classList.toggle('hide-offices',    !filters.offices);
     panelsEl.classList.toggle('hide-chapelets',  !filters.chapelets);
@@ -5335,7 +5417,7 @@ function initTodayTimeline() {
 
     // Identifiant unique pour cet office (type + heure)
     const officeId   = slot.type + '_' + entry.t.replace(':', '');
-    const officeName = slot.label + ' — ' + formatOfficeTime(entry.t).display;
+    const officeName = slot.label + ' — ' + formatOfficeTime(entry.t, undefined, entry.srcTz).display;
     const chatHtml   = `<div class="tl-chat-wrap">
         <button class="tl-chat-btn" data-action="chat"
           data-office-id="${officeId}" data-office-name="${esc(officeName)}"
@@ -5354,9 +5436,9 @@ function initTodayTimeline() {
       : '';
 
     // Heure d'affichage : locale par défaut, avec mention discrète (Paris) si décalage
-    const timeInfo = formatOfficeTime(entry.t);
+    const timeInfo = formatOfficeTime(entry.t, undefined, entry.srcTz);
     const timeBadge = timeInfo.isShifted
-      ? `<span class="tl-time-paris" title="Heure de diffusion : ${esc(entry.tl)} (Paris)">${esc(entry.tl)} Paris</span>`
+      ? `<span class="tl-time-paris" title="Heure de diffusion : ${esc(timeInfo.parisHHMM)} (Paris)">${esc(timeInfo.parisHHMM).replace(':','h')} Paris</span>`
       : '';
 
     // Description : phrase discrète toujours visible sous le titre.
