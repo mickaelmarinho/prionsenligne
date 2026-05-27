@@ -11,7 +11,16 @@
 ALTER TABLE prayer_intentions
   ADD COLUMN IF NOT EXISTS country text;
 
--- Contrainte légère : 2 caractères ASCII minuscules max (code ISO-2)
-ALTER TABLE prayer_intentions
-  ADD CONSTRAINT IF NOT EXISTS prayer_intentions_country_format_chk
-    CHECK (country IS NULL OR country ~ '^[a-z]{2}$');
+-- PostgreSQL ne supporte pas ADD CONSTRAINT IF NOT EXISTS → on passe par un
+-- bloc DO qui teste l'existence dans pg_constraint avant l'ajout.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'prayer_intentions_country_format_chk'
+  ) THEN
+    ALTER TABLE prayer_intentions
+      ADD CONSTRAINT prayer_intentions_country_format_chk
+        CHECK (country IS NULL OR country ~ '^[a-z]{2}$');
+  END IF;
+END $$;
