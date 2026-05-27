@@ -7828,7 +7828,234 @@ document.addEventListener('DOMContentLoaded', () => {
   initLatinMassModal();
   initContact();
   initGregorianPlayer();
+  initPushModule();
   handleDeepLink();      // applique le filtre/onglet issu du hash URL (landing page)
+
+  // ════════════════════════════════════════════════════════════════════
+  // PUSH NOTIFICATIONS — module client (Web Push API)
+  // ════════════════════════════════════════════════════════════════════
+  function initPushModule() {
+    const SUPPORTED = ('serviceWorker' in navigator) &&
+                      ('PushManager' in window) &&
+                      ('Notification' in window);
+
+    // Convertit la clé VAPID publique (base64url) en Uint8Array pour pushManager.subscribe
+    function urlBase64ToUint8Array(b64) {
+      const padding = '='.repeat((4 - (b64.length % 4)) % 4);
+      const base64 = (b64 + padding).replace(/-/g, '+').replace(/_/g, '/');
+      const raw = atob(base64);
+      const arr = new Uint8Array(raw.length);
+      for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+      return arr;
+    }
+
+    // Helper : décalage UTC↔Paris à un instant donné (en ms)
+    function _parisOffsetMs(date) {
+      const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Europe/Paris',
+        year: 'numeric', month: 'numeric', day: 'numeric',
+        hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false,
+      }).formatToParts(date);
+      const g = t => parseInt(parts.find(p => p.type === t)?.value, 10);
+      const asLocalUTC = Date.UTC(g('year'), g('month') - 1, g('day'),
+                                  g('hour'), g('minute'), g('second'));
+      return asLocalUTC - date.getTime();
+    }
+
+    // Convertit (date Paris naïf + HH:MM Paris) → timestamp UTC (ms)
+    function _parisToUTCms(date, hhmm) {
+      const [h, m] = String(hhmm).split(':').map(Number);
+      const candidate = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), h, m || 0);
+      const off = _parisOffsetMs(new Date(candidate));
+      return candidate - off;
+    }
+
+    // Classification du type de slot pour les filtres (aligné sur la vue semaine)
+    const _PUSH_TYPE_GROUP = { messe: 'messes', laudes: 'offices', vepres: 'offices', complies: 'offices', chapelet: 'chapelets' };
+    function _typeGroup(slot) { return _PUSH_TYPE_GROUP[slot.type] || 'autres'; }
+    function _slotCountry(slot) {
+      let foreign = null;
+      for (const entry of slot.entries) {
+        for (const k of entry.srcs) {
+          const src = SOURCES[k];
+          if (!src) continue;
+          if (!src.f) return 'fr';
+          if (!foreign) foreign = src.f;
+        }
+      }
+      return foreign || 'fr';
+    }
+
+    // Calcule les prochains pushes selon les préférences. Retourne ≤50 entrées.
+    function computeNextPushes(prefs) {
+      if (!prefs || !Array.isArray(prefs.types) || prefs.types.length === 0) return [];
+      const leadMin = Math.max(1, Math.min(60, parseInt(prefs.lead_min, 10) || 10));
+      const countries = Array.isArray(prefs.countries) && prefs.countries.length
+        ? new Set(prefs.countries) : null;  // null = tous pays
+      const types = new Set(prefs.types);
+
+      const nowMs = Date.now();
+      const horizon = nowMs + 7 * 24 * 3600 * 1000;
+      const out = [];
+      const start = getParisDate ? getParisDate() : new Date();
+      for (let i = 0; i < 7; i++) {
+        const date = new Date(start);
+        date.setDate(start.getDate() + i);
+        let slots = [];
+        try { slots = getDaySchedule(date) || []; } catch (_) { continue; }
+        for (const slot of slots) {
+          if (!types.has(_typeGroup(slot))) continue;
+          if (countries && !countries.has(_slotCountry(slot))) continue;
+          for (const entry of slot.entries) {
+            const officeUTC = _parisToUTCms(date, entry.t);
+            const pushAt = officeUTC - leadMin * 60 * 1000;
+            if (pushAt <= nowMs + 60_000) continue;   // déjà passé ou trop proche
+            if (pushAt >= horizon) continue;
+            out.push({
+              at:    new Date(pushAt).toISOString(),
+              label: slot.label,
+              body:  `Diffusion à ${entry.tl} (heure de Paris) · dans ${leadMin} min`,
+              url:   '/agenda',
+              type:  slot.type,
+              tag:   `pel-${slot.type}-${entry.t}-${date.toDateString()}`,
+            });
+          }
+        }
+      }
+      out.sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
+      return out.slice(0, 50);
+    }
+
+    // État
+    let _swReg = null;
+    let _sub   = null;
+    let _ready = SUPPORTED;
+
+    async function _initReg() {
+      if (!_ready) return null;
+      if (!_swReg) {
+        try { _swReg = await navigator.serviceWorker.ready; }
+        catch (_) { _ready = false; return null; }
+      }
+      return _swReg;
+    }
+    async function _currentSub() {
+      const reg = await _initReg();
+      if (!reg) return null;
+      try { return await reg.pushManager.getSubscription(); }
+      catch (_) { return null; }
+    }
+
+    async function getStatus() {
+      if (!SUPPORTED) return 'unsupported';
+      if (Notification.permission === 'denied') return 'denied';
+      const sub = await _currentSub();
+      if (!sub) return 'unsubscribed';
+      return 'subscribed';
+    }
+
+    async function _vapidPublic() {
+      try {
+        const r = await fetch('/api/config', { credentials: 'omit' });
+        const cfg = r.ok ? await r.json() : {};
+        return cfg.vapidPublic || '';
+      } catch (_) { return ''; }
+    }
+
+    async function subscribe(prefs) {
+      if (!SUPPORTED) throw new Error('Notifications non supportées par ce navigateur.');
+      const reg = await _initReg();
+      if (!reg) throw new Error('Service Worker indisponible.');
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') throw new Error('Permission refusée. Activez les notifications dans les paramètres du navigateur.');
+      const vapid = await _vapidPublic();
+      if (!vapid) throw new Error('Clé VAPID non configurée côté serveur.');
+      let sub = await reg.pushManager.getSubscription();
+      if (!sub) {
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapid),
+        });
+      }
+      _sub = sub;
+      await syncPrefs(prefs);
+      return sub;
+    }
+
+    // Upsert dans push_subscriptions (Supabase RLS : user_id = auth.uid())
+    async function syncPrefs(prefs) {
+      const sb = window._sbClient;
+      const user = window._pelUser;
+      if (!sb || !user) throw new Error('Vous devez être connecté pour activer les notifications.');
+      const sub = _sub || await _currentSub();
+      if (!sub) throw new Error('Aucune souscription active.');
+      const json = sub.toJSON();
+      const userTz = (() => {
+        try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Paris'; }
+        catch (_) { return 'Europe/Paris'; }
+      })();
+      const safePrefs = {
+        lead_min:  Math.max(1, Math.min(60, parseInt(prefs.lead_min, 10) || 10)),
+        types:     Array.isArray(prefs.types) ? prefs.types.slice(0, 10) : [],
+        countries: Array.isArray(prefs.countries) ? prefs.countries.slice(0, 20) : [],
+      };
+      const nextPushes = computeNextPushes(safePrefs);
+      const row = {
+        user_id:     user.id,
+        endpoint:    json.endpoint,
+        p256dh:      json.keys?.p256dh || '',
+        auth_secret: json.keys?.auth   || '',
+        user_agent:  navigator.userAgent.slice(0, 240),
+        user_tz:     userTz,
+        ...safePrefs,
+        next_pushes: nextPushes,
+        last_sync:   new Date().toISOString(),
+      };
+      const { error } = await sb.from('push_subscriptions')
+        .upsert(row, { onConflict: 'endpoint' });
+      if (error) throw new Error(error.message || 'Erreur de sauvegarde.');
+      return { row, nextPushes };
+    }
+
+    async function unsubscribe() {
+      const sub = await _currentSub();
+      if (sub) {
+        const sb = window._sbClient;
+        if (sb) {
+          try { await sb.from('push_subscriptions').delete().eq('endpoint', sub.endpoint); } catch (_) {}
+        }
+        try { await sub.unsubscribe(); } catch (_) {}
+      }
+      _sub = null;
+    }
+
+    // Lecture des prefs sauvegardées (depuis Supabase)
+    async function readPrefs() {
+      const sb = window._sbClient;
+      const user = window._pelUser;
+      if (!sb || !user) return null;
+      const sub = await _currentSub();
+      if (!sub) return null;
+      const { data } = await sb.from('push_subscriptions')
+        .select('lead_min, types, countries')
+        .eq('endpoint', sub.endpoint).maybeSingle();
+      return data || null;
+    }
+
+    window._pelPush = { SUPPORTED, getStatus, subscribe, unsubscribe, syncPrefs, readPrefs, computeNextPushes };
+
+    // Au load : si déjà abonné, on rafraîchit silencieusement la liste de pushes
+    // (couvre le cas où l'utilisateur ouvre l'app après plusieurs jours).
+    setTimeout(async () => {
+      try {
+        const sub = await _currentSub();
+        if (!sub) return;
+        const prefs = await readPrefs();
+        if (!prefs) return;
+        await syncPrefs(prefs);
+      } catch (_) { /* silent */ }
+    }, 3000);
+  }
 
   // Charge les overrides de planning depuis Supabase, puis rafraîchit les vues
   // qui dépendent du planning (timeline du jour + semaine + prochain office).

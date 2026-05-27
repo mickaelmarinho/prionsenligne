@@ -10,7 +10,7 @@
    - API /api/* : network-first (fraîcheur des données)
 ═══════════════════════════════════════════════ */
 
-const VERSION       = 'v134';
+const VERSION       = 'v135';
 const STATIC_CACHE  = `pel-static-${VERSION}`;
 const RUNTIME_CACHE = `pel-runtime-${VERSION}`;
 
@@ -134,4 +134,40 @@ self.addEventListener('fetch', e => {
 
   // 4. Cross-origin streams audio (Radio Maria, Galilée…) → network direct
   // Pas de cache : ce sont des flux continus.
+});
+
+// ─── Push notifications (Web Push API) ───────────────────────────
+// Reçu d'un push depuis le serveur (cron Vercel) : affiche la notification.
+self.addEventListener('push', e => {
+  let data = {};
+  try { data = e.data ? e.data.json() : {}; } catch (_) {}
+  const title = data.title || 'PrionsEnLigne';
+  const opts = {
+    body:     data.body  || 'Un office commence bientôt.',
+    icon:     '/icons/icon-192.png',
+    badge:    '/icons/icon-32.png',
+    tag:      data.tag   || 'pel-office',
+    renotify: true,
+    requireInteraction: false,
+    data:     { url: data.url || '/agenda' },
+  };
+  e.waitUntil(self.registration.showNotification(title, opts));
+});
+
+// Clic sur une notification : focus la fenêtre existante ou ouvre l'agenda
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const targetUrl = (e.notification.data && e.notification.data.url) || '/agenda';
+  e.waitUntil((async () => {
+    const list = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    for (const client of list) {
+      // Refocus la première fenêtre PEL ouverte si elle existe
+      if (client.url && client.url.includes(self.location.origin)) {
+        await client.focus();
+        try { client.postMessage({ type: 'push-click', url: targetUrl }); } catch (_) {}
+        return;
+      }
+    }
+    return self.clients.openWindow(targetUrl);
+  })());
 });

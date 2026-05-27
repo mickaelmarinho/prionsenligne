@@ -3011,6 +3011,58 @@ body:has(.chapelet-fab) .greg-btn { right: 88px; }   /* 54 (FAB) + 20 (marge dro
 .prof-stat-countdown .prof-stat-value i { font-size: 32px; }
 
 /* ── Sections ── */
+/* Section Notifications push */
+.prof-push-desc {
+  font-size: 13px;
+  color: rgba(255,255,255,.65);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+.prof-push-status {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,.75);
+  background: rgba(255,255,255,.04);
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.prof-push-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+.prof-push-chip {
+  cursor: pointer;
+  user-select: none;
+}
+.prof-push-chip input { display: none; }
+.prof-push-chip > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04);
+  color: rgba(255,255,255,.65);
+  transition: all .15s;
+}
+.prof-push-chip > span > i { font-size: 11px; }
+.prof-push-chip:hover > span { border-color: var(--gold); color: #fff; }
+.prof-push-chip input:checked + span {
+  background: rgba(201,168,76,.15);
+  border-color: var(--gold);
+  color: var(--gold);
+  font-weight: 500;
+}
+.prof-push-chip .src-flag { margin: 0; }
+
 .prof-section {
   padding: 18px 20px 0;
 }
