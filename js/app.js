@@ -5237,7 +5237,19 @@ function initWeek() {
     for (const slot of slots) {
       const icon = TYPE_ICON[slot.type] || 'fa-circle';
       const firstEntry = slot.entries[0];
-      const allTimes = slot.entries.map(e => formatOfficeTime(e.t, date, e.srcTz).display).join(' · ');
+      // Calcule { display, parisHHMM, isShifted } pour chaque entry
+      const timeInfos = slot.entries.map(e => formatOfficeTime(e.t, date, e.srcTz));
+      const allTimes = timeInfos.map(ti => ti.display).join(' · ');
+      // Badge "Paris" si au moins une entry est convertie (user hors zone CET/CEST,
+      // ou source africaine avec srcTz dont l'heure diffère du local user)
+      const anyShifted = timeInfos.some(ti => ti.isShifted);
+      const parisStrs = timeInfos
+        .filter(ti => ti.isShifted)
+        .map(ti => (ti.parisHHMM || '').replace(':', 'h').replace(/h(\d)$/, 'h0$1'))
+        .filter(Boolean);
+      const parisBadge = anyShifted && parisStrs.length
+        ? `<span class="wk-row-paris" title="Heure de diffusion : ${parisStrs.join(' · ')} (Paris)">${parisStrs.join(' · ')} Paris</span>`
+        : '';
       const country = slotCountry(slot);
       const typeGroup = slotTypeGroup(slot);
 
@@ -5264,7 +5276,7 @@ function initWeek() {
 
       slotsHtml += `<div class="wk-row ${slot.type} country-${country} type-${typeGroup}" data-country="${country}" data-type="${typeGroup}">
         <div class="wk-row-main" ${srcsHtml ? 'data-expandable' : ''}>
-          <span class="wk-row-time">${allTimes}</span>
+          <span class="wk-row-time">${allTimes}${parisBadge}</span>
           <i class="fa-solid ${icon} wk-row-icon"></i>
           <span class="wk-row-label">${slot.label}</span>
           ${srcsHtml ? '<i class="fa-solid fa-chevron-right wk-row-arrow"></i>' : ''}
