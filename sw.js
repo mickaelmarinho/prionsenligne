@@ -1,9 +1,19 @@
 /* ═══════════════════════════════════════════════
-   PRIONSENLIGNE — Service Worker
-   Cache les pages principales pour consultation hors-ligne
+   PRIONSENLIGNE — Service Worker v132
+   Stratégies de cache adaptées à chaque type de ressource pour
+   optimiser perf 3G/4G (Afrique francophone notamment).
+
+   - Précache : assets critiques (HTML, CSS, JS, icônes) au install
+   - Pages HTML : stale-while-revalidate (instant + revalidation BG)
+   - Assets same-origin : stale-while-revalidate
+   - Drapeaux flagcdn + fonts CDN : cache-first (immutable)
+   - API /api/* : network-first (fraîcheur des données)
 ═══════════════════════════════════════════════ */
 
-const CACHE_NAME = 'pel-v131';
+const VERSION       = 'v132';
+const STATIC_CACHE  = `pel-static-${VERSION}`;
+const RUNTIME_CACHE = `pel-runtime-${VERSION}`;
+
 const PRECACHE = [
   '/',
   '/index.html',
@@ -21,35 +31,107 @@ const PRECACHE = [
   '/manifest.json',
 ];
 
+// ─── Install : précache des assets critiques ─────────────────────
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE_NAME)
+    caches.open(STATIC_CACHE)
       .then(cache => cache.addAll(PRECACHE))
       .then(() => self.skipWaiting())
   );
 });
 
+// ─── Activate : purge des anciens caches ─────────────────────────
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+      Promise.all(
+        keys
+          .filter(k => k !== STATIC_CACHE && k !== RUNTIME_CACHE)
+          .map(k => caches.delete(k))
+      )
     ).then(() => self.clients.claim())
   );
 });
 
+// ─── Stratégies de cache ─────────────────────────────────────────
+
+// Stale-while-revalidate : sert le cache (rapide) + revalide en arrière-plan.
+// Idéal pour HTML/CSS/JS — le user voit instantanément le contenu, et la
+// prochaine ouverture aura la version fraîche.
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(RUNTIME_CACHE);
+  const cached = await cache.match(request);
+  const networkPromise = fetch(request)
+    .then(res => {
+      if (res && res.ok) cache.put(request, res.clone()).catch(() => {});
+      return res;
+    })
+    .catch(() => null);
+  return cached || networkPromise || Promise.reject(new Error('offline'));
+}
+
+// Cache-first : sert le cache si dispo, sinon réseau puis cache.
+// Idéal pour assets immuables (drapeaux flagcdn, fonts).
+async function cacheFirst(request) {
+  const cache = await caches.open(RUNTIME_CACHE);
+  const cached = await cache.match(request);
+  if (cached) return cached;
+  try {
+    const res = await fetch(request);
+    if (res && res.ok) cache.put(request, res.clone()).catch(() => {});
+    return res;
+  } catch (err) {
+    return cached || Promise.reject(err);
+  }
+}
+
+// Network-first : tente réseau d'abord, fallback cache.
+// Idéal pour /api/* (données dynamiques : Nominis bio, intentions, etc.).
+async function networkFirst(request) {
+  const cache = await caches.open(RUNTIME_CACHE);
+  try {
+    const res = await fetch(request);
+    if (res && res.ok) cache.put(request, res.clone()).catch(() => {});
+    return res;
+  } catch (err) {
+    const cached = await cache.match(request);
+    if (cached) return cached;
+    throw err;
+  }
+}
+
+// ─── Fetch routing ───────────────────────────────────────────────
 self.addEventListener('fetch', e => {
-  // Stratégie : réseau d'abord, cache en fallback (hors-ligne)
   if (e.request.method !== 'GET') return;
-  e.respondWith(
-    fetch(e.request)
-      .then(res => {
-        // Met en cache les réponses réussies des fichiers statiques
-        if (res.ok && e.request.url.startsWith(self.location.origin)) {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
-        }
-        return res;
-      })
-      .catch(() => caches.match(e.request))
+
+  const url = new URL(e.request.url);
+  const isSameOrigin = url.origin === self.location.origin;
+  const isApi        = isSameOrigin && url.pathname.startsWith('/api/');
+  const isFlagCdn    = url.hostname === 'flagcdn.com';
+  const isFontCdn    = (
+    url.hostname === 'fonts.googleapis.com' ||
+    url.hostname === 'fonts.gstatic.com' ||
+    url.hostname === 'cdnjs.cloudflare.com'
   );
+
+  // 1. API → network-first (données fraîches, fallback cache si offline)
+  if (isApi) {
+    e.respondWith(networkFirst(e.request));
+    return;
+  }
+
+  // 2. Drapeaux + fonts CDN → cache-first (immuables, jamais re-fetch)
+  if (isFlagCdn || isFontCdn) {
+    e.respondWith(cacheFirst(e.request));
+    return;
+  }
+
+  // 3. Assets same-origin (HTML, CSS, JS, images) → stale-while-revalidate
+  if (isSameOrigin) {
+    e.respondWith(staleWhileRevalidate(e.request));
+    return;
+  }
+
+  // 4. Cross-origin streams audio (Radio Maria, Galilée…) → network direct
+  // Pas de cache : ce sont des flux continus.
 });
