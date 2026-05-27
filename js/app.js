@@ -132,6 +132,70 @@ function initDate() {
    type : 'ordinaire' | 'memoire' | 'fete' | 'solennite'
    minor : saints secondaires du même jour (affiché dans le panneau détail)
 ──────────────────────────────────────────────*/
+/* ────────────────────────────────────────────
+   SAINTS FRANCOPHONES RÉGIONAUX — calendrier complémentaire
+   Saints/fêtes fortement vénérés dans un pays francophone précis,
+   non systématiquement mis en avant dans le calendrier romain général.
+   Affichés sous la bio Nominis dans le panneau détail du calendrier.
+   Format : { date: 'MM-DD', country: 'ca|be|ch|cm|ci|ht|...', name, desc }
+──────────────────────────────────────────────*/
+const REGIONAL_SAINTS = [
+  // 🇨🇦 QUÉBEC / CANADA
+  { date: '01-06', country: 'ca', name: 'Saint Frère André (Alfred Bessette)',
+    desc: "Religieux montréalais canonisé en 2010, fondateur de l'Oratoire Saint-Joseph du Mont-Royal. Surnommé « le portier de Dieu », il est vénéré pour ses dons de guérison. Patron des aidants naturels au Québec." },
+  { date: '04-17', country: 'ca', name: 'Bienheureuse Kateri Tekakwitha',
+    desc: "Première sainte amérindienne (Mohawk-Algonquine, 1656-1680). Canonisée en 2012, surnommée « le lys des Mohawks ». Patronne de l'écologie et des Amérindiens." },
+  { date: '07-26', country: 'ca', name: 'Sainte Anne, patronne du Canada',
+    desc: "Mère de la Vierge Marie et patronne principale du Canada et du Québec. Le sanctuaire de Sainte-Anne-de-Beaupré, près de Québec, est le plus ancien pèlerinage d'Amérique du Nord (depuis 1658)." },
+  { date: '10-19', country: 'ca', name: 'Saints Martyrs canadiens',
+    desc: "Huit missionnaires jésuites — Jean de Brébeuf, Isaac Jogues, Gabriel Lalemant et leurs compagnons — martyrisés entre 1642 et 1649 chez les Hurons et les Iroquois. Canonisés en 1930." },
+
+  // 🇧🇪 BELGIQUE
+  { date: '01-15', country: 'be', name: 'Notre-Dame de Banneux',
+    desc: "Apparitions mariales reconnues en 1933 à Mariette Beco, dans la province de Liège. La Vierge des Pauvres y est invoquée pour les malades et les souffrants." },
+  { date: '05-10', country: 'be', name: 'Saint Damien de Veuster (Molokai)',
+    desc: "Missionnaire belge (1840-1889), apôtre des lépreux de l'île de Molokai (Hawaï). Canonisé en 2009, choisi en 2005 comme « plus grand Belge de tous les temps »." },
+  { date: '11-24', country: 'be', name: 'Bienheureux Albert de Louvain',
+    desc: "Évêque de Liège assassiné en 1192 pour avoir défendu l'indépendance de son diocèse face à l'empereur. Béatifié au XVIIIe siècle." },
+  { date: '11-29', country: 'be', name: 'Notre-Dame de Beauraing',
+    desc: "Apparitions mariales reconnues en 1932-1933 à cinq enfants dans la province de Namur. La « Vierge au Cœur d'Or » est invoquée pour la conversion des pécheurs." },
+
+  // 🇨🇭 SUISSE
+  { date: '06-27', country: 'ch', name: 'Bienheureuse Marguerite Bays',
+    desc: "Couturière vaudoise (1815-1879), Tertiaire franciscaine, stigmatisée. Canonisée en 2019, première sainte fribourgeoise des temps modernes." },
+  { date: '09-22', country: 'ch', name: 'Saint Maurice et les martyrs d\'Agaune',
+    desc: "Officier romain chrétien et toute sa légion (la « Légion Thébaine ») martyrisés vers 286 à Agaune (Saint-Maurice, Valais). L'abbaye fondée sur leur tombeau est la plus ancienne d'Occident encore en activité." },
+  { date: '09-25', country: 'ch', name: 'Saint Nicolas de Flüe, patron de la Suisse',
+    desc: "Ermite et mystique (1417-1487) qui œuvra pour l'unité de la Confédération suisse au Diet de Stans (1481). Canonisé en 1947, patron de la Suisse et symbole de réconciliation." },
+
+  // 🌍 AFRIQUE FRANCOPHONE
+  { date: '01-20', country: 'cm', name: 'Bienheureux Cyprien Iwene Tansi',
+    desc: "Prêtre nigérian (1903-1964), trappiste, premier bienheureux d'Afrique noire moderne. Béatifié en 1998 par Jean-Paul II au Nigeria." },
+  { date: '04-30', country: 'cm', name: 'Notre-Dame d\'Afrique',
+    desc: "Patronne de l'Afrique du Nord. Sa basilique à Alger (1872) est un haut lieu de dialogue chrétien-musulman et un repère pour les chrétiens d'Afrique francophone." },
+  { date: '06-03', country: 'cm', name: 'Saints Charles Lwanga et compagnons, martyrs de l\'Ouganda',
+    desc: "Vingt-deux jeunes pages chrétiens (catholiques et anglicans) brûlés vifs en 1886 sur ordre du roi Mwanga II du Buganda. Canonisés en 1964, ils sont les premiers saints d'Afrique noire moderne." },
+  { date: '08-12', country: 'cm', name: 'Bienheureux Isidore Bakanja',
+    desc: "Jeune laïc congolais (vers 1885-1909), martyr du scapulaire du Carmel. Battu à mort pour avoir refusé d'abandonner sa foi. Béatifié en 1994." },
+
+  // 🇨🇮 CÔTE D'IVOIRE
+  { date: '12-08', country: 'ci', name: 'Notre-Dame de la Paix de Yamoussoukro',
+    desc: "Basilique consacrée le 10 septembre 1990 par Jean-Paul II. Plus grande église catholique au monde, elle est dédiée à Notre-Dame de la Paix, célébrée à l'Immaculée Conception." },
+
+  // 🇭🇹 HAÏTI
+  { date: '06-27', country: 'ht', name: 'Notre-Dame du Perpétuel Secours, patronne d\'Haïti',
+    desc: "Patronne principale d'Haïti depuis 1942. L'icône byzantine est l'objet d'une dévotion populaire intense, particulièrement après l'épidémie de variole de 1882 attribuée à son intercession." },
+];
+
+// Retourne tous les saints régionaux pour une date donnée (Date object).
+function getRegionalSaintsForDate(date) {
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  const key = `${mm}-${dd}`;
+  return REGIONAL_SAINTS.filter(s => s.date === key);
+}
+window.getRegionalSaintsForDate = getRegionalSaintsForDate;
+
 const CALENDAR_DATA = {
   '2026-01': { days: {
     1:  { saint: 'Sainte Marie, Mère de Dieu', type: 'solennite', desc: "Solennité mariale ouvrant l'année civile. Journée mondiale de la Paix.", minor: '' },
@@ -464,6 +528,48 @@ function initCalendar() {
       else { ddMinor.style.display = 'none'; }
     }
 
+    // Saints francophones régionaux (Québec, Belgique, Suisse, Afrique francophone…)
+    // Affiché si la date a des saints régionaux dans REGIONAL_SAINTS.
+    let regBlock = document.getElementById('dd-regional');
+    if (!regBlock) {
+      regBlock = document.createElement('div');
+      regBlock.id = 'dd-regional';
+      regBlock.className = 'dd-regional';
+      detail.appendChild(regBlock);
+    }
+    if (yr && mo && dy) {
+      const regionalDate = new Date(yr, mo - 1, dy);
+      const regional = getRegionalSaintsForDate(regionalDate);
+      const COUNTRY_LABELS = {
+        ca: 'Québec / Canada', be: 'Belgique', ch: 'Suisse',
+        cm: 'Afrique francophone', ci: 'Côte d\'Ivoire', ht: 'Haïti',
+      };
+      if (regional.length > 0) {
+        const cardsHtml = regional.map(r => {
+          const country = COUNTRY_LABELS[r.country] || r.country.toUpperCase();
+          return `<div class="dd-regional-card">
+            <div class="dd-regional-head">
+              <img class="src-flag" src="https://flagcdn.com/w20/${r.country}.png" srcset="https://flagcdn.com/w40/${r.country}.png 2x" width="14" height="10" alt="" aria-hidden="true">
+              <span class="dd-regional-name">${escapeHtmlSimple(r.name)}</span>
+              <span class="dd-regional-country">${country}</span>
+            </div>
+            <p class="dd-regional-desc">${escapeHtmlSimple(r.desc)}</p>
+          </div>`;
+        }).join('');
+        regBlock.innerHTML = `
+          <div class="dd-regional-head-section">
+            <i class="fa-solid fa-globe"></i>
+            <span class="dd-regional-title">Saints francophones du jour</span>
+          </div>
+          ${cardsHtml}`;
+        regBlock.style.display = '';
+      } else {
+        regBlock.style.display = 'none';
+      }
+    } else {
+      regBlock.style.display = 'none';
+    }
+
     // Enrichissement nominis : bio détaillée + lien officiel CEF
     let nomBlock = document.getElementById('dd-nominis');
     if (!nomBlock) {
@@ -686,6 +792,8 @@ function initCalendar() {
     // Reset detail panel
     detail.classList.add('hidden');
     if (ddMinor) ddMinor.style.display = 'none';
+    const regBlock = document.getElementById('dd-regional');
+    if (regBlock) regBlock.style.display = 'none';
   }
 
   // Wire nav buttons

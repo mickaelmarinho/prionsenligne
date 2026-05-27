@@ -1005,6 +1005,69 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
   padding-top: 8px;
 }
 
+/* ─── Bloc saints francophones régionaux ─── */
+.dd-regional {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,.1);
+}
+.dd-regional-head-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.dd-regional-head-section > i {
+  color: var(--gold);
+  font-size: 12px;
+}
+.dd-regional-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--gold);
+}
+.dd-regional-card {
+  background: rgba(255,255,255,.04);
+  border-left: 3px solid var(--gold);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.dd-regional-card:last-child { margin-bottom: 0; }
+.dd-regional-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.dd-regional-head .src-flag {
+  margin-left: 0;
+  flex-shrink: 0;
+}
+.dd-regional-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: #fff;
+}
+.dd-regional-country {
+  font-size: 11px;
+  color: rgba(255,255,255,.55);
+  background: rgba(255,255,255,.07);
+  padding: 1px 7px;
+  border-radius: 999px;
+  margin-left: auto;
+  white-space: nowrap;
+}
+.dd-regional-desc {
+  font-size: 13px;
+  line-height: 1.55;
+  color: rgba(255,255,255,.78);
+  margin: 0;
+}
+
 /* ─── Bloc bio nominis (Conférence des évêques de France) ─── */
 .dd-nominis {
   margin-top: 14px;
