@@ -3,10 +3,6 @@
     {
       "path": "/api/keepalive",
       "schedule": "0 6 * * *"
-    },
-    {
-      "path": "/api/cron-push",
-      "schedule": "*/5 * * * *"
     }
   ],
   "redirects": [

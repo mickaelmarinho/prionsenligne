@@ -67,7 +67,59 @@ des appels non-autorisés.
 
 ---
 
-## 4. Redéploiement
+## 4. Cron externe (obligatoire sur plan Vercel Hobby)
+
+⚠️ Le plan **Vercel Hobby** ne permet pas de cron interne plus fréquent qu'**1×
+par jour**. Pour que les notifications push partent à l'heure, on délègue le
+déclenchement à un service externe gratuit qui appelle `/api/cron-push`
+toutes les minutes.
+
+### Service recommandé : cron-job.org (gratuit, fiable)
+
+1. Va sur https://cron-job.org/ et crée un compte gratuit (vérification email)
+2. Une fois connecté, clique sur **CREATE CRONJOB** en haut à droite
+3. Remplis le formulaire :
+
+| Champ | Valeur |
+| --- | --- |
+| **Title** | `PrionsEnLigne — Push notifications` |
+| **URL** | `https://prionsenligne.fr/api/cron-push` |
+| **Schedule** → tab **Common** | Sélectionne **Every minute** |
+| **Schedule** → onglet **Custom** (alternative) | Minutes : `* (every minute)` |
+
+4. Va sur l'onglet **Advanced** :
+
+| Champ | Valeur |
+| --- | --- |
+| **Request method** | **GET** (par défaut) |
+| **Request headers** | clique **Add** → Header name : `Authorization` · Header value : `Bearer <ton CRON_SECRET>` |
+| **Notify on failure** | OK (te prévient par email si le endpoint plante) |
+| **Save responses** | OK (utile pour debug) |
+
+5. **CREATE** en bas
+
+C'est tout. cron-job.org va maintenant déclencher ton endpoint chaque minute.
+Tu peux vérifier dans son interface :
+- Onglet **History** : succès/échecs des derniers appels
+- Onglet **Last execution** : voir le body de réponse `{ "ok": true, ... }`
+
+### Alternative : passer en Pro Vercel
+
+Si tu préfères tout chez Vercel (~$20/mois), passe en plan **Pro**. Le cron
+interne défini dans `vercel.json` sera alors accepté. Pour réactiver :
+
+1. Modifie `vercel.json` pour ajouter :
+```json
+{
+  "path": "/api/cron-push",
+  "schedule": "* * * * *"
+}
+```
+2. Redéploie
+
+---
+
+## 5. Redéploiement
 
 Une fois les env vars ajoutées, **redéploie le projet** depuis Vercel
 (Deployments → … → Redeploy) pour que les nouvelles variables soient prises
@@ -75,7 +127,7 @@ en compte.
 
 ---
 
-## 5. Test end-to-end
+## 6. Test end-to-end
 
 1. Ouvre le site, connecte-toi
 2. Va dans ton **profil → section « Notifications push »**
