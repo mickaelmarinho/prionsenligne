@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron-push",
-      "schedule": "* * * * *"
+      "schedule": "*/5 * * * *"
     }
   ],
   "redirects": [

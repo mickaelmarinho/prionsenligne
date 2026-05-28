@@ -17,7 +17,10 @@
 
 import webpush from 'web-push';
 
-const FETCH_WINDOW_MS = 90 * 1000; // pushes dont 'at' est dans now ± 90s
+// Fenêtre élargie à 5min30s pour absorber un cron qui ne tourne que tous les 5 min
+// (limite plan Hobby Vercel). Trade-off : push peut arriver jusqu'à 5 min en
+// retard sur l'horaire théorique de notification.
+const FETCH_WINDOW_MS = 5 * 60 * 1000 + 30 * 1000;
 
 function configureVapid() {
   const pub  = process.env.VAPID_PUBLIC_KEY;
