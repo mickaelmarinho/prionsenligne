@@ -602,6 +602,51 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
   .tl-pastoral-text { font-size: 12.5px; }
 }
 
+/* Item 'Soutenir le projet' dans le menu hamburger — accent doré discret */
+.hm-support {
+  color: var(--gold);
+}
+.hm-support:hover { background: rgba(201,168,76,.08); }
+.hm-support > i { color: var(--gold); }
+
+/* Section 'Soutenir le projet' dans À propos */
+.about-support {
+  background: linear-gradient(135deg, rgba(201,168,76,.08), rgba(201,168,76,.02));
+  border: 1px solid rgba(201,168,76,.2);
+  padding: 18px 20px;
+  border-radius: 10px;
+  margin-top: 12px;
+}
+.about-support h3 { color: var(--gold); }
+.about-support p { margin: 8px 0; }
+.about-support-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--gold);
+  color: #1e1c18;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  padding: 10px 22px;
+  border-radius: 999px;
+  text-decoration: none;
+  margin-top: 8px;
+  transition: all .15s;
+  box-shadow: 0 2px 12px rgba(201,168,76,.25);
+}
+.about-support-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(201,168,76,.4);
+  filter: brightness(1.05);
+}
+.about-support-note {
+  font-size: 11.5px !important;
+  color: rgba(255,255,255,.5) !important;
+  font-style: italic;
+  margin-top: 10px !important;
+}
+
 /* Section 'Notre position' dans À propos — style distinctif */
 .about-position {
   background: rgba(201,168,76,.05);
