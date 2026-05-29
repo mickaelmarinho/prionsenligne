@@ -1925,6 +1925,65 @@ function initRadioPlayer() {
     setIcon(false);
   }
 
+  // ─── Modale TV (KTO, etc.) — iframe YouTube live ─────────────
+  function openTvModal({ embed, web, name, prayer, time }) {
+    if (!embed) {
+      if (web) window.open(web, '_blank', 'noopener');
+      return;
+    }
+    let modal = document.getElementById('tv-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'tv-modal';
+      modal.className = 'tv-modal hidden';
+      modal.innerHTML = `
+        <div class="tv-modal-backdrop" data-tv-close></div>
+        <div class="tv-modal-panel" role="dialog" aria-modal="true" aria-label="Lecteur vidéo">
+          <div class="tv-modal-head">
+            <div class="tv-modal-title">
+              <span class="tv-modal-channel" id="tv-modal-channel">—</span>
+              <span class="tv-modal-prayer"  id="tv-modal-prayer">—</span>
+            </div>
+            <a class="tv-modal-external" id="tv-modal-external" href="#" target="_blank" rel="noopener" title="Ouvrir sur le site officiel">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            </a>
+            <button class="tv-modal-close" data-tv-close aria-label="Fermer">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+          <div class="tv-modal-frame-wrap">
+            <iframe id="tv-modal-iframe" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+
+      modal.addEventListener('click', e => {
+        if (e.target.closest('[data-tv-close]')) closeTvModal();
+      });
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeTvModal();
+      });
+    }
+    const iframe   = modal.querySelector('#tv-modal-iframe');
+    const channel  = modal.querySelector('#tv-modal-channel');
+    const prayerEl = modal.querySelector('#tv-modal-prayer');
+    const ext      = modal.querySelector('#tv-modal-external');
+    channel.textContent  = name || '';
+    prayerEl.textContent = prayer ? `${prayer}${time ? ' · ' + time : ''}` : '';
+    if (ext)  ext.href   = web || '#';
+    iframe.src = embed;
+    modal.classList.remove('hidden');
+    document.body.classList.add('tv-modal-open');
+  }
+  function closeTvModal() {
+    const modal = document.getElementById('tv-modal');
+    if (!modal) return;
+    const iframe = modal.querySelector('#tv-modal-iframe');
+    if (iframe) iframe.src = ''; // stoppe la lecture YouTube
+    modal.classList.add('hidden');
+    document.body.classList.remove('tv-modal-open');
+  }
+
   playBtn.addEventListener('click', () => {
     if (audio.paused) {
       audio.play().then(() => setIcon(true)).catch(() => {});
@@ -1955,6 +2014,21 @@ function initRadioPlayer() {
   audio.addEventListener('error', () => {
     closePlayer();
     if (currentWeb) window.open(currentWeb, '_blank', 'noopener');
+  });
+
+  // Délégation : ouvre la modale TV pour les sources vidéo (KTO, etc.)
+  document.addEventListener('click', e => {
+    const tvBtn = e.target.closest('[data-action="tv"]');
+    if (!tvBtn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    openTvModal({
+      embed:  tvBtn.dataset.embed  || '',
+      web:    tvBtn.dataset.web    || '',
+      name:   tvBtn.dataset.name   || '',
+      prayer: tvBtn.dataset.prayer || '',
+      time:   tvBtn.dataset.time   || '',
+    });
   });
 
   // Délégation d'événement — capture TOUS les boutons radio
@@ -3297,7 +3371,10 @@ const SOURCES = {
   // Flux dédié chant grégorien d'Espérance (même que le bouton "Grégorien" en bas du site)
   espg: { n: 'Espérance Grégorien', s: 'https://esperance.streamakaci.com/gregorien.mp3', w: 'https://radio-esperance.fr' },
   fid: { n: 'Fidélité',         s: 'https://diffusion.lafrap.fr/fidelite.mp3', w: 'https://radio-fidelite.fr' },
-  kto: { n: 'KTO',              s: '', w: 'https://www.ktotv.com' },
+  // KTO Télévision : pas de flux audio simple (TV) → live YouTube en iframe modale.
+  // Chaîne YT officielle : UCg0L6cPMNLv1gjsyzYqMG7g (24/7 quand en direct).
+  kto: { n: 'KTO',              s: '', w: 'https://www.ktotv.com',
+         embed: 'https://www.youtube-nocookie.com/embed/live_stream?channel=UCg0L6cPMNLv1gjsyzYqMG7g&autoplay=1&rel=0' },
   lou: { n: 'Lourdes',          s: '', w: 'https://www.lourdes-france.com/lourdesplus/' },
   // jer (Fraternités de Jérusalem) retiré : pas de retransmission live trouvée
   // sol (Solesmes) retiré : ne diffuse pas en live sur internet
@@ -5268,6 +5345,13 @@ function initWeek() {
               data-name="${src.n}" data-prayer="${slot.label}" data-time="${entry.tl}">
               <i class="fa-solid fa-play"></i>${src.n}${flagHtml}
             </button>`;
+          } else if (src.embed) {
+            // Source vidéo (KTO, etc.) → ouvre modale iframe avec play inline
+            srcsHtml += `<button class="wc-src-btn wc-tv" data-action="tv"
+              data-embed="${src.embed}" data-web="${src.w}"
+              data-name="${src.n}" data-prayer="${slot.label}" data-time="${entry.tl}">
+              <i class="fa-solid fa-tv"></i> ${src.n}${flagHtml}
+            </button>`;
           } else {
             srcsHtml += `<a class="wc-src-btn wc-link" href="${src.w}" target="_blank" rel="noopener">
               <i class="fa-solid fa-arrow-up-right-from-square"></i>${src.n}${flagHtml}
@@ -5613,6 +5697,13 @@ function initTodayTimeline() {
           data-stream="${src.s}" data-web="${src.w}"
           data-name="${src.n}" data-prayer="${esc(slot.label)}" data-time="${entry.tl}">
           <i class="fa-solid fa-play"></i> ${src.n}${flagHtml}
+        </button>`;
+      } else if (src.embed) {
+        // Source vidéo (KTO TV, etc.) → modale iframe avec player inline
+        srcsHtml += `<button class="tl-src tv" data-action="tv"
+          data-embed="${src.embed}" data-web="${src.w}"
+          data-name="${src.n}" data-prayer="${esc(slot.label)}" data-time="${entry.tl}">
+          <i class="fa-solid fa-tv"></i> ${src.n}${flagHtml}
         </button>`;
       } else {
         srcsHtml += `<a class="tl-src youtube" href="${src.w}" target="_blank" rel="noopener">

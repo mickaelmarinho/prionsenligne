@@ -602,6 +602,116 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
   .tl-pastoral-text { font-size: 12.5px; }
 }
 
+/* Modale TV — lecteur vidéo iframe (KTO, etc.) */
+.tv-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.tv-modal.hidden { display: none; }
+.tv-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,.75);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.tv-modal-panel {
+  position: relative;
+  width: 100%;
+  max-width: 960px;
+  background: #1e1c18;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 12px 48px rgba(0,0,0,.5);
+  display: flex;
+  flex-direction: column;
+}
+.tv-modal-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #14110e;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.tv-modal-title {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.tv-modal-channel {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--gold);
+}
+.tv-modal-prayer {
+  font-size: 12.5px;
+  color: rgba(255,255,255,.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tv-modal-external,
+.tv-modal-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.7);
+  cursor: pointer;
+  text-decoration: none;
+  font-size: 14px;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+.tv-modal-external:hover,
+.tv-modal-close:hover {
+  background: rgba(255,255,255,.12);
+  color: #fff;
+}
+.tv-modal-frame-wrap {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%; /* 16:9 */
+  background: #000;
+}
+.tv-modal-frame-wrap iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+body.tv-modal-open { overflow: hidden; }
+@media (max-width: 540px) {
+  .tv-modal { padding: 0; align-items: stretch; }
+  .tv-modal-panel { border-radius: 0; max-width: 100%; }
+}
+
+/* Variante TV des src-buttons : icône TV au lieu de play */
+.wc-src-btn.wc-tv {
+  background: linear-gradient(135deg, #ec407a 0%, #d81b60 100%);
+  color: #fff;
+}
+.wc-src-btn.wc-tv:hover { filter: brightness(1.1); }
+.tl-src.tv {
+  background: linear-gradient(135deg, #ec407a 0%, #d81b60 100%);
+  color: #fff;
+  border-color: transparent;
+}
+.tl-src.tv:hover { filter: brightness(1.1); }
+
 /* Item 'Soutenir le projet' dans le menu hamburger — accent doré discret */
 .hm-support {
   color: var(--gold);
