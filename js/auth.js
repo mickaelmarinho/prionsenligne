@@ -607,27 +607,17 @@ async function loadProfileContent() {
 
     <div class="prof-section" id="prof-push-section">
       <div class="prof-section-title"><i class="fa-solid fa-bell"></i> Notifications push</div>
-      <div class="prof-push-desc">Recevez un rappel <strong>10 minutes avant</strong> chaque office choisi, même quand le site n'est pas ouvert. Idéal pour ne pas manquer la messe ou les offices du jour.</div>
+      <div class="prof-push-desc">Recevez un rappel <strong>10 minutes avant</strong> chaque office que vous suivez. Cliquez sur la cloche 🔔 à côté d'un office dans l'agenda pour l'ajouter à vos notifications.</div>
       <div class="prof-push-status" id="prof-push-status">
         <i class="fa-solid fa-circle-notch fa-spin"></i> Vérification…
       </div>
       <div id="prof-push-controls" class="hidden">
-        <div class="prof-perso-label">Types d'office à notifier</div>
-        <div class="prof-push-types">
-          <label class="prof-push-chip"><input type="checkbox" name="prof-push-type" value="messes"><span><i class="fa-solid fa-church"></i> Messes</span></label>
-          <label class="prof-push-chip"><input type="checkbox" name="prof-push-type" value="offices"><span><i class="fa-solid fa-sun"></i> Offices</span></label>
-          <label class="prof-push-chip"><input type="checkbox" name="prof-push-type" value="chapelets"><span><i class="fa-solid fa-circle-dot"></i> Chapelets</span></label>
-          <label class="prof-push-chip"><input type="checkbox" name="prof-push-type" value="autres"><span><i class="fa-solid fa-hands-praying"></i> Autres</span></label>
+        <div class="prof-push-count-wrap">
+          <i class="fa-solid fa-bell" style="color:var(--gold)"></i>
+          <span><strong id="prof-push-count">0</strong> office(s) suivi(s)</span>
+          <a class="prof-push-link" href="#" id="prof-push-goto-agenda">Choisir dans l'agenda →</a>
         </div>
-        <div class="prof-perso-label">Pays (laisser vide pour tous)</div>
-        <div class="prof-push-types">
-          <label class="prof-push-chip"><input type="checkbox" name="prof-push-country" value="fr"><span><img class="src-flag" src="https://flagcdn.com/w20/fr.png" srcset="https://flagcdn.com/w40/fr.png 2x" width="14" height="10" alt=""> France</span></label>
-          <label class="prof-push-chip"><input type="checkbox" name="prof-push-country" value="be"><span><img class="src-flag" src="https://flagcdn.com/w20/be.png" srcset="https://flagcdn.com/w40/be.png 2x" width="14" height="10" alt=""> Belgique</span></label>
-          <label class="prof-push-chip"><input type="checkbox" name="prof-push-country" value="ch"><span><img class="src-flag" src="https://flagcdn.com/w20/ch.png" srcset="https://flagcdn.com/w40/ch.png 2x" width="14" height="10" alt=""> Suisse</span></label>
-          <label class="prof-push-chip"><input type="checkbox" name="prof-push-country" value="ca"><span><img class="src-flag" src="https://flagcdn.com/w20/ca.png" srcset="https://flagcdn.com/w40/ca.png 2x" width="14" height="10" alt=""> Québec</span></label>
-        </div>
-        <button class="prof-save-btn" id="prof-push-save"><i class="fa-solid fa-check"></i> Enregistrer mes notifications</button>
-        <button class="prof-action-btn" id="prof-push-disable" style="margin-top:10px"><i class="fa-solid fa-bell-slash"></i> Désactiver les notifications</button>
+        <button class="prof-action-btn" id="prof-push-disable" style="margin-top:14px"><i class="fa-solid fa-bell-slash"></i> Désactiver toutes les notifications</button>
         <div class="prof-feedback hidden" id="prof-push-feedback"></div>
       </div>
       <button class="prof-save-btn hidden" id="prof-push-enable"><i class="fa-solid fa-bell"></i> Activer les notifications</button>
@@ -1029,8 +1019,9 @@ async function _initPushSection() {
   const ctrlEl     = $id('prof-push-controls');
   const enableBtn  = $id('prof-push-enable');
   const disableBtn = $id('prof-push-disable');
-  const saveBtn    = $id('prof-push-save');
   const fbEl       = $id('prof-push-feedback');
+  const countEl    = $id('prof-push-count');
+  const gotoBtn    = $id('prof-push-goto-agenda');
 
   if (!statusEl) return;
   if (!push || !push.SUPPORTED) {
@@ -1047,20 +1038,6 @@ async function _initPushSection() {
     fbEl.className = `prof-feedback ${kind === 'error' ? 'error' : 'success'}`;
     setTimeout(() => fbEl.classList.add('hidden'), 4000);
   }
-  function checkboxes(name) {
-    return Array.from(document.querySelectorAll(`input[name="${name}"]`));
-  }
-  function getCurrentPrefs() {
-    const types = checkboxes('prof-push-type').filter(c => c.checked).map(c => c.value);
-    const countries = checkboxes('prof-push-country').filter(c => c.checked).map(c => c.value);
-    return { lead_min: 10, types, countries };
-  }
-  function applyPrefs(prefs) {
-    const types = new Set(prefs?.types || []);
-    const countries = new Set(prefs?.countries || []);
-    checkboxes('prof-push-type').forEach(c => { c.checked = types.has(c.value); });
-    checkboxes('prof-push-country').forEach(c => { c.checked = countries.has(c.value); });
-  }
 
   async function refresh() {
     const st = await push.getStatus();
@@ -1072,14 +1049,12 @@ async function _initPushSection() {
     if (st === 'subscribed') {
       setStatus('<i class="fa-solid fa-bell" style="color:var(--gold)"></i> Notifications activées sur cet appareil');
       hide(enableBtn); show(ctrlEl);
-      // Charge les prefs sauvegardées
       try {
-        const prefs = await push.readPrefs();
-        if (prefs) applyPrefs(prefs);
+        await push.readPrefs();
+        if (countEl) countEl.textContent = push.getSubscribedCount();
       } catch (_) {}
       return;
     }
-    // unsubscribed
     setStatus('<i class="fa-solid fa-bell-slash"></i> Notifications désactivées');
     show(enableBtn); hide(ctrlEl);
   }
@@ -1089,8 +1064,8 @@ async function _initPushSection() {
     try {
       enableBtn.disabled = true;
       enableBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Activation…';
-      await push.subscribe(getCurrentPrefs());
-      feedback('✓ Notifications activées. Sélectionnez les offices à recevoir.', 'success');
+      await push.subscribe({ lead_min: 10, office_ids: [] });
+      feedback('✓ Notifications activées. Cliquez sur la cloche d\'un office dans l\'agenda pour vous abonner.', 'success');
       await refresh();
     } catch (err) {
       feedback(err.message || 'Erreur d\'activation.', 'error');
@@ -1101,6 +1076,7 @@ async function _initPushSection() {
   });
 
   disableBtn?.addEventListener('click', async () => {
+    if (!confirm('Désactiver toutes les notifications push sur cet appareil ?')) return;
     try {
       disableBtn.disabled = true;
       await push.unsubscribe();
@@ -1113,25 +1089,11 @@ async function _initPushSection() {
     }
   });
 
-  saveBtn?.addEventListener('click', async () => {
-    const prefs = getCurrentPrefs();
-    if (prefs.types.length === 0) {
-      feedback('Sélectionnez au moins un type d\'office.', 'error');
-      return;
-    }
-    try {
-      saveBtn.disabled = true;
-      const oldHTML = saveBtn.innerHTML;
-      saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enregistrement…';
-      const { nextPushes } = await push.syncPrefs(prefs);
-      feedback(`✓ ${nextPushes.length} notifications planifiées sur les 7 prochains jours.`, 'success');
-      saveBtn.innerHTML = oldHTML;
-    } catch (err) {
-      feedback(err.message || 'Erreur de sauvegarde.', 'error');
-      saveBtn.innerHTML = '<i class="fa-solid fa-check"></i> Enregistrer mes notifications';
-    } finally {
-      saveBtn.disabled = false;
-    }
+  gotoBtn?.addEventListener('click', (e) => {
+    e.preventDefault();
+    // Ferme le panneau profil et bascule sur l'onglet aujourd'hui
+    document.getElementById('profile-panel')?.classList.add('hidden');
+    document.querySelector('.nav-tab[data-tab="aujourd"]')?.click();
   });
 
   refresh();

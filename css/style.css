@@ -3011,7 +3011,97 @@ body:has(.chapelet-fab) .greg-btn { right: 88px; }   /* 54 (FAB) + 20 (marge dro
 .prof-stat-countdown .prof-stat-value i { font-size: 32px; }
 
 /* ── Sections ── */
+/* Cloche d'abonnement push à côté de chaque office (vue semaine + timeline) */
+.wk-row-bell,
+.tl-bell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  color: rgba(0,0,0,.32);
+  font-size: 13px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  margin-left: 6px;
+  transition: all .15s;
+  vertical-align: middle;
+}
+.wk-row-bell:hover,
+.tl-bell:hover {
+  color: var(--gold);
+  background: rgba(201,168,76,.08);
+  border-color: rgba(201,168,76,.3);
+}
+.wk-row-bell.active,
+.tl-bell.active {
+  color: var(--gold);
+  background: rgba(201,168,76,.15);
+  border-color: var(--gold);
+}
+.wk-row-bell.busy,
+.tl-bell.busy { opacity: .55; }
+.wk-row-bell.busy i,
+.tl-bell.busy i {
+  animation: bellPulse 0.8s ease-in-out infinite;
+}
+@keyframes bellPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.85); } }
+
+.tl-bell {
+  font-size: 14px;
+  padding: 4px 9px;
+  margin-left: 8px;
+}
+
+/* Toast notification push (feedback du toggle) */
+.push-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: #1e1c18;
+  color: #fff;
+  padding: 11px 22px;
+  border-radius: 999px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 4px 24px rgba(0,0,0,.25);
+  opacity: 0;
+  pointer-events: none;
+  transition: all .25s ease-out;
+  z-index: 9999;
+  border: 1px solid rgba(201,168,76,.4);
+}
+.push-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+.push-toast.error { border-color: rgba(220,80,80,.6); }
+
 /* Section Notifications push */
+.prof-push-count-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: rgba(255,255,255,.04);
+  padding: 14px 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  color: rgba(255,255,255,.85);
+}
+.prof-push-count-wrap strong { color: var(--gold); font-size: 18px; }
+.prof-push-link {
+  margin-left: auto;
+  color: var(--gold);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+}
+.prof-push-link:hover { text-decoration: underline; }
+
 .prof-push-desc {
   font-size: 13px;
   color: rgba(255,255,255,.65);

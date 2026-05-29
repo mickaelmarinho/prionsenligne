@@ -5274,11 +5274,24 @@ function initWeek() {
         }
       }
 
-      slotsHtml += `<div class="wk-row ${slot.type} country-${country} type-${typeGroup}" data-country="${country}" data-type="${typeGroup}">
+      // Cloche d'abonnement push (si supporté par le navigateur)
+      const pushSupported = window._pelPush?.SUPPORTED;
+      const slotId = pushSupported ? window._pelPush.getSlotId(slot) : '';
+      const isSubscribed = pushSupported && window._pelPush.isOfficeSubscribed(slot);
+      const bellHtml = pushSupported
+        ? `<button class="wk-row-bell${isSubscribed ? ' active' : ''}" data-bell="${slotId}"
+            title="${isSubscribed ? 'Désactiver les notifs pour cet office' : 'Activer les notifs pour cet office (10 min avant)'}"
+            aria-label="${isSubscribed ? 'Désabonner' : 'S abonner'}" aria-pressed="${isSubscribed}">
+            <i class="fa-solid ${isSubscribed ? 'fa-bell' : 'fa-bell-slash'}"></i>
+          </button>`
+        : '';
+
+      slotsHtml += `<div class="wk-row ${slot.type} country-${country} type-${typeGroup}" data-country="${country}" data-type="${typeGroup}" data-slot-id="${slotId}">
         <div class="wk-row-main" ${srcsHtml ? 'data-expandable' : ''}>
           <span class="wk-row-time">${allTimes}${parisBadge}</span>
           <i class="fa-solid ${icon} wk-row-icon"></i>
           <span class="wk-row-label">${slot.label}</span>
+          ${bellHtml}
           ${srcsHtml ? '<i class="fa-solid fa-chevron-right wk-row-arrow"></i>' : ''}
         </div>
         ${srcsHtml ? `<div class="wk-row-srcs hidden">${srcsHtml}</div>` : ''}
@@ -5344,8 +5357,16 @@ function initWeek() {
     });
   });
 
-  // Expand/collapse sources au clic sur une ligne
-  wrap.addEventListener('click', e => {
+  // Expand/collapse sources au clic sur une ligne + handler cloche push
+  wrap.addEventListener('click', async e => {
+    // Cloche push prioritaire (ne pas toggler le panneau sources si on clique la cloche)
+    const bellBtn = e.target.closest('[data-bell]');
+    if (bellBtn) {
+      e.stopPropagation();
+      e.preventDefault();
+      await _handleBellClick(bellBtn, wrap);
+      return;
+    }
     const main = e.target.closest('[data-expandable]');
     if (!main) return;
     const row    = main.closest('.wk-row');
@@ -5355,6 +5376,72 @@ function initWeek() {
     srcs.classList.toggle('hidden');
     if (arrow) arrow.style.transform = srcs.classList.contains('hidden') ? '' : 'rotate(90deg)';
   });
+}
+
+// Helper partagé : toggle l'abonnement d'un office et met à jour TOUTES les
+// cloches de cet office dans la page (vue semaine, timeline, etc.)
+async function _handleBellClick(bellBtn, scope) {
+  const push = window._pelPush;
+  if (!push) return;
+  const slotId = bellBtn.dataset.bell;
+  if (!slotId) return;
+  // Trouve un slot correspondant pour récupérer l'objet (depuis la date du jour active)
+  // Plus simple : on construit un faux slot avec le slotId déjà calculé, mais la
+  // logique de toggleOffice attend un slot. Solution : on cherche dans le schedule.
+  let foundSlot = null;
+  try {
+    const today = (typeof getParisDate === 'function') ? getParisDate() : new Date();
+    for (let i = 0; i < 7 && !foundSlot; i++) {
+      const d = new Date(today); d.setDate(today.getDate() + i);
+      const slots = (typeof getDaySchedule === 'function') ? getDaySchedule(d) : [];
+      foundSlot = (slots || []).find(s => push.getSlotId(s) === slotId) || null;
+    }
+  } catch (_) {}
+  if (!foundSlot) return;
+
+  // Feedback visuel optimiste
+  const wasActive = bellBtn.classList.contains('active');
+  bellBtn.disabled = true;
+  bellBtn.classList.add('busy');
+  try {
+    const { subscribed, total } = await push.toggleOffice(foundSlot);
+    // Met à jour toutes les cloches qui partagent ce slotId (vue semaine + timeline)
+    document.querySelectorAll(`[data-bell="${CSS.escape(slotId)}"]`).forEach(b => {
+      b.classList.toggle('active', subscribed);
+      b.setAttribute('aria-pressed', String(subscribed));
+      const i = b.querySelector('i');
+      if (i) i.className = `fa-solid ${subscribed ? 'fa-bell' : 'fa-bell-slash'}`;
+      b.title = subscribed ? 'Désactiver les notifs pour cet office' : 'Activer les notifs pour cet office (10 min avant)';
+    });
+    // Met à jour le badge du profil si présent
+    const cnt = document.getElementById('prof-push-count');
+    if (cnt) cnt.textContent = total;
+    // Petit toast inline
+    _showPushToast(subscribed
+      ? `🔔 Notification activée (${total} office${total > 1 ? 's' : ''} suivi${total > 1 ? 's' : ''})`
+      : `🔕 Notification désactivée (${total} restant${total > 1 ? 's' : ''})`);
+  } catch (err) {
+    bellBtn.classList.toggle('active', wasActive); // rollback visuel
+    _showPushToast(`⚠️ ${err.message || 'Erreur'}`, true);
+  } finally {
+    bellBtn.disabled = false;
+    bellBtn.classList.remove('busy');
+  }
+}
+
+function _showPushToast(msg, isError) {
+  let t = document.getElementById('push-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'push-toast';
+    t.className = 'push-toast';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.toggle('error', !!isError);
+  t.classList.add('show');
+  clearTimeout(t._timeout);
+  t._timeout = setTimeout(() => t.classList.remove('show'), 3000);
 }
 
 
@@ -5569,6 +5656,18 @@ function initTodayTimeline() {
       ? `<p class="tl-desc-inline">${esc(slot.desc)}</p>`
       : '';
 
+    // Cloche d'abonnement push (à côté du titre du slot)
+    const tlPushOk = window._pelPush?.SUPPORTED;
+    const tlSlotId = tlPushOk ? window._pelPush.getSlotId(slot) : '';
+    const tlSub    = tlPushOk && window._pelPush.isOfficeSubscribed(slot);
+    const tlBellHtml = tlPushOk
+      ? `<button class="tl-bell${tlSub ? ' active' : ''}" data-bell="${tlSlotId}"
+          title="${tlSub ? 'Désactiver les notifs pour cet office' : 'Activer les notifs pour cet office (10 min avant)'}"
+          aria-label="${tlSub ? 'Désabonner' : 'S abonner'}" aria-pressed="${tlSub}">
+          <i class="fa-solid ${tlSub ? 'fa-bell' : 'fa-bell-slash'}"></i>
+        </button>`
+      : '';
+
     const art = document.createElement('article');
     art.className        = 'tl-item';
     art.dataset.type     = slot.type;
@@ -5576,6 +5675,7 @@ function initTodayTimeline() {
     art.dataset.duration = String(duration);
     art.dataset.label    = slot.label;
     art.dataset.desc     = slot.desc || '';
+    art.dataset.slotId   = tlSlotId;
     art.innerHTML = `
       <div class="tl-time">
         <span class="tl-time-h">${esc(timeInfo.display)}</span>
@@ -5588,7 +5688,7 @@ function initTodayTimeline() {
       </div>
       <div class="tl-marker ${slot.type}"></div>
       <div class="tl-body">
-        <h3 class="tl-prayer">${slot.label} ${infoBtn}</h3>
+        <h3 class="tl-prayer">${slot.label} ${tlBellHtml} ${infoBtn}</h3>
         ${descPanel}
         <div class="tl-sources">${srcsHtml}</div>
       </div>
@@ -5643,8 +5743,15 @@ function initTodayTimeline() {
     container.prepend(bar);
   }
 
-  // Délégation : clic sur les boutons calendrier (individuel + global)
-  container.addEventListener('click', e => {
+  // Délégation : clic sur les boutons calendrier (individuel + global) + cloche push
+  container.addEventListener('click', async e => {
+    const bellBtn = e.target.closest('[data-bell]');
+    if (bellBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      await _handleBellClick(bellBtn, container);
+      return;
+    }
     const oneBtn = e.target.closest('.tl-cal-btn');
     if (oneBtn) {
       e.preventDefault();
@@ -7870,29 +7977,24 @@ document.addEventListener('DOMContentLoaded', () => {
       return candidate - off;
     }
 
-    // Classification du type de slot pour les filtres (aligné sur la vue semaine)
-    const _PUSH_TYPE_GROUP = { messe: 'messes', laudes: 'offices', vepres: 'offices', complies: 'offices', chapelet: 'chapelets' };
-    function _typeGroup(slot) { return _PUSH_TYPE_GROUP[slot.type] || 'autres'; }
-    function _slotCountry(slot) {
-      let foreign = null;
-      for (const entry of slot.entries) {
-        for (const k of entry.srcs) {
-          const src = SOURCES[k];
-          if (!src) continue;
-          if (!src.f) return 'fr';
-          if (!foreign) foreign = src.f;
-        }
-      }
-      return foreign || 'fr';
+    // Identifiant stable d'un office (slot) — utilisé pour les abonnements
+    // individuels par cloche dans l'agenda. Format: "{type}|{slug-label}|{HHMM}".
+    // Même office récurrent (ex: Chapelet Lourdes 15h30) = même ID sur tous les jours.
+    function _slotId(slot) {
+      const firstT = (slot.entries[0]?.t || '0:00').replace(':', '').padStart(4, '0');
+      const slug = String(slot.label || '')
+        .toLowerCase()
+        .normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+        .slice(0, 60);
+      return `${slot.type}|${slug}|${firstT}`;
     }
 
-    // Calcule les prochains pushes selon les préférences. Retourne ≤50 entrées.
+    // Calcule les prochains pushes selon les office_ids abonnés. Retourne ≤50 entrées.
     function computeNextPushes(prefs) {
-      if (!prefs || !Array.isArray(prefs.types) || prefs.types.length === 0) return [];
+      const officeIds = new Set(Array.isArray(prefs?.office_ids) ? prefs.office_ids : []);
+      if (officeIds.size === 0) return [];
       const leadMin = Math.max(1, Math.min(60, parseInt(prefs.lead_min, 10) || 10));
-      const countries = Array.isArray(prefs.countries) && prefs.countries.length
-        ? new Set(prefs.countries) : null;  // null = tous pays
-      const types = new Set(prefs.types);
 
       const nowMs = Date.now();
       const horizon = nowMs + 7 * 24 * 3600 * 1000;
@@ -7904,12 +8006,11 @@ document.addEventListener('DOMContentLoaded', () => {
         let slots = [];
         try { slots = getDaySchedule(date) || []; } catch (_) { continue; }
         for (const slot of slots) {
-          if (!types.has(_typeGroup(slot))) continue;
-          if (countries && !countries.has(_slotCountry(slot))) continue;
+          if (!officeIds.has(_slotId(slot))) continue;
           for (const entry of slot.entries) {
             const officeUTC = _parisToUTCms(date, entry.t);
             const pushAt = officeUTC - leadMin * 60 * 1000;
-            if (pushAt <= nowMs + 60_000) continue;   // déjà passé ou trop proche
+            if (pushAt <= nowMs + 60_000) continue;
             if (pushAt >= horizon) continue;
             out.push({
               at:    new Date(pushAt).toISOString(),
@@ -7930,6 +8031,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let _swReg = null;
     let _sub   = null;
     let _ready = SUPPORTED;
+    let _officeIdsCache = new Set();    // IDs des offices auxquels l'user est abonné
+    let _prefsCache     = { lead_min: 10, office_ids: [] };
+    let _toggleQueue    = Promise.resolve();  // sérialise les UPDATEs concurrents
 
     async function _initReg() {
       if (!_ready) return null;
@@ -8029,7 +8133,7 @@ document.addEventListener('DOMContentLoaded', () => {
       _sub = null;
     }
 
-    // Lecture des prefs sauvegardées (depuis Supabase)
+    // Lecture des prefs sauvegardées (depuis Supabase) + mise à jour du cache local
     async function readPrefs() {
       const sb = window._sbClient;
       const user = window._pelUser;
@@ -8037,12 +8141,99 @@ document.addEventListener('DOMContentLoaded', () => {
       const sub = await _currentSub();
       if (!sub) return null;
       const { data } = await sb.from('push_subscriptions')
-        .select('lead_min, types, countries')
+        .select('lead_min, office_ids')
         .eq('endpoint', sub.endpoint).maybeSingle();
+      if (data) {
+        _prefsCache = {
+          lead_min: data.lead_min || 10,
+          office_ids: Array.isArray(data.office_ids) ? data.office_ids : [],
+        };
+        _officeIdsCache = new Set(_prefsCache.office_ids);
+      }
       return data || null;
     }
 
-    window._pelPush = { SUPPORTED, getStatus, subscribe, unsubscribe, syncPrefs, readPrefs, computeNextPushes };
+    function isOfficeSubscribed(slot) {
+      if (!slot) return false;
+      return _officeIdsCache.has(_slotId(slot));
+    }
+    function getSubscribedCount() { return _officeIdsCache.size; }
+    function getSlotId(slot) { return _slotId(slot); }
+
+    // Bascule l'abonnement à un office. Auto-subscribe si pas encore activé.
+    // Retourne { subscribed: bool, total: int } ou throw.
+    function toggleOffice(slot) {
+      const id = _slotId(slot);
+      // Sérialise les toggles pour éviter les writes concurrents qui s'écrasent
+      _toggleQueue = _toggleQueue.then(() => _toggleOfficeImpl(id, slot)).catch(err => {
+        console.error('[push] toggleOffice error:', err);
+        throw err;
+      });
+      return _toggleQueue;
+    }
+    async function _toggleOfficeImpl(id, slot) {
+      const sb = window._sbClient;
+      const user = window._pelUser;
+      if (!sb || !user) throw new Error('Connectez-vous pour activer les notifications.');
+      if (!SUPPORTED) throw new Error('Notifications non supportées par ce navigateur.');
+
+      // Auto-subscribe (1ère fois) : demande la permission + crée la souscription PushManager
+      let sub = await _currentSub();
+      if (!sub) {
+        const perm = await Notification.requestPermission();
+        if (perm !== 'granted') throw new Error('Permission refusée par le navigateur.');
+        const vapid = await _vapidPublic();
+        if (!vapid) throw new Error('Clé VAPID non configurée côté serveur.');
+        const reg = await _initReg();
+        sub = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapid),
+        });
+        _sub = sub;
+      }
+
+      // Toggle local
+      const wasSubscribed = _officeIdsCache.has(id);
+      if (wasSubscribed) _officeIdsCache.delete(id);
+      else _officeIdsCache.add(id);
+      _prefsCache.office_ids = [..._officeIdsCache];
+
+      // Recompute next_pushes + UPSERT
+      const nextPushes = computeNextPushes(_prefsCache);
+      const userTz = (() => {
+        try { return Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Paris'; }
+        catch (_) { return 'Europe/Paris'; }
+      })();
+      const json = sub.toJSON();
+      const row = {
+        user_id:     user.id,
+        endpoint:    json.endpoint,
+        p256dh:      json.keys?.p256dh || '',
+        auth_secret: json.keys?.auth   || '',
+        user_agent:  navigator.userAgent.slice(0, 240),
+        user_tz:     userTz,
+        lead_min:    _prefsCache.lead_min,
+        office_ids:  _prefsCache.office_ids,
+        next_pushes: nextPushes,
+        last_sync:   new Date().toISOString(),
+      };
+      const { error } = await sb.from('push_subscriptions')
+        .upsert(row, { onConflict: 'endpoint' });
+      if (error) {
+        // Rollback local si l'écriture a échoué
+        if (wasSubscribed) _officeIdsCache.add(id);
+        else _officeIdsCache.delete(id);
+        _prefsCache.office_ids = [..._officeIdsCache];
+        throw new Error(error.message || 'Erreur de sauvegarde.');
+      }
+      return { subscribed: !wasSubscribed, total: _officeIdsCache.size };
+    }
+
+    window._pelPush = {
+      SUPPORTED, getStatus,
+      subscribe, unsubscribe, syncPrefs, readPrefs, computeNextPushes,
+      isOfficeSubscribed, toggleOffice, getSubscribedCount, getSlotId,
+    };
 
     // Au load : si déjà abonné, on rafraîchit silencieusement la liste de pushes
     // (couvre le cas où l'utilisateur ouvre l'app après plusieurs jours).
