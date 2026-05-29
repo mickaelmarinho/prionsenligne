@@ -568,27 +568,38 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
 .tl-desc[hidden] { display: none; }
 
 /* Description inline (toujours visible, discrète, sous le titre) */
-/* Note pastorale sous les cartes 'Messe' — rappel discret de la position
-   du site (compléter, ne pas remplacer la vie paroissiale). */
-.tl-pastoral-note {
-  font-size: 11.5px;
-  line-height: 1.45;
-  color: var(--gold);
-  background: rgba(201,168,76,.07);
-  border-left: 2px solid var(--gold);
-  padding: 7px 11px;
-  margin: 10px 0 0;
-  border-radius: 0 6px 6px 0;
-  font-style: normal;
+/* Bandeau pastoral en TÊTE de timeline — affiché une seule fois si la
+   journée contient au moins une messe. Cf. section "Notre position" À propos. */
+.tl-pastoral-banner {
   display: flex;
   align-items: flex-start;
-  gap: 7px;
+  gap: 12px;
+  background: linear-gradient(90deg, rgba(201,168,76,.12), rgba(201,168,76,.04));
+  border-left: 3px solid var(--gold);
+  border-radius: 0 8px 8px 0;
+  padding: 12px 16px;
+  margin: 0 0 14px;
 }
-.tl-pastoral-note > i {
-  font-size: 11px;
-  margin-top: 2px;
+.tl-pastoral-icon {
+  font-size: 16px;
+  color: var(--gold);
   flex-shrink: 0;
-  opacity: .85;
+  margin-top: 3px;
+}
+.tl-pastoral-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text-soft);
+}
+.tl-pastoral-text strong {
+  color: var(--text);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 2px;
+}
+@media (max-width: 540px) {
+  .tl-pastoral-banner { padding: 10px 12px; gap: 9px; }
+  .tl-pastoral-text { font-size: 12.5px; }
 }
 
 /* Section 'Notre position' dans À propos — style distinctif */

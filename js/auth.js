@@ -1733,6 +1733,9 @@ async function initAuth() {
       openAuthModal('reset-password');
     } else {
       updateHeaderUI(sess?.user || null);
+      // Re-render des vues qui affichent des éléments conditionnés à l'auth
+      // (ex: cloches notifications push réservées aux utilisateurs connectés)
+      try { window._pelRerenderTimeViews?.(); } catch (_) {}
     }
   });
 

@@ -5274,11 +5274,14 @@ function initWeek() {
         }
       }
 
-      // Cloche d'abonnement push (si supporté par le navigateur)
+      // Cloche d'abonnement push : visible UNIQUEMENT pour les utilisateurs connectés
+      // sur navigateur compatible. Évite les clics ratés et réduit la densité visuelle
+      // pour la majorité des visiteurs.
       const pushSupported = window._pelPush?.SUPPORTED;
-      const slotId = pushSupported ? window._pelPush.getSlotId(slot) : '';
-      const isSubscribed = pushSupported && window._pelPush.isOfficeSubscribed(slot);
-      const bellHtml = pushSupported
+      const pushUserOk = pushSupported && !!window._pelUser;
+      const slotId = pushUserOk ? window._pelPush.getSlotId(slot) : '';
+      const isSubscribed = pushUserOk && window._pelPush.isOfficeSubscribed(slot);
+      const bellHtml = pushUserOk
         ? `<button class="wk-row-bell${isSubscribed ? ' active' : ''}" data-bell="${slotId}"
             title="${isSubscribed ? 'Désactiver les notifs pour cet office' : 'Activer les notifs pour cet office (10 min avant)'}"
             aria-label="${isSubscribed ? 'Désabonner' : 'S abonner'}" aria-pressed="${isSubscribed}">
@@ -5557,6 +5560,23 @@ function initTodayTimeline() {
 
   container.innerHTML = '';
 
+  // Note pastorale : injectée UNE SEULE FOIS en tête de timeline si la journée
+  // contient au moins une messe. Rappelle (sans culpabiliser) que la
+  // participation physique reste irremplaçable. Cf. section "Notre position"
+  // dans À propos pour la version longue.
+  const hasMass = flat.some(f => f.slot.type === 'messe');
+  if (hasMass) {
+    const banner = document.createElement('div');
+    banner.className = 'tl-pastoral-banner';
+    banner.innerHTML = `
+      <i class="fa-solid fa-location-dot tl-pastoral-icon"></i>
+      <div class="tl-pastoral-text">
+        <strong>La participation physique à la messe reste irremplaçable.</strong>
+        Les diffusions ci-dessous sont une aide pour ceux qui ne peuvent pas se rendre à leur paroisse (malades, isolés, diaspora). Si votre santé et vos circonstances le permettent, rejoignez votre paroisse.
+      </div>`;
+    container.appendChild(banner);
+  }
+
   // Helper : échappe les " et < pour les attributs HTML
   const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   // Helper : formate une durée en minutes → "30 min" / "1 h" / "1 h 30"
@@ -5656,19 +5676,13 @@ function initTodayTimeline() {
       ? `<p class="tl-desc-inline">${esc(slot.desc)}</p>`
       : '';
 
-    // Note pastorale discrète sous les cartes 'Messe' uniquement.
-    // Rappelle (sans culpabiliser) que la participation physique à la messe
-    // est irremplaçable. Cohérent avec la position pastorale du site
-    // (cf. section "Notre position" dans À propos).
-    const pastoralNote = (slot.type === 'messe')
-      ? `<p class="tl-pastoral-note" title="Position de PrionsEnLigne sur la participation à la messe">
-           <i class="fa-solid fa-location-dot"></i>
-           La participation physique à la messe reste irremplaçable. Si votre santé et vos circonstances le permettent, rejoignez votre paroisse.
-         </p>`
-      : '';
+    // Note pastorale : déplacée en haut de la timeline (cf. injection one-shot
+    // au début d'initTodayTimeline) pour ne pas se répéter sous chaque messe.
+    const pastoralNote = '';
 
-    // Cloche d'abonnement push (à côté du titre du slot)
-    const tlPushOk = window._pelPush?.SUPPORTED;
+    // Cloche d'abonnement push : visible UNIQUEMENT pour utilisateurs connectés
+    // sur navigateur compatible (évite clics ratés + réduit densité visuelle).
+    const tlPushOk = window._pelPush?.SUPPORTED && !!window._pelUser;
     const tlSlotId = tlPushOk ? window._pelPush.getSlotId(slot) : '';
     const tlSub    = tlPushOk && window._pelPush.isOfficeSubscribed(slot);
     const tlBellHtml = tlPushOk
