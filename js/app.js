@@ -5656,6 +5656,17 @@ function initTodayTimeline() {
       ? `<p class="tl-desc-inline">${esc(slot.desc)}</p>`
       : '';
 
+    // Note pastorale discrète sous les cartes 'Messe' uniquement.
+    // Rappelle (sans culpabiliser) que la participation physique à la messe
+    // est irremplaçable. Cohérent avec la position pastorale du site
+    // (cf. section "Notre position" dans À propos).
+    const pastoralNote = (slot.type === 'messe')
+      ? `<p class="tl-pastoral-note" title="Position de PrionsEnLigne sur la participation à la messe">
+           <i class="fa-solid fa-location-dot"></i>
+           La participation physique à la messe reste irremplaçable. Si votre santé et vos circonstances le permettent, rejoignez votre paroisse.
+         </p>`
+      : '';
+
     // Cloche d'abonnement push (à côté du titre du slot)
     const tlPushOk = window._pelPush?.SUPPORTED;
     const tlSlotId = tlPushOk ? window._pelPush.getSlotId(slot) : '';
@@ -5691,6 +5702,7 @@ function initTodayTimeline() {
         <h3 class="tl-prayer">${slot.label} ${tlBellHtml} ${infoBtn}</h3>
         ${descPanel}
         <div class="tl-sources">${srcsHtml}</div>
+        ${pastoralNote}
       </div>
       <div class="tl-actions">
         <span class="tl-badge">—</span>
