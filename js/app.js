@@ -3287,8 +3287,10 @@ function initDailyPrayer() {
     w   → URL du site / player web (fallback systématique)
 */
 const SOURCES = {
-  // Radio Maria : flux bloqué par CORS sur HTTPS → traité comme lien externe
-  rm:  { n: 'Radio Maria',      s: '', w: 'https://www.radiomaria.fr' },
+  // Radio Maria France — flux MP3 via dreamsiteradiocp6 (même provider que Radio Maria CI).
+  // Note: l'ancien commentaire évoquait un blocage CORS, mais les éléments <audio>
+  // HTML5 ne sont pas soumis à la règle CORS → lecture intégrée fonctionnelle.
+  rm:  { n: 'Radio Maria',      s: 'https://dreamsiteradiocp6.com/proxy/rmfrance1?mp=/stream', w: 'https://www.radiomaria.fr' },
   nd:  { n: 'RCF Notre-Dame',   s: 'https://windu.radionotredame.net/RadioNotreDame-Fm.mp3', w: 'https://www.rcf.fr/radio-notre-dame' },
   rcf: { n: 'RCF',              s: '', w: 'https://rcf.fr/radios/ecouter-rcf' },
   esp: { n: 'Espérance',        s: 'https://esperance.streamakaci.com/esperance.mp3', w: 'https://radio-esperance.fr' },
