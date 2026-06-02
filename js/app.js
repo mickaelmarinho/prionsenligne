@@ -1968,12 +1968,42 @@ function initRadioPlayer() {
     const channel  = modal.querySelector('#tv-modal-channel');
     const prayerEl = modal.querySelector('#tv-modal-prayer');
     const ext      = modal.querySelector('#tv-modal-external');
+    const frameWrap = modal.querySelector('.tv-modal-frame-wrap');
     channel.textContent  = name || '';
     prayerEl.textContent = prayer ? `${prayer}${time ? ' · ' + time : ''}` : '';
     if (ext)  ext.href   = web || '#';
-    iframe.src = embed;
     modal.classList.remove('hidden');
     document.body.classList.add('tv-modal-open');
+
+    // Résolution dynamique pour les directs YouTube : "youtube-live:CHANNEL_ID"
+    // → on demande au serveur l'ID de la vidéo live actuelle, puis on embarque
+    //   youtube.com/embed/{videoId} (format embeddable sur domaine tiers).
+    if (embed.startsWith('youtube-live:')) {
+      iframe.removeAttribute('src');
+      // État de chargement
+      if (frameWrap) frameWrap.classList.add('tv-loading');
+      fetch('/api/kto-live')
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (frameWrap) frameWrap.classList.remove('tv-loading');
+          // Si la modale a été fermée entre-temps, on n'embarque rien
+          if (modal.classList.contains('hidden')) return;
+          const vid = data && data.videoId;
+          if (vid) {
+            iframe.src = `https://www.youtube.com/embed/${vid}?autoplay=1&rel=0`;
+          } else if (web) {
+            // Dernier recours : ouvre la page KTO en externe
+            window.open(web, '_blank', 'noopener');
+            closeTvModal();
+          }
+        })
+        .catch(() => {
+          if (frameWrap) frameWrap.classList.remove('tv-loading');
+          if (web) { window.open(web, '_blank', 'noopener'); closeTvModal(); }
+        });
+    } else {
+      iframe.src = embed;
+    }
   }
   function closeTvModal() {
     const modal = document.getElementById('tv-modal');
@@ -3371,13 +3401,13 @@ const SOURCES = {
   // Flux dédié chant grégorien d'Espérance (même que le bouton "Grégorien" en bas du site)
   espg: { n: 'Espérance Grégorien', s: 'https://esperance.streamakaci.com/gregorien.mp3', w: 'https://radio-esperance.fr' },
   fid: { n: 'Fidélité',         s: 'https://diffusion.lafrap.fr/fidelite.mp3', w: 'https://radio-fidelite.fr' },
-  // KTO Télévision : pas de flux audio simple (TV).
-  // On intègre la page "direct" officielle de KTO (qui gère son propre player
-  // et reflète exactement la grille TV). Plus robuste que d'embarquer YouTube
-  // directement (l'endpoint live_stream?channel est devenu peu fiable, et le
-  // live YT de KTO ne mirror pas toujours l'antenne TV).
+  // KTO Télévision : pas de flux audio simple (TV). KTO diffuse son direct
+  // sur YouTube. On résout l'ID de la vidéo live via /api/kto-live, puis on
+  // embarque youtube.com/embed/{videoId} (seul format qui passe sur un domaine
+  // tiers : pas de frame-ancestors restrictif, contrairement à live_stream?channel
+  // ou à l'iframe imbriqué de la page KTO).
   kto: { n: 'KTO',              s: '', w: 'https://www.ktotv.com/emissions/direct',
-         embed: 'https://www.ktotv.com/emissions/direct' },
+         embed: 'youtube-live:UCg0L6cPMNLv1gjsyzYqMG7g' },
   lou: { n: 'Lourdes',          s: '', w: 'https://www.lourdes-france.com/lourdesplus/' },
   // jer (Fraternités de Jérusalem) retiré : pas de retransmission live trouvée
   // sol (Solesmes) retiré : ne diffuse pas en live sur internet

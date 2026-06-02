@@ -693,6 +693,21 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
   height: 100%;
   border: 0;
 }
+/* Spinner pendant la résolution de l'ID live (YouTube) */
+.tv-modal-frame-wrap.tv-loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 42px;
+  height: 42px;
+  margin: -21px 0 0 -21px;
+  border: 3px solid rgba(255,255,255,.2);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: tvSpin 0.8s linear infinite;
+}
+@keyframes tvSpin { to { transform: rotate(360deg); } }
 body.tv-modal-open { overflow: hidden; }
 @media (max-width: 540px) {
   .tv-modal { padding: 0; align-items: stretch; }
