@@ -3371,12 +3371,13 @@ const SOURCES = {
   // Flux dédié chant grégorien d'Espérance (même que le bouton "Grégorien" en bas du site)
   espg: { n: 'Espérance Grégorien', s: 'https://esperance.streamakaci.com/gregorien.mp3', w: 'https://radio-esperance.fr' },
   fid: { n: 'Fidélité',         s: 'https://diffusion.lafrap.fr/fidelite.mp3', w: 'https://radio-fidelite.fr' },
-  // KTO Télévision : pas de flux audio simple (TV) → live YouTube en iframe modale.
-  // Chaîne YT officielle : UCg0L6cPMNLv1gjsyzYqMG7g.
-  // Note : l'endpoint `/embed/live_stream?channel=...` exige le domaine
-  // youtube.com (PAS youtube-nocookie.com), sinon "Vidéo non disponible".
-  kto: { n: 'KTO',              s: '', w: 'https://www.ktotv.com',
-         embed: 'https://www.youtube.com/embed/live_stream?channel=UCg0L6cPMNLv1gjsyzYqMG7g&autoplay=1&rel=0' },
+  // KTO Télévision : pas de flux audio simple (TV).
+  // On intègre la page "direct" officielle de KTO (qui gère son propre player
+  // et reflète exactement la grille TV). Plus robuste que d'embarquer YouTube
+  // directement (l'endpoint live_stream?channel est devenu peu fiable, et le
+  // live YT de KTO ne mirror pas toujours l'antenne TV).
+  kto: { n: 'KTO',              s: '', w: 'https://www.ktotv.com/emissions/direct',
+         embed: 'https://www.ktotv.com/emissions/direct' },
   lou: { n: 'Lourdes',          s: '', w: 'https://www.lourdes-france.com/lourdesplus/' },
   // jer (Fraternités de Jérusalem) retiré : pas de retransmission live trouvée
   // sol (Solesmes) retiré : ne diffuse pas en live sur internet
