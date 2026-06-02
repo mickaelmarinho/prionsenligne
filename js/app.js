@@ -3372,9 +3372,11 @@ const SOURCES = {
   espg: { n: 'Espérance Grégorien', s: 'https://esperance.streamakaci.com/gregorien.mp3', w: 'https://radio-esperance.fr' },
   fid: { n: 'Fidélité',         s: 'https://diffusion.lafrap.fr/fidelite.mp3', w: 'https://radio-fidelite.fr' },
   // KTO Télévision : pas de flux audio simple (TV) → live YouTube en iframe modale.
-  // Chaîne YT officielle : UCg0L6cPMNLv1gjsyzYqMG7g (24/7 quand en direct).
+  // Chaîne YT officielle : UCg0L6cPMNLv1gjsyzYqMG7g.
+  // Note : l'endpoint `/embed/live_stream?channel=...` exige le domaine
+  // youtube.com (PAS youtube-nocookie.com), sinon "Vidéo non disponible".
   kto: { n: 'KTO',              s: '', w: 'https://www.ktotv.com',
-         embed: 'https://www.youtube-nocookie.com/embed/live_stream?channel=UCg0L6cPMNLv1gjsyzYqMG7g&autoplay=1&rel=0' },
+         embed: 'https://www.youtube.com/embed/live_stream?channel=UCg0L6cPMNLv1gjsyzYqMG7g&autoplay=1&rel=0' },
   lou: { n: 'Lourdes',          s: '', w: 'https://www.lourdes-france.com/lourdesplus/' },
   // jer (Fraternités de Jérusalem) retiré : pas de retransmission live trouvée
   // sol (Solesmes) retiré : ne diffuse pas en live sur internet

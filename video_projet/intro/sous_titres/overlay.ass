@@ -1,0 +1,21 @@
+[Script Info]
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+WrapStyle: 0
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Hook,Arial Black,54,&H00FFFFFF,&H000000FF,&H00000000,&H64000000,1,0,0,0,100,100,0,0,1,5,2,8,40,40,40,1
+Style: Count,Arial Black,96,&H0000FFFF,&H000000FF,&H00000000,&H00000000,1,0,0,0,100,100,0,0,1,6,3,9,40,60,40,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:03.50,Hook,,0,0,0,,{\pos(540,235)\fad(0,250)}TON 1er jour de dresseur
+Dialogue: 0,0:00:01.30,0:00:03.50,Hook,,0,0,0,,{\pos(540,330)\fad(150,250)}et deja la {\c&H0000FF&}CATASTROPHE
+Dialogue: 0,0:00:20.00,0:00:21.00,Count,,0,0,0,,{\pos(975,250)}5
+Dialogue: 0,0:00:21.00,0:00:22.00,Count,,0,0,0,,{\pos(975,250)}4
+Dialogue: 0,0:00:22.00,0:00:23.00,Count,,0,0,0,,{\pos(975,250)}3
+Dialogue: 0,0:00:23.00,0:00:24.00,Count,,0,0,0,,{\pos(975,250)}2
+Dialogue: 0,0:00:24.00,0:00:25.10,Count,,0,0,0,,{\pos(975,250)}1

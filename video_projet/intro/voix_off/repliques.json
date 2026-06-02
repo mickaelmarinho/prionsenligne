@@ -1,0 +1,10 @@
+{
+  "description": "Repliques voix off - Intro (jeune garcon). 'start' = seconde de depart dans la video.",
+  "lignes": [
+    { "id": 1, "start": 0.2,  "texte": "Non... non non non !" },
+    { "id": 2, "start": 4.0,  "texte": "J'ai raté le rendez-vous pour mon premier Pokémon ?!" },
+    { "id": 3, "start": 8.0,  "texte": "C'est impossible..." },
+    { "id": 4, "start": 12.0, "texte": "Le Professeur doit encore être dans le coin..." },
+    { "id": 5, "start": 16.0, "texte": "Je peux peut-être encore sauver ma première journée de dresseur !" }
+  ]
+}

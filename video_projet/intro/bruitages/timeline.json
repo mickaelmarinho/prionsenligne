@@ -1,0 +1,11 @@
+{
+  "description": "Bruitages synthetises - Intro (version 25.1s). 'start' = seconde de depart.",
+  "volume_fond": 0.85,
+  "effets": [
+    { "fichier": "1_drone.wav",  "start": 0.0,  "note": "tension sous la course/arrivee" },
+    { "fichier": "2_impact.wav", "start": 9.0,  "note": "revelation du panneau TERMINEE" },
+    { "fichier": "3_riser.wav",  "start": 16.0, "note": "montee, l'espoir revient" },
+    { "fichier": "4_ding.wav",   "start": 20.0, "note": "apparition des choix" },
+    { "fichier": "5_pulse.wav",  "start": 20.0, "note": "compte a rebours du choix" }
+  ]
+}
