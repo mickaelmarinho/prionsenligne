@@ -744,8 +744,10 @@ body.tv-modal-open { overflow: hidden; }
 }
 .tv-modal-fallback-btn:hover { filter: brightness(1.1); }
 @media (max-width: 540px) {
-  .tv-modal { padding: 0; align-items: stretch; }
-  .tv-modal-panel { border-radius: 0; max-width: 100%; }
+  /* Pleine largeur edge-to-edge, mais hauteur = contenu (pas d'étirement
+     plein écran qui laisserait un grand vide noir sous le player). */
+  .tv-modal { padding: 0; align-items: center; }
+  .tv-modal-panel { border-radius: 0; max-width: 100%; width: 100%; }
 }
 
 /* Variante TV des src-buttons : icône TV au lieu de play */
