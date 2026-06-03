@@ -51,6 +51,14 @@
     {
       "source": "/agenda",
       "destination": "/app.html"
+    },
+    {
+      "source": "/saint-du-jour",
+      "destination": "/api/seo?p=saint"
+    },
+    {
+      "source": "/evangile-du-jour",
+      "destination": "/api/seo?p=evangile"
     }
   ],
   "headers": [
