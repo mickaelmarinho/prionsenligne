@@ -1954,6 +1954,12 @@ function initRadioPlayer() {
           <div class="tv-modal-frame-wrap">
             <iframe id="tv-modal-iframe" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>
           </div>
+          <div class="tv-modal-fallback">
+            <span>La vidéo ne s'affiche pas&nbsp;? Certains navigateurs (Opera, bloqueurs) empêchent l'intégration.</span>
+            <a class="tv-modal-fallback-btn" id="tv-modal-fallback-btn" href="#" target="_blank" rel="noopener">
+              <i class="fa-brands fa-youtube"></i> Regarder sur KTO
+            </a>
+          </div>
         </div>`;
       document.body.appendChild(modal);
 
@@ -1968,10 +1974,11 @@ function initRadioPlayer() {
     const channel  = modal.querySelector('#tv-modal-channel');
     const prayerEl = modal.querySelector('#tv-modal-prayer');
     const ext      = modal.querySelector('#tv-modal-external');
-    const frameWrap = modal.querySelector('.tv-modal-frame-wrap');
+    const fbBtn    = modal.querySelector('#tv-modal-fallback-btn');
     channel.textContent  = name || '';
     prayerEl.textContent = prayer ? `${prayer}${time ? ' · ' + time : ''}` : '';
-    if (ext)  ext.href   = web || '#';
+    if (ext)   ext.href   = web || '#';
+    if (fbBtn) fbBtn.href  = web || '#';
     iframe.src = embed;
     modal.classList.remove('hidden');
     document.body.classList.add('tv-modal-open');

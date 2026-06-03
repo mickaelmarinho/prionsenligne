@@ -709,6 +709,40 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
 }
 @keyframes tvSpin { to { transform: rotate(360deg); } }
 body.tv-modal-open { overflow: hidden; }
+
+/* Bannière de secours sous le player (si l'embed est bloqué par le navigateur) */
+.tv-modal-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 16px;
+  background: #14110e;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+.tv-modal-fallback > span {
+  font-size: 12px;
+  color: rgba(255,255,255,.55);
+  flex: 1;
+  min-width: 180px;
+}
+.tv-modal-fallback-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #ff0000;
+  color: #fff;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: filter .15s;
+}
+.tv-modal-fallback-btn:hover { filter: brightness(1.1); }
 @media (max-width: 540px) {
   .tv-modal { padding: 0; align-items: stretch; }
   .tv-modal-panel { border-radius: 0; max-width: 100%; }
