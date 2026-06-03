@@ -10,7 +10,7 @@
    - API /api/* : network-first (fraîcheur des données)
 ═══════════════════════════════════════════════ */
 
-const VERSION       = 'v147';
+const VERSION       = 'v148';
 const STATIC_CACHE  = `pel-static-${VERSION}`;
 const RUNTIME_CACHE = `pel-runtime-${VERSION}`;
 
@@ -114,6 +114,10 @@ self.addEventListener('fetch', e => {
     url.hostname === 'cdnjs.cloudflare.com'
   );
 
+  // Requête de navigation (document HTML) : on détecte via request.mode ou Accept.
+  const isNavigation = e.request.mode === 'navigate' ||
+    (e.request.headers.get('accept') || '').includes('text/html');
+
   // 1. API → network-first (données fraîches, fallback cache si offline)
   if (isApi) {
     e.respondWith(networkFirst(e.request));
@@ -126,7 +130,18 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  // 3. Assets same-origin (HTML, CSS, JS, images) → stale-while-revalidate
+  // 3. Pages HTML (navigations) → network-first.
+  //    CRUCIAL : la CSP est livrée en header HTTP du document. Servir une page
+  //    HTML "stale" depuis le cache renverrait une ANCIENNE CSP (ex: sans
+  //    youtube.com), bloquant l'embed KTO après mise à jour. Network-first
+  //    garantit que les headers (donc la CSP) sont toujours à jour, avec
+  //    fallback cache uniquement hors-ligne.
+  if (isSameOrigin && isNavigation) {
+    e.respondWith(networkFirst(e.request));
+    return;
+  }
+
+  // 4. Autres assets same-origin (CSS, JS, images) → stale-while-revalidate
   if (isSameOrigin) {
     e.respondWith(staleWhileRevalidate(e.request));
     return;
