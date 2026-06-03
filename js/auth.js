@@ -1398,8 +1398,11 @@ function setMode(mode) {
     submitBtn.dataset.label = submitBtn.textContent;
   }
 
-  // Captcha : visible uniquement en mode inscription (les bots ciblent surtout signUp)
-  _showCaptcha(isSignup);
+  // Captcha : requis par Supabase sur TOUTES les routes d'auth quand la
+  // protection captcha est activée (connexion, inscription, demande de reset).
+  // On l'affiche donc partout sauf à l'étape "nouveau mot de passe" (l'utilisateur
+  // est déjà authentifié via le lien email à ce stade).
+  _showCaptcha(isLogin || isSignup || isResetReq);
 
   clearAuthError();
 }
@@ -1606,8 +1609,16 @@ function initAuthUI() {
       const email    = $id('auth-email')?.value.trim();
       const password = $id('auth-password')?.value;
       if (!email || !password) { showAuthError('Veuillez remplir tous les champs.'); return; }
+      // Supabase exige un token captcha sur la connexion aussi
+      if (HCAPTCHA_SITE_KEY && !_hcaptchaToken) {
+        showAuthError('Veuillez compléter la vérification anti-robot.');
+        return;
+      }
       setAuthLoading(true);
-      const { error } = await _sb.auth.signInWithPassword({ email, password });
+      const signInOpts = {};
+      if (_hcaptchaToken) signInOpts.captchaToken = _hcaptchaToken;
+      const { error } = await _sb.auth.signInWithPassword({ email, password, options: signInOpts });
+      _resetCaptcha(); // un token = une utilisation
       setAuthLoading(false);
       if (error) {
         // Cas particulier : email pas encore confirmé → afficher l'écran de renvoi
@@ -1665,10 +1676,15 @@ function initAuthUI() {
     else if (_formMode === 'reset-request') {
       const email = $id('auth-email')?.value.trim();
       if (!email) { showAuthError('Veuillez entrer votre adresse e-mail.'); return; }
+      if (HCAPTCHA_SITE_KEY && !_hcaptchaToken) {
+        showAuthError('Veuillez compléter la vérification anti-robot.');
+        return;
+      }
       setAuthLoading(true);
-      const { error } = await _sb.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + '/agenda',
-      });
+      const resetOpts = { redirectTo: window.location.origin + '/agenda' };
+      if (_hcaptchaToken) resetOpts.captchaToken = _hcaptchaToken;
+      const { error } = await _sb.auth.resetPasswordForEmail(email, resetOpts);
+      _resetCaptcha();
       setAuthLoading(false);
       if (error) { showAuthError(translateSupabaseError(error)); return; }
       showResetSent();
