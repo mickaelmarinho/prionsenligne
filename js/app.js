@@ -523,6 +523,18 @@ function initCalendar() {
     if (ddType) { ddType.textContent = TYPE_LABELS[type] || type; ddType.className = 'dd-type ' + type; }
     if (ddSaint) ddSaint.textContent = saint;
     if (ddDesc)  ddDesc.textContent  = desc;
+
+    // Bouton « Partager ce saint » (saint principal du jour sélectionné)
+    const shareMainBtn = document.getElementById('dd-share-main');
+    if (shareMainBtn) {
+      if (saint) {
+        shareMainBtn.style.display = '';
+        const eyebrowLabel = TYPE_LABELS[type] || 'Saint du jour';
+        shareMainBtn.onclick = () => window._pelShareSaint?.({ name: saint, eyebrow: eyebrowLabel, date, btn: shareMainBtn });
+      } else {
+        shareMainBtn.style.display = 'none';
+      }
+    }
     if (ddMinor) {
       if (minor) { ddMinor.textContent = 'Aussi celebres : ' + minor; ddMinor.style.display = ''; }
       else { ddMinor.style.display = 'none'; }
@@ -551,6 +563,7 @@ function initCalendar() {
             <div class="dd-regional-head">
               <img class="src-flag" src="https://flagcdn.com/w20/${r.country}.png" srcset="https://flagcdn.com/w40/${r.country}.png 2x" width="14" height="10" alt="" aria-hidden="true">
               <span class="dd-regional-name">${escapeHtmlSimple(r.name)}</span>
+              <button class="dd-share-mini" data-sname="${escapeHtmlSimple(r.name)}" data-seb="${escapeHtmlSimple(country)}" title="Partager ${escapeHtmlSimple(r.name)}" aria-label="Partager"><i class="fa-solid fa-share-nodes"></i></button>
               <span class="dd-regional-country">${country}</span>
             </div>
             <p class="dd-regional-desc">${escapeHtmlSimple(r.desc)}</p>
@@ -562,6 +575,16 @@ function initCalendar() {
             <span class="dd-regional-title">Saints francophones du jour</span>
           </div>
           ${cardsHtml}`;
+        regBlock.dataset.shareDate = date;
+        // Délégation (attachée une seule fois)
+        if (!regBlock.dataset.shareWired) {
+          regBlock.dataset.shareWired = '1';
+          regBlock.addEventListener('click', (e) => {
+            const b = e.target.closest('.dd-share-mini');
+            if (!b) return;
+            window._pelShareSaint?.({ name: b.dataset.sname, eyebrow: b.dataset.seb, date: regBlock.dataset.shareDate, btn: b });
+          });
+        }
         regBlock.style.display = '';
       } else {
         regBlock.style.display = 'none';
@@ -614,10 +637,16 @@ function initCalendar() {
           <div class="dd-nominis-bio dd-nominis-collapsed">${safeHtml}</div>
           <div class="dd-nominis-actions">
             <button type="button" class="dd-nominis-toggle" id="dd-nominis-toggle">Lire la biographie complète <i class="fa-solid fa-chevron-down"></i></button>
+            <button type="button" class="dd-share-btn" id="dd-nominis-share"><i class="fa-solid fa-share-nodes"></i> Partager</button>
             ${lien ? `<a class="dd-nominis-link" href="${lien}" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square"></i> Voir sur nominis.cef.fr</a>` : ''}
           </div>
           <div class="dd-nominis-others" id="dd-nominis-others-${dy}" style="display:none"></div>
         `;
+
+        // Bouton « Partager » du saint Nominis (ex : Saint Kevin)
+        const nomShareBtn = nomBlock.querySelector('#dd-nominis-share');
+        if (nomShareBtn) nomShareBtn.onclick = () =>
+          window._pelShareSaint?.({ name: bio.nom, eyebrow: 'Saint du jour', date, btn: nomShareBtn });
 
         // Charge en parallèle la liste des autres saints du jour (Nominis "Autres fêtes du jour")
         fetch(`/api/saints-of-day?day=${dy}&month=${mo}&year=${yr}`)
@@ -635,10 +664,12 @@ function initCalendar() {
             const VISIBLE = 4;
             const head = others.slice(0, VISIBLE);
             const rest = others.slice(VISIBLE);
-            const headHTML = head.map(s =>
-              `<a class="dd-nominis-other" href="${escapeHtmlSimple(s.url)}" target="_blank" rel="noopener" title="${escapeHtmlSimple(s.bio || '')}">${escapeHtmlSimple(s.name)}</a>`).join('');
-            const restHTML = rest.map(s =>
-              `<a class="dd-nominis-other" href="${escapeHtmlSimple(s.url)}" target="_blank" rel="noopener" title="${escapeHtmlSimple(s.bio || '')}">${escapeHtmlSimple(s.name)}</a>`).join('');
+            const chip = s => `<span class="dd-nominis-other">
+              <a class="dd-other-link" href="${escapeHtmlSimple(s.url)}" target="_blank" rel="noopener" title="${escapeHtmlSimple(s.bio || '')}">${escapeHtmlSimple(s.name)}</a>
+              <button class="dd-other-share" data-sname="${escapeHtmlSimple(s.name)}" title="Partager ${escapeHtmlSimple(s.name)}" aria-label="Partager"><i class="fa-solid fa-share-nodes"></i></button>
+            </span>`;
+            const headHTML = head.map(chip).join('');
+            const restHTML = rest.map(chip).join('');
             wrap.innerHTML = `
               <button type="button" class="dd-nominis-others-toggle" id="dd-others-toggle-${dy}" aria-expanded="false">
                 <i class="fa-solid fa-users"></i>
@@ -660,6 +691,13 @@ function initCalendar() {
               if (tLabel) tLabel.textContent = expanded
                 ? `Replier la liste`
                 : `Voir les ${others.length} saints également célébrés ce jour`;
+            });
+            // Partage des autres saints (délégation sur la liste)
+            tList?.addEventListener('click', (e) => {
+              const b = e.target.closest('.dd-other-share');
+              if (!b) return;
+              e.preventDefault();
+              window._pelShareSaint?.({ name: b.dataset.sname, eyebrow: 'Saint du jour', date, btn: b });
             });
           })
           .catch(() => {});
@@ -8080,138 +8118,113 @@ document.addEventListener('DOMContentLoaded', () => {
   // Génère une belle image partageable (WhatsApp, Insta, Facebook…) qui
   // ramène vers le site. Moteur de bouche-à-oreille, 100 % côté client.
   // ════════════════════════════════════════════════════════════════════
+  // Fonction GLOBALE réutilisable : génère et partage une carte pour
+  // n'importe quel saint. opts = { name, eyebrow, date, btn? }
+  function _wrapText(ctx, text, maxWidth) {
+    const words = String(text || '').split(/\s+/);
+    const lines = []; let line = '';
+    for (const w of words) {
+      const test = line ? line + ' ' + w : w;
+      if (ctx.measureText(test).width > maxWidth && line) { lines.push(line); line = w; }
+      else line = test;
+    }
+    if (line) lines.push(line);
+    return lines;
+  }
+
+  // Dessine la carte 1080×1080 → Promise<Blob>
+  function _buildSaintCard({ name, eyebrow, date }) {
+    const S = 1080;
+    const c = document.createElement('canvas');
+    c.width = S; c.height = S;
+    const ctx = c.getContext('2d');
+    const cream = '#f7f3ea', navy = '#1a2744', gold = '#c9a84c', soft = '#6b6357';
+
+    ctx.fillStyle = cream; ctx.fillRect(0, 0, S, S);
+    ctx.strokeStyle = gold; ctx.lineWidth = 4; ctx.strokeRect(48, 48, S - 96, S - 96);
+    ctx.lineWidth = 1.5; ctx.strokeRect(64, 64, S - 128, S - 128);
+
+    const cx = S / 2;
+    ctx.fillStyle = navy;
+    ctx.fillRect(cx - 6, 130, 12, 70);
+    ctx.fillRect(cx - 26, 150, 52, 12);
+    ctx.strokeStyle = gold; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(cx, 165, 46, 0, Math.PI * 2); ctx.stroke();
+
+    ctx.fillStyle = navy; ctx.textAlign = 'center';
+    ctx.font = '600 30px Georgia, serif';
+    ctx.fillText('PrionsEnLigne', cx, 268);
+
+    ctx.fillStyle = gold; ctx.font = '700 26px Arial, sans-serif';
+    const eb = (eyebrow || 'SAINT DU JOUR').toString().trim().toUpperCase();
+    ctx.fillText('★  ' + eb + '  ★', cx, 360);
+
+    const saint = (name || 'Saint du jour').toString().trim();
+    ctx.fillStyle = navy;
+    let fontSize = 76; ctx.font = `700 ${fontSize}px Georgia, serif`;
+    let lines = _wrapText(ctx, saint, S - 220);
+    while (lines.length > 3 && fontSize > 42) {
+      fontSize -= 8; ctx.font = `700 ${fontSize}px Georgia, serif`;
+      lines = _wrapText(ctx, saint, S - 220);
+    }
+    const lineH = fontSize * 1.18;
+    let y = 470 + (3 - lines.length) * 26;
+    for (const ln of lines) { ctx.fillText(ln, cx, y); y += lineH; }
+
+    ctx.fillStyle = soft; ctx.font = '400 34px Georgia, serif';
+    const d = (date || '').toString().trim();
+    if (d && d !== '—') ctx.fillText(d, cx, y + 30);
+
+    ctx.strokeStyle = gold; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(cx - 70, 800); ctx.lineTo(cx + 70, 800); ctx.stroke();
+
+    ctx.fillStyle = navy; ctx.font = 'italic 400 32px Georgia, serif';
+    ctx.fillText('Prions ensemble, chaque jour', cx, 868);
+
+    ctx.fillStyle = gold; ctx.font = '700 32px Arial, sans-serif';
+    ctx.fillText('prionsenligne.fr', cx, 968);
+
+    return new Promise(resolve => c.toBlob(resolve, 'image/png', 0.92));
+  }
+
+  async function pelShareSaint(opts) {
+    const o = opts || {};
+    const name = (o.name || (document.getElementById('js-feast')?.textContent) || 'le saint du jour').trim();
+    const eyebrow = o.eyebrow || (document.getElementById('js-feast-type')?.textContent || '').trim() || 'Saint du jour';
+    const date = o.date || (document.getElementById('js-date')?.textContent || '').trim();
+    const btn = o.btn || null;
+    const shareUrl = 'https://prionsenligne.fr/saint-du-jour';
+    const shareText = `${name} — prions ensemble aujourd'hui 🙏\n${shareUrl}`;
+    const slug = name.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'saint';
+
+    if (btn) { btn.disabled = true; btn.classList.add('sharing'); }
+    try {
+      const blob = await _buildSaintCard({ name, eyebrow, date });
+      const file = blob ? new File([blob], `${slug}.png`, { type: 'image/png' }) : null;
+      if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: 'PrionsEnLigne', text: shareText });
+      } else if (navigator.share) {
+        await navigator.share({ title: 'PrionsEnLigne', text: `${name} — prions ensemble aujourd'hui 🙏`, url: shareUrl });
+      } else if (blob) {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob); a.download = `${slug}.png`; a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+        try { await navigator.clipboard.writeText(shareUrl); } catch (_) {}
+        try { _showPushToast('🖼️ Image téléchargée · lien copié'); } catch (_) {}
+      }
+    } catch (err) {
+      if (err && err.name !== 'AbortError') { try { _showPushToast('⚠️ Partage indisponible'); } catch (_) {} }
+    } finally {
+      if (btn) { btn.disabled = false; btn.classList.remove('sharing'); }
+    }
+  }
+  // Exposé pour le calendrier (selectDay) et autres
+  window._pelShareSaint = pelShareSaint;
+
   function initDayShare() {
     const btn = document.getElementById('day-share-btn');
     if (!btn) return;
-
-    function wrapText(ctx, text, maxWidth) {
-      const words = String(text || '').split(/\s+/);
-      const lines = []; let line = '';
-      for (const w of words) {
-        const test = line ? line + ' ' + w : w;
-        if (ctx.measureText(test).width > maxWidth && line) { lines.push(line); line = w; }
-        else line = test;
-      }
-      if (line) lines.push(line);
-      return lines;
-    }
-
-    // Dessine la carte 1080×1080 et renvoie une Promise<Blob>
-    function buildCard() {
-      const S = 1080;
-      const c = document.createElement('canvas');
-      c.width = S; c.height = S;
-      const ctx = c.getContext('2d');
-
-      const cream = '#f7f3ea', navy = '#1a2744', gold = '#c9a84c', soft = '#6b6357';
-
-      // Fond
-      ctx.fillStyle = cream; ctx.fillRect(0, 0, S, S);
-      // Cadre doré double
-      ctx.strokeStyle = gold; ctx.lineWidth = 4;
-      ctx.strokeRect(48, 48, S - 96, S - 96);
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(64, 64, S - 128, S - 128);
-
-      const cx = S / 2;
-
-      // Croix stylisée en haut
-      ctx.fillStyle = navy;
-      ctx.fillRect(cx - 6, 130, 12, 70);     // vertical
-      ctx.fillRect(cx - 26, 150, 52, 12);    // horizontal
-      // Halo doré autour de la croix
-      ctx.strokeStyle = gold; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.arc(cx, 165, 46, 0, Math.PI * 2); ctx.stroke();
-
-      // Marque
-      ctx.fillStyle = navy;
-      ctx.textAlign = 'center';
-      ctx.font = '600 30px Georgia, serif';
-      ctx.fillText('PrionsEnLigne', cx, 268);
-
-      // Eyebrow
-      ctx.fillStyle = gold;
-      ctx.font = '700 26px Arial, sans-serif';
-      const eyebrow = (document.getElementById('js-feast-type')?.textContent || '').trim();
-      ctx.fillText(('★  ' + (eyebrow && eyebrow !== '—' ? eyebrow.toUpperCase() : 'SAINT DU JOUR') + '  ★'), cx, 360);
-
-      // Nom du saint (gros, serif, wrap)
-      const saint = (document.getElementById('js-feast')?.textContent || 'Saint du jour').trim();
-      ctx.fillStyle = navy;
-      let fontSize = 76;
-      ctx.font = `700 ${fontSize}px Georgia, serif`;
-      let lines = wrapText(ctx, saint, S - 220);
-      // réduit la taille si trop de lignes
-      while (lines.length > 3 && fontSize > 44) {
-        fontSize -= 8; ctx.font = `700 ${fontSize}px Georgia, serif`;
-        lines = wrapText(ctx, saint, S - 220);
-      }
-      const lineH = fontSize * 1.18;
-      let y = 470 + (3 - lines.length) * 26;
-      for (const ln of lines) { ctx.fillText(ln, cx, y); y += lineH; }
-
-      // Date
-      ctx.fillStyle = soft;
-      ctx.font = '400 34px Georgia, serif';
-      const date = (document.getElementById('js-date')?.textContent || '').trim();
-      if (date && date !== '—') ctx.fillText(date, cx, y + 30);
-
-      // Divider doré
-      ctx.strokeStyle = gold; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.moveTo(cx - 70, 800); ctx.lineTo(cx + 70, 800); ctx.stroke();
-
-      // Invitation
-      ctx.fillStyle = navy;
-      ctx.font = 'italic 400 32px Georgia, serif';
-      ctx.fillText('Prions ensemble, chaque jour', cx, 868);
-
-      // Footer URL
-      ctx.fillStyle = gold;
-      ctx.font = '700 32px Arial, sans-serif';
-      ctx.fillText('prionsenligne.fr', cx, 968);
-
-      return new Promise(resolve => c.toBlob(resolve, 'image/png', 0.92));
-    }
-
-    async function doShare() {
-      const saint = (document.getElementById('js-feast')?.textContent || 'le saint du jour').trim();
-      const shareUrl = 'https://prionsenligne.fr/saint-du-jour';
-      const shareText = `${saint} — prions ensemble aujourd'hui 🙏\n${shareUrl}`;
-      btn.disabled = true;
-      btn.classList.add('sharing');
-      try {
-        const blob = await buildCard();
-        const file = blob ? new File([blob], 'saint-du-jour.png', { type: 'image/png' }) : null;
-        // 1) Partage natif AVEC image (mobile : WhatsApp, Insta, etc.)
-        if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({ files: [file], title: 'PrionsEnLigne — Saint du jour', text: shareText });
-        }
-        // 2) Partage natif texte+lien (sans image)
-        else if (navigator.share) {
-          await navigator.share({ title: 'PrionsEnLigne — Saint du jour', text: `${saint} — prions ensemble aujourd'hui 🙏`, url: shareUrl });
-        }
-        // 3) Fallback desktop : télécharge l'image + copie le lien
-        else if (blob) {
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-          a.download = 'saint-du-jour.png';
-          a.click();
-          setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-          try { await navigator.clipboard.writeText(shareUrl); } catch (_) {}
-          _showPushToast('🖼️ Image téléchargée · lien copié');
-        }
-      } catch (err) {
-        // L'utilisateur a annulé le partage → silencieux
-        if (err && err.name !== 'AbortError') {
-          try { _showPushToast('⚠️ Partage indisponible'); } catch (_) {}
-        }
-      } finally {
-        btn.disabled = false;
-        btn.classList.remove('sharing');
-      }
-    }
-
-    btn.addEventListener('click', doShare);
+    btn.addEventListener('click', () => pelShareSaint({ btn }));
   }
 
   // ════════════════════════════════════════════════════════════════════

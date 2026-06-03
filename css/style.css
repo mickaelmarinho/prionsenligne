@@ -317,16 +317,20 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  border: 1px solid rgba(201,168,76,.35);
-  background: rgba(201,168,76,.12);
+  gap: 7px;
+  height: 36px;
+  padding: 0 15px;
+  border-radius: 20px;
+  border: 1px solid rgba(201,168,76,.4);
+  background: rgba(201,168,76,.14);
   color: var(--gold);
   cursor: pointer;
-  font-size: 15px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
   transition: all .15s;
   flex-shrink: 0;
+  white-space: nowrap;
 }
 .day-share-btn:hover {
   background: var(--gold);
@@ -335,6 +339,45 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
 }
 .day-share-btn.sharing { opacity: .55; pointer-events: none; }
 .day-share-btn.sharing i { animation: tvSpin .8s linear infinite; }
+
+/* Boutons de partage dans le panneau détail du calendrier (saints) */
+.dd-share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(201,168,76,.45);
+  background: rgba(201,168,76,.10);
+  color: var(--gold);
+  cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.dd-share-btn:hover { background: var(--gold); color: #14110e; border-color: var(--gold); }
+.dd-share-btn.sharing { opacity: .55; pointer-events: none; }
+.dd-share-btn.sharing i { animation: tvSpin .8s linear infinite; }
+/* Petit bouton de partage rond (saints régionaux, autres saints) */
+.dd-share-mini {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  border: 1px solid rgba(201,168,76,.4);
+  background: transparent;
+  color: var(--gold);
+  cursor: pointer;
+  font-size: 11px;
+  flex-shrink: 0;
+  transition: all .15s;
+}
+.dd-share-mini:hover { background: var(--gold); color: #14110e; }
+.dd-share-mini.sharing { opacity: .5; pointer-events: none; }
 
 /* Layout 2 colonnes Aujourd'hui (desktop) */
 .today-main {
@@ -1508,21 +1551,41 @@ body.tv-modal-open { overflow: hidden; }
 .dd-others-collapsed .dd-others-rest { display: none; }
 .dd-others-rest { display: contents; }
 .dd-nominis-other {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
   font-size: 11.5px;
-  padding: 3px 9px;
+  padding: 2px 4px 2px 9px;
   border-radius: 999px;
   background: rgba(201,168,76,.10);
   border: 1px solid rgba(201,168,76,.18);
-  color: rgba(245,240,232,.85);
-  text-decoration: none;
-  transition: background .12s, color .12s, border-color .12s;
+  transition: background .12s, border-color .12s;
 }
 .dd-nominis-other:hover {
-  background: rgba(201,168,76,.22);
+  background: rgba(201,168,76,.20);
   border-color: rgba(201,168,76,.4);
-  color: var(--gold);
 }
+.dd-other-link {
+  color: rgba(245,240,232,.85);
+  text-decoration: none;
+}
+.dd-nominis-other:hover .dd-other-link { color: var(--gold); }
+.dd-other-share {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px; height: 18px;
+  border: none;
+  background: transparent;
+  color: rgba(201,168,76,.55);
+  cursor: pointer;
+  font-size: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: all .12s;
+}
+.dd-other-share:hover { background: var(--gold); color: #14110e; }
+.dd-other-share.sharing { opacity: .5; pointer-events: none; }
 .dd-nominis-others-more {
   margin-top: 8px;
   font-size: 10.5px;
