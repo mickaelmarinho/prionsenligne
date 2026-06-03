@@ -7084,13 +7084,16 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
 
 @media (max-width: 640px) {
 
-  /* ── Body : padding bas suffisant pour ne plus rien cacher ── */
+  /* ── Body : padding bas suffisant pour dégager bottom-nav ET les boutons
+     flottants (Grégorien + chapelet), qui montent à ~128px du bas. Sans ça,
+     la dernière ligne de contenu reste piégée sous les FAB quand on scrolle
+     tout en bas. 64 (nav) + 72 (zone FAB) = 136px. ── */
   body {
-    padding-bottom: calc(var(--bottom-nav-h) + var(--safe-bottom) + 12px);
+    padding-bottom: calc(var(--bottom-nav-h) + 72px + var(--safe-bottom));
     font-size: 15px;
   }
   body.player-open {
-    padding-bottom: calc(var(--bottom-nav-h) + 64px + var(--safe-bottom) + 12px);
+    padding-bottom: calc(var(--bottom-nav-h) + 72px + 64px + var(--safe-bottom));
   }
 
   /* ── Header compact ── */
