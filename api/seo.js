@@ -20,7 +20,16 @@
   (volume de recherche quotidien massif), porte d'entrée vers l'app.
 */
 
+import { SAINTS, SAINTS_BY_SLUG } from '../lib/saints.js';
+
 const SITE = 'https://prionsenligne.fr';
+
+// Libellés pays pour les pages saints
+const COUNTRY_LABELS = {
+  fr: 'France', be: 'Belgique', ch: 'Suisse', ca: 'Québec / Canada',
+  ci: 'Côte d\'Ivoire', cd: 'Congo (RDC)', rw: 'Rwanda', ht: 'Haïti',
+  universel: 'Saint universel',
+};
 
 const MONTHS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
 const DAYS   = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
@@ -142,6 +151,14 @@ function pageShell({ title, desc, canonical, h1, sub, bodyHtml, jsonLd, otherLin
   footer{color:var(--soft);font-size:12.5px;text-align:center;padding:26px 0 40px;line-height:1.7}
   footer a{color:var(--soft)}
   .src{font-size:12.5px;color:var(--soft);font-style:italic;margin-top:6px}
+  main h2{font-family:Georgia,serif;font-size:19px;margin:26px 0 8px;color:var(--navy)}
+  .card h2{margin:0 0 10px;font-size:21px}
+  .saint-list{list-style:none;padding:0;margin:0 0 8px}
+  .saint-list li{padding:8px 0;border-bottom:1px solid #ece5d6;font-size:15px}
+  .saint-list li:last-child{border-bottom:none}
+  .saint-list a{color:var(--navy);text-decoration:none}
+  .saint-list a:hover{color:var(--gold);text-decoration:underline}
+  .muted{color:var(--soft);font-size:13px}
 </style>
 ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
 </head>
@@ -157,9 +174,10 @@ ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
   <a class="cta" href="/agenda">📿 Ouvrir PrionsEnLigne — offices, messes, chapelet</a>
   <div class="links">
     <a href="/agenda">Agenda du jour</a>
-    <a href="${esc(otherLink.href)}">${esc(otherLink.label)}</a>
-    <a href="/agenda">Messes en direct</a>
-    <a href="/agenda">Chapelet guidé</a>
+    <a href="/saint-du-jour">Saint du jour</a>
+    <a href="/evangile-du-jour">Évangile du jour</a>
+    <a href="/saints">Tous les saints</a>
+    <a href="/messe-en-direct">Messe en direct</a>
     <a href="/">Accueil</a>
   </div>
 </div></main>
@@ -241,6 +259,102 @@ export default async function handler(req, res) {
     res.status(200).send(pageShell({
       title, desc, canonical, h1: 'Évangile du jour', sub: `Évangile · ${dateLabel}`,
       bodyHtml, jsonLd, otherLink: { href: '/saint-du-jour', label: 'Saint du jour' },
+    }));
+    return;
+  }
+
+  // ── /saints (index / hub) ──
+  if (p === 'saints') {
+    const canonical = `${SITE}/saints`;
+    const title = 'Saints de la francophonie — Vies, fêtes et prières | PrionsEnLigne';
+    const desc = "Découvrez les grands saints du monde francophone : France, Belgique, Suisse, Québec, Afrique, Haïti. Vie, date de fête, patronage et prière pour chacun.";
+    // Regroupe par région (libellé country)
+    const groups = {};
+    for (const s of SAINTS) {
+      const key = COUNTRY_LABELS[s.country] || s.region;
+      (groups[key] = groups[key] || []).push(s);
+    }
+    let listHtml = '';
+    for (const [region, list] of Object.entries(groups)) {
+      listHtml += `<h2>${esc(region)}</h2><ul class="saint-list">`;
+      for (const s of list) {
+        listHtml += `<li><a href="/saints/${esc(s.slug)}"><strong>${esc(s.name)}</strong></a> — fête le ${esc(s.feast)}${s.patron ? ` · <span class="muted">${esc(s.patron)}</span>` : ''}</li>`;
+      }
+      listHtml += `</ul>`;
+    }
+    const bodyHtml = `<p class="sub">${SAINTS.length} saints et figures mariales fortement vénérés dans la francophonie. Cliquez pour découvrir leur vie et prier avec eux.</p>${listHtml}`;
+    const jsonLd = JSON.stringify({
+      '@context': 'https://schema.org', '@type': 'CollectionPage',
+      name: title, description: desc, url: canonical,
+    });
+    res.status(200).send(pageShell({
+      title, desc, canonical, h1: 'Saints de la francophonie', sub: 'Vies & fêtes des saints',
+      bodyHtml, jsonLd, otherLink: { href: '/saint-du-jour', label: 'Saint du jour' },
+    }));
+    return;
+  }
+
+  // ── /saints/[slug] (page individuelle) ──
+  if (p === 'saint-page') {
+    const slug = (req.query.s || '').toString();
+    const saint = SAINTS_BY_SLUG[slug];
+    if (!saint) {
+      res.setHeader('Location', '/saints');
+      res.status(302).end();
+      return;
+    }
+    const canonical = `${SITE}/saints/${saint.slug}`;
+    const region = COUNTRY_LABELS[saint.country] || saint.region;
+    const title = `${saint.name} — vie, fête le ${saint.feast} | PrionsEnLigne`;
+    const desc = `${saint.name}, fêté le ${saint.feast} (${region}). ${saint.patron}. ${saint.desc}`.slice(0, 300);
+    const bodyHtml = `
+      <p class="sub">Fête le ${esc(saint.feast)} · ${esc(region)}</p>
+      <div class="card">
+        <div class="ref">${esc(saint.patron)}</div>
+        <h2>${esc(saint.name)}</h2>
+        <p>${esc(saint.desc)}</p>
+      </div>
+      <p>Retrouvez ${esc(saint.name)} et tout le calendrier liturgique dans l'application PrionsEnLigne, avec les offices du jour, les messes en direct et le chapelet guidé.</p>`;
+    const jsonLd = JSON.stringify({
+      '@context': 'https://schema.org', '@type': 'Person',
+      name: saint.name, description: saint.desc,
+      url: canonical,
+      subjectOf: { '@type': 'CreativeWork', name: `${saint.name} — vie et prière`, publisher: { '@type': 'Organization', name: 'PrionsEnLigne' } },
+    });
+    res.status(200).send(pageShell({
+      title, desc, canonical, h1: saint.name, sub: `Saint · ${region}`,
+      bodyHtml, jsonLd, otherLink: { href: '/saints', label: 'Tous les saints' },
+    }));
+    return;
+  }
+
+  // ── /messe-en-direct (evergreen) ──
+  if (p === 'messe') {
+    const canonical = `${SITE}/messe-en-direct`;
+    const title = `Messe en direct aujourd'hui — radios & TV catholiques | PrionsEnLigne`;
+    const desc = "Suivez la messe en direct chaque jour : Radio Maria, KTO, Lourdes, Notre-Dame de Paris, et de nombreux sanctuaires francophones (France, Belgique, Suisse, Québec). Horaires et accès gratuit.";
+    const bodyHtml = `
+      <p class="sub">Toutes les messes diffusées en direct, mises à jour chaque jour</p>
+      <div class="card">
+        <h2>Où suivre la messe en direct&nbsp;?</h2>
+        <p>PrionsEnLigne réunit en un seul endroit les messes catholiques diffusées en direct à la radio et à la télévision, gratuitement et sans publicité. Chaque jour, l'agenda affiche les horaires précis et un accès direct au flux.</p>
+        <p><strong>Principales sources de messes en direct&nbsp;:</strong></p>
+        <ul class="saint-list">
+          <li><strong>KTO</strong> — messe quotidienne de Notre-Dame de Paris (18h) et de Notre-Dame de la Garde à Marseille</li>
+          <li><strong>Radio Maria France</strong> — messe et chapelet quotidiens, en lecture intégrée</li>
+          <li><strong>Sanctuaire de Lourdes</strong> — messes et chapelet de la grotte</li>
+          <li><strong>Sanctuaire Notre-Dame du Laus</strong>, <strong>Paroisse Notre-Dame de La Salette</strong> et autres paroisses</li>
+          <li><strong>Francophonie&nbsp;:</strong> Radio Galilée, Radio Ville-Marie, Sel + Lumière (Québec), RCF Bruxelles (Belgique), RTS Religion (Suisse)</li>
+        </ul>
+        <p class="src">Rappel pastoral&nbsp;: suivre la messe à distance est une aide précieuse pour les malades, les personnes isolées ou la diaspora, mais ne remplace pas la participation physique à l'Eucharistie. Si vous le pouvez, rejoignez votre paroisse.</p>
+      </div>`;
+    const jsonLd = JSON.stringify({
+      '@context': 'https://schema.org', '@type': 'WebPage',
+      name: title, description: desc, url: canonical,
+    });
+    res.status(200).send(pageShell({
+      title, desc, canonical, h1: 'Messe en direct', sub: 'Messes diffusées en direct',
+      bodyHtml, jsonLd, otherLink: { href: '/agenda', label: 'Voir les horaires du jour' },
     }));
     return;
   }

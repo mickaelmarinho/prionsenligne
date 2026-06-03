@@ -59,6 +59,18 @@
     {
       "source": "/evangile-du-jour",
       "destination": "/api/seo?p=evangile"
+    },
+    {
+      "source": "/messe-en-direct",
+      "destination": "/api/seo?p=messe"
+    },
+    {
+      "source": "/saints",
+      "destination": "/api/seo?p=saints"
+    },
+    {
+      "source": "/saints/:slug",
+      "destination": "/api/seo?p=saint-page&s=:slug"
     }
   ],
   "headers": [

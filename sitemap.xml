@@ -27,4 +27,160 @@
     <priority>0.8</priority>
   </url>
 
+  <url>
+    <loc>https://prionsenligne.fr/messe-en-direct</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
+    <loc>https://prionsenligne.fr/saints</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
+    <loc>https://prionsenligne.fr/saints/sainte-therese-de-lisieux</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://prionsenligne.fr/saints/saint-francois-d-assise</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://prionsenligne.fr/saints/saint-joseph</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://prionsenligne.fr/saints/sainte-bernadette-soubirous</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://prionsenligne.fr/saints/saint-jean-marie-vianney-cure-d-ars</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://prionsenligne.fr/saints/sainte-jeanne-d-arc</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://prionsenligne.fr/saints/saint-vincent-de-paul</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://prionsenligne.fr/saints/saint-frere-andre</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://prionsenligne.fr/saints/sainte-kateri-tekakwitha</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://prionsenligne.fr/saints/sainte-anne</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://prionsenligne.fr/saints/saints-martyrs-canadiens</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://prionsenligne.fr/saints/notre-dame-de-beauraing</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://prionsenligne.fr/saints/notre-dame-de-banneux</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://prionsenligne.fr/saints/saint-damien-de-veuster</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://prionsenligne.fr/saints/saint-nicolas-de-flue</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://prionsenligne.fr/saints/saint-maurice-d-agaune</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://prionsenligne.fr/saints/bienheureuse-marguerite-bays</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://prionsenligne.fr/saints/saints-charles-lwanga-martyrs-ouganda</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://prionsenligne.fr/saints/bienheureux-isidore-bakanja</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://prionsenligne.fr/saints/bienheureux-cyprien-tansi</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://prionsenligne.fr/saints/notre-dame-d-afrique</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://prionsenligne.fr/saints/notre-dame-de-kibeho</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://prionsenligne.fr/saints/notre-dame-de-la-paix-yamoussoukro</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://prionsenligne.fr/saints/notre-dame-du-perpetuel-secours</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
 </urlset>
