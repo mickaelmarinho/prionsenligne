@@ -3340,12 +3340,25 @@ function initChapelet() {
     const btn = e.target.closest('.ch-mode-btn');
     if (!btn) return;
     const newAudio = btn.dataset.mode === 'audio';
+    // Dès qu'on touche au mode audio, on considère la découverte faite
+    if (newAudio) {
+      const discover = document.getElementById('ch-audio-discover');
+      if (discover) discover.hidden = true;
+      try { localStorage.setItem('pel_ch_audio_discovered', '1'); } catch (_) {}
+    }
     if (newAudio === audioMode) return;
     audioMode = newAudio;
     localStorage.setItem('pel_ch_audio', audioMode ? '1' : '0');
     if (!audioMode && playing) pauseAudio();
     syncModeBtns();
     render();
+  });
+
+  // Fermeture de l'indice de découverte
+  document.getElementById('ch-audio-discover-x')?.addEventListener('click', () => {
+    const discover = document.getElementById('ch-audio-discover');
+    if (discover) discover.hidden = true;
+    try { localStorage.setItem('pel_ch_audio_discovered', '1'); } catch (_) {}
   });
 
   // Sélecteur de vitesse
@@ -3401,6 +3414,15 @@ function initChapelet() {
     syncSpeedBtns();
     refreshVoiceList();
     render();
+
+    // Indice de découverte du mode audio guidé : montré tant que l'utilisateur
+    // n'a jamais utilisé l'audio ni fermé l'indice, et seulement en mode tactile.
+    const discover = document.getElementById('ch-audio-discover');
+    if (discover) {
+      let seen = false;
+      try { seen = localStorage.getItem('pel_ch_audio_discovered') === '1'; } catch (_) {}
+      discover.hidden = (audioMode || seen);
+    }
   });
 
   const closeModal = () => {

@@ -10,7 +10,7 @@
    - API /api/* : network-first (fraîcheur des données)
 ═══════════════════════════════════════════════ */
 
-const VERSION       = 'v161';
+const VERSION       = 'v162';
 const STATIC_CACHE  = `pel-static-${VERSION}`;
 const RUNTIME_CACHE = `pel-runtime-${VERSION}`;
 

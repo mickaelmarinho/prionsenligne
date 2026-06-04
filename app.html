@@ -772,11 +772,17 @@
       <!-- Bascule de mode : tactile / audio -->
       <div class="ch-mode-toggle" id="ch-mode-toggle" role="tablist" aria-label="Mode de prière">
         <button class="ch-mode-btn active" data-mode="tap" type="button" role="tab" aria-selected="true">
-          <i class="fa-solid fa-hand-point-up"></i> Tactile
+          <i class="fa-solid fa-hand-point-up"></i> Prier moi-même
         </button>
         <button class="ch-mode-btn" data-mode="audio" type="button" role="tab" aria-selected="false">
-          <i class="fa-solid fa-volume-high"></i> Audio solo
+          <i class="fa-solid fa-headphones"></i> Écouter (guidé)
         </button>
+      </div>
+      <!-- Indice de découverte (1ère fois) : pointe vers le mode audio guidé -->
+      <div class="ch-audio-discover" id="ch-audio-discover" hidden>
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+        <span>Nouveau&nbsp;: laissez-vous guider — une voix récite le chapelet à voix haute. Touchez «&nbsp;Écouter (guidé)&nbsp;».</span>
+        <button class="ch-audio-discover-x" id="ch-audio-discover-x" aria-label="Fermer">&times;</button>
       </div>
 
       <!-- Sélecteur de mystères (jours indiqués en sous-titre) -->
