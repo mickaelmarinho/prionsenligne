@@ -535,6 +535,26 @@ function initCalendar() {
         shareMainBtn.style.display = 'none';
       }
     }
+
+    // Bouton « Écouter » : lit le saint + sa description à voix haute
+    const listenDdBtn = document.getElementById('dd-listen');
+    if (listenDdBtn) {
+      const reader = window._pelReader;
+      if (!reader?.supported() || !saint) {
+        listenDdBtn.style.display = 'none';
+      } else {
+        listenDdBtn.style.display = '';
+        reader.stop(); // réinitialise à chaque changement de jour
+        listenDdBtn.onclick = () => {
+          if (reader.state === 'playing') { reader.pause(); return; }
+          if (reader.state === 'paused')  { reader.resume(); return; }
+          // Texte lu : nom + description + tagline Nominis si présente
+          const tagline = document.querySelector('#dd-nominis .dd-nominis-tagline')?.textContent || '';
+          const txt = [saint, desc, tagline].filter(Boolean).join('. ');
+          reader.read(txt, listenDdBtn);
+        };
+      }
+    }
     if (ddMinor) {
       if (minor) { ddMinor.textContent = 'Aussi celebres : ' + minor; ddMinor.style.display = ''; }
       else { ddMinor.style.display = 'none'; }
@@ -637,6 +657,7 @@ function initCalendar() {
           <div class="dd-nominis-bio dd-nominis-collapsed">${safeHtml}</div>
           <div class="dd-nominis-actions">
             <button type="button" class="dd-nominis-toggle" id="dd-nominis-toggle">Lire la biographie complète <i class="fa-solid fa-chevron-down"></i></button>
+            <button type="button" class="pel-listen-btn" id="dd-nominis-listen"><i class="fa-solid fa-volume-high"></i><span>Écouter</span></button>
             <button type="button" class="dd-share-btn" id="dd-nominis-share"><i class="fa-solid fa-share-nodes"></i> Partager</button>
             ${lien ? `<a class="dd-nominis-link" href="${lien}" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square"></i> Voir sur nominis.cef.fr</a>` : ''}
           </div>
@@ -647,6 +668,19 @@ function initCalendar() {
         const nomShareBtn = nomBlock.querySelector('#dd-nominis-share');
         if (nomShareBtn) nomShareBtn.onclick = () =>
           window._pelShareSaint?.({ name: bio.nom, eyebrow: 'Saint du jour', date, btn: nomShareBtn });
+
+        // Bouton « Écouter » du saint Nominis (lit nom + bio à voix haute)
+        const nomListenBtn = nomBlock.querySelector('#dd-nominis-listen');
+        if (nomListenBtn) {
+          const reader = window._pelReader;
+          if (!reader?.supported()) { nomListenBtn.style.display = 'none'; }
+          else nomListenBtn.onclick = () => {
+            if (reader.state === 'playing') { reader.pause(); return; }
+            if (reader.state === 'paused')  { reader.resume(); return; }
+            const bioTxt = nomBlock.querySelector('.dd-nominis-bio')?.innerText || shortDesc || '';
+            reader.read([bio.nom, shortDesc, bioTxt].filter(Boolean).join('. '), nomListenBtn);
+          };
+        }
 
         // Charge en parallèle la liste des autres saints du jour (Nominis "Autres fêtes du jour")
         fetch(`/api/saints-of-day?day=${dy}&month=${mo}&year=${yr}`)
@@ -1009,6 +1043,8 @@ function openBreviary(prayerKey, chapeletLabel) {
   const bodyEl  = document.getElementById('brev-body');
 
   if (!panel) return;
+  // Stoppe une éventuelle lecture en cours (nouvel office)
+  try { window._pelReader?.stop(); } catch (_) {}
 
   nameEl.textContent = PRAYER_NAMES[prayerKey] || prayerKey;
 
@@ -1875,6 +1911,8 @@ function closeBreviary() {
   panel.classList.remove('open');
   overlay.classList.remove('show');
   panel.setAttribute('aria-hidden', 'true');
+  // Arrête la lecture à voix haute si en cours
+  try { window._pelReader?.stop(); } catch (_) {}
 }
 
 function initBreviary() {
@@ -1905,6 +1943,23 @@ function initBreviary() {
   const overlay  = document.getElementById('breviary-overlay');
   if (closeBtn) closeBtn.addEventListener('click', closeBreviary);
   if (overlay)  overlay.addEventListener('click', closeBreviary);
+
+  // Bouton « Écouter » : lit à voix haute les textes affichés du bréviaire
+  const listenBtn = document.getElementById('brev-listen');
+  if (listenBtn) {
+    if (!window._pelReader?.supported()) {
+      listenBtn.style.display = 'none'; // navigateur sans synthèse vocale
+    } else {
+      listenBtn.addEventListener('click', () => {
+        const reader = window._pelReader;
+        if (reader.state === 'playing') { reader.pause(); return; }
+        if (reader.state === 'paused')  { reader.resume(); return; }
+        const body = document.getElementById('brev-body');
+        const txt = (body?.innerText || body?.textContent || '').trim();
+        if (txt) reader.read(txt, listenBtn);
+      });
+    }
+  }
 
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeBreviary();
@@ -8142,6 +8197,80 @@ document.addEventListener('DOMContentLoaded', () => {
   // Génère une belle image partageable (WhatsApp, Insta, Facebook…) qui
   // ramène vers le site. Moteur de bouche-à-oreille, 100 % côté client.
   // ════════════════════════════════════════════════════════════════════
+  // ════════════════════════════════════════════════════════════════════
+  // LECTURE À VOIX HAUTE — Web Speech API (accessibilité personnes âgées /
+  // malvoyantes). 100 % navigateur : aucune infra, aucun coût, voix FR
+  // intégrée à l'appareil. Bouton « Écouter » → Pause → Reprendre.
+  // ════════════════════════════════════════════════════════════════════
+  const PelReader = {
+    voice: null, queue: [], idx: 0, state: 'idle', btn: null,
+    rate: 0.95,
+    supported() { return typeof window !== 'undefined' && 'speechSynthesis' in window; },
+    init() {
+      if (!this.supported()) return;
+      const pick = () => {
+        const vs = window.speechSynthesis.getVoices() || [];
+        this.voice = vs.find(v => /^fr/i.test(v.lang)) || vs.find(v => /fran|french/i.test(v.name)) || null;
+      };
+      pick();
+      try { window.speechSynthesis.onvoiceschanged = pick; } catch (_) {}
+    },
+    // Découpe en phrases pour fiabilité (évite la coupure à ~15 s de Chrome)
+    _chunk(text) {
+      const clean = String(text || '').replace(/\s+/g, ' ').trim();
+      if (!clean) return [];
+      return clean.match(/[^.!?…:;]+[.!?…:;]*/g) || [clean];
+    },
+    read(text, btn) {
+      if (!this.supported()) return;
+      this.stop();
+      this.queue = this._chunk(text);
+      if (this.queue.length === 0) return;
+      this.idx = 0; this.btn = btn || null; this.state = 'playing';
+      this._speakNext();
+      this._sync();
+    },
+    _speakNext() {
+      if (this.idx >= this.queue.length) { this.state = 'idle'; this._sync(); return; }
+      const u = new SpeechSynthesisUtterance(this.queue[this.idx]);
+      if (this.voice) u.voice = this.voice;
+      u.lang = 'fr-FR'; u.rate = this.rate;
+      u.onend = () => { if (this.state !== 'idle') { this.idx++; this._speakNext(); } };
+      u.onerror = () => { if (this.state !== 'idle') { this.idx++; this._speakNext(); } };
+      try { window.speechSynthesis.speak(u); } catch (_) {}
+    },
+    toggle(text, btn) {
+      if (!this.supported()) return;
+      if (this.state === 'playing') this.pause();
+      else if (this.state === 'paused') this.resume();
+      else this.read(text, btn);
+    },
+    pause() { if (this.state === 'playing') { try { window.speechSynthesis.pause(); } catch (_) {} this.state = 'paused'; this._sync(); } },
+    resume() { if (this.state === 'paused') { try { window.speechSynthesis.resume(); } catch (_) {} this.state = 'playing'; this._sync(); } },
+    stop() { try { window.speechSynthesis.cancel(); } catch (_) {} this.state = 'idle'; this._sync(); },
+    // Met à jour l'apparence du bouton selon l'état
+    _sync() {
+      const b = this.btn;
+      if (!b) return;
+      const icon = b.querySelector('i');
+      const label = b.querySelector('span');
+      b.classList.toggle('reading', this.state === 'playing');
+      b.classList.toggle('paused', this.state === 'paused');
+      if (this.state === 'playing') {
+        if (icon) icon.className = 'fa-solid fa-pause';
+        if (label) label.textContent = 'Pause';
+      } else if (this.state === 'paused') {
+        if (icon) icon.className = 'fa-solid fa-play';
+        if (label) label.textContent = 'Reprendre';
+      } else {
+        if (icon) icon.className = 'fa-solid fa-volume-high';
+        if (label) label.textContent = 'Écouter';
+      }
+    },
+  };
+  PelReader.init();
+  window._pelReader = PelReader;
+
   // Fonction GLOBALE réutilisable : génère et partage une carte pour
   // n'importe quel saint. opts = { name, eyebrow, date, btn? }
   function _wrapText(ctx, text, maxWidth) {

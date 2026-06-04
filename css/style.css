@@ -340,6 +340,47 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
 .day-share-btn.sharing { opacity: .55; pointer-events: none; }
 .day-share-btn.sharing i { animation: tvSpin .8s linear infinite; }
 
+/* Bouton « Écouter » (lecture à voix haute) — réutilisable */
+.pel-listen-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(201,168,76,.45);
+  background: rgba(201,168,76,.12);
+  color: var(--gold);
+  cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all .15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.pel-listen-btn:hover { background: var(--gold); color: #14110e; border-color: var(--gold); }
+.pel-listen-btn.reading {
+  background: var(--gold); color: #14110e; border-color: var(--gold);
+}
+.pel-listen-btn.reading i { animation: listenPulse 1.1s ease-in-out infinite; }
+@keyframes listenPulse { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
+
+/* En-tête bréviaire : aligne Écouter + Fermer */
+.breviary-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+/* Ligne d'actions du détail calendrier (Écouter + Partager) */
+.dd-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+
 /* Boutons de partage dans le panneau détail du calendrier (saints) */
 .dd-share-btn {
   display: inline-flex;

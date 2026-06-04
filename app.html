@@ -232,9 +232,14 @@
         <span class="dd-type" id="dd-type"></span>
         <h3 class="dd-saint" id="dd-saint"></h3>
         <p class="dd-desc" id="dd-desc"></p>
-        <button class="dd-share-btn" id="dd-share-main" type="button" style="margin-top:4px">
-          <i class="fa-solid fa-share-nodes"></i> Partager ce saint
-        </button>
+        <div class="dd-actions-row">
+          <button class="pel-listen-btn" id="dd-listen" type="button" title="Écouter ce saint à voix haute">
+            <i class="fa-solid fa-volume-high"></i><span>Écouter</span>
+          </button>
+          <button class="dd-share-btn" id="dd-share-main" type="button">
+            <i class="fa-solid fa-share-nodes"></i> Partager ce saint
+          </button>
+        </div>
         <div id="dd-minor" class="dd-minor" style="display:none"></div>
       </div>
 
@@ -609,7 +614,12 @@
         <div class="breviary-prayer-name" id="brev-prayer-name">Laudes</div>
         <div class="breviary-date" id="brev-date"></div>
       </div>
-      <button class="breviary-close" id="brev-close" aria-label="Fermer le bréviaire"><i class="fa-solid fa-xmark"></i></button>
+      <div class="breviary-header-actions">
+        <button class="pel-listen-btn" id="brev-listen" type="button" title="Lire les textes à voix haute">
+          <i class="fa-solid fa-volume-high"></i><span>Écouter</span>
+        </button>
+        <button class="breviary-close" id="brev-close" aria-label="Fermer le bréviaire"><i class="fa-solid fa-xmark"></i></button>
+      </div>
     </div>
     <div class="breviary-body" id="brev-body">
       <div class="brev-loading">
