@@ -2013,13 +2013,35 @@ function initRadioPlayer() {
     const prayerEl = modal.querySelector('#tv-modal-prayer');
     const ext      = modal.querySelector('#tv-modal-external');
     const fbBtn    = modal.querySelector('#tv-modal-fallback-btn');
+    const frameWrap = modal.querySelector('.tv-modal-frame-wrap');
     channel.textContent  = name || '';
     prayerEl.textContent = prayer ? `${prayer}${time ? ' · ' + time : ''}` : '';
     if (ext)   ext.href   = web || '#';
     if (fbBtn) fbBtn.href  = web || '#';
-    iframe.src = embed;
     modal.classList.remove('hidden');
     document.body.classList.add('tv-modal-open');
+
+    // Marqueur 'kto-live' → résout l'ID du DIRECT actuel via l'API YouTube,
+    // puis embarque youtube.com/embed/{id} (les vidéos live démarrent au point
+    // live, avec rewind possible). Fallback sur l'ID connu si pas de direct.
+    if (embed === 'kto-live') {
+      iframe.removeAttribute('src');
+      if (frameWrap) frameWrap.classList.add('tv-loading');
+      fetch('/api/seo?p=kto-live')
+        .then(r => r.ok ? r.json() : null)
+        .then(data => {
+          if (frameWrap) frameWrap.classList.remove('tv-loading');
+          if (modal.classList.contains('hidden')) return; // fermée entre-temps
+          const vid = (data && data.videoId) || 'VN1_PRBoVHU';
+          iframe.src = `https://www.youtube.com/embed/${vid}?autoplay=1&rel=0`;
+        })
+        .catch(() => {
+          if (frameWrap) frameWrap.classList.remove('tv-loading');
+          iframe.src = 'https://www.youtube.com/embed/VN1_PRBoVHU?autoplay=1&rel=0';
+        });
+    } else {
+      iframe.src = embed;
+    }
   }
   function closeTvModal() {
     const modal = document.getElementById('tv-modal');
@@ -3429,7 +3451,9 @@ const SOURCES = {
   //    et le remplacer ici. Le bouton "ouvrir en externe" de la modale sert
   //    de filet de sécurité en attendant.
   kto: { n: 'KTO',              s: '', w: 'https://www.youtube.com/@KTOTV/live',
-         embed: 'https://www.youtube.com/embed/VN1_PRBoVHU?autoplay=1&rel=0' },
+         // Marqueur 'kto-live' → la modale résout l'ID du DIRECT actuel via
+         // /api/seo?p=kto-live (API YouTube), pour démarrer au point live.
+         embed: 'kto-live' },
   lou: { n: 'Lourdes',          s: '', w: 'https://www.lourdes-france.com/lourdesplus/' },
   // jer (Fraternités de Jérusalem) retiré : pas de retransmission live trouvée
   // sol (Solesmes) retiré : ne diffuse pas en live sur internet

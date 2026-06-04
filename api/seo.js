@@ -190,10 +190,46 @@ ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
 </html>`;
 }
 
+// ─── KTO : ID de la vidéo YouTube en direct (API YouTube Data v3) ──
+// Renvoie JSON { videoId, live }. La vidéo live démarre au point LIVE
+// (avec rewind possible) — contrairement à un ID codé en dur (enregistrement).
+const KTO_YT_CHANNEL = 'UCg0L6cPMNLv1gjsyzYqMG7g';
+const KTO_FALLBACK_VIDEO = 'VN1_PRBoVHU'; // dernier direct connu (si pas de live / pas de clé)
+
+async function ktoLiveVideoId() {
+  const key = process.env.YOUTUBE_API_KEY;
+  if (!key) return { videoId: KTO_FALLBACK_VIDEO, live: false, source: 'no_key' };
+  try {
+    const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&channelId=${KTO_YT_CHANNEL}&eventType=live&type=video&maxResults=1&key=${key}`;
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 4000);
+    const r = await fetch(url, { signal: ctrl.signal });
+    clearTimeout(t);
+    if (!r.ok) return { videoId: KTO_FALLBACK_VIDEO, live: false, source: 'api_error' };
+    const data = await r.json();
+    const id = data?.items?.[0]?.id?.videoId;
+    if (id) return { videoId: id, live: true, source: 'live' };
+    return { videoId: KTO_FALLBACK_VIDEO, live: false, source: 'no_live' };
+  } catch (_) {
+    return { videoId: KTO_FALLBACK_VIDEO, live: false, source: 'exception' };
+  }
+}
+
 export default async function handler(req, res) {
   const p = (req.query.p || '').toString();
   const now = parisNow();
   const dateLabel = frDate(now);
+
+  // ── /api/seo?p=kto-live → JSON (avant le Content-Type HTML) ──
+  if (p === 'kto-live') {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    // Cache CDN 10 min : limite les appels API (quota YouTube) tout en
+    // trouvant le direct dans les ~10 min suivant son lancement.
+    res.setHeader('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=1800');
+    const out = await ktoLiveVideoId();
+    res.status(200).json(out);
+    return;
+  }
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   // CDN : page fraîche 6h, revalidation en arrière-plan 24h
