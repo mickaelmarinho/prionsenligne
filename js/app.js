@@ -536,6 +536,13 @@ function initCalendar() {
       }
     }
 
+    // Bouton réglages voix du calendrier
+    const ddVoiceCfg = document.getElementById('dd-voice-cfg');
+    if (ddVoiceCfg) {
+      if (!('speechSynthesis' in window) || !saint) ddVoiceCfg.style.display = 'none';
+      else { ddVoiceCfg.style.display = ''; ddVoiceCfg.onclick = () => window._openVoiceSettings?.(); }
+    }
+
     // Bouton « Écouter » : lit le saint + sa description à voix haute
     const listenDdBtn = document.getElementById('dd-listen');
     if (listenDdBtn) {
@@ -2273,6 +2280,19 @@ function initHamburger() {
       document.getElementById('about-modal')?.classList.remove('hidden');
     }
   });
+
+  // ── Voix de lecture (réglages voix + vitesse, accessible partout)
+  const hmVoice = document.getElementById('hm-voice');
+  if (hmVoice) {
+    if (!('speechSynthesis' in window)) {
+      hmVoice.style.display = 'none'; // navigateur sans synthèse vocale
+    } else {
+      hmVoice.addEventListener('click', () => {
+        closeMenu();
+        window._openVoiceSettings?.();
+      });
+    }
+  }
 
   // ── Ajouter à l'écran d'accueil — toujours visible dans le menu ──
   const hmInstall = document.getElementById('hm-install');
