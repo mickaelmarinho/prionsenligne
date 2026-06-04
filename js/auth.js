@@ -127,7 +127,11 @@ function _renderCaptchaIfNeeded() {
     _hcaptchaWidgetId = window.hcaptcha.render(container, {
       sitekey: HCAPTCHA_SITE_KEY,
       theme:   'light',
-      size:    'normal',
+      // Mode INVISIBLE : aucune case à cocher ni puzzle pour les utilisateurs
+      // légitimes. Le token est obtenu en arrière-plan via hcaptcha.execute()
+      // au moment de la soumission ; hCaptcha n'affiche un défi que s'il juge
+      // la requête vraiment suspecte. (#8 — éviter la friction de connexion.)
+      size:    'invisible',
       callback:  token => { _hcaptchaToken = token; },
       'expired-callback': () => { _hcaptchaToken = null; },
       'error-callback':   () => { _hcaptchaToken = null; },
@@ -142,12 +146,38 @@ function _resetCaptcha() {
   }
 }
 
+// Obtient un token captcha de façon TRANSPARENTE (mode invisible).
+// Retourne null si pas de protection (pas de site key) ou si la lib n'est pas
+// chargée. Sinon déclenche hcaptcha.execute() — qui résout instantanément pour
+// les utilisateurs légitimes, ou affiche un défi seulement si nécessaire.
+async function _getCaptchaToken() {
+  if (!HCAPTCHA_SITE_KEY) return null;
+  if (!window.hcaptcha) return null;
+  _renderCaptchaIfNeeded();
+  if (_hcaptchaWidgetId === null) return null;
+  try {
+    const res = await window.hcaptcha.execute(_hcaptchaWidgetId, { async: true });
+    // En mode async, execute() résout avec { response, key }
+    const token = (res && (res.response || res.token)) || _hcaptchaToken || null;
+    _hcaptchaToken = token;
+    return token;
+  } catch (_) {
+    return null;
+  }
+}
+
 function _showCaptcha(show) {
+  // Mode invisible : aucun élément visible à afficher. On se contente de RENDRE
+  // le widget (caché) dès qu'une route d'auth en a besoin, pour que
+  // hcaptcha.execute() fonctionne au moment de la soumission.
+  const need = !!(HCAPTCHA_SITE_KEY && show);
   const wrap = $id('auth-captcha-wrap');
-  if (!wrap) return;
-  // Si pas de site key, on n'affiche jamais (graceful degradation)
-  if (!HCAPTCHA_SITE_KEY) { wrap.style.display = 'none'; return; }
-  wrap.style.display = show ? '' : 'none';
+  const note = $id('auth-captcha-note');
+  if (note) note.style.display = need ? '' : 'none';
+  // Conteneur gardé dans le flux (height:0) quand le captcha est requis, pour
+  // que hcaptcha.render() ne tombe pas sur un parent display:none.
+  if (wrap) wrap.style.display = need ? 'block' : 'none';
+  if (!HCAPTCHA_SITE_KEY) return;
   if (show) _renderCaptchaIfNeeded();
 }
 
@@ -1609,14 +1639,18 @@ function initAuthUI() {
       const email    = $id('auth-email')?.value.trim();
       const password = $id('auth-password')?.value;
       if (!email || !password) { showAuthError('Veuillez remplir tous les champs.'); return; }
-      // Supabase exige un token captcha sur la connexion aussi
-      if (HCAPTCHA_SITE_KEY && !_hcaptchaToken) {
-        showAuthError('Veuillez compléter la vérification anti-robot.');
-        return;
-      }
       setAuthLoading(true);
+      // Token captcha obtenu en arrière-plan (mode invisible) — sans friction.
       const signInOpts = {};
-      if (_hcaptchaToken) signInOpts.captchaToken = _hcaptchaToken;
+      if (HCAPTCHA_SITE_KEY) {
+        const tok = await _getCaptchaToken();
+        if (!tok) {
+          setAuthLoading(false);
+          showAuthError('La vérification anti-robot a échoué. Veuillez réessayer.');
+          return;
+        }
+        signInOpts.captchaToken = tok;
+      }
       const { error } = await _sb.auth.signInWithPassword({ email, password, options: signInOpts });
       _resetCaptcha(); // un token = une utilisation
       setAuthLoading(false);
@@ -1642,11 +1676,6 @@ function initAuthUI() {
       if (!email || !password) { showAuthError('Veuillez remplir tous les champs.'); return; }
       if (password.length < 6) { showAuthError('Le mot de passe doit comporter au moins 6 caractères.'); return; }
       if (password !== confirm) { showAuthError('Les mots de passe ne correspondent pas.'); return; }
-      // Vérifie le captcha si activé
-      if (HCAPTCHA_SITE_KEY && !_hcaptchaToken) {
-        showAuthError('Veuillez compléter la vérification anti-robot.');
-        return;
-      }
       setAuthLoading(true);
       // Pays choisi (optionnel) — ignoré si "other" pour ne pas stocker un drapeau "neutre"
       const countryVal = $id('auth-country')?.value || '';
@@ -1654,7 +1683,16 @@ function initAuthUI() {
       const signUpMeta = { name: name || email.split('@')[0] };
       if (countryToSave) signUpMeta.country = countryToSave;
       const signUpOpts = { data: signUpMeta };
-      if (_hcaptchaToken) signUpOpts.captchaToken = _hcaptchaToken;
+      // Token captcha obtenu en arrière-plan (mode invisible) — sans friction.
+      if (HCAPTCHA_SITE_KEY) {
+        const tok = await _getCaptchaToken();
+        if (!tok) {
+          setAuthLoading(false);
+          showAuthError('La vérification anti-robot a échoué. Veuillez réessayer.');
+          return;
+        }
+        signUpOpts.captchaToken = tok;
+      }
       const { data: signUpData, error } = await _sb.auth.signUp({
         email, password,
         options: signUpOpts,
@@ -1676,13 +1714,18 @@ function initAuthUI() {
     else if (_formMode === 'reset-request') {
       const email = $id('auth-email')?.value.trim();
       if (!email) { showAuthError('Veuillez entrer votre adresse e-mail.'); return; }
-      if (HCAPTCHA_SITE_KEY && !_hcaptchaToken) {
-        showAuthError('Veuillez compléter la vérification anti-robot.');
-        return;
-      }
       setAuthLoading(true);
       const resetOpts = { redirectTo: window.location.origin + '/agenda' };
-      if (_hcaptchaToken) resetOpts.captchaToken = _hcaptchaToken;
+      // Token captcha obtenu en arrière-plan (mode invisible) — sans friction.
+      if (HCAPTCHA_SITE_KEY) {
+        const tok = await _getCaptchaToken();
+        if (!tok) {
+          setAuthLoading(false);
+          showAuthError('La vérification anti-robot a échoué. Veuillez réessayer.');
+          return;
+        }
+        resetOpts.captchaToken = tok;
+      }
       const { error } = await _sb.auth.resetPasswordForEmail(email, resetOpts);
       _resetCaptcha();
       setAuthLoading(false);
