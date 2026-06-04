@@ -1944,6 +1944,13 @@ function initBreviary() {
   if (closeBtn) closeBtn.addEventListener('click', closeBreviary);
   if (overlay)  overlay.addEventListener('click', closeBreviary);
 
+  // Bouton réglages voix (bréviaire)
+  const voiceCfgBtn = document.getElementById('brev-voice-cfg');
+  if (voiceCfgBtn) {
+    if (!window._pelReader?.supported()) voiceCfgBtn.style.display = 'none';
+    else voiceCfgBtn.addEventListener('click', () => window._openVoiceSettings?.());
+  }
+
   // Bouton « Écouter » : lit à voix haute les textes affichés du bréviaire
   const listenBtn = document.getElementById('brev-listen');
   if (listenBtn) {
@@ -8205,15 +8212,47 @@ document.addEventListener('DOMContentLoaded', () => {
   const PelReader = {
     voice: null, queue: [], idx: 0, state: 'idle', btn: null,
     rate: 0.95,
+    // Score de qualité d'une voix (plus c'est haut, plus c'est naturel)
+    _score(v) {
+      const n = (v.name || '') + ' ' + (v.voiceURI || '');
+      let s = 0;
+      if (/natural|neural|enhanced|premium/i.test(n)) s += 100; // voix neurales
+      if (/online/i.test(n))                          s += 60;  // Edge "Online (Natural)"
+      if (/google/i.test(n))                          s += 50;  // Chrome "Google français"
+      if (/siri/i.test(n))                            s += 50;  // iOS Siri
+      if (!v.localService)                            s += 40;  // voix réseau = souvent neurales
+      if (/amélie|amelie|thomas|aurélie|aurelie|denise|henri|éloïse|eloise|charlotte/i.test(n)) s += 25;
+      if (/hortense|paul\b|julie|espeak|compact/i.test(n)) s -= 40; // anciennes voix robotiques
+      return s;
+    },
+    // Liste des voix FR triées par qualité décroissante
+    frVoices() {
+      if (!this.supported()) return [];
+      const vs = (window.speechSynthesis.getVoices() || []).filter(v => /^fr/i.test(v.lang));
+      return vs.sort((a, b) => this._score(b) - this._score(a));
+    },
     supported() { return typeof window !== 'undefined' && 'speechSynthesis' in window; },
     init() {
       if (!this.supported()) return;
       const pick = () => {
-        const vs = window.speechSynthesis.getVoices() || [];
-        this.voice = vs.find(v => /^fr/i.test(v.lang)) || vs.find(v => /fran|french/i.test(v.name)) || null;
+        const ranked = this.frVoices();
+        if (ranked.length === 0) return;
+        // Respecte le choix sauvegardé, sinon meilleure voix auto
+        let saved = null;
+        try { saved = localStorage.getItem('pel.voiceURI'); } catch (_) {}
+        try { const r = localStorage.getItem('pel.voiceRate'); if (r) this.rate = parseFloat(r) || this.rate; } catch (_) {}
+        this.voice = (saved && ranked.find(v => v.voiceURI === saved)) || ranked[0];
       };
       pick();
       try { window.speechSynthesis.onvoiceschanged = pick; } catch (_) {}
+    },
+    setVoice(uri) {
+      const v = this.frVoices().find(x => x.voiceURI === uri);
+      if (v) { this.voice = v; try { localStorage.setItem('pel.voiceURI', uri); } catch (_) {} }
+    },
+    setRate(r) {
+      this.rate = Math.max(0.6, Math.min(1.3, parseFloat(r) || 0.95));
+      try { localStorage.setItem('pel.voiceRate', String(this.rate)); } catch (_) {}
     },
     // Découpe en phrases pour fiabilité (évite la coupure à ~15 s de Chrome)
     _chunk(text) {
@@ -8270,6 +8309,89 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   PelReader.init();
   window._pelReader = PelReader;
+
+  // Fenêtre de réglages de la voix (choix de la voix + vitesse + test)
+  function openVoiceSettings() {
+    const reader = window._pelReader;
+    if (!reader?.supported()) return;
+    const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    let modal = document.getElementById('voice-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'voice-modal';
+      modal.className = 'voice-modal hidden';
+      modal.innerHTML = `
+        <div class="voice-backdrop" data-vc-close></div>
+        <div class="voice-panel" role="dialog" aria-modal="true" aria-label="Réglages de la voix">
+          <div class="voice-head">
+            <span class="voice-title"><i class="fa-solid fa-sliders"></i> Voix de lecture</span>
+            <button class="voice-close" data-vc-close aria-label="Fermer"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+          <div class="voice-section-label">Vitesse</div>
+          <div class="voice-rates" id="voice-rates">
+            <button data-rate="0.8">Lente</button>
+            <button data-rate="0.95">Normale</button>
+            <button data-rate="1.15">Rapide</button>
+          </div>
+          <div class="voice-section-label">Voix disponibles <span class="voice-hint">(les plus naturelles en haut)</span></div>
+          <div class="voice-list" id="voice-list"></div>
+          <button class="voice-test" id="voice-test"><i class="fa-solid fa-play"></i> Tester la voix</button>
+        </div>`;
+      document.body.appendChild(modal);
+      modal.addEventListener('click', e => { if (e.target.closest('[data-vc-close]')) closeVoiceSettings(); });
+      document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeVoiceSettings(); });
+      // Test
+      modal.querySelector('#voice-test').addEventListener('click', () => {
+        reader.read('Je vous salue Marie, pleine de grâce, le Seigneur est avec vous.', null);
+      });
+    }
+    // Vitesse active
+    modal.querySelectorAll('#voice-rates button').forEach(b => {
+      b.classList.toggle('active', Math.abs(parseFloat(b.dataset.rate) - reader.rate) < 0.06);
+      b.onclick = () => {
+        reader.stop();
+        reader.setRate(b.dataset.rate);
+        modal.querySelectorAll('#voice-rates button').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+      };
+    });
+    // Liste des voix
+    const list = modal.querySelector('#voice-list');
+    const voices = reader.frVoices();
+    if (voices.length === 0) {
+      list.innerHTML = '<div class="voice-empty">Aucune voix française détectée sur cet appareil.</div>';
+    } else {
+      list.innerHTML = voices.map((v, i) => {
+        const active = reader.voice && v.voiceURI === reader.voice.voiceURI;
+        const quality = reader._score(v) >= 60 ? '<span class="voice-badge">naturelle</span>' : '';
+        return `<button class="voice-item${active ? ' active' : ''}" data-uri="${esc(v.voiceURI)}">
+          <span class="voice-item-name">${esc(v.name)}</span>${quality}
+          ${active ? '<i class="fa-solid fa-check"></i>' : ''}
+        </button>`;
+      }).join('');
+      list.querySelectorAll('.voice-item').forEach(b => {
+        b.onclick = () => {
+          reader.stop();
+          reader.setVoice(b.dataset.uri);
+          list.querySelectorAll('.voice-item').forEach(x => { x.classList.remove('active'); const c = x.querySelector('.fa-check'); if (c) c.remove(); });
+          b.classList.add('active');
+          if (!b.querySelector('.fa-check')) b.insertAdjacentHTML('beforeend', '<i class="fa-solid fa-check"></i>');
+          // aperçu auto
+          reader.read('Bonjour, voici un aperçu de cette voix.', null);
+        };
+      });
+    }
+    modal.classList.remove('hidden');
+    document.body.classList.add('voice-modal-open');
+  }
+  function closeVoiceSettings() {
+    const modal = document.getElementById('voice-modal');
+    if (!modal) return;
+    try { window._pelReader?.stop(); } catch (_) {}
+    modal.classList.add('hidden');
+    document.body.classList.remove('voice-modal-open');
+  }
+  window._openVoiceSettings = openVoiceSettings;
 
   // Fonction GLOBALE réutilisable : génère et partage une carte pour
   // n'importe quel saint. opts = { name, eyebrow, date, btn? }

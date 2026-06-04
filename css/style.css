@@ -366,13 +366,78 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
 .pel-listen-btn.reading i { animation: listenPulse 1.1s ease-in-out infinite; }
 @keyframes listenPulse { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
 
-/* En-tête bréviaire : aligne Écouter + Fermer */
+/* En-tête bréviaire : aligne Écouter + réglages + Fermer */
 .breviary-header-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-shrink: 0;
 }
+.pel-voice-cfg {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(201,168,76,.4);
+  background: rgba(201,168,76,.10);
+  color: var(--gold);
+  cursor: pointer;
+  font-size: 13px;
+  transition: all .15s;
+  flex-shrink: 0;
+}
+.pel-voice-cfg:hover { background: var(--gold); color: #14110e; }
+
+/* Fenêtre de réglages de la voix */
+.voice-modal {
+  position: fixed; inset: 0; z-index: 10050;
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.voice-modal.hidden { display: none; }
+.voice-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.6); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+.voice-panel {
+  position: relative; width: 100%; max-width: 420px;
+  background: #1e1c18; color: #fff; border-radius: 14px;
+  box-shadow: 0 12px 48px rgba(0,0,0,.5);
+  padding: 18px 20px 20px; max-height: 80vh; overflow-y: auto;
+  border: 1px solid rgba(201,168,76,.25);
+}
+.voice-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.voice-title { font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 16px; color: var(--gold); }
+.voice-title i { margin-right: 6px; }
+.voice-close { width: 32px; height: 32px; border-radius: 50%; border: none; background: rgba(255,255,255,.07); color: rgba(255,255,255,.7); cursor: pointer; font-size: 14px; }
+.voice-close:hover { background: rgba(255,255,255,.14); color: #fff; }
+.voice-section-label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: rgba(255,255,255,.5); margin: 14px 0 8px; font-weight: 600; }
+.voice-hint { text-transform: none; letter-spacing: 0; font-weight: 400; color: rgba(255,255,255,.35); }
+.voice-rates { display: flex; gap: 8px; }
+.voice-rates button {
+  flex: 1; padding: 9px 0; border-radius: 9px; border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04); color: rgba(255,255,255,.7);
+  font-family: 'Outfit', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .15s;
+}
+.voice-rates button:hover { border-color: var(--gold); color: #fff; }
+.voice-rates button.active { background: rgba(201,168,76,.18); border-color: var(--gold); color: var(--gold); font-weight: 600; }
+.voice-list { display: flex; flex-direction: column; gap: 4px; max-height: 260px; overflow-y: auto; }
+.voice-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 11px 14px; border-radius: 9px; border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.03); color: rgba(255,255,255,.85);
+  font-family: 'Outfit', sans-serif; font-size: 14px; cursor: pointer; text-align: left; transition: all .15s;
+}
+.voice-item:hover { border-color: var(--gold); background: rgba(201,168,76,.08); }
+.voice-item.active { border-color: var(--gold); background: rgba(201,168,76,.14); color: #fff; }
+.voice-item-name { flex: 1; }
+.voice-item .fa-check { color: var(--gold); font-size: 12px; }
+.voice-badge { font-size: 10px; background: rgba(108,193,108,.2); color: #8fd48f; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.voice-empty { font-size: 13px; color: rgba(255,255,255,.5); padding: 10px 0; }
+.voice-test {
+  display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
+  margin-top: 14px; padding: 12px; border-radius: 10px; border: none;
+  background: var(--gold); color: #14110e; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 14px; cursor: pointer; transition: filter .15s;
+}
+.voice-test:hover { filter: brightness(1.08); }
+body.voice-modal-open { overflow: hidden; }
 /* Ligne d'actions du détail calendrier (Écouter + Partager) */
 .dd-actions-row {
   display: flex;
