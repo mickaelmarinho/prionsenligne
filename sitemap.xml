@@ -40,6 +40,12 @@
   </url>
 
   <url>
+    <loc>https://prionsenligne.fr/paroisses</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <url>
     <loc>https://prionsenligne.fr/saints/sainte-therese-de-lisieux</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>

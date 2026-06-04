@@ -71,6 +71,14 @@
     {
       "source": "/saints/:slug",
       "destination": "/api/seo?p=saint-page&s=:slug"
+    },
+    {
+      "source": "/paroisses",
+      "destination": "/api/seo?p=paroisses"
+    },
+    {
+      "source": "/affiche",
+      "destination": "/api/seo?p=affiche"
     }
   ],
   "headers": [

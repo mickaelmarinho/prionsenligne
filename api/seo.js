@@ -24,6 +24,10 @@ import { SAINTS, SAINTS_BY_SLUG } from '../lib/saints.js';
 
 const SITE = 'https://prionsenligne.fr';
 
+// QR code (SVG inline) pointant vers https://prionsenligne.fr — pour l'affiche
+// paroisse imprimable. Généré avec la lib qrcode (viewBox 33×33, crispEdges).
+const QR_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 33 33" shape-rendering="crispEdges"><path fill="#ffffff" d="M0 0h33v33H0z"/><path stroke="#000000" d="M4 4.5h7m2 0h1m3 0h1m2 0h1m1 0h7M4 5.5h1m5 0h1m3 0h1m1 0h1m2 0h1m2 0h1m5 0h1M4 6.5h1m1 0h3m1 0h1m1 0h5m1 0h3m1 0h1m1 0h3m1 0h1M4 7.5h1m1 0h3m1 0h1m1 0h1m1 0h1m2 0h2m3 0h1m1 0h3m1 0h1M4 8.5h1m1 0h3m1 0h1m1 0h4m4 0h1m1 0h1m1 0h3m1 0h1M4 9.5h1m5 0h1m1 0h1m1 0h1m2 0h3m2 0h1m5 0h1M4 10.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M12 11.5h4m2 0h1m1 0h1M4 12.5h1m1 0h5m2 0h1m2 0h3m3 0h5M4 13.5h1m3 0h2m6 0h2m2 0h2m1 0h1m3 0h1M4 14.5h1m1 0h6m4 0h5m1 0h1m2 0h1m1 0h2M7 15.5h1m3 0h6m2 0h2m7 0h1M5 16.5h1m2 0h1m1 0h3m1 0h1m2 0h3m1 0h4m1 0h3M4 17.5h2m1 0h1m1 0h1m1 0h1m2 0h1m1 0h1m3 0h1m2 0h1m1 0h1m1 0h1M4 18.5h1m3 0h1m1 0h3m5 0h3m2 0h3m1 0h2M4 19.5h1m1 0h1m1 0h2m1 0h1m1 0h2m1 0h1m1 0h1m2 0h4m3 0h1M4 20.5h1m1 0h1m3 0h2m4 0h2m1 0h6m1 0h1M12 21.5h1m4 0h1m2 0h1m3 0h2M4 22.5h7m3 0h5m1 0h1m1 0h1m1 0h1m1 0h3M4 23.5h1m5 0h1m1 0h4m4 0h1m3 0h2m2 0h1M4 24.5h1m1 0h3m1 0h1m1 0h2m1 0h10m1 0h1M4 25.5h1m1 0h3m1 0h1m1 0h1m3 0h1m2 0h4m1 0h5M4 26.5h1m1 0h3m1 0h1m1 0h3m1 0h3m1 0h1m4 0h2m1 0h1M4 27.5h1m5 0h1m2 0h1m1 0h2m2 0h3m1 0h3m2 0h1M4 28.5h7m1 0h1m1 0h1m2 0h2m2 0h1m1 0h6"/></svg>';
+
 // Libellés pays pour les pages saints
 const COUNTRY_LABELS = {
   fr: 'France', be: 'Belgique', ch: 'Suisse', ca: 'Québec / Canada',
@@ -178,6 +182,7 @@ ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
     <a href="/evangile-du-jour">Évangile du jour</a>
     <a href="/saints">Tous les saints</a>
     <a href="/messe-en-direct">Messe en direct</a>
+    <a href="/paroisses">Pour les paroisses</a>
     <a href="/">Accueil</a>
   </div>
 </div></main>
@@ -393,6 +398,129 @@ export default async function handler(req, res) {
       title, desc, canonical, h1: 'Messe en direct', sub: 'Messes diffusées en direct',
       bodyHtml, jsonLd, otherLink: { href: '/agenda', label: 'Voir les horaires du jour' },
     }));
+    return;
+  }
+
+  // ── /paroisses (argumentaire pour le clergé) ──
+  if (p === 'paroisses') {
+    const canonical = `${SITE}/paroisses`;
+    const title = 'PrionsEnLigne pour les paroisses — outil gratuit pour vos fidèles | PrionsEnLigne';
+    const desc = "Un outil gratuit, sans publicité, pour accompagner les fidèles empêchés (malades, personnes âgées, isolés, diaspora) : offices, messes en direct, chapelet guidé, calendrier liturgique. Affiche imprimable avec QR code pour votre paroisse.";
+    const bodyHtml = `
+      <p class="sub">Chers prêtres, diacres et équipes paroissiales</p>
+      <div class="card">
+        <h2>Un service au service de votre paroisse</h2>
+        <p>PrionsEnLigne est un outil <strong>entièrement gratuit, sans publicité et sans collecte de données</strong>, pensé pour <strong>compléter</strong> — et non remplacer — la vie paroissiale. Il aide les fidèles qui ne peuvent pas toujours se rendre à l'église à rester unis à la prière de l'Église.</p>
+        <p><strong>Pour qui&nbsp;?</strong></p>
+        <ul class="saint-list">
+          <li>Les <strong>personnes âgées</strong> et à mobilité réduite</li>
+          <li>Les <strong>malades</strong> et hospitalisés</li>
+          <li>Les fidèles <strong>isolés</strong> ou en zone rurale</li>
+          <li>La <strong>diaspora francophone</strong> (Afrique, Québec, Antilles…)</li>
+        </ul>
+        <p><strong>Ce qu'ils y trouvent&nbsp;:</strong> les offices du bréviaire (laudes, vêpres, complies), les messes en direct (radio &amp; TV catholiques), le chapelet numérique guidé à voix haute, la Bible et le calendrier liturgique des saints — le tout sur ordinateur, tablette ou téléphone.</p>
+      </div>
+      <div class="card">
+        <h2>Notre engagement pastoral</h2>
+        <p>Nous rappelons clairement, sur chaque messe diffusée, que <strong>la participation physique à l'Eucharistie est irremplaçable</strong>. Suivre une messe à distance est une aide précieuse pour les empêchés, jamais un substitut. Notre but&nbsp;: ramener vers la paroisse, pas en éloigner.</p>
+      </div>
+      <div class="card">
+        <h2>Comment soutenir&nbsp;? C'est simple et gratuit</h2>
+        <ul class="saint-list">
+          <li><strong>Affichez le QR code</strong> au fond de l'église, au presbytère, à la sortie de la messe</li>
+          <li><strong>Glissez l'adresse</strong> dans votre bulletin paroissial ou votre feuille de chants</li>
+          <li><strong>Parlez-en</strong> aux personnes que vous visitez (malades, aînés)</li>
+        </ul>
+        <p>Une <strong>affiche A4 prête à imprimer</strong>, avec QR code, est à votre disposition&nbsp;:</p>
+        <p><a class="cta" href="/affiche">🖨️ Voir &amp; imprimer l'affiche paroisse</a></p>
+        <p class="src">Une question, un projet de collaboration&nbsp;? Écrivez-nous à contact@prionsenligne.fr — nous serons heureux d'échanger.</p>
+      </div>`;
+    const jsonLd = JSON.stringify({
+      '@context': 'https://schema.org', '@type': 'WebPage',
+      name: title, description: desc, url: canonical,
+    });
+    res.status(200).send(pageShell({
+      title, desc, canonical, h1: 'PrionsEnLigne pour les paroisses', sub: 'Un outil gratuit au service du clergé',
+      bodyHtml, jsonLd, otherLink: { href: '/affiche', label: 'Affiche à imprimer' },
+    }));
+    return;
+  }
+
+  // ── /affiche (poster A4 imprimable avec QR code) ──
+  if (p === 'affiche') {
+    const canonical = `${SITE}/affiche`;
+    res.status(200).send(`<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Affiche paroisse — à imprimer | PrionsEnLigne</title>
+<meta name="description" content="Affiche A4 imprimable avec QR code pour faire connaître PrionsEnLigne dans votre paroisse.">
+<link rel="canonical" href="${canonical}">
+<meta name="robots" content="noindex">
+<style>
+  :root{--ink:#1e1c18;--cream:#f7f3ea;--navy:#1a2744;--gold:#c9a84c;--soft:#6b6357}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Georgia,'Times New Roman',serif;background:#e9e6df;color:var(--ink);padding:24px;display:flex;flex-direction:column;align-items:center;gap:18px}
+  .toolbar{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+  .toolbar button,.toolbar a{font-family:system-ui,sans-serif;font-size:14px;font-weight:600;padding:11px 22px;border-radius:999px;border:none;cursor:pointer;text-decoration:none}
+  .btn-print{background:var(--navy);color:#fff}
+  .btn-back{background:#fff;color:var(--navy);border:1px solid #ccc}
+  .toolbar p{flex-basis:100%;text-align:center;font-family:system-ui,sans-serif;font-size:13px;color:var(--soft)}
+  /* Feuille A4 */
+  .sheet{width:210mm;max-width:100%;aspect-ratio:210/297;background:var(--cream);box-shadow:0 6px 30px rgba(0,0,0,.18);
+    display:flex;flex-direction:column;align-items:center;text-align:center;padding:18mm 16mm;position:relative}
+  .frame{position:absolute;inset:8mm;border:2px solid var(--gold)}
+  .frame::after{content:"";position:absolute;inset:4mm;border:1px solid rgba(201,168,76,.5)}
+  .cross{margin-top:6mm;width:64px;height:64px;position:relative}
+  .cross b{position:absolute;background:var(--navy)}
+  .cross .v{left:50%;top:0;width:10px;height:64px;transform:translateX(-50%)}
+  .cross .h{left:50%;top:16px;width:38px;height:10px;transform:translateX(-50%)}
+  .brand{font-size:34px;color:var(--navy);margin-top:8px;letter-spacing:.5px}
+  .brand span{color:var(--gold)}
+  .tagline{font-style:italic;color:var(--soft);font-size:18px;margin-top:4px}
+  .hr{width:70px;height:3px;background:var(--gold);margin:16px 0}
+  .lead{font-size:20px;line-height:1.5;color:var(--ink);max-width:150mm;margin-top:2mm}
+  .lead strong{color:var(--navy)}
+  .qr-wrap{margin:6mm 0 4mm;padding:5mm;background:#fff;border:1px solid #e0d9c8;border-radius:8px}
+  .qr-wrap svg{width:46mm;height:46mm;display:block}
+  .scan{font-family:system-ui,sans-serif;font-size:15px;color:var(--navy);font-weight:600}
+  .url{font-family:system-ui,sans-serif;font-size:26px;color:var(--gold);font-weight:700;letter-spacing:.5px;margin-top:3mm}
+  .features{font-size:15px;color:var(--soft);margin-top:5mm;line-height:1.7;max-width:150mm}
+  .pastoral{margin-top:auto;font-size:13px;color:var(--soft);font-style:italic;max-width:150mm;line-height:1.5}
+  .free{font-family:system-ui,sans-serif;display:inline-block;margin-top:4mm;background:rgba(201,168,76,.18);color:var(--navy);font-weight:600;font-size:13px;padding:5px 16px;border-radius:999px}
+  @media print {
+    body{background:#fff;padding:0;gap:0}
+    .toolbar{display:none}
+    .sheet{box-shadow:none;width:100%;height:100%}
+  }
+  @page{size:A4;margin:0}
+</style>
+</head>
+<body>
+  <div class="toolbar">
+    <button class="btn-print" onclick="window.print()">🖨️ Imprimer cette affiche</button>
+    <a class="btn-back" href="/paroisses">← Retour</a>
+    <p>Conseil : imprimez en A4, couleur, qualité normale. À afficher au fond de l'église ou au presbytère.</p>
+  </div>
+  <div class="sheet">
+    <div class="frame"></div>
+    <div class="cross"><b class="v"></b><b class="h"></b></div>
+    <div class="brand">Prions<span>EnLigne</span></div>
+    <div class="tagline">Prier ensemble, chaque jour</div>
+    <div class="hr"></div>
+    <p class="lead">Vous ne pouvez pas toujours vous rendre à l'église&nbsp;?<br>
+      <strong>Restez unis à la prière de l'Église</strong>, où que vous soyez.</p>
+    <div class="qr-wrap">${QR_SVG}</div>
+    <div class="scan">Scannez avec l'appareil photo de votre téléphone</div>
+    <div class="url">prionsenligne.fr</div>
+    <div class="features">Offices du bréviaire · Messes en direct · Chapelet guidé à voix haute<br>
+      Bible · Calendrier liturgique des saints</div>
+    <span class="free">100&nbsp;% gratuit · sans publicité</span>
+    <p class="pastoral">La participation physique à la messe reste irremplaçable. Cet outil accompagne ceux qui ne peuvent pas se déplacer (malades, personnes âgées, isolés) et invite chacun à rejoindre sa paroisse dès qu'il le peut.</p>
+  </div>
+</body>
+</html>`);
     return;
   }
 
