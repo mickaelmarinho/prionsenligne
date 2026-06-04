@@ -2207,6 +2207,66 @@ body.tv-modal-open { overflow: hidden; }
   border-color: var(--gold-pale);
 }
 
+/* Lecture directe depuis la page Sources (#6) — bouton « Écouter ici » qui
+   lance le lecteur radio intégré sans quitter le site. */
+.src-play-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.src-play-btn {
+  flex: 1 1 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  background: var(--navy);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background .15s, transform .12s, box-shadow .15s;
+}
+.src-play-btn:hover {
+  background: #16304f;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0,0,0,.18);
+}
+.src-play-btn:active { transform: translateY(0); }
+.src-play-btn i { font-size: 11px; }
+.src-play-site {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text-soft);
+  text-decoration: none;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: border-color .15s, color .15s;
+}
+.src-play-site:hover { border-color: var(--gold-pale); color: var(--navy); }
+.src-play-site i { font-size: 10px; }
+
+/* Sous-item d'une carte combo rendu cliquable pour lecture directe */
+.src-combo-play { cursor: pointer; }
+.src-combo-play:hover {
+  background: rgba(201,168,76,.08);
+  border-color: var(--gold-pale);
+  transform: translateY(-1px);
+}
+.src-combo-play:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
 /* Carte source combinée (ex: RCF Notre-Dame + RCF national dans une seule carte) */
 .src-card-combo {
   display: block;
@@ -2586,7 +2646,9 @@ body.tv-modal-open { overflow: hidden; }
 .radio-player {
   position: fixed;
   left: 0; right: 0;
-  bottom: 70px; /* au-dessus de la bottom-nav mobile */
+  /* Collé pile au-dessus de la bottom-nav (hauteur réelle = 45px contenu
+     + padding bas dynamique avec safe-area). Évite le gap beige. */
+  bottom: calc(45px + max(10px, env(safe-area-inset-bottom, 0px)));
   background: var(--navy);
   padding: 12px 20px;
   display: flex;
@@ -4867,12 +4929,15 @@ body:has(.chapelet-fab) .greg-btn { right: 88px; }   /* 54 (FAB) + 20 (marge dro
   .tl-actions {
     flex-basis: 100%;
     flex-direction: row !important;
-    align-items: center;
+    align-items: flex-start; /* aligne le HAUT de Mystères et Intentions */
     justify-content: flex-end;
     gap: 8px;
     padding: 0;
     padding-left: 50px;
   }
+  /* Le wrap Intentions ne doit pas décaler son bouton (timer en dessous) */
+  .tl-actions .tl-chat-wrap { align-items: stretch; }
+  .tl-actions .tl-badge { align-self: center; }
   .tl-src { font-size: 12px; padding: 5px 10px; min-height: 34px; }
 
   /* Week cards : scroll horizontal fluide */
@@ -5894,6 +5959,43 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
 }
 .rec-section-label--duration { margin-top: 20px; }
 .rec-section-label--disabled { opacity: .4; }
+
+/* #4 — Sélecteur d'offices pour l'export de la journée */
+.rec-offices {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px;
+}
+.rec-office {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background .12s;
+}
+.rec-office:hover { background: rgba(201,168,76,.08); }
+.rec-office input { accent-color: var(--gold); width: 17px; height: 17px; flex: 0 0 auto; }
+.rec-office-time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--navy);
+  font-size: 13px;
+  min-width: 42px;
+}
+.rec-office-name { font-size: 13.5px; color: var(--text); }
+.rec-office-all {
+  border-bottom: 1px solid var(--border);
+  border-radius: 7px 7px 0 0;
+  margin-bottom: 2px;
+}
+.rec-office-all .rec-office-name strong { color: var(--navy); }
 .rec-opt {
   display: flex; align-items: flex-start; gap: 11px;
   padding: 11px 13px;
@@ -7311,16 +7413,16 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
 
 @media (max-width: 640px) {
 
-  /* ── Body : padding bas suffisant pour dégager bottom-nav ET les boutons
-     flottants (Grégorien + chapelet), qui montent à ~128px du bas. Sans ça,
-     la dernière ligne de contenu reste piégée sous les FAB quand on scrolle
-     tout en bas. 64 (nav) + 72 (zone FAB) = 136px. ── */
+  /* ── Body : padding bas = juste la hauteur de la bottom-nav (le footer
+     global, navy, absorbe la zone des FAB → pas besoin de padding en plus,
+     qui créait un gros gap beige sous le footer). ── */
   body {
-    padding-bottom: calc(var(--bottom-nav-h) + 72px + var(--safe-bottom));
+    padding-bottom: calc(45px + max(10px, env(safe-area-inset-bottom, 0px)));
     font-size: 15px;
   }
   body.player-open {
-    padding-bottom: calc(var(--bottom-nav-h) + 72px + 64px + var(--safe-bottom));
+    /* + hauteur du lecteur radio (~60px) quand il est ouvert */
+    padding-bottom: calc(45px + 62px + max(10px, env(safe-area-inset-bottom, 0px)));
   }
 
   /* ── Header compact ── */
@@ -7442,13 +7544,14 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
     flex-basis: 100%;
     flex-direction: row !important;
     justify-content: flex-end;
-    align-items: center;
+    align-items: flex-start; /* aligne le haut de Mystères et Intentions */
     gap: 6px;
     padding: 4px 0 0;
     margin-top: 4px;
     border-top: 1px dashed var(--border);
     padding-top: 8px;
   }
+  .tl-actions .tl-badge { align-self: center; }
   .tl-badge {
     font-size: 10px;
     padding: 2px 8px;
@@ -7575,9 +7678,10 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   .bn { font-size: 10.5px; gap: 2px; padding: 3px 6px; min-width: 52px; }
   .bn-icon { font-size: 16px; }
 
-  /* Lecteur radio juste au-dessus de la bottom-nav, look complet conservé */
+  /* Lecteur radio collé PILE au-dessus de la bottom-nav (hauteur réelle 55px
+     = 45px contenu + padding bas dynamique). Évite le gap beige. */
   .radio-player {
-    bottom: calc(var(--bottom-nav-h) + var(--safe-bottom));
+    bottom: calc(45px + max(10px, env(safe-area-inset-bottom, 0px)));
     left: 0; right: 0;
     border-radius: 0;
     padding: 10px 14px;

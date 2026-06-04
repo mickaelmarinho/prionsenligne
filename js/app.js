@@ -2204,6 +2204,16 @@ function initRadioPlayer() {
         if (web) window.open(web, '_blank', 'noopener');
       });
   });
+
+  // Accessibilité : les cartes Sources rendues cliquables via role="button"
+  // (sous-items combo) doivent réagir à Entrée / Espace comme un vrai bouton.
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const btn = e.target.closest('[data-action="radio"][role="button"]');
+    if (!btn) return;
+    e.preventDefault();
+    btn.click();
+  });
 }
 
 
@@ -6088,6 +6098,25 @@ function initTodayTimeline() {
     // Si une modale est déjà ouverte, on la retire
     document.getElementById('rec-modal-backdrop')?.remove();
 
+    // #4 — Quand on ajoute TOUTE la journée, on laisse l'utilisateur choisir
+    // précisément quels offices exporter (cases à cocher, tout coché par défaut).
+    const isDay = items.length > 1;
+    const officePickerHtml = isDay ? `
+            <div class="rec-section-label">Quels offices inclure&nbsp;?</div>
+            <div class="rec-offices" id="rec-offices">
+              <label class="rec-office rec-office-all">
+                <input type="checkbox" id="rec-office-all" checked>
+                <span class="rec-office-name"><strong>Tout sélectionner</strong></span>
+              </label>
+              ${items.map((it, i) => `
+              <label class="rec-office">
+                <input type="checkbox" class="rec-office-cb" data-idx="${i}" checked>
+                <span class="rec-office-time">${esc(it.dataset.start || '')}</span>
+                <span class="rec-office-name">${esc(it.dataset.label || 'Office')}</span>
+              </label>`).join('')}
+            </div>
+    ` : '';
+
     const html = `
       <div class="rec-modal-backdrop" id="rec-modal-backdrop">
         <div class="rec-modal" role="dialog" aria-modal="true" aria-label="Récurrence">
@@ -6098,6 +6127,7 @@ function initTodayTimeline() {
             <p class="rec-sub">${esc(officeLabel)}</p>
           </div>
           <div class="rec-body">
+            ${officePickerHtml}
             <div class="rec-section-label">À quelle fréquence ?</div>
             <label class="rec-opt">
               <input type="radio" name="freq" value="once" checked>
@@ -6186,6 +6216,23 @@ function initTodayTimeline() {
     syncDurationDisabled();
     syncCustomVisibility();
 
+    // #4 — Sélecteur d'offices : « Tout sélectionner » pilote les cases,
+    // et les cases individuelles remettent à jour l'état du « tout ».
+    const allCb = backdrop.querySelector('#rec-office-all');
+    const officeCbs = Array.from(backdrop.querySelectorAll('.rec-office-cb'));
+    if (allCb && officeCbs.length) {
+      allCb.addEventListener('change', () => {
+        officeCbs.forEach(cb => { cb.checked = allCb.checked; });
+      });
+      const syncAllState = () => {
+        const checked = officeCbs.filter(cb => cb.checked).length;
+        allCb.checked = checked === officeCbs.length;
+        allCb.indeterminate = checked > 0 && checked < officeCbs.length;
+      };
+      officeCbs.forEach(cb => cb.addEventListener('change', syncAllState));
+      syncAllState();
+    }
+
     backdrop.querySelector('#rec-confirm')?.addEventListener('click', () => {
       const freq = backdrop.querySelector('input[name="freq"]:checked')?.value || 'once';
       const durationVal = backdrop.querySelector('input[name="duration"]:checked')?.value || '4';
@@ -6201,8 +6248,18 @@ function initTodayTimeline() {
         untilDate = new Date(y, m - 1, d, 23, 59, 59);
         weeks = 0; // sera ignoré au profit de untilDate
       }
+      // #4 — Ne garde que les offices cochés (si sélecteur présent)
+      let chosen = items;
+      if (officeCbs.length) {
+        const keep = new Set(officeCbs.filter(cb => cb.checked).map(cb => parseInt(cb.dataset.idx, 10)));
+        chosen = items.filter((_, i) => keep.has(i));
+        if (!chosen.length) {
+          alert('Veuillez cocher au moins un office.');
+          return;
+        }
+      }
       close();
-      buildAndDownloadICS(items, mode, freq, weeks, untilDate);
+      buildAndDownloadICS(chosen, mode, freq, weeks, untilDate);
     });
   }
 

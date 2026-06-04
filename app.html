@@ -61,8 +61,8 @@
         <!-- Bouton unifié connexion/inscription — affiché uniquement quand pas connecté -->
         <button class="nav-auth-unified" id="header-btn-auth">
           <i class="fa-solid fa-user"></i>
-          <span class="nav-auth-unified-text">Se connecter / Rejoindre</span>
-          <span class="nav-auth-unified-text-short">Compte</span>
+          <span class="nav-auth-unified-text">Se connecter</span>
+          <span class="nav-auth-unified-text-short">Se connecter</span>
         </button>
         <!-- IDs préservés pour compat (handleDeepLink, contact form, etc.) — invisibles -->
         <button class="hidden-auth-shim" id="header-btn-login" aria-hidden="true" tabindex="-1"></button>
@@ -328,21 +328,25 @@
     <section id="tab-sources" class="tab-section">
 
       <div class="sources-intro">
-        <p>Toutes les sources diffusent gratuitement sur internet. Cliquez sur une carte pour accéder directement au lecteur ou à la page de diffusion.</p>
+        <p>Toutes les sources diffusent gratuitement sur internet. Touchez <strong>« Écouter ici »</strong> pour lancer la radio directement dans la page, sans la quitter.</p>
       </div>
 
       <h2 class="sources-title">Radios catholiques</h2>
       <div class="sources-grid">
 
-        <a class="src-card src-card-link" href="https://www.radiomaria.fr" target="_blank" rel="noopener">
-          <div class="src-card-head"><span class="src-type radio">Radio</span><div class="src-live-dot"></div></div>
+        <div class="src-card">
+          <div class="src-card-head"><span class="src-type radio-stream">Radio <i class="fa-solid fa-play" style="font-size:8px;margin-left:3px;"></i></span><div class="src-live-dot"></div></div>
           <h3 class="src-name">Radio Maria France</h3>
           <p class="src-info">24h/24 · Catholique · La Garde (83)</p>
           <div class="src-tags">
             <span class="stag laudes">Laudes</span><span class="stag messe">Messe</span>
             <span class="stag chapelet">Chapelet</span><span class="stag vepres">Vêpres</span><span class="stag complies">Complies</span>
           </div>
-        </a>
+          <div class="src-play-row">
+            <button class="src-play-btn" data-action="radio" data-stream="https://dreamsiteradiocp6.com/proxy/rmfrance1?mp=/stream" data-web="https://www.radiomaria.fr" data-name="Radio Maria France"><i class="fa-solid fa-play"></i> Écouter ici</button>
+            <a class="src-play-site" href="https://www.radiomaria.fr" target="_blank" rel="noopener">Site <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+          </div>
+        </div>
 
         <!-- Carte RCF combinée : RCF Notre-Dame (Île-de-France, intégré) + RCF (réseau national) -->
         <div class="src-card src-card-combo">
@@ -350,16 +354,16 @@
           <h3 class="src-name">RCF</h3>
           <p class="src-info">Radio chrétienne francophone</p>
           <div class="src-combo-list">
-            <a class="src-combo-item" href="https://www.rcf.fr/radio-notre-dame" target="_blank" rel="noopener">
+            <div class="src-combo-item src-combo-play" role="button" tabindex="0" data-action="radio" data-stream="https://windu.radionotredame.net/RadioNotreDame-Fm.mp3" data-web="https://www.rcf.fr/radio-notre-dame" data-name="RCF Notre-Dame">
               <div class="src-combo-head">
                 <strong>RCF Notre-Dame</strong>
-                <span class="src-combo-badge">▶ Lecture intégrée</span>
+                <span class="src-combo-badge"><i class="fa-solid fa-play" style="font-size:7px;"></i> Écouter ici</span>
               </div>
               <span class="src-combo-info">Paris · Île-de-France</span>
               <div class="src-tags">
                 <span class="stag matin">Prière du matin</span><span class="stag messe">Messe des malades</span><span class="stag chapelet">Chapelet de Lourdes</span>
               </div>
-            </a>
+            </div>
             <a class="src-combo-item" href="https://rcf.fr/radios/ecouter-rcf" target="_blank" rel="noopener">
               <div class="src-combo-head">
                 <strong>RCF (réseau national)</strong>
@@ -375,25 +379,29 @@
           <h3 class="src-name">Radio Espérance</h3>
           <p class="src-info">24h/24 · Saint-Étienne (42) · <strong>Lecture intégrée</strong></p>
           <div class="src-combo-list">
-            <a class="src-combo-item" href="https://radio-esperance.fr" target="_blank" rel="noopener">
-              <div class="src-combo-head"><strong>Espérance</strong><span class="src-combo-badge"><i class="fa-solid fa-play" style="font-size:7px;"></i> Lecture intégrée</span></div>
+            <div class="src-combo-item src-combo-play" role="button" tabindex="0" data-action="radio" data-stream="https://esperance.streamakaci.com/esperance.mp3" data-web="https://radio-esperance.fr" data-name="Radio Espérance">
+              <div class="src-combo-head"><strong>Espérance</strong><span class="src-combo-badge"><i class="fa-solid fa-play" style="font-size:7px;"></i> Écouter ici</span></div>
               <span class="src-combo-info">Flux généraliste catholique</span>
               <div class="src-tags"><span class="stag matin">Matin</span><span class="stag chapelet">Chapelet</span><span class="stag complies">Complies</span></div>
-            </a>
-            <a class="src-combo-item" href="https://radio-esperance.fr" target="_blank" rel="noopener">
-              <div class="src-combo-head"><strong>Espérance Grégorien</strong><span class="src-combo-badge"><i class="fa-solid fa-play" style="font-size:7px;"></i> Lecture intégrée</span></div>
+            </div>
+            <div class="src-combo-item src-combo-play" role="button" tabindex="0" data-action="radio" data-stream="https://esperance.streamakaci.com/gregorien.mp3" data-web="https://radio-esperance.fr" data-name="Espérance Grégorien">
+              <div class="src-combo-head"><strong>Espérance Grégorien</strong><span class="src-combo-badge"><i class="fa-solid fa-play" style="font-size:7px;"></i> Écouter ici</span></div>
               <span class="src-combo-info">Flux dédié chant grégorien — Triors, Saint-Wandrille…</span>
               <div class="src-tags"><span class="stag laudes">Laudes</span><span class="stag messe">Messe</span><span class="stag vepres">Vêpres</span><span class="stag complies">Complies</span></div>
-            </a>
+            </div>
           </div>
         </div>
 
-        <a class="src-card src-card-link" href="https://radio-fidelite.fr" target="_blank" rel="noopener">
+        <div class="src-card">
           <div class="src-card-head"><span class="src-type radio-stream">Radio <i class="fa-solid fa-play" style="font-size:8px;margin-left:3px;"></i></span><div class="src-live-dot"></div></div>
           <h3 class="src-name">Radio Fidélité</h3>
-          <p class="src-info">24h/24 · Angers (49) · Maine-et-Loire · <strong>Lecture intégrée</strong></p>
+          <p class="src-info">24h/24 · Angers (49) · Maine-et-Loire</p>
           <div class="src-tags"><span class="stag matin">Prière du matin</span><span class="stag messe">Messe</span><span class="stag chapelet">Chapelet</span><span class="stag complies">Complies</span></div>
-        </a>
+          <div class="src-play-row">
+            <button class="src-play-btn" data-action="radio" data-stream="https://diffusion.lafrap.fr/fidelite.mp3" data-web="https://radio-fidelite.fr" data-name="Radio Fidélité"><i class="fa-solid fa-play"></i> Écouter ici</button>
+            <a class="src-play-site" href="https://radio-fidelite.fr" target="_blank" rel="noopener">Site <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+          </div>
+        </div>
 
         <a class="src-card src-card-link" href="https://www.rcf.be/wp-content/maradio/RCF-Bruxelles/" target="_blank" rel="noopener">
           <div class="src-card-head"><span class="src-type radio">Radio</span><div class="src-live-dot"></div></div>
@@ -409,19 +417,27 @@
           <div class="src-tags"><span class="stag messe">Messe</span></div>
         </a>
 
-        <a class="src-card src-card-link" href="https://radiogalilee.com/ecoute-en-direct/" target="_blank" rel="noopener">
-          <div class="src-card-head"><span class="src-type radio">Radio</span><div class="src-live-dot"></div></div>
+        <div class="src-card">
+          <div class="src-card-head"><span class="src-type radio-stream">Radio <i class="fa-solid fa-play" style="font-size:8px;margin-left:3px;"></i></span><div class="src-live-dot"></div></div>
           <h3 class="src-name">Radio Galilée</h3>
-          <p class="src-info">24h/24 · Québec <img class="src-flag" src="https://flagcdn.com/w20/ca.png" srcset="https://flagcdn.com/w40/ca.png 2x" width="14" height="10" alt="Canada"> · CKJI-FM · <strong>Lecture intégrée</strong></p>
+          <p class="src-info">24h/24 · Québec <img class="src-flag" src="https://flagcdn.com/w20/ca.png" srcset="https://flagcdn.com/w40/ca.png 2x" width="14" height="10" alt="Canada"> · CKJI-FM</p>
           <div class="src-tags"><span class="stag messe">Messe</span><span class="stag chapelet">Chapelet</span></div>
-        </a>
+          <div class="src-play-row">
+            <button class="src-play-btn" data-action="radio" data-stream="https://stream.zeno.fm/y9p44u8gn7zuv" data-web="https://radiogalilee.com/ecoute-en-direct/" data-name="Radio Galilée"><i class="fa-solid fa-play"></i> Écouter ici</button>
+            <a class="src-play-site" href="https://radiogalilee.com/ecoute-en-direct/" target="_blank" rel="noopener">Site <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+          </div>
+        </div>
 
-        <a class="src-card src-card-link" href="https://www.radiomaria.ci" target="_blank" rel="noopener">
-          <div class="src-card-head"><span class="src-type radio">Radio</span><div class="src-live-dot"></div></div>
+        <div class="src-card">
+          <div class="src-card-head"><span class="src-type radio-stream">Radio <i class="fa-solid fa-play" style="font-size:8px;margin-left:3px;"></i></span><div class="src-live-dot"></div></div>
           <h3 class="src-name">Radio Maria CI</h3>
-          <p class="src-info">24h/24 · Abidjan <img class="src-flag" src="https://flagcdn.com/w20/ci.png" srcset="https://flagcdn.com/w40/ci.png 2x" width="14" height="10" alt="Côte d'Ivoire"> · Catholique · <strong>Lecture intégrée</strong></p>
+          <p class="src-info">24h/24 · Abidjan <img class="src-flag" src="https://flagcdn.com/w20/ci.png" srcset="https://flagcdn.com/w40/ci.png 2x" width="14" height="10" alt="Côte d'Ivoire"> · Catholique</p>
           <div class="src-tags"><span class="stag chapelet">Chapelet</span></div>
-        </a>
+          <div class="src-play-row">
+            <button class="src-play-btn" data-action="radio" data-stream="https://dreamsiteradiocp6.com/proxy/rmcosta?mp=/stream" data-web="https://www.radiomaria.ci" data-name="Radio Maria CI"><i class="fa-solid fa-play"></i> Écouter ici</button>
+            <a class="src-play-site" href="https://www.radiomaria.ci" target="_blank" rel="noopener">Site <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+          </div>
+        </div>
 
         <a class="src-card src-card-link" href="https://radiovm.com/ecoute-en-direct/" target="_blank" rel="noopener">
           <div class="src-card-head"><span class="src-type radio">Radio</span><div class="src-live-dot"></div></div>
@@ -701,7 +717,7 @@
   ═══════════════════════════════════════════ -->
   <nav class="bottom-nav">
     <button class="bn active" data-tab="aujourd">
-      <i class="fa-solid fa-sun bn-icon"></i><span>Accueil</span>
+      <i class="fa-solid fa-sun bn-icon"></i><span>Aujourd'hui</span>
     </button>
     <button class="bn" data-tab="semaine">
       <i class="fa-solid fa-calendar-week bn-icon"></i><span>Semaine</span>
@@ -712,8 +728,8 @@
     <button class="bn" data-tab="bible">
       <i class="fa-solid fa-book-bible bn-icon"></i><span>Bible</span>
     </button>
-    <button class="bn" id="bn-compte">
-      <i class="fa-solid fa-bars bn-icon"></i><span>Menu</span>
+    <button class="bn" data-tab="sources">
+      <i class="fa-solid fa-tower-broadcast bn-icon"></i><span>Sources</span>
     </button>
   </nav>
 
