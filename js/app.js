@@ -45,7 +45,35 @@ function initTabs() {
 function initFilters() {
   // Sélection multiple : chaque filtre se toggle indépendamment.
   // Un Set vide = « Tout » affiché.
+  // #7 — Le choix est mémorisé (localStorage) pour que « Aujourd'hui »
+  // n'affiche que les offices favoris les jours suivants, sans recommencer.
+  const STORE_KEY = 'pel_office_filters';
   const active = new Set();
+
+  // Restaure la sélection sauvegardée
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORE_KEY) || '[]');
+    if (Array.isArray(saved)) saved.forEach(t => t && active.add(t));
+  } catch (_) {}
+
+  function persist() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify([...active])); } catch (_) {}
+  }
+
+  function syncButtons() {
+    const allBtn = document.querySelector('.pf[data-filter="all"]');
+    document.querySelectorAll('.pf').forEach(b => {
+      const t = b.dataset.filter;
+      if (t === 'all') b.classList.toggle('active', active.size === 0);
+      else b.classList.toggle('active', active.has(t));
+    });
+    if (allBtn) allBtn.classList.toggle('active', active.size === 0);
+  }
+
+  function syncHint() {
+    const hint = document.getElementById('pf-saved-hint');
+    if (hint) hint.hidden = active.size === 0;
+  }
 
   function applyFilters() {
     const showAll = active.size === 0;
@@ -54,7 +82,12 @@ function initFilters() {
       item.style.display = show ? '' : 'none';
       if (show) item.style.animation = 'fadeIn .2s ease';
     });
+    syncHint();
   }
+
+  // Exposé pour ré-appliquer le filtre après (re)génération de la timeline,
+  // qui peut survenir APRÈS initFilters (items injectés dynamiquement).
+  window._pelApplyFilters = applyFilters;
 
   document.querySelectorAll('.pf').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -63,25 +96,28 @@ function initFilters() {
       if (type === 'all') {
         // Réinitialise tout → « Tout »
         active.clear();
-        document.querySelectorAll('.pf').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
       } else {
-        document.querySelector('.pf[data-filter="all"]')?.classList.remove('active');
-        if (active.has(type)) {
-          active.delete(type);
-          btn.classList.remove('active');
-          if (active.size === 0) {
-            document.querySelector('.pf[data-filter="all"]')?.classList.add('active');
-          }
-        } else {
-          active.add(type);
-          btn.classList.add('active');
-        }
+        if (active.has(type)) active.delete(type);
+        else active.add(type);
       }
 
+      syncButtons();
+      persist();
       applyFilters();
     });
   });
+
+  // Lien « Tout réafficher » de l'indice favoris
+  document.getElementById('pf-saved-reset')?.addEventListener('click', () => {
+    active.clear();
+    syncButtons();
+    persist();
+    applyFilters();
+  });
+
+  // État initial (boutons + filtrage) selon la sélection restaurée
+  syncButtons();
+  applyFilters();
 }
 
 
@@ -6076,6 +6112,10 @@ function initTodayTimeline() {
     const items = Array.from(document.querySelectorAll('#timeline .tl-item'));
     exportTimelineItems(items, 'journée');
   });
+
+  // #7 — Ré-applique les filtres favoris mémorisés sur la timeline fraîchement
+  // générée (l'init des filtres a pu tourner avant que les items existent).
+  window._pelApplyFilters?.();
 
   // Construit un .ics à partir d'une liste d'items de timeline et déclenche le download
   function exportTimelineItems(items, mode) {
