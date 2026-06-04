@@ -186,6 +186,7 @@ ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
   Offices du bréviaire, messes en direct, chapelet numérique, Bible interactive, calendrier liturgique.</p>
   <p><a href="/">prionsenligne.fr</a> · Textes liturgiques : AELF · Saints : Nominis (CEF)</p>
 </div></footer>
+<script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>`;
 }

@@ -10,7 +10,7 @@
    - API /api/* : network-first (fraîcheur des données)
 ═══════════════════════════════════════════════ */
 
-const VERSION       = 'v156';
+const VERSION       = 'v157';
 const STATIC_CACHE  = `pel-static-${VERSION}`;
 const RUNTIME_CACHE = `pel-runtime-${VERSION}`;
 
@@ -113,6 +113,10 @@ self.addEventListener('fetch', e => {
     url.hostname === 'fonts.gstatic.com' ||
     url.hostname === 'cdnjs.cloudflare.com'
   );
+
+  // Endpoints internes Vercel (Web Analytics) : jamais interceptés/cachés,
+  // sinon les pixels de mesure seraient servis depuis le cache.
+  if (isSameOrigin && url.pathname.startsWith('/_vercel/')) return;
 
   // Requête de navigation (document HTML) : on détecte via request.mode ou Accept.
   const isNavigation = e.request.mode === 'navigate' ||
