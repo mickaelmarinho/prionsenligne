@@ -2321,7 +2321,7 @@ body.tv-modal-open { overflow: hidden; }
   position: fixed;
   inset: 0;
   background: rgba(26,39,68,.45);
-  z-index: 200;
+  z-index: 400;
   opacity: 0;
   pointer-events: none;
   transition: opacity .3s;
@@ -2334,7 +2334,7 @@ body.tv-modal-open { overflow: hidden; }
   width: min(520px, 100vw);
   height: 100vh;
   background: var(--cream);
-  z-index: 201;
+  z-index: 401; /* au-dessus du site-header (300) sinon l'en-tête est masqué */
   transform: translateX(100%);
   transition: transform .35s cubic-bezier(.4,0,.2,1);
   display: flex;
@@ -3314,7 +3314,7 @@ body:has(.chapelet-fab) .greg-btn { right: 88px; }   /* 54 (FAB) + 20 (marge dro
 .profile-overlay {
   position: fixed; inset: 0;
   background: rgba(26,39,68,.55);
-  z-index: 202;
+  z-index: 402;
   opacity: 0; pointer-events: none;
   transition: opacity .3s;
   backdrop-filter: blur(3px);
@@ -3328,7 +3328,7 @@ body:has(.chapelet-fab) .greg-btn { right: 88px; }   /* 54 (FAB) + 20 (marge dro
   width: min(460px, 100vw);
   height: 100vh;
   background: var(--cream);
-  z-index: 203;
+  z-index: 403; /* au-dessus du site-header (300) */
   transform: translateX(100%);
   transition: transform .35s cubic-bezier(.4,0,.2,1);
   display: flex;

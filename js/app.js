@@ -540,7 +540,7 @@ function initCalendar() {
     const listenDdBtn = document.getElementById('dd-listen');
     if (listenDdBtn) {
       const reader = window._pelReader;
-      if (!reader?.supported() || !saint) {
+      if (!('speechSynthesis' in window) || !saint) {
         listenDdBtn.style.display = 'none';
       } else {
         listenDdBtn.style.display = '';
@@ -673,7 +673,7 @@ function initCalendar() {
         const nomListenBtn = nomBlock.querySelector('#dd-nominis-listen');
         if (nomListenBtn) {
           const reader = window._pelReader;
-          if (!reader?.supported()) { nomListenBtn.style.display = 'none'; }
+          if (!('speechSynthesis' in window)) { nomListenBtn.style.display = 'none'; }
           else nomListenBtn.onclick = () => {
             if (reader.state === 'playing') { reader.pause(); return; }
             if (reader.state === 'paused')  { reader.resume(); return; }
@@ -1947,14 +1947,14 @@ function initBreviary() {
   // Bouton réglages voix (bréviaire)
   const voiceCfgBtn = document.getElementById('brev-voice-cfg');
   if (voiceCfgBtn) {
-    if (!window._pelReader?.supported()) voiceCfgBtn.style.display = 'none';
+    if (!('speechSynthesis' in window)) voiceCfgBtn.style.display = 'none';
     else voiceCfgBtn.addEventListener('click', () => window._openVoiceSettings?.());
   }
 
   // Bouton « Écouter » : lit à voix haute les textes affichés du bréviaire
   const listenBtn = document.getElementById('brev-listen');
   if (listenBtn) {
-    if (!window._pelReader?.supported()) {
+    if (!('speechSynthesis' in window)) {
       listenBtn.style.display = 'none'; // navigateur sans synthèse vocale
     } else {
       listenBtn.addEventListener('click', () => {
