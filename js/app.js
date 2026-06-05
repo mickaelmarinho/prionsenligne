@@ -7436,39 +7436,71 @@ function initInstallBanner() {
     || window.navigator.standalone === true;
   if (isStandalone) return;
 
-  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+  // L'utilisateur a déjà masqué la suggestion → on respecte son choix.
+  const DISMISS_KEY = 'pel_install_hidden';
+  try { if (localStorage.getItem(DISMISS_KEY) === '1') return; } catch (_) {}
 
-  // Sur iOS, Apple bloque l'installation programmatique → pas de bannière ici.
-  // L'accès à l'option d'installation iOS reste disponible via le menu burger.
-  if (isIOS) return;
+  const ua = navigator.userAgent;
+  const isIOS = /iphone|ipad|ipod/i.test(ua) && !window.MSStream;
+  // Sur iOS, SEUL Safari peut ajouter à l'écran d'accueil (Chrome/Firefox iOS
+  // ne le permettent pas) → on ne propose la bannière qu'en Safari iOS.
+  const isIOSSafari = isIOS && /safari/i.test(ua) && !/crios|fxios|edgios|opios/i.test(ua);
 
-  const btn = document.getElementById('tib-btn');
+  const btn      = document.getElementById('tib-btn');
+  const btnLabel = document.getElementById('tib-btn-label');
+  const sub      = document.getElementById('tib-sub');
+  const closeBtn = document.getElementById('tib-close');
 
   function showBar() {
     bar.style.display = '';
     bar.removeAttribute('aria-hidden');
   }
+  function hideBar(remember) {
+    bar.style.display = 'none';
+    bar.setAttribute('aria-hidden', 'true');
+    if (remember) { try { localStorage.setItem(DISMISS_KEY, '1'); } catch (_) {} }
+  }
 
-  // Android / Desktop Chrome / Edge / Opera : attend le prompt natif
+  // Bouton « masquer » (× ) : mémorise le choix, ne réapparaîtra plus.
+  closeBtn?.addEventListener('click', () => hideBar(true));
+
+  // ── iPhone / iPad (Safari) : pas d'installation programmatique possible.
+  // On affiche tout de même la bannière, dont le bouton ouvre le GUIDE pas-à-pas
+  // (bouton Partager → « Sur l'écran d'accueil »). C'est LE point d'entrée que
+  // les personnes âgées ne trouvaient pas seules dans le menu.
+  if (isIOSSafari) {
+    if (btnLabel) btnLabel.textContent = 'Voir comment';
+    if (sub) sub.textContent = 'Ajoutez l’icône sur votre écran d’accueil';
+    btn?.addEventListener('click', () => { window._openInstallModal?.(); });
+    showBar();
+    return;
+  }
+
+  // Autres navigateurs iOS (Chrome/Firefox…) : ils ne peuvent pas installer →
+  // pas de bannière (éviterait de frustrer ; le menu reste disponible).
+  if (isIOS) return;
+
+  // ── Android / Desktop Chrome / Edge / Opera : prompt natif d'installation.
+  if (btn) {
+    btn.addEventListener('click', async () => {
+      if (_installPrompt) {
+        const res = await _installPrompt.prompt();
+        if (res?.outcome === 'accepted') {
+          _installPrompt = null;
+          hideBar(false);
+        }
+      } else {
+        // Pas de prompt natif dispo → ouvre le guide d'instructions.
+        window._openInstallModal?.();
+      }
+    });
+  }
+
   window.addEventListener('beforeinstallprompt', () => showBar());
-
-  // Si le prompt a déjà été capturé avant l'init
   if (_installPrompt) showBar();
 
-  if (!btn) return;
-
-  btn.addEventListener('click', async () => {
-    if (_installPrompt) {
-      const res = await _installPrompt.prompt();
-      if (res?.outcome === 'accepted') {
-        _installPrompt = null;
-        bar.style.display = 'none';
-      }
-    }
-  });
-
   // Masquer si installé depuis un autre point d'entrée
-  window.addEventListener('appinstalled', () => { bar.style.display = 'none'; });
+  window.addEventListener('appinstalled', () => hideBar(false));
 }
 
 function initContact() {

@@ -1932,6 +1932,19 @@ body.tv-modal-open { overflow: hidden; }
 }
 .tib-btn:hover { background: #d4af5a; }
 .tib-btn:active { transform: scale(.96); }
+.tib-close {
+  flex-shrink: 0;
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  color: rgba(245,240,232,.55);
+  font-size: .85rem;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.tib-close:hover { background: rgba(255,255,255,.1); color: var(--cream); }
 
 .chat-panel {
   position: fixed;
