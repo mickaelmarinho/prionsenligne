@@ -502,13 +502,14 @@ body.voice-modal-open { overflow: hidden; }
   flex-shrink: 0;
 }
 
-/* #7 — Indice « offices favoris mémorisés » sous les filtres */
+/* #7 — Indice « offices favoris mémorisés » (bannière au-dessus de la rangée
+   filtres + timeline, pour ne pas casser la grille flex à 2 colonnes). */
 .pf-saved-hint {
   display: flex;
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
-  margin: -8px 0 16px;
+  margin: 0 0 16px;
   padding: 8px 12px;
   background: rgba(201,168,76,.10);
   border: 1px solid var(--gold-pale);

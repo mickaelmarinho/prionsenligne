@@ -177,6 +177,12 @@
         </div>
       </div>
 
+      <p class="pf-saved-hint" id="pf-saved-hint" hidden>
+        <i class="fa-solid fa-star"></i>
+        <span>Vos offices favoris sont mémorisés&nbsp;: chaque jour, « Aujourd'hui » affichera d'abord ceux-ci.</span>
+        <button type="button" class="pf-saved-reset" id="pf-saved-reset">Tout réafficher</button>
+      </p>
+
       <!-- Filtres + Timeline -->
       <div class="today-main">
 
@@ -190,11 +196,6 @@
           <button class="pf pf-soiree"       data-filter="soiree"><i class="fa-solid fa-hands-praying"></i> Prière du soir</button>
           <button class="pf pf-complies"     data-filter="complies"><i class="fa-solid fa-moon"></i> Complies</button>
         </div>
-        <p class="pf-saved-hint" id="pf-saved-hint" hidden>
-          <i class="fa-solid fa-star"></i>
-          <span>Vos offices favoris sont mémorisés&nbsp;: chaque jour, « Aujourd'hui » affichera d'abord ceux-ci.</span>
-          <button type="button" class="pf-saved-reset" id="pf-saved-reset">Tout réafficher</button>
-        </p>
 
         <!-- Timeline — générée dynamiquement par initTodayTimeline() selon le jour réel -->
         <div class="timeline" id="timeline">
