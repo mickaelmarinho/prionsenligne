@@ -60,6 +60,53 @@ function initFilters() {
     try { localStorage.setItem(STORE_KEY, JSON.stringify([...active])); } catch (_) {}
   }
 
+  // ── #4 — Synchronisation au compte (multi-appareils) ──
+  // Le localStorage reste la source immédiate ; quand l'utilisateur est
+  // connecté, on lit/écrit aussi ses favoris dans Supabase. Dégradation
+  // gracieuse : si la table n'existe pas encore (migration non lancée) ou si
+  // l'appareil est hors-ligne, les erreurs sont ignorées et le local fait foi.
+  function _sbCtx() {
+    const sb = window._sbClient, user = window._pelUser;
+    return (sb && user) ? { sb, user } : null;
+  }
+  async function persistRemote() {
+    const ctx = _sbCtx();
+    if (!ctx) return;
+    try {
+      await ctx.sb.from('user_preferences').upsert({
+        user_id: ctx.user.id,
+        office_filters: [...active],
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id' });
+    } catch (_) {}
+  }
+  async function loadRemote() {
+    const ctx = _sbCtx();
+    if (!ctx) return;
+    try {
+      const { data, error } = await ctx.sb
+        .from('user_preferences')
+        .select('office_filters')
+        .eq('user_id', ctx.user.id)
+        .maybeSingle();
+      if (error) return; // table absente / RLS / etc. → on garde le local
+      if (data && Array.isArray(data.office_filters)) {
+        // Le compte fait foi : applique ses favoris sur cet appareil.
+        applyFilterSet(data.office_filters, { persistLocal: true });
+      } else if (active.size > 0) {
+        // Aucune préférence en base mais un choix local existe → 1ʳᵉ synchro.
+        persistRemote();
+      }
+    } catch (_) {}
+  }
+  function applyFilterSet(arr, opts = {}) {
+    active.clear();
+    if (Array.isArray(arr)) arr.forEach(t => t && active.add(t));
+    syncButtons();
+    if (opts.persistLocal) persist();
+    applyFilters();
+  }
+
   function syncButtons() {
     const allBtn = document.querySelector('.pf[data-filter="all"]');
     document.querySelectorAll('.pf').forEach(b => {
@@ -103,6 +150,7 @@ function initFilters() {
 
       syncButtons();
       persist();
+      persistRemote();
       applyFilters();
     });
   });
@@ -112,8 +160,15 @@ function initFilters() {
     active.clear();
     syncButtons();
     persist();
+    persistRemote();
     applyFilters();
   });
+
+  // Synchronisation au compte : à chaque connexion, on récupère les favoris
+  // enregistrés (et on pousse le choix local si la base est vide).
+  document.addEventListener('pel:authchange', e => { if (e.detail?.user) loadRemote(); });
+  // Session déjà restaurée avant l'init de ce module ?
+  if (window._pelUser) loadRemote();
 
   // État initial (boutons + filtrage) selon la sélection restaurée
   syncButtons();
