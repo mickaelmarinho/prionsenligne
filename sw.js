@@ -10,7 +10,7 @@
    - API /api/* : network-first (fraîcheur des données)
 ═══════════════════════════════════════════════ */
 
-const VERSION       = 'v170';
+const VERSION       = 'v171';
 const STATIC_CACHE  = `pel-static-${VERSION}`;
 const RUNTIME_CACHE = `pel-runtime-${VERSION}`;
 
@@ -23,6 +23,7 @@ const PRECACHE = [
   '/css/style.css',
   '/js/app.js',
   '/js/auth.js',
+  '/js/bible.js',
   '/icons/icon.svg',
   '/icons/icon-32.png',
   '/icons/icon-192.png',

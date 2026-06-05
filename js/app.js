@@ -7503,6 +7503,24 @@ function initInstallBanner() {
   window.addEventListener('appinstalled', () => hideBar(false));
 }
 
+// Bannière « hors connexion » — informe l'utilisateur que la connexion est
+// perdue (utile pour la diaspora avec un réseau instable). Le contenu déjà mis
+// en cache par le Service Worker (coquille de l'app, offices du jour calculés
+// côté client, textes déjà consultés) reste accessible.
+function initOfflineBanner() {
+  const banner = document.getElementById('offline-banner');
+  if (!banner) return;
+  function sync() {
+    const offline = !navigator.onLine;
+    banner.hidden = !offline;
+    banner.classList.toggle('show', offline);
+    document.body.classList.toggle('is-offline', offline);
+  }
+  window.addEventListener('online', sync);
+  window.addEventListener('offline', sync);
+  sync();
+}
+
 function initContact() {
   const overlay  = document.getElementById('contact-overlay');
   const modal    = document.getElementById('contact-modal');
@@ -8358,6 +8376,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initChapelet();
   initChat();
   initInstallBanner();
+  initOfflineBanner();
   initAbout();
   initInstallModal();
   initMonasticModal();
