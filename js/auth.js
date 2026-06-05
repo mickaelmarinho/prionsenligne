@@ -104,11 +104,17 @@ function _countryOptionsHTML(selected) {
   }).join('');
 }
 
-// ── hCaptcha (anti-bot sur l'inscription) ──
-// Site key publique d'hCaptcha — site « prionsenligne fr » (production).
-// La Secret Key correspondante est configurée côté Supabase (Auth → Captcha).
-// Si on vide cette constante, le captcha n'est plus affiché (fallback gracieux).
-const HCAPTCHA_SITE_KEY = 'b6826716-4f82-48e4-87ba-22c4f816ce34';
+// ── hCaptcha (anti-bot) — DÉSACTIVÉ ──
+// La protection captcha a été désactivée côté Supabase (Authentication →
+// Attack Protection → « Enable Captcha protection » = OFF), car elle gênait
+// trop les utilisateurs (personnes âgées, défis qui réapparaissaient).
+// On vide donc la site key : aucun widget n'est rendu, aucun jeton n'est
+// demandé, et les routes d'auth s'exécutent sans friction. La sécurité reste
+// assurée par la confirmation e-mail + la limitation de débit Supabase.
+// ⚠️ Si un jour on réactive le captcha côté Supabase, il SUFFIT de remettre la
+//    site key ci-dessous ('b6826716-4f82-48e4-87ba-22c4f816ce34') ET de
+//    recharger le script hCaptcha dans app.html.
+const HCAPTCHA_SITE_KEY = '';
 let _hcaptchaWidgetId = null;
 let _hcaptchaToken    = null;
 
