@@ -2327,17 +2327,15 @@ function initHamburger() {
     }
   });
 
-  // ── Voix de lecture (réglages voix + vitesse, accessible partout)
+  // ── Accessibilité : taille du texte + voix de lecture (accessible partout).
+  // Toujours visible : même sans synthèse vocale, la modale propose la taille
+  // du texte (les sections vocales se masquent alors d'elles-mêmes).
   const hmVoice = document.getElementById('hm-voice');
   if (hmVoice) {
-    if (!('speechSynthesis' in window)) {
-      hmVoice.style.display = 'none'; // navigateur sans synthèse vocale
-    } else {
-      hmVoice.addEventListener('click', () => {
-        closeMenu();
-        window._openVoiceSettings?.();
-      });
-    }
+    hmVoice.addEventListener('click', () => {
+      closeMenu();
+      window._openVoiceSettings?.();
+    });
   }
 
   // ── Ajouter à l'écran d'accueil — toujours visible dans le menu ──
@@ -8450,9 +8448,29 @@ document.addEventListener('DOMContentLoaded', () => {
   window._pelReader = PelReader;
 
   // Fenêtre de réglages de la voix (choix de la voix + vitesse + test)
+  // ── Accessibilité : taille du texte ──
+  // Niveaux discrets appliqués via la propriété CSS `zoom` sur la racine.
+  // Mémorisé par appareil (localStorage). Cf. script inline dans app.html qui
+  // applique la valeur AVANT le rendu pour éviter tout saut visuel.
+  const PelTextScale = {
+    LEVELS: [1, 1.15, 1.3],
+    get() {
+      try { return parseFloat(localStorage.getItem('pel.textScale')) || 1; }
+      catch (_) { return 1; }
+    },
+    set(v) {
+      v = parseFloat(v) || 1;
+      try { localStorage.setItem('pel.textScale', String(v)); } catch (_) {}
+      // zoom='' restaure le rendu normal (évite un zoom:1 qui crée un contexte
+      // de rendu inutile).
+      document.documentElement.style.zoom = v > 1 ? String(v) : '';
+    },
+  };
+  window._pelTextScale = PelTextScale;
+
   function openVoiceSettings() {
     const reader = window._pelReader;
-    if (!reader?.supported()) return;
+    const hasVoice = !!reader?.supported();
     const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     let modal = document.getElementById('voice-modal');
     if (!modal) {
@@ -8461,28 +8479,56 @@ document.addEventListener('DOMContentLoaded', () => {
       modal.className = 'voice-modal hidden';
       modal.innerHTML = `
         <div class="voice-backdrop" data-vc-close></div>
-        <div class="voice-panel" role="dialog" aria-modal="true" aria-label="Réglages de la voix">
+        <div class="voice-panel" role="dialog" aria-modal="true" aria-label="Accessibilité">
           <div class="voice-head">
-            <span class="voice-title"><i class="fa-solid fa-sliders"></i> Voix de lecture</span>
+            <span class="voice-title"><i class="fa-solid fa-universal-access"></i> Accessibilité</span>
             <button class="voice-close" data-vc-close aria-label="Fermer"><i class="fa-solid fa-xmark"></i></button>
           </div>
-          <div class="voice-section-label">Vitesse</div>
-          <div class="voice-rates" id="voice-rates">
-            <button data-rate="0.8">Lente</button>
-            <button data-rate="0.95">Normale</button>
-            <button data-rate="1.15">Rapide</button>
+          <div class="voice-section-label">Taille du texte</div>
+          <div class="voice-textsize" id="voice-textsize">
+            <button data-scale="1"><span class="ts-a" style="font-size:15px">A</span> Normal</button>
+            <button data-scale="1.15"><span class="ts-a" style="font-size:18px">A</span> Grand</button>
+            <button data-scale="1.3"><span class="ts-a" style="font-size:22px">A</span> Très grand</button>
           </div>
-          <div class="voice-section-label">Voix disponibles <span class="voice-hint">(les plus naturelles en haut)</span></div>
-          <div class="voice-list" id="voice-list"></div>
-          <button class="voice-test" id="voice-test"><i class="fa-solid fa-play"></i> Tester la voix</button>
+          <div id="voice-audio-sections">
+            <div class="voice-section-label">Vitesse de lecture</div>
+            <div class="voice-rates" id="voice-rates">
+              <button data-rate="0.8">Lente</button>
+              <button data-rate="0.95">Normale</button>
+              <button data-rate="1.15">Rapide</button>
+            </div>
+            <div class="voice-section-label">Voix disponibles <span class="voice-hint">(les plus naturelles en haut)</span></div>
+            <div class="voice-list" id="voice-list"></div>
+            <button class="voice-test" id="voice-test"><i class="fa-solid fa-play"></i> Tester la voix</button>
+          </div>
         </div>`;
       document.body.appendChild(modal);
       modal.addEventListener('click', e => { if (e.target.closest('[data-vc-close]')) closeVoiceSettings(); });
       document.addEventListener('keydown', e => { if (e.key === 'Escape' && !modal.classList.contains('hidden')) closeVoiceSettings(); });
-      // Test
-      modal.querySelector('#voice-test').addEventListener('click', () => {
-        reader.read('Je vous salue Marie, pleine de grâce, le Seigneur est avec vous.', null);
+      // Test (présent uniquement si la synthèse vocale existe)
+      modal.querySelector('#voice-test')?.addEventListener('click', () => {
+        window._pelReader?.read('Je vous salue Marie, pleine de grâce, le Seigneur est avec vous.', null);
       });
+    }
+
+    // ── Taille du texte (toujours disponible, indépendant de la voix) ──
+    const curScale = PelTextScale.get();
+    modal.querySelectorAll('#voice-textsize button').forEach(b => {
+      b.classList.toggle('active', Math.abs(parseFloat(b.dataset.scale) - curScale) < 0.01);
+      b.onclick = () => {
+        PelTextScale.set(b.dataset.scale);
+        modal.querySelectorAll('#voice-textsize button').forEach(x => x.classList.remove('active'));
+        b.classList.add('active');
+      };
+    });
+
+    // ── Sections vocales : masquées si l'appareil n'a pas de synthèse vocale ──
+    const audioSections = modal.querySelector('#voice-audio-sections');
+    if (audioSections) audioSections.style.display = hasVoice ? '' : 'none';
+    if (!hasVoice) {
+      modal.classList.remove('hidden');
+      document.body.classList.add('voice-modal-open');
+      return;
     }
     // Vitesse active
     modal.querySelectorAll('#voice-rates button').forEach(b => {

@@ -418,6 +418,18 @@ a.hm-home-link i { color: var(--text-soft); width: 16px; text-align: center; fon
 }
 .voice-rates button:hover { border-color: var(--gold); color: #fff; }
 .voice-rates button.active { background: rgba(201,168,76,.18); border-color: var(--gold); color: var(--gold); font-weight: 600; }
+
+/* Taille du texte (accessibilité) — mêmes pastilles que la vitesse */
+.voice-textsize { display: flex; gap: 8px; }
+.voice-textsize button {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+  padding: 8px 0; border-radius: 9px; border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.04); color: rgba(255,255,255,.7);
+  font-family: 'Outfit', sans-serif; font-size: 12px; font-weight: 500; cursor: pointer; transition: all .15s;
+}
+.voice-textsize button:hover { border-color: var(--gold); color: #fff; }
+.voice-textsize button.active { background: rgba(201,168,76,.18); border-color: var(--gold); color: var(--gold); font-weight: 600; }
+.voice-textsize .ts-a { line-height: 1; font-weight: 700; }
 .voice-list { display: flex; flex-direction: column; gap: 4px; max-height: 260px; overflow-y: auto; }
 .voice-item {
   display: flex; align-items: center; gap: 8px;

@@ -3,6 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script>
+    /* Accessibilité — taille du texte. Appliqué AVANT le rendu pour éviter tout
+       saut visuel (« flash »). Niveaux : 1 (normal), 1.15 (grand), 1.3 (très
+       grand). Utilise la propriété CSS `zoom` (= zoom natif, bien supporté sur
+       Safari iOS / Chrome Android / Edge), car le site est en px (pas en rem). */
+    (function () {
+      try {
+        var s = parseFloat(localStorage.getItem('pel.textScale'));
+        if (s && s > 1) document.documentElement.style.zoom = s;
+      } catch (e) {}
+    })();
+  </script>
   <title>PrionsEnLigne — Agenda des prières du jour</title>
   <meta name="description" content="Laudes, messe, chapelet, vêpres, complies : tous les offices et retransmissions du jour en un seul endroit. Calendrier liturgique catholique." />
   <meta name="robots" content="index, follow" />
@@ -103,7 +115,7 @@
         <div class="hm-divider hm-nav-divider"></div>
         <div class="hm-item" id="hm-signout" style="display:none"><i class="fa-solid fa-right-from-bracket"></i> Se déconnecter</div>
         <div class="hm-item" id="hm-install"><i class="fa-solid fa-download"></i> Ajouter à l'écran d'accueil</div>
-        <div class="hm-item" id="hm-voice"><i class="fa-solid fa-volume-high"></i> Voix de lecture</div>
+        <div class="hm-item" id="hm-voice"><i class="fa-solid fa-universal-access"></i> Accessibilité&nbsp;: texte &amp; voix</div>
         <div class="hm-divider"></div>
         <a href="/" class="hm-item hm-home-link"><i class="fa-solid fa-house"></i> Accueil &amp; présentation</a>
         <div class="hm-item" id="hm-contact"><i class="fa-solid fa-envelope"></i> Nous contacter</div>
