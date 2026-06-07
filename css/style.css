@@ -840,6 +840,20 @@ body.voice-modal-open { overflow: hidden; }
   display: block;
   margin-bottom: 2px;
 }
+.tl-pastoral-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--navy);
+  text-decoration: none;
+  border-bottom: 1px solid var(--gold-pale);
+  padding-bottom: 1px;
+}
+.tl-pastoral-link:hover { color: var(--gold); border-color: var(--gold); }
+.tl-pastoral-link i { color: var(--gold); }
 @media (max-width: 540px) {
   .tl-pastoral-banner { padding: 10px 12px; gap: 9px; }
   .tl-pastoral-text { font-size: 12.5px; }
@@ -1012,6 +1026,21 @@ body.tv-modal-open { overflow: hidden; }
 }
 .hm-support:hover { background: rgba(201,168,76,.08); }
 .hm-support > i { color: var(--gold); }
+
+/* Entrée « Pour les paroisses » + badge « affiche à imprimer » */
+.hm-paroisses > i { color: var(--gold); }
+.hm-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  background: rgba(201,168,76,.18);
+  color: #8a5a00;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .01em;
+  vertical-align: middle;
+}
 
 /* Section 'Soutenir le projet' dans À propos */
 .about-support {
