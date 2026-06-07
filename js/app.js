@@ -6169,6 +6169,10 @@ function initTodayTimeline() {
   // #7 — Ré-applique les filtres favoris mémorisés sur la timeline fraîchement
   // générée (l'init des filtres a pu tourner avant que les items existent).
   window._pelApplyFilters?.();
+  // Ré-applique aussi les badges horaires (Terminé / En direct / Ferme dans…)
+  // immédiatement après (re)génération, pour éviter qu'ils restent sur « — »
+  // sur les chemins de re-render (restauration de session, overrides, fuseau).
+  window._pelUpdateBadges?.();
 
   // Construit un .ics à partir d'une liste d'items de timeline et déclenche le download
   function exportTimelineItems(items, mode) {
@@ -6567,9 +6571,16 @@ function initBadges() {
     });
   }
 
+  // Exposé pour ré-appliquer les badges après chaque (re)génération de la
+  // timeline (sinon, sur certains chemins de re-render — ex. restauration de
+  // session au 1er chargement — les badges restaient figés sur « — »).
+  window._pelUpdateBadges = updateBadges;
+
   updateBadges();
-  // Mise à jour automatique toutes les minutes
-  setInterval(updateBadges, 60_000);
+  // Mise à jour automatique toutes les minutes (un seul interval global :
+  // initBadges peut être rappelé, on évite d'empiler les timers).
+  if (window._pelBadgesInterval) clearInterval(window._pelBadgesInterval);
+  window._pelBadgesInterval = setInterval(updateBadges, 60_000);
 }
 
 
