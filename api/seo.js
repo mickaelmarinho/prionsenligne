@@ -130,22 +130,25 @@ function pageShell({ title, desc, canonical, h1, sub, bodyHtml, jsonLd, otherLin
 <meta name="twitter:card" content="summary">
 <meta name="theme-color" content="#1a2744">
 <link rel="icon" href="/favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root{--ink:#1e1c18;--cream:#f7f3ea;--navy:#1a2744;--gold:#c9a84c;--soft:#6b6357}
+  :root{--ink:#1e1c18;--cream:#f7f3ea;--navy:#1a2744;--gold:#c9a84c;--soft:#6b6357;--serif:'Cormorant Garamond',Georgia,serif}
   *{box-sizing:border-box}
   body{margin:0;font-family:'Outfit',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--ink);background:var(--cream);line-height:1.6}
   .wrap{max-width:720px;margin:0 auto;padding:0 20px}
   header{background:var(--navy);color:#fff;padding:14px 0}
   header .wrap{display:flex;align-items:center;justify-content:space-between}
-  .brand{font-family:Georgia,serif;font-size:18px;color:#fff;text-decoration:none;display:flex;align-items:center;gap:8px}
-  .brand b{color:var(--gold);font-weight:700}
+  .brand{font-family:var(--serif);font-size:22px;color:#fff;text-decoration:none;display:flex;align-items:center;gap:8px}
+  .brand b{color:var(--gold);font-weight:600}
   .open-app{background:var(--gold);color:var(--ink);font-weight:600;font-size:14px;padding:8px 16px;border-radius:999px;text-decoration:none}
   main{padding:34px 0 10px}
   .eyebrow{text-transform:uppercase;letter-spacing:.08em;font-size:12px;color:var(--gold);font-weight:600;margin-bottom:6px}
-  h1{font-family:Georgia,serif;font-size:30px;line-height:1.2;margin:0 0 6px}
+  h1{font-family:var(--serif);font-size:38px;font-weight:600;line-height:1.15;margin:0 0 6px}
   .sub{color:var(--soft);font-size:15px;margin-bottom:22px}
   .card{background:#fff;border:1px solid #e7e0d2;border-left:3px solid var(--gold);border-radius:10px;padding:20px 22px;margin:18px 0}
-  .card h2{font-family:Georgia,serif;font-size:21px;margin:0 0 10px}
+  .card h2{font-family:var(--serif);font-weight:600;font-size:25px;margin:0 0 10px}
   .ref{color:var(--gold);font-weight:600;font-size:14px;margin-bottom:10px}
   p{margin:0 0 14px}
   .cta{display:inline-flex;align-items:center;gap:9px;background:var(--navy);color:#fff;font-weight:600;padding:13px 26px;border-radius:999px;text-decoration:none;margin:8px 0 26px}
@@ -155,8 +158,8 @@ function pageShell({ title, desc, canonical, h1, sub, bodyHtml, jsonLd, otherLin
   footer{color:var(--soft);font-size:12.5px;text-align:center;padding:26px 0 40px;line-height:1.7}
   footer a{color:var(--soft)}
   .src{font-size:12.5px;color:var(--soft);font-style:italic;margin-top:6px}
-  main h2{font-family:Georgia,serif;font-size:19px;margin:26px 0 8px;color:var(--navy)}
-  .card h2{margin:0 0 10px;font-size:21px}
+  main h2{font-family:var(--serif);font-weight:600;font-size:23px;margin:26px 0 8px;color:var(--navy)}
+  .card h2{margin:0 0 10px;font-size:25px}
   .saint-list{list-style:none;padding:0;margin:0 0 8px}
   .saint-list li{padding:8px 0;border-bottom:1px solid #ece5d6;font-size:15px}
   .saint-list li:last-child{border-bottom:none}
@@ -175,7 +178,6 @@ ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
   <div class="eyebrow">${esc(sub)}</div>
   <h1>${esc(h1)}</h1>
   ${bodyHtml}
-  <a class="cta" href="/agenda">📿 Ouvrir PrionsEnLigne — offices, messes, chapelet</a>
   <div class="links">
     <a href="/agenda">Agenda du jour</a>
     <a href="/saint-du-jour">Saint du jour</a>
@@ -461,14 +463,17 @@ export default async function handler(req, res) {
 <style>
   :root{--ink:#1e1c18;--cream:#f7f3ea;--navy:#1a2744;--gold:#c9a84c;--soft:#6b6357}
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:Georgia,'Times New Roman',serif;background:#e9e6df;color:var(--ink);padding:24px;display:flex;flex-direction:column;align-items:center;gap:18px}
+  body{font-family:Georgia,'Times New Roman',serif;background:#e9e6df;color:var(--ink);padding:24px;display:flex;flex-direction:column;align-items:center;gap:18px;overflow-x:hidden}
   .toolbar{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
   .toolbar button,.toolbar a{font-family:system-ui,sans-serif;font-size:14px;font-weight:600;padding:11px 22px;border-radius:999px;border:none;cursor:pointer;text-decoration:none}
   .btn-print{background:var(--navy);color:#fff}
   .btn-back{background:#fff;color:var(--navy);border:1px solid #ccc}
   .toolbar p{flex-basis:100%;text-align:center;font-family:system-ui,sans-serif;font-size:13px;color:var(--soft)}
-  /* Feuille A4 */
-  .sheet{width:210mm;max-width:100%;aspect-ratio:210/297;background:var(--cream);box-shadow:0 6px 30px rgba(0,0,0,.18);
+  /* Feuille A4 — taille fixe réelle ; mise à l'échelle pour l'écran via JS
+     (sinon les unités mm/px déborderaient sur mobile). */
+  .sheet-wrap{width:100%;display:flex;justify-content:center;align-items:flex-start;overflow:hidden}
+  .sheet{width:210mm;flex-shrink:0;aspect-ratio:210/297;background:var(--cream);box-shadow:0 6px 30px rgba(0,0,0,.18);
+    transform-origin:top center;
     display:flex;flex-direction:column;align-items:center;text-align:center;padding:18mm 16mm;position:relative}
   .frame{position:absolute;inset:8mm;border:2px solid var(--gold)}
   .frame::after{content:"";position:absolute;inset:4mm;border:1px solid rgba(201,168,76,.5)}
@@ -492,7 +497,8 @@ export default async function handler(req, res) {
   @media print {
     body{background:#fff;padding:0;gap:0}
     .toolbar{display:none}
-    .sheet{box-shadow:none;width:100%;height:100%}
+    .sheet-wrap{overflow:visible;height:auto!important}
+    .sheet{box-shadow:none;width:100%;height:100%;transform:none!important}
   }
   @page{size:A4;margin:0}
 </style>
@@ -503,6 +509,7 @@ export default async function handler(req, res) {
     <a class="btn-back" href="/paroisses">← Retour</a>
     <p>Conseil : imprimez en A4, couleur, qualité normale. À afficher au fond de l'église ou au presbytère.</p>
   </div>
+  <div class="sheet-wrap">
   <div class="sheet">
     <div class="frame"></div>
     <div class="cross"><b class="v"></b><b class="h"></b></div>
@@ -519,6 +526,41 @@ export default async function handler(req, res) {
     <span class="free">100&nbsp;% gratuit · sans publicité</span>
     <p class="pastoral">La participation physique à la messe reste irremplaçable. Cet outil accompagne ceux qui ne peuvent pas se déplacer (malades, personnes âgées, isolés) et invite chacun à rejoindre sa paroisse dès qu'il le peut.</p>
   </div>
+  </div>
+  <script>
+    // Met la feuille A4 à l'échelle pour qu'elle tienne en largeur sur l'écran
+    // (mobile surtout), tout en restant fidèle. L'impression la réinitialise.
+    (function () {
+      var wrap = document.querySelector('.sheet-wrap');
+      var sheet = document.querySelector('.sheet');
+      function fit() {
+        sheet.style.transform = 'none';
+        var natural = sheet.offsetWidth;        // largeur réelle (210mm en px)
+        // On mesure la largeur disponible depuis le viewport (non pollué par le
+        // débordement de la feuille non encore mise à l'échelle), moins le
+        // padding horizontal du body.
+        var bs = getComputedStyle(document.body);
+        var padX = parseFloat(bs.paddingLeft) + parseFloat(bs.paddingRight);
+        var avail = document.documentElement.clientWidth - padX;
+        var s = Math.min(1, avail / natural);
+        sheet.style.transform = 'scale(' + s + ')';
+        // La hauteur du wrapper suit la feuille mise à l'échelle (le transform
+        // ne réduit pas la boîte de mise en page).
+        wrap.style.height = (sheet.offsetHeight * s) + 'px';
+      }
+      window.addEventListener('resize', fit);
+      window.addEventListener('beforeprint', function () { wrap.style.height = 'auto'; sheet.style.transform = 'none'; });
+      window.addEventListener('afterprint', fit);
+      // Plusieurs passages : la 1re mesure peut tomber avant que la largeur du
+      // viewport (mobile) soit stabilisée. On recalcule après le load, à la
+      // frame suivante, et avec un court filet de sécurité.
+      fit();
+      window.addEventListener('load', fit);
+      if (window.requestAnimationFrame) requestAnimationFrame(fit);
+      setTimeout(fit, 250);
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+    })();
+  </script>
 </body>
 </html>`);
     return;
