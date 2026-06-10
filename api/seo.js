@@ -147,7 +147,19 @@ function pageShell({ title, desc, canonical, h1, sub, bodyHtml, jsonLd, otherLin
   /* État connecté : pastille compte (initiale + prénom), comme dans l'app */
   .open-app.account{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.18);display:inline-flex;align-items:center;gap:8px;padding:5px 14px 5px 5px}
   .open-app.account .acc-ini{width:26px;height:26px;border-radius:50%;background:var(--gold);color:var(--navy);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;text-transform:uppercase}
-  .open-app.account .acc-chev{opacity:.55;font-size:12px;margin-left:1px}
+  .open-app.account .acc-chev{opacity:.55;font-size:12px;margin-left:1px;transition:transform .15s}
+  .open-app.account.open .acc-chev{transform:rotate(180deg)}
+  /* Menu déroulant compte (ouvert EN PLACE sur la page, comme l'app) */
+  .acc-menu{position:absolute;top:calc(100% + 14px);right:0;width:264px;background:#fff;border-radius:12px;box-shadow:0 14px 44px rgba(0,0,0,.28);padding:8px;z-index:1000;font-family:'Outfit',sans-serif}
+  .acc-menu[hidden]{display:none}
+  .acc-menu a,.acc-menu button{display:block;width:100%;text-align:left;background:none;border:none;font-family:inherit;font-size:14px;color:var(--ink);text-decoration:none;padding:9px 12px;border-radius:8px;cursor:pointer}
+  .acc-menu a:hover,.acc-menu button:hover{background:rgba(201,168,76,.12)}
+  .acc-menu-head{display:flex;align-items:center;gap:10px;padding:8px 12px 12px}
+  .acc-ini-lg{width:34px;height:34px;border-radius:50%;background:var(--navy);color:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:700;text-transform:uppercase;flex:0 0 auto}
+  .acc-menu-id strong{display:block;font-size:14px;color:var(--navy)}
+  .acc-menu-id small{font-size:12px;color:var(--soft);word-break:break-all}
+  .acc-menu-sep{height:1px;background:#eee;margin:6px 4px}
+  .acc-menu .acc-logout{color:#9a3b3b}
   main{padding:34px 0 10px}
   .eyebrow{text-transform:uppercase;letter-spacing:.08em;font-size:12px;color:var(--gold);font-weight:600;margin-bottom:6px}
   h1{font-family:var(--serif);font-size:38px;font-weight:600;line-height:1.15;margin:0 0 6px}
@@ -204,28 +216,65 @@ ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
      l'app. Tout reste côté client : aucune donnée n'est transmise. */
   (function () {
     try {
-      var key = Object.keys(localStorage).find(function (k) { return /^sb-.*-auth-token$/.test(k); });
-      if (!key) return;
-      var raw = localStorage.getItem(key); if (!raw) return;
+      var keys = Object.keys(localStorage).filter(function (k) { return /^sb-.*-auth-token$/.test(k); });
+      if (!keys.length) return;
+      var raw = localStorage.getItem(keys[0]); if (!raw) return;
       var s = JSON.parse(raw);
       var user = (s && (s.user || (s.currentSession && s.currentSession.user))) || null;
       if (!user) return;
       var name = (user.user_metadata && user.user_metadata.name) || (user.email ? user.email.split('@')[0] : '');
       if (!name) return;
+      var email = user.email || '';
+      var initial = (name.trim()[0] || '?');
       var btn = document.getElementById('seo-account');
       if (!btn) return;
-      btn.setAttribute('href', '/agenda#menu');
+
+      // « Se connecter » → pastille compte
+      btn.setAttribute('href', '/agenda#menu'); // repli si JS désactivé
       btn.classList.add('account');
       btn.textContent = '';
-      var ini = document.createElement('span');
-      ini.className = 'acc-ini';
-      ini.textContent = (name.trim()[0] || '?');
+      var ini = document.createElement('span'); ini.className = 'acc-ini'; ini.textContent = initial;
       btn.appendChild(ini);
       btn.appendChild(document.createTextNode(name));
-      var chev = document.createElement('span');
-      chev.className = 'acc-chev';
-      chev.textContent = '▾'; // ▾
+      var chev = document.createElement('span'); chev.className = 'acc-chev'; chev.textContent = '▾';
       btn.appendChild(chev);
+
+      // Menu déroulant ouvert EN PLACE (pas de détour par « Aujourd'hui »)
+      var esc = function (t) { var d = document.createElement('div'); d.textContent = (t == null ? '' : t); return d.innerHTML; };
+      var wrap = btn.parentNode; // header .wrap
+      wrap.style.position = 'relative';
+      var menu = document.createElement('div');
+      menu.className = 'acc-menu'; menu.id = 'acc-menu'; menu.hidden = true;
+      menu.innerHTML =
+        '<div class="acc-menu-head"><span class="acc-ini-lg">' + esc(initial) + '</span>' +
+        '<div class="acc-menu-id"><strong>Mon compte</strong><small>' + esc(email) + '</small></div></div>' +
+        '<a href="/agenda">Aujourd’hui</a>' +
+        '<a href="/agenda#semaine">Semaine</a>' +
+        '<a href="/agenda#mois">Calendrier liturgique</a>' +
+        '<a href="/agenda#bible">Bible</a>' +
+        '<a href="/agenda#sources">Sources</a>' +
+        '<div class="acc-menu-sep"></div>' +
+        '<button type="button" class="acc-logout" id="seo-logout">Se déconnecter</button>' +
+        '<div class="acc-menu-sep"></div>' +
+        '<a href="/">Accueil &amp; présentation</a>' +
+        '<a href="/paroisses">Pour les paroisses</a>' +
+        '<a href="https://paypal.me/prionsenligne" target="_blank" rel="noopener">Soutenir le projet</a>';
+      wrap.appendChild(menu);
+
+      function closeMenu() { menu.hidden = true; btn.classList.remove('open'); }
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        menu.hidden = !menu.hidden;
+        btn.classList.toggle('open', !menu.hidden);
+      });
+      document.addEventListener('click', function (e) {
+        if (!menu.hidden && !menu.contains(e.target) && !btn.contains(e.target)) closeMenu();
+      });
+      document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeMenu(); });
+      menu.querySelector('#seo-logout').addEventListener('click', function () {
+        try { keys.forEach(function (k) { localStorage.removeItem(k); }); } catch (_) {}
+        location.reload();
+      });
     } catch (e) {}
   })();
 </script>
