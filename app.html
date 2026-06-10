@@ -1184,6 +1184,28 @@
   }
   </script>
 
+  <script>
+    // ── Service Worker + auto-mise-à-jour ─────────────────────
+    // (absent jusqu'ici dans l'app → l'ancien SW servait indéfiniment les
+    // anciens fichiers). Quand une nouvelle version est publiée, le nouveau SW
+    // s'active et la page se recharge UNE fois → plus de Ctrl+F5 manuel.
+    if ('serviceWorker' in navigator) {
+      if (navigator.serviceWorker.controller) {
+        var _pelSwReloaded = false;
+        navigator.serviceWorker.addEventListener('controllerchange', function () {
+          if (_pelSwReloaded) return;
+          _pelSwReloaded = true;
+          location.reload();
+        });
+      }
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/sw.js').then(function (reg) {
+          reg.update();
+          setInterval(function () { reg.update(); }, 3600000);
+        }).catch(function () {});
+      });
+    }
+  </script>
   <script src="js/app.js"></script>
   <script src="js/bible.js"></script>
   <!-- Supabase — build UMD explicite (évite que jsdelivr serve le build CJS/ESM) -->

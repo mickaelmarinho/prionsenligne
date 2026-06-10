@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════
-   PRIONSENLIGNE — Service Worker v132
+   PRIONSENLIGNE — Service Worker (version dans la constante VERSION ci-dessous)
    Stratégies de cache adaptées à chaque type de ressource pour
    optimiser perf 3G/4G (Afrique francophone notamment).
 
@@ -10,7 +10,7 @@
    - API /api/* : network-first (fraîcheur des données)
 ═══════════════════════════════════════════════ */
 
-const VERSION       = 'v180';
+const VERSION       = 'v181';
 const STATIC_CACHE  = `pel-static-${VERSION}`;
 const RUNTIME_CACHE = `pel-runtime-${VERSION}`;
 

@@ -483,10 +483,24 @@
   </button>
 
   <script>
-    // ── Service Worker ────────────────────────────────────────
+    // ── Service Worker + auto-mise-à-jour ─────────────────────
+    // Quand une nouvelle version est publiée, le nouveau SW s'active
+    // (skipWaiting) et la page se recharge UNE fois en douceur → plus besoin
+    // de vider le cache manuellement.
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      if (navigator.serviceWorker.controller) {
+        var _pelSwReloaded = false;
+        navigator.serviceWorker.addEventListener('controllerchange', function () {
+          if (_pelSwReloaded) return;
+          _pelSwReloaded = true;
+          location.reload();
+        });
+      }
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/sw.js').then(function (reg) {
+          reg.update();
+          setInterval(function () { reg.update(); }, 3600000); // re-vérifie chaque heure
+        }).catch(function () {});
       });
     }
 
