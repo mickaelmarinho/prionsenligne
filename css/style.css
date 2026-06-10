@@ -207,6 +207,30 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
 }
 .hamburger-btn:hover { background: rgba(255,255,255,.2); }
 
+/* Icône hamburger animée : 3 traits fins qui pivotent en croix à l'ouverture
+   (état piloté par aria-expanded="true", géré par initHamburger). */
+.hb-lines {
+  position: relative;
+  display: block;
+  width: 18px;
+  height: 13px;
+}
+.hb-lines span {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: currentColor;
+  border-radius: 2px;
+  transition: transform .28s cubic-bezier(.4,0,.2,1), top .28s cubic-bezier(.4,0,.2,1), opacity .18s ease;
+}
+.hb-lines span:nth-child(1) { top: 0; }
+.hb-lines span:nth-child(2) { top: 5.5px; }
+.hb-lines span:nth-child(3) { top: 11px; }
+.hamburger-btn[aria-expanded="true"] .hb-lines span:nth-child(1) { top: 5.5px; transform: rotate(45deg); }
+.hamburger-btn[aria-expanded="true"] .hb-lines span:nth-child(2) { opacity: 0; transform: scaleX(.4); }
+.hamburger-btn[aria-expanded="true"] .hb-lines span:nth-child(3) { top: 5.5px; transform: rotate(-45deg); }
+
 /* Overlay fond sombre derrière le drawer (mobile) */
 .hamburger-overlay {
   position: fixed;
