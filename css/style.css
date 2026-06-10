@@ -1075,7 +1075,9 @@ body.tv-modal-open { overflow: hidden; }
 }
 .about-support-note {
   font-size: 11.5px !important;
-  color: rgba(255,255,255,.5) !important;
+  /* Texte atténué FONCÉ : le modal « À propos » est sur fond clair, donc le
+     blanc précédent était invisible. */
+  color: var(--text-soft) !important;
   font-style: italic;
   margin-top: 10px !important;
 }
