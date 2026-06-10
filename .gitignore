@@ -17,3 +17,14 @@ scripts/package-lock.json
 
 # Fichier généré (régénérable depuis app.js)
 scripts/tts-texts.json
+
+# Projets vidéo personnels (TikTok/YouTube) — n'ont rien à voir avec le site
+video_projet/
+
+# Fichiers temporaires de test/rendu (générés ponctuellement, non versionnés)
+_test_*.html
+_render_test.mjs
+
+# Système
+.DS_Store
+Thumbs.db
