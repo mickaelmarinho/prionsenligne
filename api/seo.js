@@ -144,6 +144,9 @@ function pageShell({ title, desc, canonical, h1, sub, bodyHtml, jsonLd, otherLin
   .brand img{width:30px;height:30px;display:block}
   header .wrap{max-width:1100px}
   .open-app{background:var(--gold);color:var(--ink);font-weight:600;font-size:14px;padding:8px 16px;border-radius:999px;text-decoration:none}
+  /* État connecté : pastille compte (initiale + prénom), comme dans l'app */
+  .open-app.account{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.18);display:inline-flex;align-items:center;gap:8px;padding:5px 14px 5px 5px}
+  .open-app.account .acc-ini{width:26px;height:26px;border-radius:50%;background:var(--gold);color:var(--navy);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;text-transform:uppercase}
   main{padding:34px 0 10px}
   .eyebrow{text-transform:uppercase;letter-spacing:.08em;font-size:12px;color:var(--gold);font-weight:600;margin-bottom:6px}
   h1{font-family:var(--serif);font-size:38px;font-weight:600;line-height:1.15;margin:0 0 6px}
@@ -172,8 +175,8 @@ ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
 </head>
 <body>
 <header><div class="wrap">
-  <a class="brand" href="/"><img src="/icons/icon.svg" alt="" width="30" height="30"><span>Accueil</span></a>
-  <a class="open-app" href="/agenda#login">Se connecter</a>
+  <a class="brand" href="/" aria-label="Accueil"><img src="/icons/icon.svg" alt="" width="30" height="30"></a>
+  <a class="open-app" href="/agenda#login" id="seo-account">Se connecter</a>
 </div></header>
 <main><div class="wrap">
   <div class="eyebrow">${esc(sub)}</div>
@@ -194,6 +197,33 @@ ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
   Offices du bréviaire, messes en direct, chapelet numérique, Bible interactive, calendrier liturgique.</p>
   <p><a href="/">prionsenligne.fr</a> · Textes liturgiques : AELF · Saints : Nominis (CEF)</p>
 </div></footer>
+<script>
+  /* Si l'utilisateur est déjà connecté (session Supabase en localStorage, même
+     domaine), on remplace « Se connecter » par sa pastille compte — comme dans
+     l'app. Tout reste côté client : aucune donnée n'est transmise. */
+  (function () {
+    try {
+      var key = Object.keys(localStorage).find(function (k) { return /^sb-.*-auth-token$/.test(k); });
+      if (!key) return;
+      var raw = localStorage.getItem(key); if (!raw) return;
+      var s = JSON.parse(raw);
+      var user = (s && (s.user || (s.currentSession && s.currentSession.user))) || null;
+      if (!user) return;
+      var name = (user.user_metadata && user.user_metadata.name) || (user.email ? user.email.split('@')[0] : '');
+      if (!name) return;
+      var btn = document.getElementById('seo-account');
+      if (!btn) return;
+      btn.setAttribute('href', '/agenda');
+      btn.classList.add('account');
+      btn.textContent = '';
+      var ini = document.createElement('span');
+      ini.className = 'acc-ini';
+      ini.textContent = (name.trim()[0] || '?');
+      btn.appendChild(ini);
+      btn.appendChild(document.createTextNode(name));
+    } catch (e) {}
+  })();
+</script>
 <script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>`;
