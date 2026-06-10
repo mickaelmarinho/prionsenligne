@@ -140,8 +140,10 @@ function pageShell({ title, desc, canonical, h1, sub, bodyHtml, jsonLd, otherLin
   .wrap{max-width:720px;margin:0 auto;padding:0 20px}
   header{background:var(--navy);color:#fff;padding:14px 0}
   header .wrap{display:flex;align-items:center;justify-content:space-between}
-  .brand{font-family:var(--serif);font-size:22px;color:#fff;text-decoration:none;display:flex;align-items:center;gap:8px}
+  .brand{font-family:var(--serif);font-size:23px;color:#fff;text-decoration:none;display:flex;align-items:center;gap:9px}
+  .brand img{width:30px;height:30px;display:block}
   .brand b{color:var(--gold);font-weight:600}
+  header .wrap{max-width:1100px}
   .open-app{background:var(--gold);color:var(--ink);font-weight:600;font-size:14px;padding:8px 16px;border-radius:999px;text-decoration:none}
   main{padding:34px 0 10px}
   .eyebrow{text-transform:uppercase;letter-spacing:.08em;font-size:12px;color:var(--gold);font-weight:600;margin-bottom:6px}
@@ -171,7 +173,7 @@ ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
 </head>
 <body>
 <header><div class="wrap">
-  <a class="brand" href="/">✝ Prions<b>EnLigne</b></a>
+  <a class="brand" href="/"><img src="/icons/icon.svg" alt="" width="30" height="30">Prions<b>EnLigne</b></a>
   <a class="open-app" href="/agenda">Ouvrir l'app</a>
 </div></header>
 <main><div class="wrap">
