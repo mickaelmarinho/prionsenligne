@@ -6642,6 +6642,19 @@ function handleDeepLink() {
     return;
   }
 
+  // Ouvre le menu compte (utilisé par la pastille « Mon compte » des pages SEO :
+  // /agenda#menu → arrive sur Aujourd'hui et ouvre directement le menu).
+  if (hash === 'menu' || hash === 'account') {
+    setTimeout(() => {
+      const accountBtn = document.getElementById('header-btn-account');
+      const burgerBtn  = document.getElementById('hamburger-btn');
+      if (accountBtn && accountBtn.offsetParent !== null) accountBtn.click();
+      else burgerBtn?.click();
+      history.replaceState(null, '', location.pathname);
+    }, 300);
+    return;
+  }
+
   // Ouvre directement le chapelet numérique (modal)
   if (hash === 'open-chapelet') {
     setTimeout(() => document.getElementById('chapelet-fab')?.click(), 150);

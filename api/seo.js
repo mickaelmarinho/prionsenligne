@@ -147,6 +147,7 @@ function pageShell({ title, desc, canonical, h1, sub, bodyHtml, jsonLd, otherLin
   /* État connecté : pastille compte (initiale + prénom), comme dans l'app */
   .open-app.account{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.18);display:inline-flex;align-items:center;gap:8px;padding:5px 14px 5px 5px}
   .open-app.account .acc-ini{width:26px;height:26px;border-radius:50%;background:var(--gold);color:var(--navy);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;text-transform:uppercase}
+  .open-app.account .acc-chev{opacity:.55;font-size:12px;margin-left:1px}
   main{padding:34px 0 10px}
   .eyebrow{text-transform:uppercase;letter-spacing:.08em;font-size:12px;color:var(--gold);font-weight:600;margin-bottom:6px}
   h1{font-family:var(--serif);font-size:38px;font-weight:600;line-height:1.15;margin:0 0 6px}
@@ -213,7 +214,7 @@ ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
       if (!name) return;
       var btn = document.getElementById('seo-account');
       if (!btn) return;
-      btn.setAttribute('href', '/agenda');
+      btn.setAttribute('href', '/agenda#menu');
       btn.classList.add('account');
       btn.textContent = '';
       var ini = document.createElement('span');
@@ -221,6 +222,10 @@ ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
       ini.textContent = (name.trim()[0] || '?');
       btn.appendChild(ini);
       btn.appendChild(document.createTextNode(name));
+      var chev = document.createElement('span');
+      chev.className = 'acc-chev';
+      chev.textContent = '▾'; // ▾
+      btn.appendChild(chev);
     } catch (e) {}
   })();
 </script>
