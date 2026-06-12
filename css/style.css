@@ -194,18 +194,24 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
   position: relative;
 }
 
+/* Bouton menu nominatif : pilule « Menu », assortie à « Se connecter » */
 .hamburger-btn {
   background: rgba(255,255,255,.1);
   border: 1px solid rgba(255,255,255,.15);
   color: var(--cream);
-  width: 36px; height: 36px;
-  border-radius: var(--r-md);
+  height: 33px;
+  padding: 0 14px 0 12px;
+  border-radius: 20px;
   cursor: pointer;
-  font-size: 15px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
   transition: background .15s;
-  display: flex; align-items: center; justify-content: center;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  white-space: nowrap;
 }
 .hamburger-btn:hover { background: rgba(255,255,255,.2); }
+.hb-label { line-height: 1; }
 
 /* Icône hamburger animée : 3 traits fins qui pivotent en croix à l'ouverture
    (état piloté par aria-expanded="true", géré par initHamburger). */
@@ -7581,10 +7587,11 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   .logo-img { width: 30px; height: 30px; }
   .logo-site-name { display: none; }   /* on garde uniquement l'icône ronde */
 
-  /* Bouton burger : zone tactile + visuel */
+  /* Bouton menu nominatif : zone tactile confortable, pilule conservée */
   .hamburger-btn {
-    width: 40px; height: 40px;
-    border-radius: 10px;
+    height: 36px;
+    padding: 0 13px 0 11px;
+    border-radius: 20px;
   }
 
   /* ── Main : padding latéral plus serré ── */
