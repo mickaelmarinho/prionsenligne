@@ -135,6 +135,12 @@ function initFilters() {
   // Exposé pour ré-appliquer le filtre après (re)génération de la timeline,
   // qui peut survenir APRÈS initFilters (items injectés dynamiquement).
   window._pelApplyFilters = applyFilters;
+  // Exposé pour l'onboarding des nouveaux inscrits : applique + persiste
+  // (local et compte) un jeu de favoris choisi hors de ce module.
+  window._pelSetOfficeFilters = arr => {
+    applyFilterSet(arr, { persistLocal: true });
+    persistRemote();
+  };
 
   document.querySelectorAll('.pf').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -2454,6 +2460,92 @@ function initWelcome() {
   document.getElementById('wb-close')?.addEventListener('click',   dismiss);
   document.getElementById('wb-start')?.addEventListener('click',   dismiss);
   document.getElementById('wb-dismiss')?.addEventListener('click', dismiss);
+}
+
+
+/* ────────────────────────────────────────────
+   8a-bis. ONBOARDING — accueil des nouveaux inscrits
+   À la première connexion d'un compte récemment créé, propose de choisir
+   ses offices favoris → la page « Aujourd'hui » est personnalisée dès le
+   premier jour (sauvegarde locale + compte via _pelSetOfficeFilters).
+──────────────────────────────────────────────*/
+function initOnboarding() {
+  const KEY = 'pel_onboarded';
+
+  const OFFICES = [
+    { type: 'laudes',   icon: 'fa-sun',            label: 'Laudes' },
+    { type: 'matin',    icon: 'fa-mug-hot',        label: 'Prière du matin' },
+    { type: 'messe',    icon: 'fa-church',         label: 'Messe' },
+    { type: 'chapelet', icon: 'fa-circle-dot',     label: 'Chapelet' },
+    { type: 'vepres',   icon: 'fa-cloud-sun',      label: 'Vêpres' },
+    { type: 'soiree',   icon: 'fa-hands-praying',  label: 'Prière du soir' },
+    { type: 'complies', icon: 'fa-moon',           label: 'Complies' },
+  ];
+
+  function openOnboarding(user) {
+    if (document.getElementById('ob-backdrop')) return;
+    const name = user?.user_metadata?.name || '';
+    const esc = s => String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const div = document.createElement('div');
+    div.id = 'ob-backdrop';
+    div.className = 'ob-backdrop';
+    div.innerHTML = `
+      <div class="ob-modal" role="dialog" aria-modal="true" aria-label="Bienvenue">
+        <div class="ob-head">
+          <i class="fa-solid fa-hands-praying"></i>
+          <h3>Bienvenue${name ? ' ' + esc(name) : ''} 🙏</h3>
+          <p>Quelles prières souhaitez-vous voir en priorité sur votre page «&nbsp;Aujourd'hui&nbsp;»&nbsp;?</p>
+        </div>
+        <div class="ob-grid">
+          ${OFFICES.map(o => `
+            <label class="ob-office">
+              <input type="checkbox" value="${o.type}">
+              <span class="ob-office-card"><i class="fa-solid ${o.icon}"></i>${o.label}</span>
+            </label>`).join('')}
+        </div>
+        <div class="ob-foot">
+          <button type="button" class="ob-skip" id="ob-skip">Tout afficher</button>
+          <button type="button" class="ob-save" id="ob-save" disabled>Valider mes favoris</button>
+        </div>
+        <p class="ob-hint">Modifiable à tout moment avec les filtres en haut de la page.</p>
+      </div>`;
+    document.body.appendChild(div);
+    document.body.style.overflow = 'hidden';
+
+    const saveBtn = div.querySelector('#ob-save');
+    const checked = () => Array.from(div.querySelectorAll('input:checked')).map(i => i.value);
+    div.addEventListener('change', () => { saveBtn.disabled = checked().length === 0; });
+
+    function close() {
+      try { localStorage.setItem(KEY, '1'); } catch (_) {}
+      div.remove();
+      document.body.style.overflow = '';
+    }
+    div.querySelector('#ob-skip').addEventListener('click', () => {
+      window._pelSetOfficeFilters?.([]);
+      close();
+    });
+    saveBtn.addEventListener('click', () => {
+      window._pelSetOfficeFilters?.(checked());
+      close();
+    });
+  }
+
+  document.addEventListener('pel:authchange', e => {
+    const user = e.detail?.user;
+    if (!user) return;
+    let seen = false;
+    try { seen = localStorage.getItem(KEY) === '1'; } catch (_) {}
+    if (seen) return;
+    // Compte créé il y a moins de 48 h → vrai nouvel inscrit : on lui propose
+    // ses favoris. Compte plus ancien : on marque silencieusement (pas de nag).
+    const ageMs = Date.now() - new Date(user.created_at || 0).getTime();
+    if (ageMs < 48 * 3600 * 1000) {
+      setTimeout(() => openOnboarding(user), 600);
+    } else {
+      try { localStorage.setItem(KEY, '1'); } catch (_) {}
+    }
+  });
 }
 
 
@@ -8452,6 +8544,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initBadges();          // idem
   initWeek();
   initWelcome();
+  initOnboarding();
   initNextOffice();
   initChapelet();
   initChat();

@@ -1424,6 +1424,10 @@ function setMode(mode) {
   const forgotEl = $id('auth-forgot');
   if (forgotEl) forgotEl.style.display = isLogin ? '' : 'none';
 
+  // Lien magique (connexion sans mot de passe) : mode connexion uniquement
+  const magicEl = $id('auth-magic');
+  if (magicEl) magicEl.style.display = isLogin ? '' : 'none';
+
   const submitBtn = $id('auth-submit');
   if (submitBtn) {
     const labels = {
@@ -1550,6 +1554,16 @@ function showConfirmation(email) {
     if (closeBtn) closeBtn.before(resendBtn);
   }
 }
+function showMagicSent(email) {
+  const safe = String(email || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  showSuccessScreen({
+    icon:     'fa-wand-magic-sparkles',
+    title:    'Lien de connexion envoyé !',
+    desc:     `Un lien vient d'être envoyé à <strong>${safe}</strong>.<br>Ouvrez votre boîte mail et cliquez dessus : vous serez connecté automatiquement.<br><small style="color:var(--text-soft)">Pensez à vérifier vos spams. Le lien expire dans 1 heure.</small>`,
+    btnLabel: 'Fermer',
+    btnAction: closeAuthModal,
+  });
+}
 function showResetSent() {
   showSuccessScreen({
     icon:     'fa-paper-plane',
@@ -1616,6 +1630,46 @@ function initAuthUI() {
 
   // ── Mot de passe oublié / Retour ──
   $id('auth-forgot-btn')?.addEventListener('click', () => { restoreFields(); setMode('reset-request'); });
+
+  // ── Lien magique : connexion sans mot de passe ──
+  // Envoie un e-mail contenant un lien ; au clic, Supabase établit la session
+  // automatiquement (detectSessionInUrl). shouldCreateUser:false → réservé aux
+  // comptes existants (l'inscription classique reste le parcours de création).
+  $id('auth-magic-btn')?.addEventListener('click', async () => {
+    clearAuthError();
+    if (!_sb) { showAuthError('Service en cours de chargement. Réessayez dans quelques instants.'); return; }
+    const email = $id('auth-email')?.value.trim();
+    if (!email || !email.includes('@')) {
+      showAuthError('Entrez d\'abord votre adresse e-mail dans le champ ci-dessus.');
+      $id('auth-email')?.focus();
+      return;
+    }
+    const btn = $id('auth-magic-btn');
+    const oldHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Envoi en cours…';
+    const { error } = await _sb.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: window.location.origin + '/agenda',
+        shouldCreateUser: false,
+      },
+    });
+    btn.disabled = false;
+    btn.innerHTML = oldHtml;
+    if (error) {
+      const m = (error.message || '').toLowerCase();
+      if (m.includes('signups not allowed') || m.includes('user not found') || m.includes('otp_disabled')) {
+        showAuthError('Aucun compte n\'existe avec cette adresse. Créez d\'abord un compte (onglet « Créer un compte »).');
+      } else if (m.includes('rate limit') || m.includes('security purposes')) {
+        showAuthError('Un e-mail vient déjà d\'être envoyé. Patientez une minute avant de redemander un lien.');
+      } else {
+        showAuthError(translateSupabaseError(error));
+      }
+      return;
+    }
+    showMagicSent(email);
+  });
   $id('auth-back-btn')?.addEventListener('click',   () => { restoreFields(); setMode('login'); });
 
   // ── Toggle afficher / masquer mot de passe ──

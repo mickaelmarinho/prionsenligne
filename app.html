@@ -630,20 +630,19 @@
             <div class="auth-hint">Un petit drapeau sera affiché à côté de votre pseudo dans le chat des intentions. Modifiable plus tard dans votre profil.</div>
           </div>
           <div id="auth-error" class="auth-error hidden"></div>
-          <!-- hCaptcha (anti-bot) — visible uniquement en mode inscription -->
-          <div id="auth-captcha-wrap" class="auth-captcha-wrap" style="display:none">
-            <div id="auth-captcha"></div>
-          </div>
           <div class="auth-forgot" id="auth-forgot">
             <button type="button" id="auth-forgot-btn">Mot de passe oublié&nbsp;?</button>
           </div>
           <button type="submit" class="auth-submit" id="auth-submit" data-label="Se connecter">Se connecter</button>
-          <p class="auth-captcha-note" id="auth-captcha-note" style="display:none">
-            <i class="fa-solid fa-shield-halved"></i>
-            Protégé contre les robots par hCaptcha&nbsp;— sa
-            <a href="https://www.hcaptcha.com/privacy" target="_blank" rel="noopener">confidentialité</a> et ses
-            <a href="https://www.hcaptcha.com/terms" target="_blank" rel="noopener">conditions</a> s'appliquent.
-          </p>
+          <!-- Connexion SANS mot de passe (lien magique par e-mail) — mode connexion uniquement -->
+          <div class="auth-magic" id="auth-magic" style="display:none">
+            <div class="auth-magic-sep"><span>ou, plus simple</span></div>
+            <button type="button" class="auth-magic-btn" id="auth-magic-btn">
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+              Recevoir un lien de connexion par e-mail
+            </button>
+            <p class="auth-magic-hint">Pas de mot de passe à retenir&nbsp;: entrez votre e-mail ci-dessus, on vous envoie un lien — un clic et vous êtes connecté.</p>
+          </div>
         </div>
         <div id="auth-success-screen" class="auth-confirm" style="display:none">
           <i id="auth-success-icon" class="fa-solid fa-envelope-circle-check"></i>
