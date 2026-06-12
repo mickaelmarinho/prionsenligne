@@ -1085,18 +1085,21 @@ body.tv-modal-open { overflow: hidden; }
   font-family: 'Outfit', sans-serif;
   font-weight: 600;
   font-size: 15px;
-  padding: 10px 22px;
-  border-radius: 999px;
+  padding: 12px 24px;
+  border-radius: 10px;
   text-decoration: none;
   margin-top: 8px;
-  transition: all .15s;
-  box-shadow: 0 2px 12px rgba(201,168,76,.25);
+  transition: background .2s cubic-bezier(.4,0,.2,1),
+              transform .2s cubic-bezier(.34,1.56,.64,1),
+              box-shadow .2s cubic-bezier(.4,0,.2,1);
+  box-shadow: 0 2px 12px rgba(201,168,76,.22);
 }
 .about-support-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(201,168,76,.4);
-  filter: brightness(1.05);
+  background: #ffe08f;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(201,168,76,.34);
 }
+.about-support-btn:active { transform: translateY(0); }
 .about-support-note {
   font-size: 11.5px !important;
   /* Texte atténué FONCÉ : le modal « À propos » est sur fond clair, donc le
@@ -3193,24 +3196,28 @@ body.tv-modal-open { overflow: hidden; }
 .nav-auth-unified {
   background: var(--gold);
   color: var(--navy);
-  border: 1px solid transparent;
+  border: none;
   font-family: 'Outfit', sans-serif;
-  font-size: 13px;
-  font-weight: 500;
-  padding: 7px 16px;
-  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 9px 20px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: all .2s;
+  /* Survol « moderne » : léger rebond + lueur dorée (style jasonmarinho.com) */
+  transition: background .2s cubic-bezier(.4,0,.2,1),
+              transform .2s cubic-bezier(.34,1.56,.64,1),
+              box-shadow .2s cubic-bezier(.4,0,.2,1);
   display: flex;
   align-items: center;
   gap: 8px;
   white-space: nowrap;
 }
 .nav-auth-unified:hover {
-  background: var(--gold-pale);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(201,168,76,.3);
+  background: #ffe08f;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(201,168,76,.34);
 }
+.nav-auth-unified:active { transform: translateY(0); }
 .nav-auth-unified > i { font-size: 13px; }
 .nav-auth-unified.hidden { display: none; }
 .nav-auth-unified-text-short { display: none; }
@@ -3436,14 +3443,14 @@ body:has(.chapelet-fab) .greg-btn { right: 88px; }   /* 54 (FAB) + 20 (marge dro
   background: rgba(255,255,255,.1);
   border: 1px solid rgba(255,255,255,.18);
   color: var(--cream);
-  border-radius: 20px;
+  border-radius: 11px;
   font-family: 'Outfit', sans-serif;
   font-size: 13px;
   cursor: pointer;
-  transition: background .18s;
+  transition: background .18s, border-color .18s, transform .2s cubic-bezier(.34,1.56,.64,1);
   white-space: nowrap;
 }
-.nav-account-btn:hover { background: rgba(255,255,255,.18); }
+.nav-account-btn:hover { background: rgba(255,255,255,.18); border-color: rgba(255,255,255,.32); transform: translateY(-1px); }
 .nav-account-btn.hidden { display: none !important; }
 /* Chevron du bouton compte unifié — pivote quand le menu est ouvert */
 .nav-account-chevron {
@@ -5259,15 +5266,18 @@ body:has(.chapelet-fab) .greg-btn { right: 88px; }   /* 54 (FAB) + 20 (marge dro
   background: var(--navy);
   color: var(--cream);
   border: none;
-  border-radius: 20px;
-  padding: 8px 20px;
+  border-radius: 10px;
+  padding: 11px 22px;
   font-family: 'Outfit', sans-serif;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background .15s, transform .1s;
+  transition: background .2s cubic-bezier(.4,0,.2,1),
+              transform .2s cubic-bezier(.34,1.56,.64,1),
+              box-shadow .2s cubic-bezier(.4,0,.2,1);
 }
-.wb-start:hover { background: var(--navy-mid); transform: translateY(-1px); }
+.wb-start:hover { background: var(--navy-mid); transform: translateY(-2px); box-shadow: 0 12px 30px rgba(26,39,68,.3); }
+.wb-start:active { transform: translateY(0); }
 
 .wb-dismiss {
   font-size: 11px;
