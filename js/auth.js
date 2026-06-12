@@ -420,7 +420,9 @@ function updateHeaderUI(user) {
     authUnified?.classList.add('hidden');
     logoutBtn?.classList.add('hidden'); // signout est désormais dans le panneau profil
   } else {
-    if (btn) btn.innerHTML = '<i class="fa-solid fa-bars"></i>';
+    // Restaure le bouton menu nominatif (traits animés + libellé « Menu »),
+    // cf. markup d'origine dans app.html — plus l'ancienne icône fa-bars.
+    if (btn) btn.innerHTML = '<span class="hb-lines" aria-hidden="true"><span></span><span></span><span></span></span><span class="hb-label">Menu</span>';
     headerUser?.classList.remove('user-logged-in');
     accountBtn?.classList.add('hidden');
     if (hmProfileRow) hmProfileRow.classList.add('hidden');
