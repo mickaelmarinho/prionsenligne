@@ -65,10 +65,16 @@
 
   // ── Présence live (abonnement à la chaîne site_presence) ────────────
   let _presenceChannelAdmin = null;
-  function _startPresenceLiveUpdate() {
+  let _presenceRetryTimer   = null;
+  function _startPresenceLiveUpdate(attempt = 0) {
     const sb = window._sbClient;
     if (!sb) return;
-    if (_presenceChannelAdmin) return; // déjà abonné
+    if (_presenceChannelAdmin) {
+      // Déjà abonné (panneau ré-ouvert) : le DOM vient d'être reconstruit avec
+      // des « — » → re-rendre immédiatement avec l'état déjà connu.
+      _updatePresenceCard();
+      return;
+    }
     // Clé unique pour l'admin (pour ne pas dédoublonner avec sa propre présence)
     const adminKey = (window._pelUser?.id || 'admin') + '-monitor-' + Math.random().toString(36).slice(2, 8);
     _presenceChannelAdmin = sb.channel('site_presence', {
@@ -76,13 +82,34 @@
     });
     _presenceChannelAdmin.on('presence', { event: 'sync' }, _updatePresenceCard);
     _presenceChannelAdmin.subscribe(async (status) => {
-      if (status !== 'SUBSCRIBED') return;
-      // Track avec un marqueur "monitor" pour ne pas être compté dans la liste
-      await _presenceChannelAdmin.track({ _monitor: true });
-      _updatePresenceCard(); // initial render
+      if (status === 'SUBSCRIBED') {
+        // Track avec un marqueur "monitor" pour ne pas être compté dans la liste
+        await _presenceChannelAdmin.track({ _monitor: true });
+        _updatePresenceCard(); // rendu initial
+        // Le sync complet des autres clients peut arriver juste après le
+        // subscribe → rendus de sécurité pour ne jamais rester sur « — ».
+        setTimeout(_updatePresenceCard, 600);
+        setTimeout(_updatePresenceCard, 2000);
+        return;
+      }
+      // Premier subscribe parfois en échec (socket WebSocket « à froid »,
+      // CHANNEL_ERROR / TIMED_OUT) → c'était la cause du widget figé sur « — »
+      // jusqu'à fermeture/réouverture du panneau. On retente automatiquement.
+      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
+        _stopPresenceLiveUpdate();
+        // Ne retente que si le panneau est toujours affiché, max 3 essais.
+        if (attempt < 3 && document.getElementById('adm-presence-card')) {
+          _presenceRetryTimer = setTimeout(
+            () => _startPresenceLiveUpdate(attempt + 1),
+            700 * (attempt + 1)
+          );
+        }
+      }
     });
   }
   function _stopPresenceLiveUpdate() {
+    clearTimeout(_presenceRetryTimer);
+    _presenceRetryTimer = null;
     const sb = window._sbClient;
     if (_presenceChannelAdmin && sb) {
       try { sb.removeChannel(_presenceChannelAdmin); } catch (_) {}
