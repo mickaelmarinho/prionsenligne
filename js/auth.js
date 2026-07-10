@@ -104,86 +104,68 @@ function _countryOptionsHTML(selected) {
   }).join('');
 }
 
-// ── hCaptcha (anti-bot) — DÉSACTIVÉ ──
-// La protection captcha a été désactivée côté Supabase (Authentication →
-// Attack Protection → « Enable Captcha protection » = OFF), car elle gênait
-// trop les utilisateurs (personnes âgées, défis qui réapparaissaient).
-// On vide donc la site key : aucun widget n'est rendu, aucun jeton n'est
-// demandé, et les routes d'auth s'exécutent sans friction. La sécurité reste
-// assurée par la confirmation e-mail + la limitation de débit Supabase.
-// ⚠️ Si un jour on réactive le captcha côté Supabase, il SUFFIT de remettre la
-//    site key ci-dessous ('b6826716-4f82-48e4-87ba-22c4f816ce34') ET de
-//    recharger le script hCaptcha dans app.html.
-const HCAPTCHA_SITE_KEY = '';
-let _hcaptchaWidgetId = null;
-let _hcaptchaToken    = null;
-
-// Callback exposé globalement, appelé par le script hCaptcha quand il termine de charger
-window.onHCaptchaLoad = function () {
-  // Le widget sera réellement rendu quand on entre en mode signup
-};
+// ── Cloudflare Turnstile (anti-bot, INVISIBLE) ──
+// Réintroduit après une vague d'inscriptions de robots (juillet 2026) qui
+// frappaient directement l'API Supabase. Turnstile est configuré en mode
+// « Invisible » dans le dashboard Cloudflare : AUCUN puzzle, aucune case pour
+// les humains — le jeton est obtenu en arrière-plan au moment de la
+// soumission. La Secret Key correspondante est dans Supabase
+// (Authentication → Attack Protection → Captcha → Turnstile).
+const TURNSTILE_SITE_KEY = '0x4AAAAAADzU6Poo7r7E48x3';
+let _tsWidgetId  = null;
+let _tsToken     = null;
+let _tsResolvers = [];   // promesses en attente d'un jeton (execute en cours)
 
 function _renderCaptchaIfNeeded() {
-  if (!HCAPTCHA_SITE_KEY) return;
-  if (!window.hcaptcha) return;             // script pas encore chargé
-  if (_hcaptchaWidgetId !== null) return;   // déjà rendu
+  if (!TURNSTILE_SITE_KEY) return;
+  if (!window.turnstile) return;        // script pas encore chargé
+  if (_tsWidgetId !== null) return;     // déjà rendu
   const container = $id('auth-captcha');
   if (!container) return;
   try {
-    _hcaptchaWidgetId = window.hcaptcha.render(container, {
-      sitekey: HCAPTCHA_SITE_KEY,
-      theme:   'light',
-      // Mode INVISIBLE : aucune case à cocher ni puzzle pour les utilisateurs
-      // légitimes. Le token est obtenu en arrière-plan via hcaptcha.execute()
-      // au moment de la soumission ; hCaptcha n'affiche un défi que s'il juge
-      // la requête vraiment suspecte. (#8 — éviter la friction de connexion.)
-      size:    'invisible',
-      callback:  token => { _hcaptchaToken = token; },
-      'expired-callback': () => { _hcaptchaToken = null; },
-      'error-callback':   () => { _hcaptchaToken = null; },
+    _tsWidgetId = window.turnstile.render(container, {
+      sitekey:   TURNSTILE_SITE_KEY,
+      // Le défi ne tourne que quand on appelle turnstile.execute() (à la
+      // soumission) — pas au rendu.
+      execution: 'execute',
+      callback:  token => { _tsToken = token; _tsResolvers.splice(0).forEach(fn => fn(token)); },
+      'error-callback':   () => { _tsToken = null; _tsResolvers.splice(0).forEach(fn => fn(null)); },
+      'expired-callback': () => { _tsToken = null; },
     });
   } catch (_) { /* tolérance */ }
 }
 
 function _resetCaptcha() {
-  _hcaptchaToken = null;
-  if (window.hcaptcha && _hcaptchaWidgetId !== null) {
-    try { window.hcaptcha.reset(_hcaptchaWidgetId); } catch (_) {}
+  _tsToken = null;
+  if (window.turnstile && _tsWidgetId !== null) {
+    try { window.turnstile.reset(_tsWidgetId); } catch (_) {}
   }
 }
 
-// Obtient un token captcha de façon TRANSPARENTE (mode invisible).
-// Retourne null si pas de protection (pas de site key) ou si la lib n'est pas
-// chargée. Sinon déclenche hcaptcha.execute() — qui résout instantanément pour
-// les utilisateurs légitimes, ou affiche un défi seulement si nécessaire.
+// Obtient un jeton captcha de façon TRANSPARENTE (mode invisible).
+// Chaque jeton est à usage unique → reset + execute à chaque appel.
+// Retourne null si pas de protection ou si la lib n'est pas chargée.
 async function _getCaptchaToken() {
-  if (!HCAPTCHA_SITE_KEY) return null;
-  if (!window.hcaptcha) return null;
+  if (!TURNSTILE_SITE_KEY) return null;
+  if (!window.turnstile) return null;
   _renderCaptchaIfNeeded();
-  if (_hcaptchaWidgetId === null) return null;
-  try {
-    const res = await window.hcaptcha.execute(_hcaptchaWidgetId, { async: true });
-    // En mode async, execute() résout avec { response, key }
-    const token = (res && (res.response || res.token)) || _hcaptchaToken || null;
-    _hcaptchaToken = token;
-    return token;
-  } catch (_) {
-    return null;
-  }
+  if (_tsWidgetId === null) return null;
+  return new Promise(resolve => {
+    let done = false;
+    const finish = t => { if (!done) { done = true; resolve(t); } };
+    _tsResolvers.push(finish);
+    setTimeout(() => finish(null), 20000);  // filet de sécurité
+    try {
+      window.turnstile.reset(_tsWidgetId);
+      window.turnstile.execute(_tsWidgetId);
+    } catch (_) { finish(null); }
+  });
 }
 
 function _showCaptcha(show) {
-  // Mode invisible : aucun élément visible à afficher. On se contente de RENDRE
-  // le widget (caché) dès qu'une route d'auth en a besoin, pour que
-  // hcaptcha.execute() fonctionne au moment de la soumission.
-  const need = !!(HCAPTCHA_SITE_KEY && show);
-  const wrap = $id('auth-captcha-wrap');
-  const note = $id('auth-captcha-note');
-  if (note) note.style.display = need ? '' : 'none';
-  // Conteneur gardé dans le flux (height:0) quand le captcha est requis, pour
-  // que hcaptcha.render() ne tombe pas sur un parent display:none.
-  if (wrap) wrap.style.display = need ? 'block' : 'none';
-  if (!HCAPTCHA_SITE_KEY) return;
+  // Invisible : rien à afficher. On PRÉ-REND simplement le widget dès qu'une
+  // route d'auth en a besoin, pour que execute() soit instantané ensuite.
+  if (!TURNSTILE_SITE_KEY) return;
   if (show) _renderCaptchaIfNeeded();
 }
 
@@ -1648,13 +1630,22 @@ function initAuthUI() {
     const oldHtml = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Envoi en cours…';
-    const { error } = await _sb.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: window.location.origin + '/agenda',
-        shouldCreateUser: false,
-      },
-    });
+    // Jeton captcha (Turnstile invisible) — exigé par Supabase sur l'OTP aussi
+    const otpOpts = {
+      emailRedirectTo: window.location.origin + '/agenda',
+      shouldCreateUser: false,
+    };
+    if (TURNSTILE_SITE_KEY) {
+      const tok = await _getCaptchaToken();
+      if (!tok) {
+        btn.disabled = false;
+        btn.innerHTML = oldHtml;
+        showAuthError('La vérification anti-robot a échoué. Veuillez réessayer.');
+        return;
+      }
+      otpOpts.captchaToken = tok;
+    }
+    const { error } = await _sb.auth.signInWithOtp({ email, options: otpOpts });
     btn.disabled = false;
     btn.innerHTML = oldHtml;
     if (error) {
@@ -1704,7 +1695,7 @@ function initAuthUI() {
       setAuthLoading(true);
       // Token captcha obtenu en arrière-plan (mode invisible) — sans friction.
       const signInOpts = {};
-      if (HCAPTCHA_SITE_KEY) {
+      if (TURNSTILE_SITE_KEY) {
         const tok = await _getCaptchaToken();
         if (!tok) {
           setAuthLoading(false);
@@ -1746,7 +1737,7 @@ function initAuthUI() {
       if (countryToSave) signUpMeta.country = countryToSave;
       const signUpOpts = { data: signUpMeta };
       // Token captcha obtenu en arrière-plan (mode invisible) — sans friction.
-      if (HCAPTCHA_SITE_KEY) {
+      if (TURNSTILE_SITE_KEY) {
         const tok = await _getCaptchaToken();
         if (!tok) {
           setAuthLoading(false);
@@ -1779,7 +1770,7 @@ function initAuthUI() {
       setAuthLoading(true);
       const resetOpts = { redirectTo: window.location.origin + '/agenda' };
       // Token captcha obtenu en arrière-plan (mode invisible) — sans friction.
-      if (HCAPTCHA_SITE_KEY) {
+      if (TURNSTILE_SITE_KEY) {
         const tok = await _getCaptchaToken();
         if (!tok) {
           setAuthLoading(false);
