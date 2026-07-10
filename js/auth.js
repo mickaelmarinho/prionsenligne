@@ -1881,6 +1881,10 @@ function _initSitePresence() {
   _presenceChannel = _sb.channel('site_presence', {
     config: { presence: { key: presenceKey } },
   });
+  // Exposé pour le panneau admin (widget « En direct ») : il RÉUTILISE ce
+  // canal au lieu d'en créer un doublon — le serveur Realtime n'accepte qu'un
+  // canal par sujet et par connexion (cause du widget figé sur « — »).
+  window._pelPresenceChannel = _presenceChannel;
   _presenceChannel.subscribe(async (status) => {
     if (status !== 'SUBSCRIBED') return;
     const meta = user?.user_metadata || {};

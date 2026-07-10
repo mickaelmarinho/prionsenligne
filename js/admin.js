@@ -63,63 +63,44 @@
 
   let _filter = 'all';   // 'all' | 'blocked' | 'allowed'
 
-  // ── Présence live (abonnement à la chaîne site_presence) ────────────
-  let _presenceChannelAdmin = null;
-  let _presenceRetryTimer   = null;
-  function _startPresenceLiveUpdate(attempt = 0) {
-    const sb = window._sbClient;
-    if (!sb) return;
-    if (_presenceChannelAdmin) {
-      // Déjà abonné (panneau ré-ouvert) : le DOM vient d'être reconstruit avec
-      // des « — » → re-rendre immédiatement avec l'état déjà connu.
-      _updatePresenceCard();
+  // ── Présence live ────────────────────────────────────────────────────
+  // On RÉUTILISE le canal site_presence déjà ouvert par auth.js pour tous les
+  // visiteurs (window._pelPresenceChannel). En créer un deuxième sur le même
+  // sujet depuis la même connexion faisait échouer l'abonnement côté serveur
+  // Realtime → widget figé sur « — » à la première ouverture.
+  let _presenceBound      = false;  // listener 'sync' déjà branché ?
+  let _presenceRetryTimer = null;
+  function _startPresenceLiveUpdate() {
+    clearTimeout(_presenceRetryTimer);
+    const ch = window._pelPresenceChannel;
+    if (!ch) {
+      // Canal pas encore initialisé (auth en cours de chargement) → on
+      // repasse bientôt, tant que le panneau est affiché.
+      if (document.getElementById('adm-presence-card')) {
+        _presenceRetryTimer = setTimeout(_startPresenceLiveUpdate, 600);
+      }
       return;
     }
-    // Clé unique pour l'admin (pour ne pas dédoublonner avec sa propre présence)
-    const adminKey = (window._pelUser?.id || 'admin') + '-monitor-' + Math.random().toString(36).slice(2, 8);
-    _presenceChannelAdmin = sb.channel('site_presence', {
-      config: { presence: { key: adminKey } },
-    });
-    _presenceChannelAdmin.on('presence', { event: 'sync' }, _updatePresenceCard);
-    _presenceChannelAdmin.subscribe(async (status) => {
-      if (status === 'SUBSCRIBED') {
-        // Track avec un marqueur "monitor" pour ne pas être compté dans la liste
-        await _presenceChannelAdmin.track({ _monitor: true });
-        _updatePresenceCard(); // rendu initial
-        // Le sync complet des autres clients peut arriver juste après le
-        // subscribe → rendus de sécurité pour ne jamais rester sur « — ».
-        setTimeout(_updatePresenceCard, 600);
-        setTimeout(_updatePresenceCard, 2000);
-        return;
-      }
-      // Premier subscribe parfois en échec (socket WebSocket « à froid »,
-      // CHANNEL_ERROR / TIMED_OUT) → c'était la cause du widget figé sur « — »
-      // jusqu'à fermeture/réouverture du panneau. On retente automatiquement.
-      if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT' || status === 'CLOSED') {
-        _stopPresenceLiveUpdate();
-        // Ne retente que si le panneau est toujours affiché, max 3 essais.
-        if (attempt < 3 && document.getElementById('adm-presence-card')) {
-          _presenceRetryTimer = setTimeout(
-            () => _startPresenceLiveUpdate(attempt + 1),
-            700 * (attempt + 1)
-          );
-        }
-      }
-    });
+    if (!_presenceBound) {
+      // Un binding peut s'ajouter après subscribe ; _updatePresenceCard
+      // no-op proprement quand le panneau est fermé (gardes sur les ids).
+      ch.on('presence', { event: 'sync' }, _updatePresenceCard);
+      _presenceBound = true;
+    }
+    _updatePresenceCard(); // rendu immédiat avec l'état déjà connu
+    // Sécurité : l'état complet peut arriver quelques instants plus tard.
+    setTimeout(_updatePresenceCard, 800);
   }
   function _stopPresenceLiveUpdate() {
     clearTimeout(_presenceRetryTimer);
     _presenceRetryTimer = null;
-    const sb = window._sbClient;
-    if (_presenceChannelAdmin && sb) {
-      try { sb.removeChannel(_presenceChannelAdmin); } catch (_) {}
-    }
-    _presenceChannelAdmin = null;
+    // On ne ferme PAS le canal : il appartient au site (présence du visiteur).
   }
 
   function _updatePresenceCard() {
-    if (!_presenceChannelAdmin) return;
-    const state = _presenceChannelAdmin.presenceState() || {};
+    const ch = window._pelPresenceChannel;
+    if (!ch) return;
+    const state = ch.presenceState() || {};
     // Aplatit : { key1: [{...}, ...], key2: [...] } → liste de {key, ...meta}
     const entries = [];
     for (const key of Object.keys(state)) {
