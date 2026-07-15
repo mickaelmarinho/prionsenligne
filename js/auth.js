@@ -1876,6 +1876,13 @@ function _initSitePresence() {
   // canal au lieu d'en créer un doublon — le serveur Realtime n'accepte qu'un
   // canal par sujet et par connexion (cause du widget figé sur « — »).
   window._pelPresenceChannel = _presenceChannel;
+  // ⚠️ INDISPENSABLE : depuis une mise à jour de supabase-js v2, la présence
+  // n'est ACTIVÉE côté serveur que si un écouteur 'presence' existe AVANT le
+  // subscribe. Sans cette ligne, presenceState() reste vide (même pour soi) et
+  // le widget admin « En direct » n'affiche rien. Vérifié expérimentalement.
+  _presenceChannel.on('presence', { event: 'sync' }, () => {
+    try { document.dispatchEvent(new CustomEvent('pel:presence-sync')); } catch (_) {}
+  });
   _presenceChannel.subscribe(async (status) => {
     if (status !== 'SUBSCRIBED') return;
     const meta = user?.user_metadata || {};

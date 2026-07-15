@@ -116,6 +116,9 @@
     _presenceRetryTimer = null;
     // On ne ferme PAS le canal : il appartient au site (présence du visiteur).
   }
+  // auth.js relaie chaque sync de présence via cet événement DOM → re-rendu
+  // (no-op si le panneau est fermé : gardes sur les ids dans _updatePresenceCard).
+  document.addEventListener('pel:presence-sync', () => { try { _updatePresenceCard(); } catch (_) {} });
 
   function _updatePresenceCard() {
     const ch = _resolvePresenceChannel();
