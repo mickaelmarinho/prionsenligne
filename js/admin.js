@@ -70,17 +70,37 @@
   // Realtime → widget figé sur « — » à la première ouverture.
   let _presenceBound      = false;  // listener 'sync' déjà branché ?
   let _presenceRetryTimer = null;
+  let _presenceTries      = 0;
+  // Résout le canal de présence du site : via l'exposition d'auth.js, ou en
+  // repli directement dans la liste des canaux du client Supabase (robuste
+  // aux mélanges de versions de fichiers en cache).
+  function _resolvePresenceChannel() {
+    if (window._pelPresenceChannel) return window._pelPresenceChannel;
+    try {
+      const chans = window._sbClient?.getChannels?.() || [];
+      return chans.find(c => (c.topic || '').includes('site_presence')) || null;
+    } catch (_) { return null; }
+  }
   function _startPresenceLiveUpdate() {
     clearTimeout(_presenceRetryTimer);
-    const ch = window._pelPresenceChannel;
+    const ch = _resolvePresenceChannel();
     if (!ch) {
       // Canal pas encore initialisé (auth en cours de chargement) → on
       // repasse bientôt, tant que le panneau est affiché.
       if (document.getElementById('adm-presence-card')) {
+        _presenceTries++;
+        if (_presenceTries >= 10) {
+          // ~6 s sans canal : on l'affiche honnêtement plutôt que « — » à vie.
+          const listEl = document.getElementById('adm-presence-list');
+          if (listEl) listEl.innerHTML =
+            '<div class="adm-presence-empty">Connexion temps réel indisponible — rechargez la page.</div>';
+          return;
+        }
         _presenceRetryTimer = setTimeout(_startPresenceLiveUpdate, 600);
       }
       return;
     }
+    _presenceTries = 0;
     if (!_presenceBound) {
       // Un binding peut s'ajouter après subscribe ; _updatePresenceCard
       // no-op proprement quand le panneau est fermé (gardes sur les ids).
@@ -98,7 +118,7 @@
   }
 
   function _updatePresenceCard() {
-    const ch = window._pelPresenceChannel;
+    const ch = _resolvePresenceChannel();
     if (!ch) return;
     const state = ch.presenceState() || {};
     // Aplatit : { key1: [{...}, ...], key2: [...] } → liste de {key, ...meta}

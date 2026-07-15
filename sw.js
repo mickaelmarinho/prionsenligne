@@ -10,7 +10,11 @@
    - API /api/* : network-first (fraîcheur des données)
 ═══════════════════════════════════════════════ */
 
-const VERSION       = 'v188';
+// ⚠️ À chaque bump de VERSION, penser à aligner le « ?v=NNN » des balises
+//    <script>/<link> dans app.html et index.html (cache-busting : l'HTML,
+//    toujours frais (network-first), pointe ainsi vers des JS/CSS frais —
+//    plus jamais de mélange de versions en cache).
+const VERSION       = 'v189';
 const STATIC_CACHE  = `pel-static-${VERSION}`;
 const RUNTIME_CACHE = `pel-runtime-${VERSION}`;
 
