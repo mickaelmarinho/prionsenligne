@@ -2116,6 +2116,8 @@ function initRadioPlayer() {
     subEl.textContent  = `${prayer} · ${time}`;
     player.classList.add('visible');
     document.body.classList.add('player-open');
+    // Widget audio du système (écran verrouillé iOS/Android) : titre + pochette
+    _pelSetMediaSession(name, prayer ? `${prayer} · ${time}` : 'Radio en direct');
   }
 
   function closePlayer() {
@@ -8441,6 +8443,26 @@ function initInstallModal() {
 /* ────────────────────────────────────────────
    10. CHANT GRÉGORIEN — Lecteur ambiant
 ──────────────────────────────────────────────*/
+/* ────────────────────────────────────────────
+   MEDIA SESSION — métadonnées pour le widget audio du système
+   (écran verrouillé / centre de contrôle iOS & Android). Sans ça, iOS
+   affiche le titre de la page et une pochette blanche vide.
+──────────────────────────────────────────────*/
+function _pelSetMediaSession(title, artist) {
+  if (!('mediaSession' in navigator) || typeof MediaMetadata === 'undefined') return;
+  try {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title:  title  || 'PrionsEnLigne',
+      artist: artist || 'PrionsEnLigne',
+      album:  'prionsenligne.fr',
+      artwork: [
+        { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+        { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+      ],
+    });
+  } catch (_) {}
+}
+
 function initGregorianPlayer() {
   const audio = document.getElementById('greg-audio');
   const btn   = document.getElementById('greg-btn');
@@ -8484,7 +8506,13 @@ function initGregorianPlayer() {
   }
 
   audio.addEventListener('error',   () => { clearTimeout(loadTimer); showFallback(); });
-  audio.addEventListener('playing', () => { clearTimeout(loadTimer); setUI(true); });
+  audio.addEventListener('playing', () => {
+    clearTimeout(loadTimer);
+    setUI(true);
+    // Widget audio du système : titre + pochette (sinon iOS affiche une
+    // pochette blanche et le titre de la page)
+    _pelSetMediaSession('Chant grégorien — Radio Espérance', 'PrionsEnLigne');
+  });
 
   btn.addEventListener('click', () => {
     if (failed) { window.open(FALLBACK, '_blank', 'noopener'); return; }
