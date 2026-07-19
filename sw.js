@@ -14,7 +14,7 @@
 //    <script>/<link> dans app.html et index.html (cache-busting : l'HTML,
 //    toujours frais (network-first), pointe ainsi vers des JS/CSS frais —
 //    plus jamais de mélange de versions en cache).
-const VERSION       = 'v191';
+const VERSION       = 'v192';
 const STATIC_CACHE  = `pel-static-${VERSION}`;
 const RUNTIME_CACHE = `pel-runtime-${VERSION}`;
 
@@ -28,6 +28,7 @@ const PRECACHE = [
   '/js/app.js',
   '/js/auth.js',
   '/js/bible.js',
+  '/js/bible-themes.js',
   '/icons/icon.svg',
   '/icons/icon-32.png',
   '/icons/icon-192.png',

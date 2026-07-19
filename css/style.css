@@ -8819,6 +8819,59 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   border-color: var(--navy);
 }
 
+/* ── Exploration par thème (« Que dit la Bible sur… ? ») ── */
+.bible-theme-explore {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+.bible-theme-explore > .bible-quick-ref-label {
+  display: block;
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--navy);
+}
+.bible-theme-explore > .bible-quick-ref-label i { color: var(--gold); margin-right: 5px; }
+.bible-theme-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+.bible-theme-chip {
+  background: rgba(201,168,76,.1);
+  border: 1px solid var(--gold-pale);
+  border-radius: 999px;
+  padding: 6px 13px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 12.5px;
+  color: var(--navy);
+  cursor: pointer;
+  transition: all .15s;
+}
+.bible-theme-chip:hover {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--navy);
+  transform: translateY(-1px);
+}
+.bible-theme-hint {
+  display: block;
+  margin-top: 10px;
+  font-size: 11.5px;
+  font-style: italic;
+  color: var(--text-soft);
+}
+
+/* Section thème dans le dropdown de recherche */
+.bible-dd-theme .bible-dd-section-title {
+  background: rgba(201,168,76,.12);
+  color: var(--navy);
+  border-radius: 6px;
+}
+
 /* Mot cliquable individuellement (surlignage granulaire) */
 .bible-word {
   cursor: pointer;

@@ -626,6 +626,24 @@
     }).slice(0, 5);
   }
 
+  // ── Concordance thématique (js/bible-themes.js) ───────────
+  // Taper « pardon », « avortement », « partage »… fait remonter le thème
+  // avec ses passages. Matching insensible aux accents, sur le titre du
+  // thème ET ses mots-clés/synonymes.
+  function matchThemes(query) {
+    const themes = window.PEL_BIBLE_THEMES;
+    if (!Array.isArray(themes)) return [];
+    const q = norm(query);
+    if (!q || q.length < 3) return [];
+    return themes.filter(th => {
+      if (norm(th.t).includes(q)) return true;
+      return th.kw.some(k => {
+        const nk = norm(k);
+        return nk.includes(q) || (q.length >= 4 && q.includes(nk));
+      });
+    }).slice(0, 2);
+  }
+
   // ── Recherche plein texte via bolls.life ──────────────────
   let _searchAbortCtrl = null;
   async function searchFullText(query) {
@@ -669,7 +687,7 @@
     if (_dropdownEl) _dropdownEl.hidden = true;
   }
 
-  function renderDropdown(query, refMatch, curated, fullText) {
+  function renderDropdown(query, refMatch, curated, fullText, themes) {
     const dd = ensureDropdown();
     dd.innerHTML = '';
 
@@ -683,6 +701,25 @@
           <i class="fa-solid fa-arrow-right"></i>
         </button>
       </div>`;
+    }
+
+    // 1bis. Thèmes (concordance thématique — cf. js/bible-themes.js)
+    if (themes && themes.length) {
+      themes.forEach(th => {
+        html += `<div class="bible-dd-section bible-dd-theme">
+          <div class="bible-dd-section-title">🕊️ Thème — ${escapeHtml(th.t)}</div>`;
+        th.refs.forEach(([refStr, label]) => {
+          const ref = parseReference(refStr);
+          if (!ref) return;
+          html += `<button type="button" class="bible-dd-item bible-dd-theme-item" data-go="${ref.book.id}|${ref.ch}|${ref.verse || ''}">
+            <div class="bible-dd-curated">
+              <div class="bible-dd-curated-title">${escapeHtml(label)}</div>
+              <div class="bible-dd-curated-ref">${escapeHtml(refStr)}</div>
+            </div>
+          </button>`;
+        });
+        html += '</div>';
+      });
     }
 
     // 2. Suggestions curées (passages célèbres)
@@ -720,7 +757,7 @@
     }
 
     if (!html) {
-      html = `<div class="bible-dd-empty">Aucun résultat. Essayez « Jean 3:16 », « samaritain » ou « amour ».</div>`;
+      html = `<div class="bible-dd-empty">Aucun résultat. Essayez une référence (« Jean 3:16 »), un thème (« pardon », « partage »…) ou un mot du texte.</div>`;
     }
 
     dd.innerHTML = html;
@@ -888,6 +925,23 @@
           <button class="bible-quick-ref" data-ref="Jean 3:16">Jean 3:16</button>
           <button class="bible-quick-ref" data-ref="1 Corinthiens 13">1 Co 13 — L'Amour</button>
         </div>
+
+        <div class="bible-theme-explore">
+          <span class="bible-quick-ref-label"><i class="fa-solid fa-feather"></i> Que dit la Bible sur… ?</span>
+          <div class="bible-theme-chips">
+            <button class="bible-theme-chip" data-theme="pardon">Le pardon</button>
+            <button class="bible-theme-chip" data-theme="partage">Le partage</button>
+            <button class="bible-theme-chip" data-theme="peur">La peur</button>
+            <button class="bible-theme-chip" data-theme="deuil">Le deuil</button>
+            <button class="bible-theme-chip" data-theme="mariage">Le mariage</button>
+            <button class="bible-theme-chip" data-theme="argent">L'argent</button>
+            <button class="bible-theme-chip" data-theme="esperance">L'espérance</button>
+            <button class="bible-theme-chip" data-theme="colere">La colère</button>
+            <button class="bible-theme-chip" data-theme="maladie">La maladie</button>
+            <button class="bible-theme-chip" data-theme="solitude">La solitude</button>
+          </div>
+          <span class="bible-theme-hint">…ou tapez n'importe quel thème dans la recherche : égoïsme, jalousie, travail, vieillesse…</span>
+        </div>
       </div>
     `;
 
@@ -915,6 +969,19 @@
       btn.addEventListener('click', () => {
         const ref = parseReference(btn.dataset.ref);
         if (ref) loadChapter(ref.book, ref.ch, { scrollToVerse: ref.verse });
+      });
+    });
+
+    // Puces « Que dit la Bible sur… ? » : remplit la recherche avec le thème
+    // → le pipeline normal (input + debounce) affiche le dropdown thématique.
+    reader.querySelectorAll('.bible-theme-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const input = document.getElementById('bible-search');
+        if (!input) return;
+        input.value = btn.dataset.theme;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.focus();
+        input.scrollIntoView({ block: 'center', behavior: 'smooth' });
       });
     });
   }
@@ -1119,20 +1186,21 @@
       // 1. Référence directe (synchrone, immédiat)
       const refMatch = parseReference(v);
 
-      // 2. Suggestions curées (synchrone, sur mots-clés)
+      // 2. Thèmes (concordance thématique) + suggestions curées (synchrone)
+      const themes  = matchThemes(v);
       const curated = matchCurated(v);
 
       // 3. Recherche plein texte (asynchrone, via API)
       // On affiche déjà le dropdown avec ce qu'on a, puis on update quand
       // les résultats plein texte arrivent
-      renderDropdown(v, refMatch, curated, []);
+      renderDropdown(v, refMatch, curated, [], themes);
 
       if (v.length >= 3 && !refMatch) {
         const ft = await searchFullText(v);
         if (ft === null) return;     // requête annulée par une plus récente
         // Si l'utilisateur a continué à taper, ne pas écraser
         if (searchInput.value.trim() !== v) return;
-        renderDropdown(v, refMatch, curated, ft);
+        renderDropdown(v, refMatch, curated, ft, themes);
       }
     }
 
