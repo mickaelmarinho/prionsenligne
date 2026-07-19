@@ -68,8 +68,8 @@
   // visiteurs (window._pelPresenceChannel). En créer un deuxième sur le même
   // sujet depuis la même connexion faisait échouer l'abonnement côté serveur
   // Realtime → widget figé sur « — » à la première ouverture.
-  let _presenceBound      = false;  // listener 'sync' déjà branché ?
   let _presenceRetryTimer = null;
+  let _presencePoll       = null;
   let _presenceTries      = 0;
   // Résout le canal de présence du site : via l'exposition d'auth.js, ou en
   // repli directement dans la liste des canaux du client Supabase (robuste
@@ -101,19 +101,28 @@
       return;
     }
     _presenceTries = 0;
-    if (!_presenceBound) {
-      // Un binding peut s'ajouter après subscribe ; _updatePresenceCard
-      // no-op proprement quand le panneau est fermé (gardes sur les ids).
-      ch.on('presence', { event: 'sync' }, _updatePresenceCard);
-      _presenceBound = true;
-    }
+    // ⚠️ Ne JAMAIS faire ch.on('presence', …) ici : la lib supabase-js lève
+    // « cannot add presence callbacks after subscribe() » (binding interdit
+    // après l'abonnement) — l'exception tuait la fonction AVANT le premier
+    // rendu, d'où le widget figé sur « — ». Les mises à jour temps réel
+    // arrivent via l'événement DOM pel:presence-sync (écouteur attaché AVANT
+    // subscribe dans auth.js) + le rafraîchissement périodique ci-dessous.
     _updatePresenceCard(); // rendu immédiat avec l'état déjà connu
     // Sécurité : l'état complet peut arriver quelques instants plus tard.
     setTimeout(_updatePresenceCard, 800);
+    // Rafraîchissement périodique tant que le panneau est ouvert (lecture
+    // 100 % locale de presenceState : aucun coût réseau).
+    clearInterval(_presencePoll);
+    _presencePoll = setInterval(() => {
+      if (!document.getElementById('adm-presence-card')) { clearInterval(_presencePoll); return; }
+      _updatePresenceCard();
+    }, 4000);
   }
   function _stopPresenceLiveUpdate() {
     clearTimeout(_presenceRetryTimer);
     _presenceRetryTimer = null;
+    clearInterval(_presencePoll);
+    _presencePoll = null;
     // On ne ferme PAS le canal : il appartient au site (présence du visiteur).
   }
   // auth.js relaie chaque sync de présence via cet événement DOM → re-rendu
