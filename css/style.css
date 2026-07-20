@@ -8455,16 +8455,19 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   min-height: 400px;
 }
 
-/* Empêche tout débordement horizontal — cause majeure du décalage page sur mobile */
+/* Empêche tout débordement horizontal — cause majeure du décalage page sur mobile.
+   ⚠️ PAS la .bible-toolbar : overflow-x:hidden force aussi un rognage vertical
+   (spec CSS), ce qui écrasait le dropdown de recherche à la hauteur de la barre
+   (menu illisible avec une mini barre de défilement). */
 #tab-bible,
 #tab-bible .bible-header,
-#tab-bible .bible-toolbar,
 #tab-bible .bible-layout,
 #tab-bible .bible-reader,
 #tab-bible .bible-welcome {
   max-width: 100%;
   overflow-x: hidden;
 }
+#tab-bible .bible-toolbar { max-width: 100%; }
 /* Le body lui-même : pas de scroll horizontal sur mobile, jamais */
 @media (max-width: 640px) {
   body, html { overflow-x: hidden; max-width: 100vw; }
