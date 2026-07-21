@@ -8175,7 +8175,9 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   border: 1.5px solid var(--border);
   border-radius: 12px;
   font-family: 'Outfit', sans-serif;
-  font-size: 14px;
+  /* 16px MINIMUM : en dessous, iOS Safari zoome automatiquement en focus sur
+     le champ (« zoom de fou » signalé). 16px = pas de zoom, et plus lisible. */
+  font-size: 16px;
   color: var(--text);
   transition: border-color .15s, box-shadow .15s;
 }
@@ -9406,7 +9408,8 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   .bible-title i { font-size: 19px; }
   .bible-subtitle { font-size: 12.5px; }
   .bible-toolbar { flex-direction: column; gap: 8px; }
-  .bible-search { padding: 10px 36px 10px 36px; font-size: 13.5px; }
+  /* font-size 16px conservé sur mobile : en dessous, iOS zoome au focus. */
+  .bible-search { padding: 10px 36px 10px 36px; font-size: 16px; }
   .bible-trans-selector { width: 100%; }
   .bible-trans-btn { flex: 1; padding: 9px 8px; font-size: 12px; }
   .bible-tool-btn { width: 100%; justify-content: center; padding: 10px 14px; }

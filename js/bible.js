@@ -656,13 +656,15 @@
       if (!resp.ok) return [];
       const data = await resp.json();
       if (!Array.isArray(data)) return [];
-      // bolls renvoie : { book, chapter, verse, text } — book est numérique 1-66
-      return data.map(r => {
+      // bolls renvoie : { book, chapter, verse, text } — book est numérique 1-66.
+      // ⚠️ bolls IGNORE le paramètre limit (peut renvoyer 1000+ versets) → on
+      // tronque nous-mêmes à 8 pour un menu léger.
+      return data.slice(0, 8).map(r => {
         const allBooks = [...BOOKS.ot, ...BOOKS.nt];
         const book = allBooks.find(b => b.id === r.book);
         return book ? {
           book, ch: r.chapter, verse: r.verse,
-          text: String(r.text || '').replace(/<\/?mark>/g, ''), // marqueur temporaire pour highlight
+          text: String(r.text || '').replace(/<\/?mark>/gi, '').replace(/\p{Cc}/gu, ''), // marqueur temporaire pour highlight
         } : null;
       }).filter(Boolean);
     } catch (err) {
@@ -980,8 +982,9 @@
         if (!input) return;
         input.value = btn.dataset.theme;
         input.dispatchEvent(new Event('input', { bubbles: true }));
-        input.focus();
-        input.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        // Pas de input.focus() : sur mobile, le clavier surgirait et masquerait
+        // les résultats. L'utilisateur a choisi un thème, il n'a pas à taper.
+        input.scrollIntoView({ block: 'start', behavior: 'smooth' });
       });
     });
   }
