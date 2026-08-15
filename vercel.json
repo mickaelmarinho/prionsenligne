@@ -77,6 +77,10 @@
       "destination": "/api/seo?p=paroisses"
     },
     {
+      "source": "/fonds-ecran",
+      "destination": "/api/seo?p=fonds-ecran"
+    },
+    {
       "source": "/affiche",
       "destination": "/api/seo?p=affiche"
     }

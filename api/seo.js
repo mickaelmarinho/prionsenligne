@@ -489,6 +489,61 @@ export default async function handler(req, res) {
   }
 
   // ── /paroisses (argumentaire pour le clergé) ──
+  // ── /fonds-ecran (fonds d'écran de prière à offrir) ──
+  if (p === 'fonds-ecran') {
+    const canonical = `${SITE}/fonds-ecran`;
+    const title = "Fonds d'écran de prière à offrir — versets bibliques | PrionsEnLigne";
+    const desc = "Six fonds d'écran gratuits pour téléphone, ornés d'un verset biblique (Psaume 23, Ave Maria, Isaïe 41…). À télécharger librement — style sobre et élégant, offert par PrionsEnLigne.";
+    const WP = [
+      ['sois-sans-crainte-isaie-41-10.jpg',               '« Sois sans crainte, je suis avec toi. »',             'Isaïe 41, 10'],
+      ['que-ton-coeur-ne-se-trouble-point-jean-14-27.jpg', '« Que ton cœur ne se trouble point. »',                'Jean 14, 27'],
+      ['le-seigneur-est-mon-berger-psaume-23.jpg',        '« Le Seigneur est mon berger, je ne manque de rien. »', 'Psaume 23'],
+      ['tout-concourt-au-bien-romains-8-28.jpg',          '« Tout concourt au bien de ceux qui aiment Dieu. »',    'Romains 8, 28'],
+      ['je-vous-salue-marie-ave-maria.jpg',               '« Je vous salue, Marie, pleine de grâce. »',           'Ave Maria'],
+      ['demandez-et-vous-recevrez-matthieu-7-7.jpg',      '« Demandez et vous recevrez. »',                       'Matthieu 7, 7'],
+    ];
+    const cards = WP.map(([file, verse, ref]) => `
+        <div class="wp-card">
+          <a class="wp-thumb-link" href="/wallpapers/${file}" download="${file}" target="_blank" rel="noopener" aria-label="Télécharger le fond d'écran : ${esc(ref)}">
+            <img class="wp-thumb" src="/wallpapers/${file}" alt="${esc(verse)} — ${esc(ref)}" loading="lazy" width="1170" height="2532">
+          </a>
+          <div class="wp-ref">${esc(verse)}<span class="wp-ref-src">${esc(ref)}</span></div>
+          <a class="wp-dl" href="/wallpapers/${file}" download="${file}"><span>Télécharger</span></a>
+        </div>`).join('');
+    const bodyHtml = `
+      <style>
+        .wp-intro{font-size:15px;color:var(--soft);margin:-6px 0 24px;line-height:1.6}
+        .wp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:22px;margin:6px 0}
+        .wp-card{text-align:center}
+        .wp-thumb-link{display:block}
+        .wp-thumb{display:block;width:100%;height:auto;aspect-ratio:1170/2532;object-fit:cover;border-radius:12px;box-shadow:0 6px 22px rgba(26,39,68,.18);border:1px solid #e7e0d2}
+        .wp-thumb-link:hover .wp-thumb{box-shadow:0 10px 30px rgba(26,39,68,.28);transform:translateY(-2px);transition:all .18s}
+        .wp-ref{font-family:var(--serif);font-size:16px;color:var(--navy);margin:12px 0 10px;line-height:1.3}
+        .wp-ref-src{display:block;font-family:'Outfit',sans-serif;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--gold);margin-top:5px}
+        .wp-dl{display:inline-flex;align-items:center;gap:6px;background:var(--navy);color:#fff;font-size:13px;font-weight:600;padding:8px 18px;border-radius:999px;text-decoration:none}
+        .wp-dl:hover{background:#16304f}
+        .wp-hint{font-size:12.5px;color:var(--soft);text-align:center;margin:24px 0 8px;font-style:italic;line-height:1.6}
+        .wp-shop{background:#fff;border:1px solid #e7e0d2;border-left:3px solid var(--gold);border-radius:10px;padding:18px 22px;margin:20px 0 4px;text-align:center}
+        .wp-shop p{margin:0 0 12px}
+      </style>
+      <p class="wp-intro">Six fonds d'écran pour porter une parole d'Évangile sur votre téléphone, chaque fois que vous l'allumez. Offerts&nbsp;: téléchargez librement ceux qui vous parlent.</p>
+      <div class="wp-grid">${cards}</div>
+      <p class="wp-hint">📱 Sur téléphone&nbsp;: appui long sur l'image, puis «&nbsp;Enregistrer l'image&nbsp;».<br>💻 Sur ordinateur&nbsp;: le bouton «&nbsp;Télécharger&nbsp;» enregistre directement.</p>
+      <div class="wp-shop">
+        <p>Vous aimez ce style&nbsp;? Retrouvez nos <strong>affiches et carnets de prière à imprimer</strong> sur la boutique.</p>
+        <p><a class="cta" href="https://www.etsy.com/shop/FatimaLightCo" target="_blank" rel="noopener">Voir la boutique</a></p>
+      </div>`;
+    const jsonLd = JSON.stringify({
+      '@context': 'https://schema.org', '@type': 'CollectionPage',
+      name: title, description: desc, url: canonical,
+    });
+    res.status(200).send(pageShell({
+      title, desc, canonical, h1: "Fonds d'écran à offrir", sub: 'Un cadeau pour votre téléphone',
+      bodyHtml, jsonLd,
+    }));
+    return;
+  }
+
   if (p === 'paroisses') {
     const canonical = `${SITE}/paroisses`;
     const title = 'PrionsEnLigne pour les paroisses — outil gratuit pour vos fidèles | PrionsEnLigne';
