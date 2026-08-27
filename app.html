@@ -35,7 +35,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <link rel="stylesheet" href="css/style.css?v=199" />
+  <link rel="stylesheet" href="css/style.css?v=200" />
   <!-- PWA / iOS standalone -->
   <meta name="theme-color" content="#1a2744" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -298,8 +298,8 @@
     <!-- ──────────── BIBLE ──────────── -->
     <section id="tab-bible" class="tab-section">
       <div class="bible-header">
-        <h2 class="bible-title"><i class="fa-solid fa-book-bible"></i> Bible Louis Segond</h2>
-        <p class="bible-subtitle">Version Louis Segond 1910 — Ancien et Nouveau Testament. Surlignez vos passages préférés et créez vos favoris (connecté).</p>
+        <h2 class="bible-title"><i class="fa-solid fa-book-bible"></i> Bible catholique</h2>
+        <p class="bible-subtitle">Traduction Crampon 1923 — les 73 livres du canon catholique, livres deutérocanoniques compris. Surlignez vos passages préférés et créez vos favoris (connecté).</p>
       </div>
 
       <div class="bible-toolbar">
@@ -311,11 +311,6 @@
           <button class="bible-search-clear" id="bible-search-clear" hidden aria-label="Effacer">
             <i class="fa-solid fa-xmark"></i>
           </button>
-        </div>
-        <div class="bible-trans-selector" role="group" aria-label="Choix de la traduction">
-          <button class="bible-trans-btn" data-trans="FRLSG" type="button" title="Bible Segond 1910">LSG</button>
-          <button class="bible-trans-btn" data-trans="BDS"   type="button" title="Bible du Semeur 2015">BDS</button>
-          <button class="bible-trans-btn" data-trans="NBS"   type="button" title="Nouvelle Bible Segond 2002">NBS</button>
         </div>
         <div class="bible-toolbar-actions">
           <button class="bible-tool-btn" id="bible-fav-toggle" title="Mes favoris">
@@ -1031,7 +1026,7 @@
 
         <div class="about-section">
           <h3><i class="fa-solid fa-book-bible"></i> Bible interactive</h3>
-          <p>Trois traductions disponibles : <strong>Bible Segond 1910</strong> (LSG), <strong>Bible du Semeur 2015</strong> (BDS) et <strong>Nouvelle Bible Segond 2002</strong> (NBS). Texte fourni par bolls.life. Consultable librement ; le surlignage et les favoris nécessitent un compte gratuit.</p>
+          <p><strong>Bible catholique Crampon 1923</strong> : les 73 livres du canon catholique, avec les livres deutérocanoniques (Tobie, Judith, Sagesse, Ecclésiastique, Baruch, 1 et 2 Machabées) absents des bibles protestantes. Traduction de l'abbé Augustin Crampon, dans le domaine public. Consultable librement ; le surlignage et les favoris nécessitent un compte gratuit.</p>
         </div>
 
         <div class="about-section">
@@ -1145,7 +1140,7 @@
         <li><strong>Complies</strong> — prière de la nuit</li>
       </ul>
       <h2>Bible interactive</h2>
-      <p>Trois traductions disponibles : Bible Segond 1910 (LSG), Bible du Semeur 2015 (BDS), Nouvelle Bible Segond 2002 (NBS). Lecture libre ; surlignage et favoris avec un compte gratuit.</p>
+      <p>Bible catholique Crampon 1923 — les 73 livres du canon, livres deutérocanoniques compris. Lecture libre ; surlignage et favoris avec un compte gratuit.</p>
       <h2>Sources</h2>
       <p>Radio Maria France, RCF Notre-Dame, Radio Espérance, Radio Fidélité, KTO Télévision, Sanctuaire de Lourdes, Notre-Dame de Paris, Sanctuaire d'Ars, Sanctuaire Notre-Dame du Laus, Radio Galilée, Radio Ville-Marie, Sel + Lumière.</p>
       <h2>Textes liturgiques</h2>
@@ -1182,7 +1177,7 @@
       "Chapelet numérique guidé (tactile et audio)",
       "Vêpres",
       "Complies",
-      "Bible interactive (Segond 1910, Bible du Semeur, Nouvelle Segond)",
+      "Bible catholique interactive (Crampon 1923, 73 livres)",
       "Calendrier liturgique des saints",
       "Textes de l'AELF",
       "Intentions de prière partagées"
@@ -1212,10 +1207,10 @@
       });
     }
   </script>
-  <script src="js/app.js?v=199"></script>
+  <script src="js/app.js?v=200"></script>
   <!-- Concordance thématique (chargée AVANT bible.js qui la consomme) -->
-  <script src="js/bible-themes.js?v=199"></script>
-  <script src="js/bible.js?v=199"></script>
+  <script src="js/bible-themes.js?v=200"></script>
+  <script src="js/bible.js?v=200"></script>
   <!-- Supabase — build UMD explicite (évite que jsdelivr serve le build CJS/ESM).
        Version ÉPINGLÉE : le tag flottant @2 nous a déjà cassé la présence
        Realtime lors d'une mise à jour silencieuse de la lib (juillet 2026).
@@ -1224,8 +1219,8 @@
   <!-- Cloudflare Turnstile — anti-bot invisible (cf. auth.js). Chargé en async
        pour ne pas bloquer le rendu ; le widget est rendu à la demande. -->
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-  <script src="js/auth.js?v=199"></script>
-  <script src="js/admin.js?v=199"></script>
+  <script src="js/auth.js?v=200"></script>
+  <script src="js/admin.js?v=200"></script>
   <script>document.addEventListener('DOMContentLoaded', initAuth);</script>
   <!-- Vercel Web Analytics — sans cookies, RGPD-friendly (aucune donnée personnelle) -->
   <script defer src="/_vercel/insights/script.js"></script>

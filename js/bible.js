@@ -1,87 +1,98 @@
 /* ════════════════════════════════════════════════════════════
-   PRIONSENLIGNE — Bible interactive (Louis Segond 1910)
+   PRIONSENLIGNE — Bible interactive (catholique, Crampon 1923)
    ─────────────────────────────────────────────────────────────
-   • API : bible-api.com (LSG public domain) avec cache localStorage
+   • Texte : /bible/crampon/*.json servis par le site (un fichier par livre),
+     les 73 livres du canon catholique, deutérocanoniques compris.
+     Aucune API tierce : lecture possible hors-ligne via le service worker.
    • Surlignages : par verset, mémorisés (localStorage + Supabase si connecté)
    • Favoris : références (livre, chapitre, verset) avec note optionnelle
-   • Recherche : par référence (ex: Jean 3:16) OU plein texte (à venir v2)
+   • Recherche : par référence (Jean 3:16), par thème, ou plein texte
+     (/api/bible-search — le corpus reste côté serveur, ~1,8 Mo compressé)
    ════════════════════════════════════════════════════════════ */
 
 (function () {
   'use strict';
 
-  // ── Liste des livres bibliques (LSG) ──────────────────────
-  // id : numéro 1-66 utilisé par bolls.life (Genesis=1, Apocalypse=66)
+  // ── Livres du canon catholique (73) ───────────────────────
+  // id : nom de fichier dans /bible/crampon/. « d: 1 » = deutérocanonique,
+  // absent des bibles protestantes (66 livres).
   const BOOKS = {
     ot: [
-      { name: 'Genèse',         id: 1,  ch: 50 },
-      { name: 'Exode',          id: 2,  ch: 40 },
-      { name: 'Lévitique',      id: 3,  ch: 27 },
-      { name: 'Nombres',        id: 4,  ch: 36 },
-      { name: 'Deutéronome',    id: 5,  ch: 34 },
-      { name: 'Josué',          id: 6,  ch: 24 },
-      { name: 'Juges',          id: 7,  ch: 21 },
-      { name: 'Ruth',           id: 8,  ch: 4  },
-      { name: '1 Samuel',       id: 9,  ch: 31 },
-      { name: '2 Samuel',       id: 10, ch: 24 },
-      { name: '1 Rois',         id: 11, ch: 22 },
-      { name: '2 Rois',         id: 12, ch: 25 },
-      { name: '1 Chroniques',   id: 13, ch: 29 },
-      { name: '2 Chroniques',   id: 14, ch: 36 },
-      { name: 'Esdras',         id: 15, ch: 10 },
-      { name: 'Néhémie',        id: 16, ch: 13 },
-      { name: 'Esther',         id: 17, ch: 10 },
-      { name: 'Job',            id: 18, ch: 42 },
-      { name: 'Psaumes',        id: 19, ch: 150 },
-      { name: 'Proverbes',      id: 20, ch: 31 },
-      { name: 'Ecclésiaste',    id: 21, ch: 12 },
-      { name: 'Cantique',       id: 22, ch: 8  },
-      { name: 'Ésaïe',          id: 23, ch: 66 },
-      { name: 'Jérémie',        id: 24, ch: 52 },
-      { name: 'Lamentations',   id: 25, ch: 5  },
-      { name: 'Ézéchiel',       id: 26, ch: 48 },
-      { name: 'Daniel',         id: 27, ch: 12 },
-      { name: 'Osée',           id: 28, ch: 14 },
-      { name: 'Joël',           id: 29, ch: 3  },
-      { name: 'Amos',           id: 30, ch: 9  },
-      { name: 'Abdias',         id: 31, ch: 1  },
-      { name: 'Jonas',          id: 32, ch: 4  },
-      { name: 'Michée',         id: 33, ch: 7  },
-      { name: 'Nahum',          id: 34, ch: 3  },
-      { name: 'Habakuk',        id: 35, ch: 3  },
-      { name: 'Sophonie',       id: 36, ch: 3  },
-      { name: 'Aggée',          id: 37, ch: 2  },
-      { name: 'Zacharie',       id: 38, ch: 14 },
-      { name: 'Malachie',       id: 39, ch: 4  },
+      { name: "Genèse",                     id: "genese",               ch:  50 },
+      { name: "Exode",                      id: "exode",                ch:  40 },
+      { name: "Lévitique",                  id: "levitique",            ch:  27 },
+      { name: "Nombres",                    id: "nombres",              ch:  36 },
+      { name: "Deutéronome",                id: "deuteronome",          ch:  34 },
+      { name: "Josué",                      id: "josue",                ch:  24 },
+      { name: "Juges",                      id: "juges",                ch:  21 },
+      { name: "Ruth",                       id: "ruth",                 ch:   4 },
+      { name: "1 Samuel",                   id: "1-samuel",             ch:  31 },
+      { name: "2 Samuel",                   id: "2-samuel",             ch:  24 },
+      { name: "1 Rois",                     id: "1-rois",               ch:  22 },
+      { name: "2 Rois",                     id: "2-rois",               ch:  25 },
+      { name: "1 Chroniques",               id: "1-chroniques",         ch:  29 },
+      { name: "2 Chroniques",               id: "2-chroniques",         ch:  36 },
+      { name: "Esdras",                     id: "esdras",               ch:  10 },
+      { name: "Néhémie",                    id: "nehemie",              ch:  13 },
+      { name: "Tobie",                      id: "tobie",                ch:  14, d: 1 },
+      { name: "Judith",                     id: "judith",               ch:  16, d: 1 },
+      { name: "Esther",                     id: "esther",               ch:  16 },
+      { name: "1 Machabées",                id: "1-machabees",          ch:  16, d: 1 },
+      { name: "2 Machabées",                id: "2-machabees",          ch:  15, d: 1 },
+      { name: "Job",                        id: "job",                  ch:  42 },
+      { name: "Psaumes",                    id: "psaumes",              ch: 150 },
+      { name: "Proverbes",                  id: "proverbes",            ch:  31 },
+      { name: "Ecclésiaste",                id: "ecclesiaste",          ch:  12 },
+      { name: "Cantique des Cantiques",     id: "cantique",             ch:   8 },
+      { name: "Sagesse",                    id: "sagesse",              ch:  19, d: 1 },
+      { name: "Ecclésiastique (Siracide)",  id: "ecclesiastique",       ch:  51, d: 1 },
+      { name: "Isaïe",                      id: "isaie",                ch:  66 },
+      { name: "Jérémie",                    id: "jeremie",              ch:  52 },
+      { name: "Lamentations",               id: "lamentations",         ch:   5 },
+      { name: "Baruch",                     id: "baruch",               ch:   6, d: 1 },
+      { name: "Ézéchiel",                   id: "ezechiel",             ch:  48 },
+      { name: "Daniel",                     id: "daniel",               ch:  14 },
+      { name: "Osée",                       id: "osee",                 ch:  14 },
+      { name: "Joël",                       id: "joel",                 ch:   4 },
+      { name: "Amos",                       id: "amos",                 ch:   9 },
+      { name: "Abdias",                     id: "abdias",               ch:   1 },
+      { name: "Jonas",                      id: "jonas",                ch:   4 },
+      { name: "Michée",                     id: "michee",               ch:   7 },
+      { name: "Nahum",                      id: "nahum",                ch:   3 },
+      { name: "Habacuc",                    id: "habacuc",              ch:   3 },
+      { name: "Sophonie",                   id: "sophonie",             ch:   3 },
+      { name: "Aggée",                      id: "aggee",                ch:   2 },
+      { name: "Zacharie",                   id: "zacharie",             ch:  14 },
+      { name: "Malachie",                   id: "malachie",             ch:   3 },
     ],
     nt: [
-      { name: 'Matthieu',       id: 40, ch: 28 },
-      { name: 'Marc',           id: 41, ch: 16 },
-      { name: 'Luc',            id: 42, ch: 24 },
-      { name: 'Jean',           id: 43, ch: 21 },
-      { name: 'Actes',          id: 44, ch: 28 },
-      { name: 'Romains',        id: 45, ch: 16 },
-      { name: '1 Corinthiens',  id: 46, ch: 16 },
-      { name: '2 Corinthiens',  id: 47, ch: 13 },
-      { name: 'Galates',        id: 48, ch: 6  },
-      { name: 'Éphésiens',      id: 49, ch: 6  },
-      { name: 'Philippiens',    id: 50, ch: 4  },
-      { name: 'Colossiens',     id: 51, ch: 4  },
-      { name: '1 Thessaloniciens', id: 52, ch: 5 },
-      { name: '2 Thessaloniciens', id: 53, ch: 3 },
-      { name: '1 Timothée',     id: 54, ch: 6  },
-      { name: '2 Timothée',     id: 55, ch: 4  },
-      { name: 'Tite',           id: 56, ch: 3  },
-      { name: 'Philémon',       id: 57, ch: 1  },
-      { name: 'Hébreux',        id: 58, ch: 13 },
-      { name: 'Jacques',        id: 59, ch: 5  },
-      { name: '1 Pierre',       id: 60, ch: 5  },
-      { name: '2 Pierre',       id: 61, ch: 3  },
-      { name: '1 Jean',         id: 62, ch: 5  },
-      { name: '2 Jean',         id: 63, ch: 1  },
-      { name: '3 Jean',         id: 64, ch: 1  },
-      { name: 'Jude',           id: 65, ch: 1  },
-      { name: 'Apocalypse',     id: 66, ch: 22 },
+      { name: "Matthieu",                   id: "matthieu",             ch:  28 },
+      { name: "Marc",                       id: "marc",                 ch:  16 },
+      { name: "Luc",                        id: "luc",                  ch:  24 },
+      { name: "Jean",                       id: "jean",                 ch:  21 },
+      { name: "Actes des Apôtres",          id: "actes",                ch: undefined },
+      { name: "Romains",                    id: "romains",              ch:  16 },
+      { name: "1 Corinthiens",              id: "1-corinthiens",        ch:  16 },
+      { name: "2 Corinthiens",              id: "2-corinthiens",        ch:  13 },
+      { name: "Galates",                    id: "galates",              ch:   6 },
+      { name: "Éphésiens",                  id: "ephesiens",            ch:   6 },
+      { name: "Philippiens",                id: "philippiens",          ch:   4 },
+      { name: "Colossiens",                 id: "colossiens",           ch:   4 },
+      { name: "1 Thessaloniciens",          id: "1-thessaloniciens",    ch:   5 },
+      { name: "2 Thessaloniciens",          id: "2-thessaloniciens",    ch:   3 },
+      { name: "1 Timothée",                 id: "1-timothee",           ch:   6 },
+      { name: "2 Timothée",                 id: "2-timothee",           ch:   4 },
+      { name: "Tite",                       id: "tite",                 ch:   3 },
+      { name: "Philémon",                   id: "philemon",             ch:   1 },
+      { name: "Hébreux",                    id: "hebreux",              ch:  13 },
+      { name: "Jacques",                    id: "jacques",              ch:   5 },
+      { name: "1 Pierre",                   id: "1-pierre",             ch:   5 },
+      { name: "2 Pierre",                   id: "2-pierre",             ch:   3 },
+      { name: "1 Jean",                     id: "1-jean",               ch:   5 },
+      { name: "2 Jean",                     id: "2-jean",               ch:   1 },
+      { name: "3 Jean",                     id: "3-jean",               ch:   1 },
+      { name: "Jude",                       id: "jude",                 ch:   1 },
+      { name: "Apocalypse",                 id: "apocalypse",           ch:  22 },
     ],
   };
 
@@ -94,13 +105,31 @@
   }
   [...BOOKS.ot, ...BOOKS.nt].forEach(b => {
     BOOK_INDEX[norm(b.name)] = b;
-    // Alias courts
-    if (b.name === 'Psaumes')      BOOK_INDEX['ps']  = b;
-    if (b.name === 'Genèse')       BOOK_INDEX['gn']  = b;
-    if (b.name === 'Matthieu')     BOOK_INDEX['mt']  = b;
-    if (b.name === 'Marc')         BOOK_INDEX['mc']  = b;
-    if (b.name === 'Luc')          BOOK_INDEX['lc']  = b;
-    if (b.name === 'Jean')         BOOK_INDEX['jn']  = b;
+  });
+
+  // Autres façons d'écrire un même livre : abréviations liturgiques,
+  // formes courtes, et graphies protestantes (Ésaïe pour Isaïe) — pour que
+  // toute référence saisie ou héritée continue de tomber juste.
+  const ALIASES = {
+    // Abréviations et formes courtes
+    ps: 'Psaumes', gn: 'Genèse', ex: 'Exode', dt: 'Deutéronome',
+    mt: 'Matthieu', mc: 'Marc', lc: 'Luc', jn: 'Jean',
+    ac: 'Actes des Apôtres', actes: 'Actes des Apôtres',
+    rm: 'Romains', ap: 'Apocalypse', he: 'Hébreux',
+    cantique: 'Cantique des Cantiques', ct: 'Cantique des Cantiques',
+    is: 'Isaïe', jr: 'Jérémie', ez: 'Ézéchiel', dn: 'Daniel',
+    si: 'Ecclésiastique (Siracide)', siracide: 'Ecclésiastique (Siracide)',
+    sg: 'Sagesse', tb: 'Tobie', jdt: 'Judith', ba: 'Baruch',
+    qo: 'Ecclésiaste', ecclesiaste: 'Ecclésiaste',
+    // Graphies protestantes ou variantes courantes
+    esaie: 'Isaïe',
+    maccabees: '1 Machabées', '1maccabees': '1 Machabées', '2maccabees': '2 Machabées',
+    ecclesiastique: 'Ecclésiastique (Siracide)',
+    apocalypsedejean: 'Apocalypse',
+  };
+  Object.entries(ALIASES).forEach(([alias, name]) => {
+    const b = BOOK_INDEX[norm(name)];
+    if (b) BOOK_INDEX[norm(alias)] = b;
   });
 
   // ── État courant ──────────────────────────────────────────
@@ -152,64 +181,67 @@
     catch (_) { /* quota plein, ignore */ }
   }
 
-  // ── Traductions disponibles (bolls.life) ─────────────────
-  const TRANSLATIONS = {
-    FRLSG: {
-      code:  'FRLSG',
-      short: 'LSG',
-      full:  'Bible Segond 1910',
-      year:  '1910',
-      desc:  "Traduction historique de référence dans le monde francophone, par Louis Segond. Texte limpide et fidèle aux originaux hébreux et grecs.",
-      cover: 'navy',  // style de couverture
-    },
-    BDS: {
-      code:  'BDS',
-      short: 'BDS',
-      full:  'Bible du Semeur',
-      year:  '2015',
-      desc:  "Traduction moderne et accessible, soucieuse d'une lecture fluide tout en restant fidèle aux textes originaux.",
-      cover: 'leather',
-    },
-    NBS: {
-      code:  'NBS',
-      short: 'NBS',
-      full:  'Nouvelle Bible Segond',
-      year:  '2002',
-      desc:  "Révision savante de la Segond avec un appareil critique poussé. Idéale pour l'étude approfondie des Écritures.",
-      cover: 'minimal',
-    },
-  };
-  const TRANSLATION_ORDER = ['FRLSG', 'BDS', 'NBS'];
-
-  let currentTranslation = localStorage.getItem('pel_bible_translation') || 'FRLSG';
-  if (!TRANSLATIONS[currentTranslation]) currentTranslation = 'FRLSG';
-
-  // Source unique selon la traduction active. Fallback automatique
-  // sur les autres traductions si la source primaire échoue.
-  function fetchChapter(book, ch) {
-    const order = [currentTranslation, ...TRANSLATION_ORDER.filter(t => t !== currentTranslation)];
-    return (async () => {
-      let lastErr = '';
-      for (const t of order) {
-        try {
-          const url = `https://bolls.life/get-text/${t}/${book.id}/${ch}/`;
-          const resp = await fetch(url);
-          if (!resp.ok) { lastErr = `${t}: HTTP ${resp.status}`; continue; }
-          const raw = await resp.json();
-          if (!Array.isArray(raw) || !raw.length) { lastErr = `${t}: réponse vide`; continue; }
-          return {
-            translation: t,
-            verses: raw.map(v => ({
-              verse: parseInt(v.verse, 10),
-              text:  String(v.text || '').replace(/<[^>]+>/g, '').trim(),
-            })).filter(v => !isNaN(v.verse) && v.text),
-          };
-        } catch (err) {
-          lastErr = `${t}: ${err.message}`;
+  // Purge unique des chapitres mis en cache pour les traductions retirées
+  // (Segond, Semeur, NBS) : ces entrées ne seront plus jamais relues et
+  // occupent inutilement le quota localStorage des visiteurs de longue date.
+  (function purgeAnciennesTraductions() {
+    try {
+      if (localStorage.getItem('pel_bible_purge_crampon') === '1') return;
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(CACHE_PREFIX) && !k.startsWith(`${CACHE_PREFIX}CRAMPON_`)) {
+          localStorage.removeItem(k);
         }
       }
-      throw new Error(lastErr);
-    })();
+      localStorage.removeItem('pel_bible_translation');
+      localStorage.setItem('pel_bible_purge_crampon', '1');
+    } catch (_) { /* stockage indisponible : sans conséquence */ }
+  })();
+
+  // ── Traduction : Bible catholique Crampon 1923 ────────────
+  // Le site est catholique : la Bible l'est aussi. Les traductions
+  // protestantes (Segond, Semeur, NBS) ont été retirées au profit de la
+  // Crampon, seule traduction catholique complète libre de droits — les
+  // 73 livres du canon, deutérocanoniques compris.
+  const TRANSLATIONS = {
+    CRAMPON: {
+      code:  'CRAMPON',
+      short: 'Crampon',
+      full:  'Bible catholique Crampon',
+      year:  '1923',
+      desc:  "Traduction catholique de référence de l'abbé Augustin Crampon, établie sur les textes hébreu et grec. Elle contient les 73 livres du canon catholique, avec les livres deutérocanoniques (Tobie, Judith, Sagesse, Ecclésiastique, Baruch, 1 et 2 Machabées) absents des bibles protestantes.",
+      cover: 'navy',
+    },
+  };
+  const TRANSLATION_ORDER = ['CRAMPON'];
+  const currentTranslation = 'CRAMPON';
+
+  // ── Source des textes : fichiers JSON du site (un par livre) ──
+  // Pas d'API tierce : le texte est servi par prionsenligne.fr, donc
+  // disponible hors-ligne une fois le livre consulté (cache du service
+  // worker) et rapide sur connexion lente.
+  const BOOK_CACHE = {};          // id → { v: { chapitre: { verset: texte } } }
+
+  async function loadBook(book) {
+    if (BOOK_CACHE[book.id]) return BOOK_CACHE[book.id];
+    const resp = await fetch(`/bible/crampon/${book.id}.json`);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    BOOK_CACHE[book.id] = data;
+    return data;
+  }
+
+  async function fetchChapter(book, ch) {
+    const data = await loadBook(book);
+    const verses = data.v?.[ch];
+    if (!verses) throw new Error(`${book.name} ${ch} introuvable`);
+    return {
+      translation: 'CRAMPON',
+      verses: Object.keys(verses)
+        .map(Number)
+        .sort((a, b) => a - b)
+        .map(n => ({ verse: n, text: verses[n] })),
+    };
   }
 
   // ── Surlignages PAR VERSET ────────────────────────────────
@@ -685,28 +717,24 @@
     }).slice(0, 2);
   }
 
-  // ── Recherche plein texte via bolls.life ──────────────────
+  // ── Recherche plein texte (/api/bible-search) ─────────────
+  // Le corpus complet (~1,8 Mo compressé) reste côté serveur : seuls les
+  // versets trouvés transitent, ce qui garde la recherche légère en 3G.
   let _searchAbortCtrl = null;
   async function searchFullText(query) {
     if (!query || query.length < 3) return [];
     if (_searchAbortCtrl) _searchAbortCtrl.abort();
     _searchAbortCtrl = new AbortController();
     try {
-      const url = `https://bolls.life/find/${currentTranslation}/?search=${encodeURIComponent(query)}&limit=8`;
+      const url = `/api/bible-search?q=${encodeURIComponent(query)}&limit=8`;
       const resp = await fetch(url, { signal: _searchAbortCtrl.signal });
       if (!resp.ok) return [];
       const data = await resp.json();
-      if (!Array.isArray(data)) return [];
-      // bolls renvoie : { book, chapter, verse, text } — book est numérique 1-66.
-      // ⚠️ bolls IGNORE le paramètre limit (peut renvoyer 1000+ versets) → on
-      // tronque nous-mêmes à 8 pour un menu léger.
-      return data.slice(0, 8).map(r => {
-        const allBooks = [...BOOKS.ot, ...BOOKS.nt];
-        const book = allBooks.find(b => b.id === r.book);
-        return book ? {
-          book, ch: r.chapter, verse: r.verse,
-          text: String(r.text || '').replace(/<\/?mark>/gi, '').replace(/\p{Cc}/gu, ''), // marqueur temporaire pour highlight
-        } : null;
+      const rows = Array.isArray(data?.results) ? data.results : [];
+      const allBooks = [...BOOKS.ot, ...BOOKS.nt];
+      return rows.map(r => {
+        const book = allBooks.find(b => b.name === r.book);
+        return book ? { book, ch: r.ch, verse: r.vs, text: r.text } : null;
       }).filter(Boolean);
     } catch (err) {
       if (err.name === 'AbortError') return null;
@@ -811,7 +839,7 @@
       btn.addEventListener('click', () => {
         const [bookId, ch, verse] = btn.dataset.go.split('|');
         const allBooks = [...BOOKS.ot, ...BOOKS.nt];
-        const book = allBooks.find(b => b.id === parseInt(bookId, 10));
+        const book = allBooks.find(b => b.id === bookId);
         if (!book) return;
         loadChapter(book, parseInt(ch, 10), { scrollToVerse: verse ? parseInt(verse, 10) : null });
         hideDropdown();
@@ -893,61 +921,35 @@
   }
   function escapeAttr(s) { return escapeHtml(s); }
 
-  // ── Sélecteur de traduction ──────────────────────────────
-  function setTranslation(code) {
-    if (!TRANSLATIONS[code] || code === currentTranslation) return;
-    currentTranslation = code;
-    localStorage.setItem('pel_bible_translation', code);
-    syncTranslationBtns();
-    // Recharge le chapitre courant si un est ouvert (avec le cache de cette traduction)
-    if (currentBook && currentChapter) {
-      loadChapter(currentBook, currentChapter);
-    } else {
-      // Sinon, on rafraîchit la welcome screen pour mettre à jour la couverture active
-      renderWelcome();
-    }
-  }
-  function syncTranslationBtns() {
-    document.querySelectorAll('.bible-trans-btn').forEach(b => {
-      b.classList.toggle('active', b.dataset.trans === currentTranslation);
-    });
-  }
-
-  // ── Welcome screen avec 3 couvertures de Bible ───────────
+  // ── Écran d'accueil ──────────────────────────────────────
   function renderWelcome() {
     const reader = document.getElementById('bible-reader');
     if (!reader) return;
-    const t = TRANSLATIONS;
-    const tr = t[currentTranslation];
+    const tr = TRANSLATIONS[currentTranslation];
     reader.innerHTML = `
       <div class="bible-welcome">
-        <h3 class="bible-welcome-title">Choisissez une traduction</h3>
-        <p class="bible-welcome-sub">Cliquez sur une Bible pour découvrir sa description, puis ouvrez-la.</p>
+        <h3 class="bible-welcome-title">La Bible catholique</h3>
+        <p class="bible-welcome-sub">Les 73 livres du canon, livres deutérocanoniques compris.</p>
 
-        <div class="bible-shelf">
-          ${TRANSLATION_ORDER.map(code => {
-            const trItem = t[code];
-            const isActive = code === currentTranslation;
-            return `<button class="bible-cover bible-cover-${trItem.cover}${isActive ? ' is-active' : ''}" data-trans="${code}" type="button" aria-label="Sélectionner ${escapeAttr(trItem.full)}">
-              <div class="bible-cover-spine"></div>
-              <div class="bible-cover-front">
-                <div class="bible-cover-ornament-top"></div>
-                <div class="bible-cover-cross">
-                  <span></span><span></span>
-                </div>
-                <div class="bible-cover-title-block">
-                  <div class="bible-cover-the">LA SAINTE</div>
-                  <div class="bible-cover-bible">BIBLE</div>
-                  <div class="bible-cover-divider"></div>
-                  <div class="bible-cover-version">${escapeHtml(trItem.short === 'LSG' ? 'Segond' : trItem.short === 'BDS' ? 'Du Semeur' : 'Nouvelle Segond')}</div>
-                  <div class="bible-cover-year">${escapeHtml(trItem.year)}</div>
-                </div>
-                <div class="bible-cover-ornament-bottom"></div>
+        <div class="bible-shelf bible-shelf-single">
+          <button class="bible-cover bible-cover-${tr.cover} is-active" type="button" id="bible-cover-open" aria-label="Ouvrir la ${escapeAttr(tr.full)}">
+            <div class="bible-cover-spine"></div>
+            <div class="bible-cover-front">
+              <div class="bible-cover-ornament-top"></div>
+              <div class="bible-cover-cross">
+                <span></span><span></span>
               </div>
-              <div class="bible-cover-pages"></div>
-              ${isActive ? '<span class="bible-cover-active-badge">Sélectionnée</span>' : ''}
-            </button>`;
-          }).join('')}
+              <div class="bible-cover-title-block">
+                <div class="bible-cover-the">LA SAINTE</div>
+                <div class="bible-cover-bible">BIBLE</div>
+                <div class="bible-cover-divider"></div>
+                <div class="bible-cover-version">${escapeHtml(tr.short)}</div>
+                <div class="bible-cover-year">${escapeHtml(tr.year)}</div>
+              </div>
+              <div class="bible-cover-ornament-bottom"></div>
+            </div>
+            <div class="bible-cover-pages"></div>
+          </button>
         </div>
 
         <div class="bible-welcome-trans-info">
@@ -955,7 +957,7 @@
           <p class="bible-welcome-translation-desc">${escapeHtml(tr.desc)}</p>
           <button class="bible-open-btn" id="bible-open-selected" type="button">
             <i class="fa-solid fa-book-open"></i>
-            Ouvrir la <strong>${escapeHtml(tr.short)}</strong>
+            Ouvrir la <strong>Bible</strong>
             <i class="fa-solid fa-arrow-right bible-open-arrow"></i>
           </button>
         </div>
@@ -988,19 +990,9 @@
       </div>
     `;
 
-    // 1er clic sur une couverture = SÉLECTION (description s'actualise, pas d'ouverture)
-    // 2e clic sur la même couverture (déjà sélectionnée) = OUVERTURE
-    reader.querySelectorAll('.bible-cover').forEach(el => {
-      el.addEventListener('click', () => {
-        const code = el.dataset.trans;
-        if (code === currentTranslation) {
-          // Déjà sélectionnée → on l'ouvre
-          loadChapter(BOOKS.ot[0], 1);
-        } else {
-          // Sélection seulement
-          setTranslation(code);
-        }
-      });
+    // Une seule Bible : le clic sur la couverture l'ouvre directement.
+    reader.querySelector('#bible-cover-open')?.addEventListener('click', () => {
+      loadChapter(BOOKS.ot[0], 1);
     });
 
     // Bouton "Ouvrir la BIBLE" sous la description
@@ -1285,12 +1277,6 @@
     document.addEventListener('click', e => {
       if (!e.target.closest('.bible-search-wrap')) hideDropdown();
     });
-
-    // Sélecteur de traduction (boutons en toolbar)
-    document.querySelectorAll('.bible-trans-btn').forEach(btn => {
-      btn.addEventListener('click', () => setTranslation(btn.dataset.trans));
-    });
-    syncTranslationBtns();
 
     // Sync Supabase à chaque connexion / déconnexion
     document.addEventListener('pel:authchange', e => {

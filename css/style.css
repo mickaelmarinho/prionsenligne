@@ -8635,6 +8635,16 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
 .bible-cover.is-active:hover {
   transform: translateY(-16px) rotateY(-12deg) scale(1.08);
 }
+/* Bible unique (catholique Crampon) : plus de « sélection » parmi plusieurs
+   couvertures — on retire l'inclinaison, qui donnerait un livre de travers. */
+.bible-shelf-single .bible-cover.is-active {
+  transform: translateY(-6px) scale(1.04);
+}
+@media (hover: hover) and (pointer: fine) {
+  .bible-shelf-single .bible-cover.is-active:hover {
+    transform: translateY(-10px) scale(1.07);
+  }
+}
 
 /* Tranche du livre */
 .bible-cover-spine {
