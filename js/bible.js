@@ -316,6 +316,12 @@
     if (!reader) return;
 
     let html = `<div class="bible-chapter-list-wrap">
+      <div class="bible-chapter-toprow">
+        <button class="bible-home-btn bible-books-btn" id="bible-to-books" type="button" title="Retour à la liste des livres">
+          <i class="fa-solid fa-arrow-left"></i>
+          <span>Tous les livres</span>
+        </button>
+      </div>
       <h3 class="bible-current-book">${escapeHtml(book.name)}</h3>
       <p class="bible-chapter-list-hint">Choisissez un chapitre :</p>
       <div class="bible-chapter-grid">`;
@@ -325,9 +331,37 @@
     html += '</div></div>';
     reader.innerHTML = html;
 
+    reader.querySelector('#bible-to-books')?.addEventListener('click', backToBooks);
     reader.querySelectorAll('.bible-chapter-btn').forEach(btn => {
       btn.addEventListener('click', () => loadChapter(book, parseInt(btn.dataset.ch, 10)));
     });
+  }
+
+  // Ramène l'utilisateur à la liste des livres (sidebar).
+  // On vide le reader : sinon le chapitre en cours (très haut) resterait au-dessus
+  // et repousserait la sidebar tout en bas — c'est précisément ce que l'on veut
+  // éviter. Reader vidé → la liste des livres remonte juste sous l'invite.
+  function backToBooks() {
+    currentBook = null;
+    currentChapter = null;
+    syncActiveBookBtn();
+
+    const reader = document.getElementById('bible-reader');
+    if (reader) {
+      reader.innerHTML = `<div class="bible-pick-book">
+        <i class="fa-solid fa-book-bible"></i>
+        <p class="bible-pick-book-title">Choisissez un livre</p>
+        <p class="bible-pick-book-hint">Ancien ou Nouveau Testament, dans la liste ci-dessous.</p>
+        <button type="button" class="bible-home-btn" id="bible-pick-other-bible">
+          <i class="fa-solid fa-house"></i>
+          <span>Choisir une autre Bible</span>
+        </button>
+      </div>`;
+      reader.querySelector('#bible-pick-other-bible')?.addEventListener('click', renderWelcome);
+    }
+
+    const anchor = document.getElementById('bible-reader') || document.getElementById('bible-sidebar');
+    if (anchor) anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function syncActiveBookBtn() {
@@ -386,10 +420,16 @@
     const loggedIn = isLoggedIn();
     let html = `<div class="bible-chapter${loggedIn ? '' : ' guest-mode'}">
       <div class="bible-chapter-toprow">
-        <button class="bible-home-btn" id="bible-home" type="button" title="Retour à la sélection des Bibles">
-          <i class="fa-solid fa-house"></i>
-          <span>Choisir une autre Bible</span>
-        </button>
+        <div class="bible-toprow-btns">
+          <button class="bible-home-btn bible-books-btn" id="bible-to-books" type="button" title="Retour à la liste des livres">
+            <i class="fa-solid fa-arrow-left"></i>
+            <span>Tous les livres</span>
+          </button>
+          <button class="bible-home-btn" id="bible-home" type="button" title="Retour à la sélection des Bibles">
+            <i class="fa-solid fa-house"></i>
+            <span>Choisir une autre Bible</span>
+          </button>
+        </div>
         <span class="bible-current-trans-badge">${escapeHtml(trShort)}</span>
       </div>
       ${!loggedIn ? `
@@ -463,6 +503,7 @@
       syncActiveBookBtn();
       renderWelcome();
     });
+    reader.querySelector('#bible-to-books')?.addEventListener('click', backToBooks);
     reader.querySelector('#bible-back')?.addEventListener('click', () => openBook(book));
     reader.querySelectorAll('.bible-nav-btn').forEach(btn => {
       btn.addEventListener('click', () => {

@@ -2,13 +2,16 @@
   <!-- Fond navy arrondi -->
   <rect width="512" height="512" rx="90" fill="#1a2744"/>
 
-  <!-- Ondes radio GAUCHE (ouvrant à gauche, bien séparées de la croix) -->
-  <path d="M 162 158 A 72 72 0 0 0 162 258" fill="none" stroke="#c9a84c" stroke-width="22" stroke-linecap="round"/>
-  <path d="M 140 118 A 110 110 0 0 0 140 288" fill="none" stroke="#c9a84c" stroke-width="19" stroke-linecap="round"/>
+  <!-- Ondes radio GAUCHE (ouvrant à gauche, bien séparées de la croix)
+       Extrémités à x=118 : avec le linecap rond (+11) le trait s'arrête à
+       x=129, soit 18 px avant le bras de la croix (x=147). Auparavant les
+       ondes chevauchaient la croix de 26 px — le symbole respire enfin. -->
+  <path d="M 118 158 A 72 72 0 0 0 118 258" fill="none" stroke="#c9a84c" stroke-width="22" stroke-linecap="round"/>
+  <path d="M 96 118 A 110 110 0 0 0 96 288" fill="none" stroke="#c9a84c" stroke-width="19" stroke-linecap="round"/>
 
-  <!-- Ondes radio DROITE (ouvrant à droite, bien séparées de la croix) -->
-  <path d="M 350 158 A 72 72 0 0 1 350 258" fill="none" stroke="#c9a84c" stroke-width="22" stroke-linecap="round"/>
-  <path d="M 372 118 A 110 110 0 0 1 372 288" fill="none" stroke="#c9a84c" stroke-width="19" stroke-linecap="round"/>
+  <!-- Ondes radio DROITE (symétriques : axe x=256 → 394 et 416) -->
+  <path d="M 394 158 A 72 72 0 0 1 394 258" fill="none" stroke="#c9a84c" stroke-width="22" stroke-linecap="round"/>
+  <path d="M 416 118 A 110 110 0 0 1 416 288" fill="none" stroke="#c9a84c" stroke-width="19" stroke-linecap="round"/>
 
   <!-- Croix dorée -->
   <rect x="237" y="82" width="38" height="290" rx="9" fill="#c9a84c"/>

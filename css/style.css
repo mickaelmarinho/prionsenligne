@@ -1244,11 +1244,17 @@ body.tv-modal-open { overflow: hidden; }
   text-overflow: ellipsis;
   cursor: default;
 }
-/* Au survol : développe le texte complet (pour lecture optionnelle) */
-.tl-item:hover .tl-desc-inline,
-.tl-item:focus-within .tl-desc-inline {
-  -webkit-line-clamp: unset;
-  overflow: visible;
+/* Au survol : développe le texte complet (pour lecture optionnelle).
+   Réservé aux vrais pointeurs : sur écran tactile, iOS simule un :hover au
+   premier tap — la description se dépliait, poussait le bouton « Intentions »
+   vers le bas et le tap ratait sa cible (d'où un double-clic nécessaire,
+   d'autant plus visible que le texte est agrandi). */
+@media (hover: hover) and (pointer: fine) {
+  .tl-item:hover .tl-desc-inline,
+  .tl-item:focus-within .tl-desc-inline {
+    -webkit-line-clamp: unset;
+    overflow: visible;
+  }
 }
 
 .tl-marker {
@@ -5848,7 +5854,9 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 18px 18px 16px;
+  /* Le panneau est fixed top:0 : sans la safe-area, l'en-tête (et donc la
+     croix de fermeture) passe sous le notch / la Dynamic Island sur iPhone. */
+  padding: calc(18px + env(safe-area-inset-top, 0px)) 18px 16px;
   border-bottom: 1px solid var(--border-mid);
   flex-shrink: 0;
 }
@@ -9109,6 +9117,36 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   border-color: var(--navy);
 }
 .bible-home-btn:hover i { color: var(--gold); }
+/* Invite affichée dans le reader après « Tous les livres » — garde le reader
+   court pour que la liste des livres (sidebar) remonte juste en dessous. */
+.bible-pick-book {
+  text-align: center;
+  padding: 26px 16px;
+}
+.bible-pick-book > i {
+  font-size: 26px;
+  color: var(--gold);
+  margin-bottom: 10px;
+}
+.bible-pick-book-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  color: var(--navy);
+  margin: 0 0 4px;
+}
+.bible-pick-book-hint {
+  font-size: 13px;
+  color: var(--text-soft);
+  margin: 0 0 16px;
+}
+
+/* Groupe de boutons de gauche dans la toprow (Livres + Choisir une Bible) */
+.bible-toprow-btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 .bible-current-trans-badge {
   display: inline-block;
   background: var(--navy);
@@ -9460,6 +9498,10 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   .bible-home-btn span::before {
     content: 'Bibles';
     font-size: 12px;
+  }
+  /* Bouton « Tous les livres » : label mobile compact « Livres » */
+  .bible-books-btn span::before {
+    content: 'Livres';
   }
   .bible-home-btn { padding: 8px 12px; }
   .bible-reader { padding: 18px 16px; border-radius: 12px; }
