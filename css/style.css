@@ -2411,6 +2411,44 @@ body.tv-modal-open { overflow: hidden; }
 .src-info { font-size: 11px; color: var(--text-soft); margin-bottom: 10px; }
 
 .src-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+
+/* ── Sources : puces d'offices repliées par défaut (cf. initSourcesCompact) ── */
+.src-tags-fold { display: none; }
+.src-card.src-open .src-tags-fold { display: flex; }
+.src-more-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 10px;
+  padding: 5px 11px 5px 9px;
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 11px;
+  color: var(--text-mid);
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.src-more-btn i {
+  font-size: 9px;
+  color: var(--gold);
+  transition: transform .18s ease;
+}
+.src-card.src-open .src-more-btn i { transform: rotate(180deg); }
+.src-more-count {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 0 5px;
+  background: var(--navy);
+  color: var(--cream);
+  border-radius: 999px;
+  font-size: 9.5px;
+  font-weight: 600;
+}
+@media (hover: hover) and (pointer: fine) {
+  .src-more-btn:hover { background: var(--navy); color: white; border-color: var(--navy); }
+}
 .stag {
   font-size: 9px;
   padding: 2px 7px;

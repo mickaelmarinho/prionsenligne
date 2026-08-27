@@ -8557,6 +8557,53 @@ function initGregorianPlayer() {
 
 
 /* ────────────────────────────────────────────
+   10bis. SOURCES — affichage compact
+   L'onglet affichait d'un coup les puces d'offices de chaque source
+   (jusqu'à 5 par carte, 14 cartes) : beaucoup de couleur et de bruit
+   à l'arrivée. On garde la liste complète et lisible (type, nom,
+   description, écoute) et on déroule les offices au clic.
+──────────────────────────────────────────────*/
+function initSourcesCompact() {
+  const cards = document.querySelectorAll('#tab-sources .src-card');
+  cards.forEach(card => {
+    // Les cartes qui sont elles-mêmes un lien (<a class="src-card">) ne
+    // peuvent pas accueillir de bouton : imbriquer un élément interactif
+    // dans un <a> est invalide et rend le clic ambigu. Elles restent en
+    // l'état — ce sont les plus légères (1 à 3 puces).
+    if (card.tagName === 'A' || card.closest('a')) return;
+
+    const groups = card.querySelectorAll('.src-tags');
+    if (!groups.length) return;
+
+    const count = card.querySelectorAll('.stag').length;
+    if (!count) return;
+
+    groups.forEach(g => g.classList.add('src-tags-fold'));
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'src-more-btn';
+    btn.setAttribute('aria-expanded', 'false');
+    btn.innerHTML = `<i class="fa-solid fa-chevron-down"></i>` +
+      `<span>Offices diffusés<span class="src-more-count">${count}</span></span>`;
+
+    btn.addEventListener('click', e => {
+      // Les cartes « combo » contiennent des zones cliquables (lecture du
+      // flux) : on empêche le clic de remonter jusqu'à elles.
+      e.stopPropagation();
+      const open = card.classList.toggle('src-open');
+      btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+
+    // Inséré après la description, avant le premier groupe de puces.
+    const info = card.querySelector('.src-info');
+    if (info && info.parentNode === card) info.after(btn);
+    else card.insertBefore(btn, groups[0]);
+  });
+}
+
+
+/* ────────────────────────────────────────────
    11. INIT GLOBAL
 ──────────────────────────────────────────────*/
 document.addEventListener('DOMContentLoaded', () => {
@@ -8584,6 +8631,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initLatinMassModal();
   initContact();
   initGregorianPlayer();
+  initSourcesCompact();
   initPushModule();
   initDayShare();
   handleDeepLink();      // applique le filtre/onglet issu du hash URL (landing page)
