@@ -47,11 +47,6 @@
       "permanent": true
     }
   ],
-  "functions": {
-    "api/bible-search.js": {
-      "includeFiles": "bible/crampon/**"
-    }
-  },
   "rewrites": [
     {
       "source": "/agenda",

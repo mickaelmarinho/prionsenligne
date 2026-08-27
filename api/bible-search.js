@@ -27,20 +27,50 @@ function accentless(s) {
   return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 }
 
-function loadCorpus() {
-  if (CORPUS) return CORPUS;
-  const index = JSON.parse(fs.readFileSync(path.join(DIR, '_index.json'), 'utf8'));
-  const rows = [];
-  for (const b of index.books) {
-    const data = JSON.parse(fs.readFileSync(path.join(DIR, `${b.id}.json`), 'utf8'));
-    for (const ch of Object.keys(data.v)) {
-      const verses = data.v[ch];
-      for (const vs of Object.keys(verses)) {
-        const text = verses[vs];
-        rows.push({ book: b.name, abbr: b.abbr, ch: +ch, vs: +vs, text, n: accentless(text) });
-      }
+// Les livres sont d'abord cherchés sur le disque de la fonction ; s'ils n'y
+// ont pas été embarqués, on les lit via le CDN du déploiement (ils y sont
+// publiés comme fichiers statiques). Le résultat est gardé en mémoire.
+function readLocal(name) {
+  return JSON.parse(fs.readFileSync(path.join(DIR, name), 'utf8'));
+}
+
+async function readRemote(origin, name) {
+  const r = await fetch(`${origin}/bible/crampon/${name}`);
+  if (!r.ok) throw new Error(`${name}: HTTP ${r.status}`);
+  return r.json();
+}
+
+function collect(rows, book, data) {
+  for (const ch of Object.keys(data.v)) {
+    const verses = data.v[ch];
+    for (const vs of Object.keys(verses)) {
+      const text = verses[vs];
+      rows.push({ book: book.name, abbr: book.abbr, ch: +ch, vs: +vs, text, n: accentless(text) });
     }
   }
+}
+
+async function loadCorpus(origin) {
+  if (CORPUS) return CORPUS;
+
+  let index, getBook;
+  try {
+    index = readLocal('_index.json');
+    getBook = async b => readLocal(`${b.id}.json`);
+  } catch (_) {
+    index = await readRemote(origin, '_index.json');
+    getBook = b => readRemote(origin, `${b.id}.json`);
+  }
+
+  const rows = [];
+  // Par lots : 73 requêtes séquentielles seraient trop lentes au démarrage.
+  const books = index.books;
+  for (let i = 0; i < books.length; i += 12) {
+    const lot = books.slice(i, i + 12);
+    const datas = await Promise.all(lot.map(getBook));
+    lot.forEach((b, k) => collect(rows, b, datas[k]));
+  }
+
   CORPUS = rows;
   return CORPUS;
 }
@@ -54,9 +84,13 @@ export default async function handler(req, res) {
     return;
   }
 
+  const headers = req.headers || {};
+  const proto = String(headers['x-forwarded-proto'] || 'https').split(',')[0];
+  const origin = headers.host ? `${proto}://${headers.host}` : '';
+
   let corpus;
   try {
-    corpus = loadCorpus();
+    corpus = await loadCorpus(origin);
   } catch (err) {
     res.status(500).json({ error: 'Corpus indisponible.', detail: err.message });
     return;
