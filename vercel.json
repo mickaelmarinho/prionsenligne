@@ -53,6 +53,10 @@
       "destination": "/app.html"
     },
     {
+      "source": "/api/nominis-month",
+      "destination": "/api/nominis?scope=month"
+    },
+    {
       "source": "/saint-du-jour",
       "destination": "/api/seo?p=saint"
     },
