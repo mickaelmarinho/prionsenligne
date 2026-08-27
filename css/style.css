@@ -1257,6 +1257,39 @@ body.tv-modal-open { overflow: hidden; }
   }
 }
 
+/* ── Offices déjà terminés : repliés derrière un bouton (cf. syncPastFold) ── */
+.timeline.tl-fold-past .tl-item.tl-past { display: none; }
+
+.tl-past-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 11px 16px;
+  background: var(--cream);
+  border: 1px dashed var(--border);
+  border-radius: var(--r-lg);
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  color: var(--text-soft);
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.tl-past-toggle i { font-size: 10px; color: var(--gold); }
+@media (hover: hover) and (pointer: fine) {
+  .tl-past-toggle:hover {
+    background: white;
+    color: var(--navy);
+    border-color: var(--gold);
+  }
+}
+.tl-past-toggle:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
 .tl-marker {
   width: 10px; height: 10px;
   border-radius: 50%;

@@ -6666,16 +6666,74 @@ function initBadges() {
     });
   }
 
+  // ── Offices déjà terminés : repliés derrière un seul bouton ──────
+  // En fin de journée, la page listait jusqu'à 43 offices passés sur 62,
+  // soit une dizaine d'écrans d'historique à franchir avant d'atteindre la
+  // prochaine prière. On les regroupe sous un unique bouton, en haut de la
+  // timeline (ils sont en tête, dans l'ordre chronologique). Chaque office
+  // encore à venir garde en revanche toutes ses informations visibles :
+  // rien n'est masqué office par office.
+  const FOLD_MIN = 3;   // en deçà, replier n'apporte rien
+
+  function syncPastFold() {
+    const container = document.getElementById('timeline');
+    if (!container) return;
+
+    const past = container.querySelectorAll('.tl-item.tl-past');
+    let toggle = document.getElementById('tl-past-toggle');
+
+    if (past.length < FOLD_MIN) {
+      container.classList.remove('tl-fold-past');
+      toggle?.remove();
+      return;
+    }
+
+    if (!toggle) {
+      toggle = document.createElement('button');
+      toggle.type = 'button';
+      toggle.id = 'tl-past-toggle';
+      toggle.className = 'tl-past-toggle';
+      toggle.addEventListener('click', () => {
+        const open = container.classList.toggle('tl-fold-past');
+        // « open » vaut true quand on vient de REPLIER
+        toggle.setAttribute('aria-expanded', open ? 'false' : 'true');
+        try { sessionStorage.setItem('pel_tl_past_open', open ? '0' : '1'); } catch (_) {}
+        syncPastLabel(toggle, container);
+      });
+      container.prepend(toggle);
+
+      // Replié par défaut, sauf si la personne l'a ouvert dans cette session
+      let open = false;
+      try { open = sessionStorage.getItem('pel_tl_past_open') === '1'; } catch (_) {}
+      container.classList.toggle('tl-fold-past', !open);
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    } else if (toggle !== container.firstElementChild) {
+      container.prepend(toggle);   // re-render : le bouton doit rester en tête
+    }
+
+    syncPastLabel(toggle, container);
+  }
+
+  function syncPastLabel(toggle, container) {
+    const n = container.querySelectorAll('.tl-item.tl-past').length;
+    const replie = container.classList.contains('tl-fold-past');
+    toggle.innerHTML = `<i class="fa-solid fa-chevron-${replie ? 'down' : 'up'}"></i>` +
+      `<span>${replie
+        ? `Voir les ${n} office${n > 1 ? 's' : ''} déjà passé${n > 1 ? 's' : ''}`
+        : `Masquer les offices passés`}</span>`;
+  }
+
   // Exposé pour ré-appliquer les badges après chaque (re)génération de la
   // timeline (sinon, sur certains chemins de re-render — ex. restauration de
   // session au 1er chargement — les badges restaient figés sur « — »).
-  window._pelUpdateBadges = updateBadges;
+  window._pelUpdateBadges = () => { updateBadges(); syncPastFold(); };
 
   updateBadges();
+  syncPastFold();
   // Mise à jour automatique toutes les minutes (un seul interval global :
   // initBadges peut être rappelé, on évite d'empiler les timers).
   if (window._pelBadgesInterval) clearInterval(window._pelBadgesInterval);
-  window._pelBadgesInterval = setInterval(updateBadges, 60_000);
+  window._pelBadgesInterval = setInterval(() => { updateBadges(); syncPastFold(); }, 60_000);
 }
 
 
