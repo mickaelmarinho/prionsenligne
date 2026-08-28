@@ -5073,14 +5073,14 @@ body:has(.chapelet-fab) .greg-btn { right: 88px; }   /* 54 (FAB) + 20 (marge dro
 }
 
 .footer-inner {
-  max-width: 1320px;
+  /* Trois blocs depuis le retrait du doublon de navigation : marque ·
+     Chaque jour · mentions. La grille en déclarait encore quatre, laissant
+     une colonne vide de plus de 350 px et un pied de page qui s'étirait. */
+  max-width: 1080px;
   margin: 0 auto;
   display: grid;
-  /* 4 blocs : marque · Navigation · Chaque jour · mentions.
-     (auparavant 3 colonnes pour 4 blocs → le bloc mentions passait à la ligne
-      et se retrouvait mal placé.) */
-  grid-template-columns: 1.3fr auto auto 1.3fr;
-  gap: 40px;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 48px;
   align-items: start;
 }
 
@@ -5093,10 +5093,19 @@ body:has(.chapelet-fab) .greg-btn { right: 88px; }   /* 54 (FAB) + 20 (marge dro
 }
 
 .footer-nav {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
+  /* Huit liens en une seule colonne faisaient près de 400 px de haut pour
+     170 px de large. Sur deux colonnes, le bloc retrouve des proportions
+     normales — et reste sur une colonne dès qu'il n'y a plus la place. */
+  display: grid;
+  grid-template-columns: repeat(2, minmax(140px, auto));
+  column-gap: 34px;
+  row-gap: 2px;
+  justify-content: center;
+  justify-items: start;
+}
+.footer-nav .footer-nav-title {
+  grid-column: 1 / -1;
+  justify-self: center;
 }
 
 .footer-nav-title {
@@ -5352,7 +5361,9 @@ body:has(.chapelet-fab) .greg-btn { right: 88px; }   /* 54 (FAB) + 20 (marge dro
   /* Footer mobile */
   .footer-inner { grid-template-columns: 1fr; gap: 20px; text-align: center; }
   .footer-legal { text-align: center; }
-  .footer-nav { flex-direction: row; flex-wrap: wrap; justify-content: center; }
+  /* Sur téléphone, une seule colonne : deux seraient trop serrées, et les
+     liens doivent rester assez espacés pour se viser au doigt. */
+  .footer-nav { grid-template-columns: 1fr; justify-items: center; row-gap: 0; }
 
   /* Lecteur radio */
   .rp-vol { width: 56px; }
