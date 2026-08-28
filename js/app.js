@@ -505,9 +505,9 @@ function initCalendar() {
   const DOW_FR = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
   const TYPE_LABELS = {
     ordinaire: 'Temps ordinaire',
-    memoire:   'Memoire',
-    fete:      'Fete liturgique',
-    solennite: 'Solennite',
+    memoire:   'Mémoire',
+    fete:      'Fête liturgique',
+    solennite: 'Solennité',
   };
 
   const now = getParisDate();

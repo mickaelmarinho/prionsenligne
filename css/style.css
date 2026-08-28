@@ -1272,12 +1272,14 @@ body.tv-modal-open { overflow: hidden; }
   border: 1px dashed var(--border);
   border-radius: var(--r-lg);
   font-family: 'Outfit', sans-serif;
-  font-size: 13px;
-  color: var(--text-soft);
+  /* Lisibilité : 15 px et couleur pleine — à 13 px sur --text-soft le
+     contraste tombait à 4,0:1, sous le minimum de 4,5:1. */
+  font-size: 15px;
+  color: var(--text-mid);
   cursor: pointer;
   transition: background .15s, color .15s, border-color .15s;
 }
-.tl-past-toggle i { font-size: 10px; color: var(--gold); }
+.tl-past-toggle i { font-size: 11px; color: var(--gold); }
 @media (hover: hover) and (pointer: fine) {
   .tl-past-toggle:hover {
     background: white;
