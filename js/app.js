@@ -3377,21 +3377,43 @@ function initChapelet() {
      ────────────────────────────────────────────────────────── */
   let currentAudio = null;
 
+  /* Un SEUL élément <audio> réutilisé pour tout le chapelet.
+     iOS n'autorise la lecture que sur un élément « débloqué » par un geste
+     de l'utilisateur. En créant un `new Audio()` à chaque prière, seuls les
+     premiers passaient : les suivants voyaient leur play() refusé, on basculait
+     sur la synthèse vocale, muette faute de voix installée dans la langue —
+     d'où des prières franchies en silence.
+
+     C'était particulièrement net au début de chaque dizaine, le seul moment
+     où deux sons s'enchaînent dans la même étape (annonce du mystère, puis
+     Notre Père) : le second était le plus souvent refusé. En réutilisant le
+     même élément, il reste débloqué pour toute la session. */
+  function getAudioEl() {
+    if (!currentAudio) {
+      currentAudio = new Audio();
+      currentAudio.preload = 'auto';
+    }
+    return currentAudio;
+  }
+
   function tryPlayMp3(url, rate) {
     return new Promise((resolve, reject) => {
-      const a = new Audio();
-      a.preload = 'auto';
-      try { a.preservesPitch = true; } catch(_) {}
+      const a = getAudioEl();
+
+      // Coupe proprement ce qui jouait encore avant de réutiliser l'élément
+      a.onended = null; a.onerror = null;
+      try { a.pause(); } catch (_) {}
+
+      try { a.preservesPitch = true; } catch (_) {}
       a.playbackRate = rate || 1;
       a.src = url;
-      const cleanup = () => {
-        a.onended = null; a.onerror = null; a.oncanplay = null;
-        currentAudio = null;
-      };
-      a.onended = () => { cleanup(); resolve(); };
-      a.onerror = () => { cleanup(); reject(new Error('audio load failed')); };
-      currentAudio = a;
-      a.play().catch(err => { cleanup(); reject(err); });
+      try { a.currentTime = 0; } catch (_) {}
+
+      const fin = () => { a.onended = null; a.onerror = null; };
+      a.onended = () => { fin(); resolve(); };
+      a.onerror = () => { fin(); reject(new Error('audio load failed')); };
+
+      a.play().catch(err => { fin(); reject(err); });
     });
   }
 
@@ -3480,24 +3502,27 @@ function initChapelet() {
     render();
     speakStep();
   }
+  // On met en pause SANS jeter l'élément : le remplacer obligerait iOS à le
+  // débloquer à nouveau, et la lecture reprendrait muette.
+  function halteAudio() {
+    if (!currentAudio) return;
+    currentAudio.onended = null;
+    currentAudio.onerror = null;
+    try { currentAudio.pause(); } catch (_) {}
+  }
+
   function pauseAudio() {
     playing = false;
     try { synth?.cancel(); } catch(_) {}
     currentUtterance = null;
-    if (currentAudio) {
-      try { currentAudio.pause(); } catch(_) {}
-      currentAudio = null;
-    }
+    halteAudio();
     render();
   }
   function stopAudio() {
     playing = false;
     try { synth?.cancel(); } catch(_) {}
     currentUtterance = null;
-    if (currentAudio) {
-      try { currentAudio.pause(); } catch(_) {}
-      currentAudio = null;
-    }
+    halteAudio();
   }
 
   /* ── Listeners UI ── */
