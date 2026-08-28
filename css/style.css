@@ -850,12 +850,14 @@ body.voice-modal-open { overflow: hidden; }
   background: transparent;
   border: 1px solid transparent;
   color: var(--text-soft);
-  width: 26px; height: 26px;
+  /* Cible tactile de 44 px (Apple HIG / WCAG 2.5.5). L'icône reste discrète :
+     c'est la zone atteignable qui grandit, pas le dessin. */
+  width: 44px; height: 44px;
   border-radius: 50%;
   display: inline-flex; align-items: center; justify-content: center;
   cursor: pointer;
-  font-size: 12px;
-  margin-top: 2px;
+  font-size: 15px;
+  margin-top: 0;
   opacity: .55;
   transition: background .15s, color .15s, border-color .15s, opacity .15s;
 }
@@ -955,9 +957,9 @@ body.voice-modal-open { overflow: hidden; }
   margin-top: 3px;
 }
 .tl-pastoral-text {
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--text-soft);
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--text-mid);
 }
 .tl-pastoral-text strong {
   color: var(--text);
@@ -1231,8 +1233,10 @@ body.tv-modal-open { overflow: hidden; }
 }
 
 .tl-desc-inline {
-  font-size: 12px;
-  line-height: 1.45;
+  /* Lisibilité : 12 px était la taille dominante du site et la plus
+     pénalisante pour les lecteurs âgés (audit d'ergonomie, août 2026). */
+  font-size: 15px;
+  line-height: 1.5;
   color: var(--text-soft);
   font-style: italic;
   margin: 1px 0 6px;
@@ -1322,15 +1326,15 @@ body.tv-modal-open { overflow: hidden; }
   align-items: center;
   gap: 4px;
   font-family: 'Outfit', sans-serif;
-  font-size: 12px;
-  padding: 5px 12px;
+  font-size: 14px;
+  padding: 9px 14px;
   border-radius: 10px;
   cursor: pointer;
   transition: all .15s;
   text-decoration: none;
   border: 1px solid transparent;
   line-height: 1.4;
-  min-height: 32px; /* cible tactile */
+  min-height: 44px; /* cible tactile — Apple HIG / WCAG 2.5.5 */
 }
 
 /* Drapeau du pays de la source (image flagcdn.com — rendu identique tous OS) */
@@ -1377,8 +1381,10 @@ body.tv-modal-open { overflow: hidden; }
 }
 
 .tl-badge {
-  font-size: 11px;
-  padding: 3px 10px;
+  /* « Dans 20 min », « En direct » : l'information la plus consultée de la
+     page. Elle était en 10-11 px, la plus petite du site. */
+  font-size: 14px;
+  padding: 5px 12px;
   border-radius: 10px;
   white-space: nowrap;
   font-weight: 500;
@@ -2027,10 +2033,10 @@ body.tv-modal-open { overflow: hidden; }
 
 /* Texte countdown */
 .tl-chat-timer {
-  font-size: 10px;
+  font-size: 13px;
   white-space: nowrap;
   color: var(--text-soft);
-  min-height: 13px;
+  min-height: 16px;
   line-height: 1.2;
 }
 .tl-chat-timer--open {
@@ -5102,11 +5108,13 @@ body:has(.chapelet-fab) .greg-btn { right: 88px; }   /* 54 (FAB) + 20 (marge dro
 .footer-nav-link {
   background: none;
   border: none;
-  color: rgba(245,240,232,.6);
+  /* Opacité relevée de .6 à .78 : à .6 le contraste tombait sous 4,5:1 */
+  color: rgba(245,240,232,.78);
   font-family: 'Outfit', sans-serif;
-  font-size: 13px;
+  font-size: 15px;
   cursor: pointer;
-  padding: 2px 0;
+  /* Lignes espacées : des liens serrés se ratent au doigt */
+  padding: 9px 0;
   transition: color .15s;
   text-align: center;
 }
@@ -5187,16 +5195,20 @@ body:has(.chapelet-fab) .greg-btn { right: 88px; }   /* 54 (FAB) + 20 (marge dro
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 3px;
   font-family: 'Outfit', sans-serif;
-  font-size: 11px;
+  /* Navigation principale du site : c'est elle qu'on vise le plus souvent.
+     Libellé remonté de 11 à 12,5 px et hauteur portée à 44 px. */
+  font-size: 12.5px;
   color: var(--text-soft);
   background: transparent;
   border: none;
   cursor: pointer;
   padding: 4px 8px;
   transition: color .15s;
-  min-width: 56px; /* cible tactile */
+  min-width: 60px;
+  min-height: 44px;   /* cible tactile — Apple HIG / WCAG 2.5.5 */
 }
 .bn.active { color: var(--navy); }
 .bn-icon {
@@ -5302,7 +5314,7 @@ body:has(.chapelet-fab) .greg-btn { right: 88px; }   /* 54 (FAB) + 20 (marge dro
   /* Timeline : compacte sur mobile */
   .tl-item { flex-wrap: wrap; padding: 11px 12px; gap: 6px 12px; }
   .tl-body { flex-basis: calc(100% - 50px - 12px); }
-  .tl-prayer { font-size: 15px; }
+  .tl-prayer { font-size: 16px; }
   .tl-actions {
     flex-basis: 100%;
     flex-direction: row !important;
@@ -5315,7 +5327,7 @@ body:has(.chapelet-fab) .greg-btn { right: 88px; }   /* 54 (FAB) + 20 (marge dro
   /* Le wrap Intentions ne doit pas décaler son bouton (timer en dessous) */
   .tl-actions .tl-chat-wrap { align-items: stretch; }
   .tl-actions .tl-badge { align-self: center; }
-  .tl-src { font-size: 12px; padding: 5px 10px; min-height: 34px; }
+  .tl-src { font-size: 14px; padding: 9px 13px; min-height: 44px; }
 
   /* Week cards : scroll horizontal fluide */
   .week-cards { gap: 10px; padding-bottom: 8px; }
@@ -5532,11 +5544,14 @@ body:has(.chapelet-fab) .greg-btn { right: 88px; }   /* 54 (FAB) + 20 (marge dro
   padding: 16px 20px;
   margin-bottom: 20px;
 }
+/* Carte « Prochain office » — l'élément le plus consulté du site.
+   Son compte à rebours était en 12 px : il porte l'information que la
+   plupart des visiteurs viennent chercher. */
 .no-label {
-  font-size: 10px;
+  font-size: 12.5px;
   text-transform: uppercase;
   letter-spacing: .1em;
-  opacity: .65;
+  opacity: .8;
   margin-bottom: 5px;
 }
 .no-prayer {
@@ -5546,9 +5561,9 @@ body:has(.chapelet-fab) .greg-btn { right: 88px; }   /* 54 (FAB) + 20 (marge dro
   line-height: 1.15;
 }
 .no-srcs {
-  font-size: 12px;
-  opacity: .65;
-  margin-top: 5px;
+  font-size: 14.5px;
+  opacity: .85;
+  margin-top: 6px;
 }
 .no-right { text-align: right; flex-shrink: 0; }
 .no-time {
@@ -5559,9 +5574,10 @@ body:has(.chapelet-fab) .greg-btn { right: 88px; }   /* 54 (FAB) + 20 (marge dro
   line-height: 1;
 }
 .no-countdown {
-  font-size: 12px;
-  opacity: .75;
-  margin-top: 4px;
+  font-size: 16px;
+  font-weight: 500;
+  opacity: .95;
+  margin-top: 5px;
 }
 
 
@@ -5867,18 +5883,19 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 12px;
+  font-size: 14px;
   font-family: var(--font-ui);
   font-weight: 500;
   color: var(--text-soft);
   background: var(--cream);
   border: 1px solid var(--border-mid);
   border-radius: 20px;
-  padding: 5px 12px;
+  padding: 8px 14px;
   cursor: pointer;
   transition: background .15s, color .15s, border-color .15s;
   white-space: nowrap;
-  min-height: 32px;
+  /* Cible tactile de 44 px : recommandation Apple, critère WCAG 2.5.5 */
+  min-height: 44px;
 }
 .tl-chat-btn:hover {
   background: rgba(201,168,76,.15);
@@ -7864,7 +7881,8 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   }
   .no-prayer { font-size: 18px; }
   .no-time   { font-size: 26px; }
-  .no-srcs, .no-countdown { font-size: 11px; }
+  .no-srcs { font-size: 14px; }
+  .no-countdown { font-size: 15.5px; font-weight: 500; }
 
   /* Bannière du jour : tu vois la date + fête sans rogner */
   .day-banner {
@@ -7912,13 +7930,13 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
     font-weight: 500;
   }
   .tl-marker { display: none; }         /* gain d'espace, la couleur reste sur le bord gauche */
-  .tl-prayer { font-size: 14.5px; line-height: 1.3; margin-bottom: 5px; }
+  .tl-prayer { font-size: 16px; line-height: 1.35; margin-bottom: 5px; }
   .tl-sources { gap: 5px; }
   .tl-src {
-    font-size: 11.5px;
-    padding: 5px 10px;
+    font-size: 14px;
+    padding: 9px 13px;
     border-radius: 8px;
-    min-height: 30px;
+    min-height: 44px;
   }
   .tl-actions {
     flex-basis: 100%;
@@ -7933,14 +7951,16 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   }
   .tl-actions .tl-badge { align-self: center; }
   .tl-badge {
-    font-size: 10px;
-    padding: 2px 8px;
-    border-radius: 8px;
+    font-size: 13.5px;
+    padding: 4px 10px;
+    border-radius: 9px;
   }
+  /* Cible tactile portée à 44 px (recommandation Apple / WCAG 2.5.5) :
+     en dessous, les doigts peu assurés ratent le bouton. */
   .tl-breviary-btn {
-    font-size: 11.5px;
-    padding: 5px 10px;
-    min-height: 30px;
+    font-size: 14px;
+    padding: 8px 14px;
+    min-height: 44px;
   }
   .tl-body { flex: 1; min-width: 0; }
 
@@ -8185,9 +8205,9 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   .day-feast { font-size: 16px; }
   .no-prayer { font-size: 16px; }
   .no-time   { font-size: 22px; }
-  .tl-prayer { font-size: 13.5px; }
+  .tl-prayer { font-size: 15.5px; }
   .tl-time   { font-size: 12px; min-width: 38px; }
-  .tl-src    { font-size: 11px; padding: 4px 8px; }
+  .tl-src    { font-size: 13.5px; padding: 8px 11px; }
   .month-title { font-size: 17px; }
   .cal-day { min-height: 44px; }
   .cal-num { font-size: 11.5px; }
@@ -9605,4 +9625,54 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   .bible-chapter-grid {
     grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
   }
+}
+
+
+/* ═══════════════════════════════════════════════
+   ACCESSIBILITÉ — cibles tactiles
+   Audit d'ergonomie (août 2026) : 53 boutons mesuraient moins de
+   44 × 44 px, le minimum recommandé par Apple et par le critère
+   WCAG 2.5.5. En dessous, une main peu assurée rate le bouton et
+   tombe sur autre chose — première cause d'abandon chez les aînés.
+
+   Pour les petits boutons ronds (croix de fermeture, icônes), on
+   n'agrandit PAS le dessin : on étend la zone atteignable autour,
+   avec un pseudo-élément invisible. L'aspect du site est inchangé.
+═══════════════════════════════════════════════ */
+.logo,
+.wb-close,
+.pel-voice-cfg,
+.breviary-close,
+.profile-close,
+.auth-close,
+.chat-close,
+.voice-close,
+.bible-fav-close {
+  position: relative;
+}
+.logo::after,
+.wb-close::after,
+.pel-voice-cfg::after,
+.breviary-close::after,
+.profile-close::after,
+.auth-close::after,
+.chat-close::after,
+.voice-close::after,
+.bible-fav-close::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+  /* Zone de contact uniquement : rien de visible, rien de cliquable en trop */
+  pointer-events: auto;
+}
+
+/* Commandes du lecteur radio : 38 et 40 px, portées à 44 */
+.rp-btn-play,
+.rp-btn-close {
+  min-width: 44px;
+  min-height: 44px;
 }
