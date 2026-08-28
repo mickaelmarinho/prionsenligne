@@ -85,6 +85,10 @@
       "destination": "/api/seo?p=fonds-ecran"
     },
     {
+      "source": "/histoire-du-christianisme",
+      "destination": "/api/seo?p=histoire"
+    },
+    {
       "source": "/affiche",
       "destination": "/api/seo?p=affiche"
     }

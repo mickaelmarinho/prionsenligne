@@ -35,7 +35,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <link rel="stylesheet" href="css/style.css?v=206" />
+  <link rel="stylesheet" href="css/style.css?v=207" />
   <!-- PWA / iOS standalone -->
   <meta name="theme-color" content="#1a2744" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -562,6 +562,7 @@
         <a class="footer-nav-link" href="/evangile-du-jour">Évangile du jour</a>
         <a class="footer-nav-link" href="/messe-en-direct">Messe en direct</a>
         <a class="footer-nav-link" href="/saints">Saints de la francophonie</a>
+        <a class="footer-nav-link" href="/histoire-du-christianisme">Histoire du christianisme</a>
         <a class="footer-nav-link" href="/paroisses">Pour les paroisses</a>
         <a class="footer-nav-link" href="/fonds-ecran">Fonds d'écran à offrir</a>
         <a class="footer-nav-link" href="https://www.etsy.com/shop/FatimaLightCo" target="_blank" rel="noopener">Boutique à imprimer</a>
@@ -1222,10 +1223,10 @@
       });
     }
   </script>
-  <script src="js/app.js?v=206"></script>
+  <script src="js/app.js?v=207"></script>
   <!-- Concordance thématique (chargée AVANT bible.js qui la consomme) -->
-  <script src="js/bible-themes.js?v=206"></script>
-  <script src="js/bible.js?v=206"></script>
+  <script src="js/bible-themes.js?v=207"></script>
+  <script src="js/bible.js?v=207"></script>
   <!-- Supabase — build UMD explicite (évite que jsdelivr serve le build CJS/ESM).
        Version ÉPINGLÉE : le tag flottant @2 nous a déjà cassé la présence
        Realtime lors d'une mise à jour silencieuse de la lib (juillet 2026).
@@ -1234,8 +1235,8 @@
   <!-- Cloudflare Turnstile — anti-bot invisible (cf. auth.js). Chargé en async
        pour ne pas bloquer le rendu ; le widget est rendu à la demande. -->
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-  <script src="js/auth.js?v=206"></script>
-  <script src="js/admin.js?v=206"></script>
+  <script src="js/auth.js?v=207"></script>
+  <script src="js/admin.js?v=207"></script>
   <script>document.addEventListener('DOMContentLoaded', initAuth);</script>
   <!-- Vercel Web Analytics — sans cookies, RGPD-friendly (aucune donnée personnelle) -->
   <script defer src="/_vercel/insights/script.js"></script>

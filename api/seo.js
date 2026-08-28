@@ -544,6 +544,187 @@ export default async function handler(req, res) {
     return;
   }
 
+  /* ── Histoire du christianisme et de ses branches ──────────────────
+     Page de fond : un seul sujet traité sérieusement vaut mieux que
+     beaucoup d'articles courts. Le ton est descriptif et respectueux
+     envers les autres confessions, conformément à la position de
+     l'Église depuis Vatican II. Les courants traditionalistes sont
+     distingués avec soin : être attaché à la messe ancienne, contester
+     le concile, ou tenir le siège de Pierre pour vacant sont trois
+     positions différentes, qu'on confond souvent. */
+  if (p === 'histoire') {
+    const canonical = `${SITE}/histoire-du-christianisme`;
+    const title = "Histoire du christianisme et de ses branches — des origines aux sédévacantistes | PrionsEnLigne";
+    const desc = "Comment le christianisme s'est divisé au fil des siècles : le schisme de 1054, la Réforme, l'anglicanisme, Vatican II, les traditionalistes et les sédévacantistes. Une frise claire pour comprendre qui croit quoi, et pourquoi.";
+
+    // [année, titre, texte] — la frise principale
+    const FRISE = [
+      ['Vers l\'an 30',
+       'Les origines',
+       "Jésus de Nazareth est crucifié à Jérusalem sous Ponce Pilate. Ses disciples annoncent sa résurrection. À la Pentecôte, les apôtres commencent à prêcher : c'est le point de départ de l'Église. Paul de Tarse porte le message hors du monde juif, jusqu'à Rome."],
+      ['I<sup>er</sup>–III<sup>e</sup> s.',
+       'Une Église persécutée',
+       "Les chrétiens sont une minorité illicite dans l'Empire romain, périodiquement persécutée. Les communautés s'organisent autour d'évêques ; celui de Rome, successeur de Pierre, jouit très tôt d'une autorité particulière."],
+      ['313',
+       'La liberté, puis les grands conciles',
+       "L'empereur Constantin autorise le christianisme. Les conciles de Nicée (325) et de Constantinople (381) fixent la foi commune dans le Credo que l'on récite encore aujourd'hui. C'est aussi au IV<sup>e</sup> siècle que se stabilise la liste des livres de la Bible."],
+      ['431 et 451',
+       'Les premières séparations',
+       "Les conciles d'Éphèse puis de Chalcédoine, portant sur la façon de dire que le Christ est vrai Dieu et vrai homme, laissent de côté des Églises entières d'Orient : l'Église assyrienne, et les Églises dites orthodoxes orientales (coptes d'Égypte, arméniens, syriaques, éthiopiens). Elles existent toujours. C'est la division chrétienne la plus ancienne, et la plus oubliée."],
+      ['1054',
+       'Le Grand Schisme d\'Orient',
+       "Rome et Constantinople se séparent. Les motifs sont à la fois théologiques — l'autorité du pape sur toute l'Église, l'ajout du mot <em>Filioque</em> au Credo — et culturels : deux mondes, latin et grec, qui ne se comprenaient plus. Naissent d'un côté l'Église catholique, de l'autre les Églises orthodoxes."],
+      ['1517',
+       'La Réforme protestante',
+       "Le moine allemand Martin Luther conteste notamment le commerce des indulgences. La rupture s'élargit vite à des questions de fond : l'Écriture seule plutôt que l'Écriture et la Tradition, la foi seule pour être sauvé, le refus de l'autorité du pape. Jean Calvin à Genève, Ulrich Zwingli à Zurich donnent naissance à d'autres courants. Les protestants retiennent 66 livres bibliques, en laissant de côté les sept livres deutérocanoniques que les catholiques conservent."],
+      ['1534',
+       'L\'anglicanisme',
+       "En Angleterre, Henri VIII rompt avec Rome pour des raisons d'abord dynastiques et se déclare chef de l'Église d'Angleterre. L'anglicanisme gardera une position particulière, entre catholicisme et protestantisme."],
+      ['1545–1563',
+       'Le concile de Trente',
+       "L'Église catholique répond : elle réaffirme sa doctrine, confirme les 73 livres de la Bible, réforme la formation des prêtres et la discipline. En 1570, saint Pie V fixe le missel qui restera en usage quatre siècles — la messe dite tridentine, ou messe en latin."],
+      ['1870',
+       'Vatican I',
+       "Le concile définit l'infaillibilité pontificale : le pape ne peut se tromper lorsqu'il proclame solennellement une vérité de foi. Une minorité refuse cette définition et forme les Églises vieilles-catholiques."],
+      ['1906',
+       'Le pentecôtisme',
+       "À Los Angeles, un réveil religieux donne naissance au pentecôtisme, centré sur l'expérience de l'Esprit Saint. Avec les courants évangéliques, c'est aujourd'hui la famille chrétienne qui croît le plus vite dans le monde, notamment en Afrique et en Amérique latine."],
+      ['1962–1965',
+       'Vatican II',
+       "Le concile Vatican II ouvre l'Église au monde : la messe peut être célébrée dans la langue de chacun, le dialogue avec les autres confessions et religions est encouragé, la liberté religieuse est affirmée. En 1969, Paul VI promulgue un nouveau missel. Ce tournant est reçu par l'immense majorité des catholiques, mais il va provoquer les divisions qui suivent."],
+    ];
+
+    // Les courants nés après Vatican II — trois positions à ne pas confondre
+    const APRES = [
+      ['En pleine communion avec Rome',
+       'Les instituts traditionnels',
+       "Fraternité Saint-Pierre (1988), Institut du Christ-Roi et d'autres célèbrent la messe ancienne tout en reconnaissant pleinement le pape et le concile. Ils sont catholiques sans réserve : être attaché à la liturgie traditionnelle n'a jamais signifié être en rupture.",
+       'ok'],
+      ['En situation irrégulière',
+       'La Fraternité Saint-Pie-X',
+       "Fondée en 1970 par M<sup>gr</sup> Marcel Lefebvre, elle refuse plusieurs orientations de Vatican II. En 1988, il sacre quatre évêques sans l'accord de Rome : les excommunications suivent, levées en 2009. La Fraternité reconnaît le pape comme pape, mais conteste son enseignement conciliaire. Sa situation canonique reste irrégulière, et des discussions se poursuivent avec le Saint-Siège.",
+       'mid'],
+      ['Hors de la communion',
+       'Le sédévacantisme',
+       "Le mot vient du latin <em>sede vacante</em>, « le siège étant vacant ». Ce courant très minoritaire, apparu dans les années 1970, tient que les papes qui ont suivi Pie&nbsp;XII ne sont pas de véritables papes, et que le siège de Pierre est donc vide. La conséquence est lourde : ils ne reconnaissent plus aucune autorité vivante dans l'Église. Ils se comptent en dizaines de milliers dans le monde, répartis en groupes eux-mêmes divisés. Cette position place ceux qui la tiennent hors de la communion catholique.",
+       'out'],
+    ];
+
+    // Les grandes familles aujourd'hui (ordres de grandeur)
+    const FAMILLES = [
+      ['Catholiques', '≈ 1,4 milliard', 'En communion avec l\'évêque de Rome. 73 livres bibliques.'],
+      ['Protestants', '≈ 900 millions', 'Luthériens, réformés, évangéliques, pentecôtistes, baptistes… une grande diversité.'],
+      ['Orthodoxes', '≈ 220 millions', 'Églises de tradition grecque et slave, séparées de Rome depuis 1054.'],
+      ['Anglicans', '≈ 85 millions', 'Communion anglicane, issue de la rupture de 1534.'],
+      ['Orthodoxes orientaux', '≈ 60 millions', 'Coptes, arméniens, syriaques, éthiopiens — séparés dès le V<sup>e</sup> siècle.'],
+    ];
+
+    const friseHtml = FRISE.map(([an, titre, texte]) => `
+        <li class="tl-e">
+          <div class="tl-year">${an}</div>
+          <h3 class="tl-title">${titre}</h3>
+          <p class="tl-text">${texte}</p>
+        </li>`).join('');
+
+    const apresHtml = APRES.map(([statut, nom, texte, cls]) => `
+        <article class="cur cur-${cls}">
+          <div class="cur-status">${statut}</div>
+          <h3 class="cur-name">${nom}</h3>
+          <p class="cur-text">${texte}</p>
+        </article>`).join('');
+
+    const famHtml = FAMILLES.map(([nom, nb, note]) => `
+        <tr><th scope="row">${nom}</th><td class="fam-n">${nb}</td><td class="fam-d">${note}</td></tr>`).join('');
+
+    const bodyHtml = `
+      <style>
+        .hx-lede{font-family:var(--serif);font-size:19px;line-height:1.6;color:var(--navy);margin:-4px 0 28px}
+        .hx h2{font-family:var(--serif);font-size:26px;color:var(--navy);margin:38px 0 6px}
+        .hx h2+.hx-note{margin:0 0 20px;color:var(--soft);font-size:14.5px}
+        /* Frise */
+        .tl{list-style:none;margin:22px 0 0;padding:0 0 0 26px;border-left:2px solid rgba(201,168,76,.4)}
+        .tl-e{position:relative;padding:0 0 26px 8px}
+        .tl-e::before{content:'';position:absolute;left:-33px;top:6px;width:11px;height:11px;border-radius:50%;background:var(--gold);border:2px solid var(--cream)}
+        .tl-year{font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--gold)}
+        .tl-title{font-family:var(--serif);font-size:21px;color:var(--navy);margin:2px 0 6px}
+        .tl-text{margin:0;font-size:16px;line-height:1.65}
+        /* Courants d'après Vatican II */
+        .cur{background:#fff;border:1px solid rgba(0,0,0,.07);border-left:4px solid var(--soft);border-radius:8px;padding:18px 20px;margin:0 0 14px}
+        .cur-ok{border-left-color:#3a6448}
+        .cur-mid{border-left-color:#9a6b18}
+        .cur-out{border-left-color:#a03229}
+        .cur-status{font-size:12.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--soft)}
+        .cur-ok .cur-status{color:#3a6448}
+        .cur-mid .cur-status{color:#9a6b18}
+        .cur-out .cur-status{color:#a03229}
+        .cur-name{font-family:var(--serif);font-size:21px;color:var(--navy);margin:3px 0 8px}
+        .cur-text{margin:0;font-size:16px;line-height:1.65}
+        /* Familles */
+        .fam-wrap{overflow-x:auto}
+        table.fam{border-collapse:collapse;width:100%;margin-top:14px;font-size:15.5px}
+        table.fam th,table.fam td{text-align:left;padding:11px 12px;border-bottom:1px solid rgba(0,0,0,.08);vertical-align:top}
+        table.fam th{font-weight:600;color:var(--navy);white-space:nowrap}
+        .fam-n{white-space:nowrap;color:var(--gold);font-weight:600}
+        .fam-d{color:var(--soft);font-size:14.5px}
+        .hx-end{background:rgba(201,168,76,.1);border-radius:8px;padding:18px 20px;margin-top:34px;font-size:16px;line-height:1.65}
+        .hx-end strong{color:var(--navy)}
+      </style>
+
+      <div class="hx">
+        <p class="hx-lede">
+          Les chrétiens du monde entier lisent le même Évangile, et pourtant ils ne prient pas
+          tous ensemble. Cette page raconte simplement pourquoi&nbsp;: où et quand les chemins
+          se sont séparés, et ce que chacun croit aujourd'hui.
+        </p>
+
+        <h2>Vingt siècles en quelques dates</h2>
+        <p class="hx-note">Les moments où l'histoire chrétienne a bifurqué.</p>
+        <ul class="tl">${friseHtml}</ul>
+
+        <h2>Après Vatican II&nbsp;: trois positions à ne pas confondre</h2>
+        <p class="hx-note">
+          On range souvent sous le même mot de «&nbsp;traditionalistes&nbsp;» des réalités très
+          différentes. La distinction tient à un point précis&nbsp;: le rapport à l'autorité du pape.
+        </p>
+        ${apresHtml}
+
+        <h2>Les grandes familles chrétiennes aujourd'hui</h2>
+        <p class="hx-note">Ordres de grandeur — les estimations varient selon les sources.</p>
+        <div class="fam-wrap">
+          <table class="fam">
+            <thead><tr><th scope="col">Famille</th><th scope="col">Fidèles</th><th scope="col">En bref</th></tr></thead>
+            <tbody>${famHtml}</tbody>
+          </table>
+        </div>
+
+        <div class="hx-end">
+          <strong>Et maintenant&nbsp;?</strong> Depuis Vatican II, l'Église catholique s'engage dans
+          le dialogue œcuménique&nbsp;: reconnaître ce qui unit avant ce qui sépare, et travailler à
+          l'unité voulue par le Christ. Les excommunications de 1054 ont été levées en 1965.
+          Le chemin est long, mais il est ouvert.
+        </div>
+      </div>`;
+
+    const jsonLd = {
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: "Histoire du christianisme et de ses branches",
+      description: desc,
+      inLanguage: 'fr',
+      mainEntityOfPage: canonical,
+      publisher: { '@type': 'Organization', name: 'PrionsEnLigne', logo: { '@type': 'ImageObject', url: `${SITE}/icons/icon-512.png` } },
+    };
+
+    res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800');
+    res.status(200).send(pageShell({
+      title, desc, canonical,
+      h1: 'Histoire du christianisme',
+      sub: 'Des origines à aujourd\'hui — pourquoi les chrétiens se sont divisés',
+      bodyHtml, jsonLd,
+    }));
+    return;
+  }
+
   if (p === 'paroisses') {
     const canonical = `${SITE}/paroisses`;
     const title = 'PrionsEnLigne pour les paroisses — outil gratuit pour vos fidèles | PrionsEnLigne';
