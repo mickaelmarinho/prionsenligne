@@ -9676,3 +9676,63 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   min-width: 44px;
   min-height: 44px;
 }
+
+
+/* ═══════════════════════════════════════════════
+   BOUTON « A+ » — taille du texte, dans l'en-tête
+   Le réglage existait déjà, mais dans le menu, écrit en petit : ceux
+   qui en ont le plus besoin ne le trouvaient pas. Il est désormais
+   visible en permanence, et un appui suffit.
+═══════════════════════════════════════════════ */
+.textsize-btn {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 1px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 10px;
+  background: var(--cream);
+  border: 1px solid var(--border-mid);
+  border-radius: 10px;
+  color: var(--navy);
+  cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.ts-btn-a    { font-size: 19px; font-weight: 600; line-height: 1; }
+.ts-btn-plus { font-size: 13px; font-weight: 600; line-height: 1; }
+
+/* Repère discret quand un agrandissement est actif */
+.textsize-btn.is-on {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: var(--gold);
+}
+@media (hover: hover) and (pointer: fine) {
+  .textsize-btn:hover { background: var(--navy); border-color: var(--navy); color: white; }
+}
+.textsize-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+/* Confirmation du niveau atteint — sans elle, on ne sait pas ce qui a changé */
+.textsize-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--bottom-nav-h, 62px) + var(--safe-bottom, 0px) + 18px);
+  transform: translate(-50%, 10px);
+  background: var(--navy);
+  color: var(--cream);
+  font-family: 'Outfit', sans-serif;
+  font-size: 16px;
+  padding: 12px 22px;
+  border-radius: 999px;
+  box-shadow: 0 6px 24px rgba(26,39,68,.28);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 900;
+  transition: opacity .2s ease, transform .2s ease;
+}
+.textsize-toast.show { opacity: 1; transform: translate(-50%, 0); }
+@media (prefers-reduced-motion: reduce) {
+  .textsize-toast { transition: opacity .2s ease; }
+}

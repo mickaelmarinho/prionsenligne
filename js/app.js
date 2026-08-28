@@ -8811,7 +8811,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Mémorisé par appareil (localStorage). Cf. script inline dans app.html qui
   // applique la valeur AVANT le rendu pour éviter tout saut visuel.
   const PelTextScale = {
-    LEVELS: [1, 1.15, 1.3],
+    // Un quatrième palier (×1,5) a été ajouté : à ×1,3, le corps de texte
+    // le plus courant restait sous le seuil de lecture confortable.
+    LEVELS: [1, 1.15, 1.3, 1.5],
+    LABELS: { 1: 'Normal', 1.15: 'Grand', 1.3: 'Très grand', 1.5: 'Maximum' },
     get() {
       try { return parseFloat(localStorage.getItem('pel.textScale')) || 1; }
       catch (_) { return 1; }
@@ -8823,8 +8826,61 @@ document.addEventListener('DOMContentLoaded', () => {
       // de rendu inutile).
       document.documentElement.style.zoom = v > 1 ? String(v) : '';
     },
+    // Passe au palier suivant, et revient à « Normal » après le dernier.
+    next() {
+      const cur = this.get();
+      const i = this.LEVELS.findIndex(l => Math.abs(l - cur) < 0.01);
+      const v = this.LEVELS[(i + 1) % this.LEVELS.length];
+      this.set(v);
+      return v;
+    },
   };
   window._pelTextScale = PelTextScale;
+
+  // ── Bouton « A+ » de l'en-tête ────────────────────────────────
+  // Un appui agrandit d'un cran, le suivant encore, et après le dernier on
+  // revient à Normal : pas de réglage à trouver, pas d'impasse. Un message
+  // confirme le niveau atteint, sans quoi on ne sait pas ce qui s'est passé.
+  function initTextSizeButton() {
+    const btn = document.getElementById('textsize-btn');
+    if (!btn) return;
+
+    const annonce = document.createElement('div');
+    annonce.className = 'textsize-toast';
+    annonce.setAttribute('role', 'status');
+    annonce.setAttribute('aria-live', 'polite');
+    document.body.appendChild(annonce);
+    let minuteur = null;
+
+    function refleteEtat() {
+      const v = PelTextScale.get();
+      btn.classList.toggle('is-on', v > 1);
+      btn.title = `Taille du texte : ${PelTextScale.LABELS[v] || 'Normal'} — appuyez pour agrandir`;
+    }
+
+    btn.addEventListener('click', () => {
+      const v = PelTextScale.next();
+      const nom = PelTextScale.LABELS[v] || 'Normal';
+      refleteEtat();
+      annonce.textContent = v > 1 ? `Texte ${nom.toLowerCase()}` : 'Texte de taille normale';
+      annonce.classList.add('show');
+      clearTimeout(minuteur);
+      minuteur = setTimeout(() => annonce.classList.remove('show'), 1800);
+    });
+
+    refleteEtat();
+  }
+
+  // Ce bloc s'exécute après la liste d'initialisation générale : on branche
+  // donc le bouton ici même, dès que le DOM est disponible.
+  if (!window._pelTextSizeBtnReady) {
+    window._pelTextSizeBtnReady = true;
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initTextSizeButton, { once: true });
+    } else {
+      initTextSizeButton();
+    }
+  }
 
   function openVoiceSettings() {
     const reader = window._pelReader;
@@ -8847,6 +8903,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <button data-scale="1"><span class="ts-a" style="font-size:15px">A</span> Normal</button>
             <button data-scale="1.15"><span class="ts-a" style="font-size:18px">A</span> Grand</button>
             <button data-scale="1.3"><span class="ts-a" style="font-size:22px">A</span> Très grand</button>
+            <button data-scale="1.5"><span class="ts-a" style="font-size:26px">A</span> Maximum</button>
           </div>
           <div id="voice-audio-sections">
             <div class="voice-section-label">Vitesse de lecture</div>
