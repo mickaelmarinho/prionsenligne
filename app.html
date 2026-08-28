@@ -35,7 +35,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <link rel="stylesheet" href="css/style.css?v=204" />
+  <link rel="stylesheet" href="css/style.css?v=205" />
   <!-- PWA / iOS standalone -->
   <meta name="theme-color" content="#1a2744" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -122,16 +122,26 @@
         <div class="hm-item hm-nav-item" data-tab="sources"><i class="fa-solid fa-tower-broadcast"></i> Sources</div>
         <div class="hm-divider hm-nav-divider"></div>
         <div class="hm-item" id="hm-signout" style="display:none"><i class="fa-solid fa-right-from-bracket"></i> Se déconnecter</div>
+
+        <!-- Le menu comptait dix-sept lignes de même poids, où le réglage de
+             confort et la boutique voisinaient sans hiérarchie. Il est
+             désormais rangé en trois groupes nommés. -->
+        <div class="hm-section-label">Confort de lecture</div>
+        <div class="hm-item" id="hm-voice"><i class="fa-solid fa-universal-access"></i> Taille du texte &amp; lecture à voix haute</div>
         <div class="hm-item" id="hm-install"><i class="fa-solid fa-download"></i> Ajouter à l'écran d'accueil</div>
-        <div class="hm-item" id="hm-voice"><i class="fa-solid fa-universal-access"></i> Accessibilité&nbsp;: texte &amp; voix</div>
+
         <div class="hm-divider"></div>
+        <div class="hm-section-label">Le site</div>
         <a href="/" class="hm-item hm-home-link"><i class="fa-solid fa-house"></i> Accueil &amp; présentation</a>
-        <a href="/paroisses" class="hm-item hm-paroisses"><i class="fa-solid fa-church"></i> Pour les paroisses <span class="hm-badge">affiche à imprimer</span></a>
-        <div class="hm-item" id="hm-contact"><i class="fa-solid fa-envelope"></i> Nous contacter</div>
         <div class="hm-item" id="hm-about"><i class="fa-solid fa-circle-info"></i> À propos</div>
+        <div class="hm-item" id="hm-contact"><i class="fa-solid fa-envelope"></i> Nous contacter</div>
+        <a href="/paroisses" class="hm-item hm-paroisses"><i class="fa-solid fa-church"></i> Pour les paroisses <span class="hm-badge">affiche à imprimer</span></a>
+
+        <div class="hm-divider"></div>
+        <div class="hm-section-label">Soutenir le projet</div>
+        <a href="https://paypal.me/prionsenligne" target="_blank" rel="noopener" class="hm-item hm-support"><i class="fa-solid fa-hand-holding-heart"></i> Faire un don</a>
         <a href="/fonds-ecran" class="hm-item"><i class="fa-solid fa-mobile-screen-button"></i> Fonds d'écran à offrir</a>
         <a href="https://www.etsy.com/shop/FatimaLightCo" target="_blank" rel="noopener" class="hm-item hm-boutique"><i class="fa-solid fa-store"></i> Boutique — prières à imprimer</a>
-        <a href="https://paypal.me/prionsenligne" target="_blank" rel="noopener" class="hm-item hm-support"><i class="fa-solid fa-hand-holding-heart"></i> Soutenir le projet</a>
         <!-- IDs login/signup préservés (cachés) pour compat handleDeepLink + contact form fallback -->
         <div class="hm-item hidden-auth-shim" id="hm-login-item" aria-hidden="true"></div>
         <div class="hm-item hidden-auth-shim" id="hm-signup-item" aria-hidden="true"></div>
@@ -542,13 +552,10 @@
         </div>
         <p class="footer-tagline">Prier ensemble, chaque jour</p>
       </div>
-      <nav class="footer-nav">
-        <span class="footer-nav-title">Navigation</span>
-        <button class="footer-nav-link" data-tab="aujourd">Aujourd'hui</button>
-        <button class="footer-nav-link" data-tab="semaine">Semaine</button>
-        <button class="footer-nav-link" data-tab="mois">Calendrier liturgique</button>
-        <button class="footer-nav-link" data-tab="sources">Sources</button>
-      </nav>
+      <!-- Le bloc « Navigation » qui reprenait Aujourd'hui / Semaine /
+           Calendrier / Sources a été retiré : ces destinations sont déjà
+           dans la barre principale, et il s'agissait de boutons d'onglet,
+           sans valeur pour le référencement. -->
       <nav class="footer-nav">
         <span class="footer-nav-title">Chaque jour</span>
         <a class="footer-nav-link" href="/saint-du-jour">Saint du jour</a>
@@ -1215,10 +1222,10 @@
       });
     }
   </script>
-  <script src="js/app.js?v=204"></script>
+  <script src="js/app.js?v=205"></script>
   <!-- Concordance thématique (chargée AVANT bible.js qui la consomme) -->
-  <script src="js/bible-themes.js?v=204"></script>
-  <script src="js/bible.js?v=204"></script>
+  <script src="js/bible-themes.js?v=205"></script>
+  <script src="js/bible.js?v=205"></script>
   <!-- Supabase — build UMD explicite (évite que jsdelivr serve le build CJS/ESM).
        Version ÉPINGLÉE : le tag flottant @2 nous a déjà cassé la présence
        Realtime lors d'une mise à jour silencieuse de la lib (juillet 2026).
@@ -1227,8 +1234,8 @@
   <!-- Cloudflare Turnstile — anti-bot invisible (cf. auth.js). Chargé en async
        pour ne pas bloquer le rendu ; le widget est rendu à la demande. -->
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-  <script src="js/auth.js?v=204"></script>
-  <script src="js/admin.js?v=204"></script>
+  <script src="js/auth.js?v=205"></script>
+  <script src="js/admin.js?v=205"></script>
   <script>document.addEventListener('DOMContentLoaded', initAuth);</script>
   <!-- Vercel Web Analytics — sans cookies, RGPD-friendly (aucune donnée personnelle) -->
   <script defer src="/_vercel/insights/script.js"></script>
