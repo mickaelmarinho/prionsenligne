@@ -627,12 +627,25 @@ export default async function handler(req, res) {
       ['Sede vacante', "Locution latine — « le siège étant vacant ». Désigne normalement la période entre la mort d'un pape et l'élection du suivant."],
     ];
 
-    // De quoi vérifier par soi-même
+    /* De quoi vérifier par soi-même.
+       Les sources sont groupées et étiquetées selon leur provenance : donner
+       uniquement les documents romains reviendrait à ne fournir les pièces que
+       d'un seul camp. Chacun expose ici sa position dans ses propres mots, et
+       le lecteur sait d'où chaque texte parle. */
     const SOURCES = [
-      ['Les textes de Vatican II', "<em>Lumen gentium</em> sur l'Église, <em>Unitatis redintegratio</em> sur l'œcuménisme, <em>Dignitatis humanae</em> sur la liberté religieuse.", 'https://www.vatican.va/archive/hist_councils/ii_vatican_council/index_fr.htm'],
-      ['Le Catéchisme de l\'Église catholique', "La référence pour ce que l'Église enseigne aujourd'hui, notamment les paragraphes 811 à 870 sur l'unité de l'Église.", 'https://www.vatican.va/archive/FRA0013/_INDEX.HTM'],
-      ['Benoît XVI, discours à la Curie (2005)', "Le texte où il oppose « herméneutique de la rupture » et « herméneutique de la réforme dans la continuité » à propos du concile.", 'https://www.vatican.va/content/benedict-xvi/fr/speeches/2005/december/documents/hf_ben_xvi_spe_20051222_roman-curia.html'],
-      ['<em>Traditionis custodes</em> (2021)', "Le motu proprio du pape François sur l'usage du missel de 1962, et la lettre qui l'accompagne.", 'https://www.vatican.va/content/francesco/fr/motu_proprio/documents/20210716-motu-proprio-traditionis-custodes.html'],
+      ['Les textes officiels de l\'Église', 'off', [
+        ['Les documents de Vatican II', "<em>Lumen gentium</em> sur l'Église, <em>Unitatis redintegratio</em> sur l'œcuménisme, <em>Dignitatis humanae</em> sur la liberté religieuse — les textes mêmes dont on débat.", 'https://www.vatican.va/archive/hist_councils/ii_vatican_council/index_fr.htm'],
+        ['Le Catéchisme de l\'Église catholique', "Ce que l'Église enseigne aujourd'hui, notamment les paragraphes 811 à 870 sur l'unité de l'Église.", 'https://www.vatican.va/archive/FRA0013/_INDEX.HTM'],
+        ['Benoît XVI, discours à la Curie (2005)', "Le texte où il oppose « herméneutique de la rupture » et « herméneutique de la réforme dans la continuité ».", 'https://www.vatican.va/content/benedict-xvi/fr/speeches/2005/december/documents/hf_ben_xvi_spe_20051222_roman-curia.html'],
+        ['<em>Traditionis custodes</em> (2021)', "Le motu proprio du pape François sur l'usage du missel de 1962, et la lettre qui l'accompagne.", 'https://www.vatican.va/content/francesco/fr/motu_proprio/documents/20210716-motu-proprio-traditionis-custodes.html'],
+      ]],
+      ['La position traditionaliste, dans ses propres mots', 'trad', [
+        ['La Porte Latine', "Le site officiel du district de France de la Fraternité Saint-Pie-X : ses prises de position sur le concile, la messe et sa situation canonique.", 'https://laportelatine.org/'],
+        ['Les catéchismes antérieurs au concile', "Le Catéchisme du concile de Trente et celui de saint Pie X, toujours réédités, permettent de comparer soi-même l'enseignement d'avant et d'après. Sans lien&nbsp;: ce sont des livres, disponibles en librairie religieuse.", ''],
+      ]],
+      ['La position sédévacantiste, dans ses propres mots', 'sede', [
+        ['Don Andrea Mancinella, <em>1962 — Révolution dans l\'Église</em>', "Sous-titré «&nbsp;brève chronique de l'occupation néo-moderniste de l'Église catholique&nbsp;», cet ouvrage expose la thèse sédévacantiste sous la forme d'une chronologie. Le titre annonce d'emblée sa position&nbsp;: c'est un livre de combat, non un travail neutre — comme le sont, symétriquement, bien des textes de l'autre bord.", ''],
+      ]],
     ];
 
     // Les courants nés après Vatican II — trois positions à ne pas confondre
@@ -696,8 +709,15 @@ export default async function handler(req, res) {
     const motsHtml = MOTS.map(([mot, def]) => `
         <div class="glo-item"><dt>${mot}</dt><dd>${def}</dd></div>`).join('');
 
-    const srcHtml = SOURCES.map(([nom, quoi, url]) => `
-        <li><a href="${url}" target="_blank" rel="noopener">${nom}</a> — ${quoi}</li>`).join('');
+    const srcHtml = SOURCES.map(([groupe, cls, items]) => `
+        <section class="srcg srcg-${cls}">
+          <h3 class="srcg-t">${groupe}</h3>
+          <ul class="src">
+            ${items.map(([nom, quoi, url]) => `<li>${
+              url ? `<a href="${url}" target="_blank" rel="noopener">${nom}</a>` : `<span class="src-book">${nom}</span>`
+            } — ${quoi}</li>`).join('')}
+          </ul>
+        </section>`).join('');
 
     const bodyHtml = `
       <style>
@@ -751,10 +771,19 @@ export default async function handler(req, res) {
         .glo-item:last-child{border-bottom:none}
         .glo dt{font-weight:600;color:var(--navy);font-size:16px}
         .glo dd{margin:3px 0 0;font-size:15.5px;line-height:1.55;color:var(--soft)}
-        /* Sources */
-        .src{margin:16px 0 0;padding-left:20px}
+        /* Sources, groupées par provenance */
+        .srcg{margin-top:20px;padding-left:14px;border-left:3px solid rgba(0,0,0,.1)}
+        .srcg-off{border-left-color:var(--navy)}
+        .srcg-trad{border-left-color:#9a6b18}
+        .srcg-sede{border-left-color:#a03229}
+        .srcg-t{font-size:13px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin:0 0 4px}
+        .srcg-off .srcg-t{color:var(--navy)}
+        .srcg-trad .srcg-t{color:#9a6b18}
+        .srcg-sede .srcg-t{color:#a03229}
+        .src{margin:8px 0 0;padding-left:20px}
         .src li{margin-bottom:11px;font-size:15.5px;line-height:1.6;color:var(--soft)}
         .src a{color:var(--navy);font-weight:600}
+        .src-book{color:var(--ink);font-weight:600}
       </style>
 
       <div class="hx">
@@ -805,10 +834,12 @@ export default async function handler(req, res) {
 
         <h2>Vérifier par vous-même</h2>
         <p class="hx-note">
-          Cette page résume&nbsp;; ces textes font foi. Ils sont tous consultables librement,
-          en français, sur le site du Vatican.
+          Cette page résume&nbsp;; ces textes font foi. Ne donner que les documents romains
+          reviendrait à ne fournir les pièces que d'un seul camp&nbsp;: chaque courant est
+          donc renvoyé à ses propres sources, et l'origine de chacune est indiquée.
+          Les citer n'est pas les approuver — c'est vous laisser lire et juger.
         </p>
-        <ul class="src">${srcHtml}</ul>
+        ${srcHtml}
 
         <div class="hx-end">
           <strong>Et maintenant&nbsp;?</strong> Depuis Vatican II, l'Église catholique s'engage dans
