@@ -35,7 +35,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <link rel="stylesheet" href="css/style.css?v=208" />
+  <link rel="stylesheet" href="css/style.css?v=209" />
   <!-- PWA / iOS standalone -->
   <meta name="theme-color" content="#1a2744" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -885,6 +885,29 @@
         <i class="fa-solid fa-hand-point-up"></i> Suivant
       </button>
 
+      <!-- Conclusion — le chapelet se termine traditionnellement par le
+           Salve Regina. Auparavant, la dernière étape laissait un bouton
+           « Chapelet terminé ! » désactivé : rien à faire, aucune clôture. -->
+      <div class="ch-final" id="ch-final" hidden>
+        <div class="ch-final-head">
+          <i class="fa-solid fa-cross ch-final-icon"></i>
+          <p class="ch-final-title" id="ch-final-title">Chapelet achevé</p>
+          <p class="ch-final-sub" id="ch-final-sub">Que la Vierge Marie vous garde.</p>
+        </div>
+        <div class="ch-final-prayer">
+          <p class="ch-final-prayer-name" id="ch-final-prayer-name">Salve Regina</p>
+          <p class="ch-final-prayer-txt" id="ch-final-prayer-txt"></p>
+        </div>
+        <div class="ch-final-actions">
+          <button class="ch-final-amen" id="ch-final-amen" type="button">
+            <i class="fa-solid fa-check"></i> <span id="ch-final-amen-txt">Amen</span>
+          </button>
+          <button class="ch-final-again" id="ch-final-again" type="button">
+            <i class="fa-solid fa-rotate-left"></i> <span id="ch-final-again-txt">Prier un autre chapelet</span>
+          </button>
+        </div>
+      </div>
+
       <!-- Contrôles audio (visibles en mode audio uniquement) -->
       <div class="ch-audio-ctrls" id="ch-audio-ctrls" hidden>
         <div class="ch-audio-row">
@@ -1224,10 +1247,10 @@
       });
     }
   </script>
-  <script src="js/app.js?v=208"></script>
+  <script src="js/app.js?v=209"></script>
   <!-- Concordance thématique (chargée AVANT bible.js qui la consomme) -->
-  <script src="js/bible-themes.js?v=208"></script>
-  <script src="js/bible.js?v=208"></script>
+  <script src="js/bible-themes.js?v=209"></script>
+  <script src="js/bible.js?v=209"></script>
   <!-- Supabase — build UMD explicite (évite que jsdelivr serve le build CJS/ESM).
        Version ÉPINGLÉE : le tag flottant @2 nous a déjà cassé la présence
        Realtime lors d'une mise à jour silencieuse de la lib (juillet 2026).
@@ -1236,8 +1259,8 @@
   <!-- Cloudflare Turnstile — anti-bot invisible (cf. auth.js). Chargé en async
        pour ne pas bloquer le rendu ; le widget est rendu à la demande. -->
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-  <script src="js/auth.js?v=208"></script>
-  <script src="js/admin.js?v=208"></script>
+  <script src="js/auth.js?v=209"></script>
+  <script src="js/admin.js?v=209"></script>
   <script>document.addEventListener('DOMContentLoaded', initAuth);</script>
   <!-- Vercel Web Analytics — sans cookies, RGPD-friendly (aucune donnée personnelle) -->
   <script defer src="/_vercel/insights/script.js"></script>

@@ -843,11 +843,13 @@
         if (!book) return;
         loadChapter(book, parseInt(ch, 10), { scrollToVerse: verse ? parseInt(verse, 10) : null });
         hideDropdown();
-        // Vide la barre pour le prochain usage
+        // Le terme cherché RESTE dans la barre : on consulte rarement un seul
+        // passage. En l'effaçant, il fallait le retaper pour lire le suivant.
+        // La liste se rouvre d'un appui sur la barre (cf. gestionnaire focus).
         const input = document.getElementById('bible-search');
         if (input) {
-          input.value = '';
-          document.getElementById('bible-search-clear').hidden = true;
+          document.getElementById('bible-search-clear').hidden = !input.value;
+          // On referme tout de même le clavier, sinon il masque le texte
           input.blur();
         }
       });

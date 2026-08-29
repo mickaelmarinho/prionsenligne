@@ -9771,3 +9771,95 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
 .hamburger-menu .hm-nav-divider {
   display: none;
 }
+
+
+/* ═══════════════════════════════════════════════
+   CHAPELET — conclusion (Salve Regina)
+   La dernière perle laissait un bouton « Chapelet terminé ! » désactivé :
+   aucune clôture, rien à faire. Le chapelet s'achève traditionnellement
+   par cette antienne mariale ; on la lit, on répond « Amen », la prière
+   est close.
+═══════════════════════════════════════════════ */
+.ch-final {
+  margin-top: 14px;
+  padding: 22px 20px 18px;
+  background: var(--cream);
+  border: 1px solid rgba(201, 168, 76, .35);
+  border-radius: 14px;
+  text-align: center;
+}
+.ch-final[hidden] { display: none; }
+
+.ch-final-icon { font-size: 20px; color: var(--gold); }
+.ch-final-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 24px;
+  color: var(--navy);
+  margin: 8px 0 2px;
+}
+.ch-final-sub {
+  font-size: 14.5px;
+  color: var(--text-soft);
+  margin: 0 0 16px;
+}
+
+.ch-final-prayer {
+  background: white;
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 18px;
+  text-align: left;
+}
+.ch-final-prayer-name {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin: 0 0 8px;
+  text-align: center;
+}
+.ch-final-prayer-txt {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  line-height: 1.55;
+  color: var(--text);
+  margin: 0;
+}
+
+.ch-final-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+.ch-final-amen,
+.ch-final-again {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;              /* cible tactile — Apple HIG / WCAG 2.5.5 */
+  padding: 11px 22px;
+  border-radius: 999px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.ch-final-amen {
+  background: var(--navy);
+  color: var(--cream);
+  border: 1px solid var(--navy);
+}
+.ch-final-again {
+  background: transparent;
+  color: var(--text-mid);
+  border: 1px solid var(--border-mid);
+}
+@media (hover: hover) and (pointer: fine) {
+  .ch-final-amen:hover  { background: #24345a; }
+  .ch-final-again:hover { border-color: var(--gold); color: var(--navy); }
+}
+.ch-final-amen:focus-visible,
+.ch-final-again:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }

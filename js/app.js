@@ -2623,6 +2623,63 @@ function initNextOffice() {
 ──────────────────────────────────────────────*/
 
 /* ────────────────────────────────────────────
+   CONCLUSION DU CHAPELET — le Salve Regina
+   Le chapelet s'achève traditionnellement par cette antienne mariale.
+   Elle sert ici de vraie fin : on la lit, on répond « Amen », et la
+   prière est close — plutôt qu'un bouton désactivé.
+──────────────────────────────────────────────*/
+const CHAPELET_FINAL = {
+  fr: {
+    titre: 'Chapelet achevé',
+    sous: 'Que la Vierge Marie vous garde.',
+    nom: 'Salve Regina',
+    amen: 'Amen',
+    encore: 'Prier un autre chapelet',
+    texte: "Salut, ô Reine, Mère de miséricorde, notre vie, notre douceur et notre espérance, salut. Enfants d'Ève, exilés, nous crions vers vous. Vers vous nous soupirons, gémissant et pleurant dans cette vallée de larmes. Ô vous, notre avocate, tournez vers nous vos regards miséricordieux. Et après cet exil, montrez-nous Jésus, le fruit béni de vos entrailles. Ô clémente, ô miséricordieuse, ô douce Vierge Marie.",
+  },
+  en: {
+    titre: 'Rosary completed',
+    sous: 'May the Virgin Mary keep you.',
+    nom: 'Salve Regina',
+    amen: 'Amen',
+    encore: 'Pray another Rosary',
+    texte: "Hail, holy Queen, Mother of mercy, our life, our sweetness and our hope. To thee do we cry, poor banished children of Eve. To thee do we send up our sighs, mourning and weeping in this valley of tears. Turn then, most gracious advocate, thine eyes of mercy toward us, and after this our exile show unto us the blessed fruit of thy womb, Jesus. O clement, O loving, O sweet Virgin Mary.",
+  },
+  es: {
+    titre: 'Rosario terminado',
+    sous: 'Que la Virgen María os guarde.',
+    nom: 'Salve Regina',
+    amen: 'Amén',
+    encore: 'Rezar otro Rosario',
+    texte: "Dios te salve, Reina y Madre de misericordia, vida, dulzura y esperanza nuestra; Dios te salve. A ti clamamos los desterrados hijos de Eva; a ti suspiramos, gimiendo y llorando en este valle de lágrimas. Ea, pues, Señora, abogada nuestra, vuelve a nosotros esos tus ojos misericordiosos; y después de este destierro, muéstranos a Jesús, fruto bendito de tu vientre. ¡Oh clementísima, oh piadosa, oh dulce Virgen María!",
+  },
+  it: {
+    titre: 'Rosario terminato',
+    sous: 'Che la Vergine Maria vi custodisca.',
+    nom: 'Salve Regina',
+    amen: 'Amen',
+    encore: 'Pregare un altro Rosario',
+    texte: "Salve, Regina, Madre di misericordia, vita, dolcezza e speranza nostra, salve. A te ricorriamo, esuli figli di Eva; a te sospiriamo, gementi e piangenti in questa valle di lacrime. Orsù dunque, avvocata nostra, rivolgi a noi gli occhi tuoi misericordiosi. E mostraci, dopo questo esilio, Gesù, il frutto benedetto del tuo seno. O clemente, o pia, o dolce Vergine Maria.",
+  },
+  pt: {
+    titre: 'Terço terminado',
+    sous: 'Que a Virgem Maria vos guarde.',
+    nom: 'Salve Rainha',
+    amen: 'Amém',
+    encore: 'Rezar outro terço',
+    texte: "Salve, Rainha, Mãe de misericórdia, vida, doçura e esperança nossa, salve! A vós bradamos, os degredados filhos de Eva. A vós suspiramos, gemendo e chorando neste vale de lágrimas. Eia, pois, advogada nossa, esses vossos olhos misericordiosos a nós volvei. E depois deste desterro mostrai-nos Jesus, bendito fruto do vosso ventre. Ó clemente, ó piedosa, ó doce sempre Virgem Maria.",
+  },
+  la: {
+    titre: 'Rosarium expletum',
+    sous: 'Virgo Maria vos custodiat.',
+    nom: 'Salve Regina',
+    amen: 'Amen',
+    encore: 'Aliud rosarium orare',
+    texte: "Salve, Regína, Mater misericórdiæ, vita, dulcédo et spes nostra, salve. Ad te clamámus, éxsules fílii Hevæ. Ad te suspirámus, geméntes et flentes in hac lacrimárum valle. Eia ergo, advocáta nostra, illos tuos misericórdes óculos ad nos convérte. Et Jesum, benedíctum fructum ventris tui, nobis post hoc exsílium osténde. O clemens, o pia, o dulcis Virgo María.",
+  },
+};
+
+/* ────────────────────────────────────────────
    TEXTES MULTILINGUES DU CHAPELET
 ──────────────────────────────────────────────*/
 const CHAPELET_TEXTS = {
@@ -2988,20 +3045,35 @@ function initChapelet() {
       bead.classList.toggle('current', s === step);
     });
 
+    // ── Conclusion : à la dernière perle, le bouton laisse place au
+    //    Salve Regina et à un « Amen » qui clôt vraiment la prière.
+    const fini = step >= TOTAL - 1;
+    const finalBox = el('ch-final');
+    if (finalBox) {
+      finalBox.hidden = !fini;
+      if (fini) {
+        const F = CHAPELET_FINAL[lang] || CHAPELET_FINAL.fr;
+        if (el('ch-final-title'))       el('ch-final-title').textContent       = F.titre;
+        if (el('ch-final-sub'))         el('ch-final-sub').textContent         = F.sous;
+        if (el('ch-final-prayer-name')) el('ch-final-prayer-name').textContent = F.nom;
+        if (el('ch-final-prayer-txt'))  el('ch-final-prayer-txt').textContent  = F.texte;
+        if (el('ch-final-amen-txt'))    el('ch-final-amen-txt').textContent    = F.amen;
+        if (el('ch-final-again-txt'))   el('ch-final-again-txt').textContent   = F.encore;
+      }
+    }
+
     if (tapBtn) {
-      const done = step >= TOTAL - 1;
+      const done = fini;
+      // Le bouton disparaît à la fin : la conclusion prend le relais
+      tapBtn.hidden = done;
       if (audioMode) {
-        tapBtn.innerHTML = done
-          ? '<i class="fa-solid fa-check"></i> Chapelet terminé !'
-          : (playing
-              ? '<i class="fa-solid fa-pause"></i> Pause'
-              : '<i class="fa-solid fa-play"></i> Lecture');
+        tapBtn.innerHTML = playing
+          ? '<i class="fa-solid fa-pause"></i> Pause'
+          : '<i class="fa-solid fa-play"></i> Lecture';
         tapBtn.classList.toggle('audio-playing', playing && !done);
         tapBtn.disabled = done;
       } else {
-        tapBtn.innerHTML = done
-          ? '<i class="fa-solid fa-check"></i> Chapelet terminé !'
-          : '<i class="fa-solid fa-hand-point-up"></i> Suivant';
+        tapBtn.innerHTML = '<i class="fa-solid fa-hand-point-up"></i> Suivant';
         tapBtn.classList.remove('audio-playing');
         tapBtn.disabled = done;
       }
@@ -3665,6 +3737,21 @@ function initChapelet() {
   });
 
   resetBtn?.addEventListener('click', () => {
+    stopAudio();
+    step = 0;
+    render();
+  });
+
+  // ── Conclusion ───────────────────────────────────────────────
+  // « Amen » clôt la prière et referme le chapelet ; l'autre bouton en
+  // relance un directement, sans repasser par l'agenda.
+  document.getElementById('ch-final-amen')?.addEventListener('click', () => {
+    stopAudio();
+    step = 0;
+    render();
+    document.getElementById('ch-close')?.click();
+  });
+  document.getElementById('ch-final-again')?.addEventListener('click', () => {
     stopAudio();
     step = 0;
     render();
