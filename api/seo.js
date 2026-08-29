@@ -118,6 +118,18 @@ function pageShell({ title, desc, canonical, h1, sub, bodyHtml, jsonLd, otherLin
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+  /* Accessibilité — reprend la taille de texte choisie dans l'application
+     (bouton A+). Sans cela, une personne ayant agrandi le texte le voyait
+     revenir en petit dès qu'elle ouvrait une de ces pages. Appliqué avant
+     le rendu pour éviter tout saut visuel. */
+  (function () {
+    try {
+      var s = parseFloat(localStorage.getItem('pel.textScale'));
+      if (s && s > 1) document.documentElement.style.zoom = s;
+    } catch (e) {}
+  })();
+</script>
 <title>${esc(title)}</title>
 <meta name="description" content="${esc(desc)}">
 <link rel="canonical" href="${esc(canonical)}">
@@ -608,6 +620,22 @@ export default async function handler(req, res) {
        "Trois objections lui sont opposées. D'abord, nul dans l'Église n'a autorité pour juger le pape — « le premier siège n'est jugé par personne ». Ensuite, l'acceptation paisible d'un pape par l'Église entière est tenue pour un signe certain de sa légitimité. Enfin, une vacance de plusieurs décennies, sans moyen d'élire un successeur, contredirait la promesse du Christ à son Église."],
     ];
 
+    /* L'arbre des branches — vue d'ensemble avant le détail de la frise.
+       Construit en HTML et non en image : le texte suit ainsi le réglage
+       d'agrandissement du site, ce qu'une image ne ferait pas. */
+    const ARBRE = [
+      ['431 et 451', "Églises d'Orient", "Église assyrienne, puis coptes, arméniens, syriaques et Éthiopiens.", '≈ 60 à 80 millions', []],
+      ['1054', 'Églises orthodoxes', "Constantinople et les Églises de tradition grecque et slave.", '≈ 220 millions', []],
+      ['1517', 'Protestantisme', "Luthériens et réformés d'abord ; à partir de 1906, les évangéliques et pentecôtistes, aujourd'hui la famille qui croît le plus vite.", '≈ 900 millions', []],
+      ['1534', 'Anglicanisme', "L'Église d'Angleterre, entre catholicisme et protestantisme.", '≈ 85 millions', []],
+      ['1870', 'Vieux-catholiques', "Refus de l'infaillibilité pontificale définie à Vatican I.", "quelques centaines de milliers", []],
+      ['après 1965', 'Courants traditionalistes', "Nés du refus de tout ou partie de Vatican II — trois situations bien distinctes :", '', [
+        ['ok',  'Instituts en pleine communion', 'Saint-Pierre, Christ-Roi…'],
+        ['mid', 'Fraternité Saint-Pie-X',        'situation canonique irrégulière'],
+        ['out', 'Sédévacantisme',                'hors de la communion'],
+      ]],
+    ];
+
     // Ce qui demeure commun : sans cela, on ne voit que les fractures.
     const COMMUN = [
       ['Le baptême', "Reconnu réciproquement entre la plupart des confessions : un baptisé protestant qui devient catholique n'est pas rebaptisé."],
@@ -706,6 +734,17 @@ export default async function handler(req, res) {
     const communHtml = COMMUN.map(([nom, txt]) => `
         <div class="com-item"><h3>${nom}</h3><p>${txt}</p></div>`).join('');
 
+    const arbreHtml = ARBRE.map(([an, nom, txt, nb, sous]) => `
+        <li class="br">
+          <div class="br-date">${an}</div>
+          <div class="br-card">
+            <h3 class="br-nom">${nom}${nb ? `<span class="br-nb">${nb}</span>` : ''}</h3>
+            <p class="br-txt">${txt}</p>
+            ${sous.length ? `<ul class="br-sub">${sous.map(([c, n, d]) =>
+              `<li class="br-s br-s-${c}"><strong>${n}</strong><span>${d}</span></li>`).join('')}</ul>` : ''}
+          </div>
+        </li>`).join('');
+
     const motsHtml = MOTS.map(([mot, def]) => `
         <div class="glo-item"><dt>${mot}</dt><dd>${def}</dd></div>`).join('');
 
@@ -751,6 +790,36 @@ export default async function handler(req, res) {
         .fam-d{color:var(--soft);font-size:14.5px}
         .hx-end{background:rgba(201,168,76,.1);border-radius:8px;padding:18px 20px;margin-top:34px;font-size:16px;line-height:1.65}
         .hx-end strong{color:var(--navy)}
+        /* Arbre des branches — tronc vertical, branches vers la droite.
+           En HTML : le texte suit le réglage d'agrandissement du site. */
+        .arb{position:relative;margin:22px 0 0;padding:0}
+        .arb-tronc{position:relative;padding:0 0 0 30px;list-style:none;margin:0;
+          border-left:4px solid var(--navy)}
+        .arb-node{position:relative;margin:0 0 6px;padding:10px 0 10px 6px;font-weight:600;color:var(--navy);font-size:16px}
+        .arb-node::before{content:'';position:absolute;left:-40px;top:50%;transform:translateY(-50%);
+          width:16px;height:16px;border-radius:50%;background:var(--navy);border:3px solid var(--cream)}
+        .arb-node .arb-an{display:block;font-size:12.5px;font-weight:600;letter-spacing:.06em;
+          text-transform:uppercase;color:var(--gold)}
+        .br{position:relative;margin:0 0 14px;padding-left:6px;list-style:none}
+        .br::before{content:'';position:absolute;left:-30px;top:26px;width:26px;height:3px;background:rgba(201,168,76,.75)}
+        .br::after{content:'';position:absolute;left:-9px;top:21px;width:11px;height:11px;border-radius:50%;
+          background:var(--gold);border:3px solid var(--cream)}
+        .br-date{font-size:12.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);margin-bottom:3px}
+        .br-card{background:#fff;border:1px solid rgba(0,0,0,.07);border-radius:9px;padding:14px 16px}
+        .br-nom{font-family:var(--serif);font-size:20px;color:var(--navy);margin:0 0 5px;
+          display:flex;flex-wrap:wrap;align-items:baseline;gap:9px}
+        .br-nb{font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;color:var(--gold);white-space:nowrap}
+        .br-txt{margin:0;font-size:15.5px;line-height:1.55;color:var(--soft)}
+        .br-sub{list-style:none;margin:11px 0 0;padding:0;display:grid;gap:7px}
+        .br-s{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;font-size:14.5px;
+          padding-left:11px;border-left:3px solid var(--soft)}
+        .br-s strong{color:var(--ink)}
+        .br-s span{color:var(--soft)}
+        .br-s-ok{border-left-color:#3a6448}
+        .br-s-mid{border-left-color:#9a6b18}
+        .br-s-out{border-left-color:#a03229}
+        .arb-note{font-size:14.5px;line-height:1.6;color:var(--soft);font-style:italic;
+          margin:16px 0 0;padding-left:14px;border-left:2px solid rgba(0,0,0,.12)}
         /* Ce qui unit */
         .com{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:16px}
         .com-item{background:#fff;border-radius:8px;padding:16px 18px;border:1px solid rgba(0,0,0,.06)}
@@ -800,8 +869,24 @@ export default async function handler(req, res) {
         </p>
         <div class="com">${communHtml}</div>
 
+        <h2>L'arbre des branches</h2>
+        <p class="hx-note">Qui vient de qui, d'un seul coup d'œil.</p>
+        <div class="arb">
+          <ul class="arb-tronc">
+            <li class="arb-node"><span class="arb-an">I<sup>er</sup> siècle</span>L'Église des origines</li>
+            ${arbreHtml}
+            <li class="arb-node"><span class="arb-an">Aujourd'hui</span>Église catholique — ≈ 1,4 milliard</li>
+          </ul>
+        </div>
+        <p class="arb-note">
+          Ce schéma suit le point de vue catholique, celui de ce site&nbsp;: le tronc y figure
+          l'Église de Rome, dont les autres se détachent. Les orthodoxes racontent la même
+          histoire autrement — pour eux, c'est Rome qui s'est éloignée en 1054. Chaque Église
+          se comprend comme la continuité de celle des origines.
+        </p>
+
         <h2>Vingt siècles en quelques dates</h2>
-        <p class="hx-note">Les moments où l'histoire chrétienne a bifurqué.</p>
+        <p class="hx-note">Le détail des moments où l'histoire chrétienne a bifurqué.</p>
         <ul class="tl">${friseHtml}</ul>
 
         <h2>Après Vatican II&nbsp;: trois positions à ne pas confondre</h2>
