@@ -209,7 +209,7 @@
       short: 'Crampon',
       full:  'Bible catholique Crampon',
       year:  '1923',
-      desc:  "Traduction catholique de référence de l'abbé Augustin Crampon, établie sur les textes hébreu et grec. Elle contient les 73 livres du canon catholique, avec les livres deutérocanoniques (Tobie, Judith, Sagesse, Ecclésiastique, Baruch, 1 et 2 Machabées) absents des bibles protestantes.",
+      desc:  "Traduction catholique de référence de l'abbé Augustin Crampon, établie sur les textes hébreu et grec. Elle contient les 73 livres du canon catholique, livres deutérocanoniques compris : Tobie, Judith, Sagesse, Ecclésiastique, Baruch, 1 et 2 Machabées.",
       cover: 'navy',
     },
   };
