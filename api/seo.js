@@ -592,6 +592,47 @@ export default async function handler(req, res) {
       ['1962–1965',
        'Vatican II',
        "Le concile Vatican II ouvre l'Église au monde : la messe peut être célébrée dans la langue de chacun, le dialogue avec les autres confessions et religions est encouragé, la liberté religieuse est affirmée. En 1969, Paul VI promulgue un nouveau missel. Ce tournant est reçu par l'immense majorité des catholiques, mais il va provoquer les divisions qui suivent."],
+      ['2007, puis 2021',
+       'La messe ancienne, élargie puis restreinte',
+       "Par <em>Summorum Pontificum</em> (2007), Benoît XVI autorise largement la célébration de la messe selon le missel de 1962. En 2021, par <em>Traditionis custodes</em>, François revient sur cette ouverture et en confie l'autorisation aux évêques, estimant qu'elle servait à contester le concile. Ce va-et-vient explique une bonne part des tensions actuelles."],
+    ];
+
+    /* Les raisonnements de part et d'autre. Sans eux, on sait ce que chacun
+       tient mais pas pourquoi — et l'on ne peut pas se faire un avis. */
+    const DEBATS = [
+      ['La Fraternité Saint-Pie-X',
+       "Le concile aurait rompu avec l'enseignement antérieur sur trois points : la liberté religieuse, l'œcuménisme et la collégialité des évêques. Devant ce qu'elle juge une crise, la Fraternité estime agir par nécessité pour préserver la foi et le sacerdoce, quitte à passer outre les autorisations romaines.",
+       "Rome répond que le concile doit se lire dans la continuité de la Tradition, et non comme une rupture — c'est la thèse de Benoît XVI en 2005. Elle rappelle qu'aucune nécessité ne justifie de sacrer des évêques sans mandat pontifical, acte qui a entraîné les excommunications de 1988."],
+      ['Le sédévacantisme',
+       "Le raisonnement s'appuie sur une thèse ancienne : un pape qui tomberait dans l'hérésie perdrait sa charge. Jugeant les enseignements conciliaires contraires à la foi définie auparavant, les sédévacantistes en concluent que les papes qui les ont promulgués n'étaient pas de vrais papes, et que le siège est vide depuis lors.",
+       "Trois objections lui sont opposées. D'abord, nul dans l'Église n'a autorité pour juger le pape — « le premier siège n'est jugé par personne ». Ensuite, l'acceptation paisible d'un pape par l'Église entière est tenue pour un signe certain de sa légitimité. Enfin, une vacance de plusieurs décennies, sans moyen d'élire un successeur, contredirait la promesse du Christ à son Église."],
+    ];
+
+    // Ce qui demeure commun : sans cela, on ne voit que les fractures.
+    const COMMUN = [
+      ['Le baptême', "Reconnu réciproquement entre la plupart des confessions : un baptisé protestant qui devient catholique n'est pas rebaptisé."],
+      ['Le Credo', "Le symbole de Nicée-Constantinople (325-381) est professé par les catholiques, les orthodoxes et la plupart des protestants."],
+      ['Les Écritures', "Les quatre Évangiles et le Nouveau Testament sont communs à tous. Les écarts portent sur sept livres de l'Ancien Testament."],
+      ['Le Notre Père', "La prière enseignée par le Christ lui-même, récitée dans toutes les confessions chrétiennes."],
+    ];
+
+    // Le vocabulaire, expliqué simplement
+    const MOTS = [
+      ['Schisme', "Rupture de communion entre chrétiens, sans nécessairement de désaccord sur la foi elle-même."],
+      ['Hérésie', "Négation obstinée d'une vérité de foi que l'Église tient pour révélée."],
+      ['Concile œcuménique', "Assemblée de tous les évêques du monde, convoquée par le pape, dont les décisions engagent l'Église entière."],
+      ['Canon des Écritures', "La liste des livres reconnus comme inspirés. 73 pour les catholiques, 66 pour les protestants."],
+      ['Magistère', "L'autorité d'enseignement de l'Église, exercée par le pape et les évêques."],
+      ['Œcuménisme', "La recherche de l'unité entre chrétiens séparés, promue par l'Église catholique depuis Vatican II."],
+      ['Sede vacante', "Locution latine — « le siège étant vacant ». Désigne normalement la période entre la mort d'un pape et l'élection du suivant."],
+    ];
+
+    // De quoi vérifier par soi-même
+    const SOURCES = [
+      ['Les textes de Vatican II', "<em>Lumen gentium</em> sur l'Église, <em>Unitatis redintegratio</em> sur l'œcuménisme, <em>Dignitatis humanae</em> sur la liberté religieuse.", 'https://www.vatican.va/archive/hist_councils/ii_vatican_council/index_fr.htm'],
+      ['Le Catéchisme de l\'Église catholique', "La référence pour ce que l'Église enseigne aujourd'hui, notamment les paragraphes 811 à 870 sur l'unité de l'Église.", 'https://www.vatican.va/archive/FRA0013/_INDEX.HTM'],
+      ['Benoît XVI, discours à la Curie (2005)', "Le texte où il oppose « herméneutique de la rupture » et « herméneutique de la réforme dans la continuité » à propos du concile.", 'https://www.vatican.va/content/benedict-xvi/fr/speeches/2005/december/documents/hf_ben_xvi_spe_20051222_roman-curia.html'],
+      ['<em>Traditionis custodes</em> (2021)', "Le motu proprio du pape François sur l'usage du missel de 1962, et la lettre qui l'accompagne.", 'https://www.vatican.va/content/francesco/fr/motu_proprio/documents/20210716-motu-proprio-traditionis-custodes.html'],
     ];
 
     // Les courants nés après Vatican II — trois positions à ne pas confondre
@@ -636,6 +677,28 @@ export default async function handler(req, res) {
     const famHtml = FAMILLES.map(([nom, nb, note]) => `
         <tr><th scope="row">${nom}</th><td class="fam-n">${nb}</td><td class="fam-d">${note}</td></tr>`).join('');
 
+    const debatsHtml = DEBATS.map(([nom, pour, contre]) => `
+        <article class="deb">
+          <h3 class="deb-name">${nom}</h3>
+          <div class="deb-side deb-pour">
+            <div class="deb-lbl">Ce qu'ils avancent</div>
+            <p>${pour}</p>
+          </div>
+          <div class="deb-side deb-contre">
+            <div class="deb-lbl">Ce que Rome répond</div>
+            <p>${contre}</p>
+          </div>
+        </article>`).join('');
+
+    const communHtml = COMMUN.map(([nom, txt]) => `
+        <div class="com-item"><h3>${nom}</h3><p>${txt}</p></div>`).join('');
+
+    const motsHtml = MOTS.map(([mot, def]) => `
+        <div class="glo-item"><dt>${mot}</dt><dd>${def}</dd></div>`).join('');
+
+    const srcHtml = SOURCES.map(([nom, quoi, url]) => `
+        <li><a href="${url}" target="_blank" rel="noopener">${nom}</a> — ${quoi}</li>`).join('');
+
     const bodyHtml = `
       <style>
         .hx-lede{font-family:var(--serif);font-size:19px;line-height:1.6;color:var(--navy);margin:-4px 0 28px}
@@ -668,6 +731,30 @@ export default async function handler(req, res) {
         .fam-d{color:var(--soft);font-size:14.5px}
         .hx-end{background:rgba(201,168,76,.1);border-radius:8px;padding:18px 20px;margin-top:34px;font-size:16px;line-height:1.65}
         .hx-end strong{color:var(--navy)}
+        /* Ce qui unit */
+        .com{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:16px}
+        .com-item{background:#fff;border-radius:8px;padding:16px 18px;border:1px solid rgba(0,0,0,.06)}
+        .com-item h3{font-family:var(--serif);font-size:19px;color:var(--navy);margin:0 0 5px}
+        .com-item p{margin:0;font-size:15px;line-height:1.55;color:var(--soft)}
+        /* Arguments et réponses */
+        .deb{background:#fff;border:1px solid rgba(0,0,0,.07);border-radius:10px;padding:18px 20px;margin:0 0 16px}
+        .deb-name{font-family:var(--serif);font-size:21px;color:var(--navy);margin:0 0 12px}
+        .deb-side{padding:12px 0}
+        .deb-side+.deb-side{border-top:1px dashed rgba(0,0,0,.12)}
+        .deb-lbl{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px}
+        .deb-pour .deb-lbl{color:#9a6b18}
+        .deb-contre .deb-lbl{color:#1a2744}
+        .deb-side p{margin:0;font-size:16px;line-height:1.65}
+        /* Glossaire */
+        .glo{margin:16px 0 0}
+        .glo-item{padding:11px 0;border-bottom:1px solid rgba(0,0,0,.07)}
+        .glo-item:last-child{border-bottom:none}
+        .glo dt{font-weight:600;color:var(--navy);font-size:16px}
+        .glo dd{margin:3px 0 0;font-size:15.5px;line-height:1.55;color:var(--soft)}
+        /* Sources */
+        .src{margin:16px 0 0;padding-left:20px}
+        .src li{margin-bottom:11px;font-size:15.5px;line-height:1.6;color:var(--soft)}
+        .src a{color:var(--navy);font-weight:600}
       </style>
 
       <div class="hx">
@@ -676,6 +763,13 @@ export default async function handler(req, res) {
           tous ensemble. Cette page raconte simplement pourquoi&nbsp;: où et quand les chemins
           se sont séparés, et ce que chacun croit aujourd'hui.
         </p>
+
+        <h2>Ce que tous les chrétiens ont en commun</h2>
+        <p class="hx-note">
+          À ne pas perdre de vue avant de lire ce qui suit&nbsp;: les divisions portent sur
+          beaucoup de choses, mais pas sur l'essentiel.
+        </p>
+        <div class="com">${communHtml}</div>
 
         <h2>Vingt siècles en quelques dates</h2>
         <p class="hx-note">Les moments où l'histoire chrétienne a bifurqué.</p>
@@ -688,6 +782,14 @@ export default async function handler(req, res) {
         </p>
         ${apresHtml}
 
+        <h2>Les arguments, de part et d'autre</h2>
+        <p class="hx-note">
+          Savoir ce que chacun soutient ne suffit pas pour juger&nbsp;: il faut connaître
+          les raisons. Voici, sans les trancher, les arguments avancés et les réponses qui
+          leur sont faites.
+        </p>
+        ${debatsHtml}
+
         <h2>Les grandes familles chrétiennes aujourd'hui</h2>
         <p class="hx-note">Ordres de grandeur — les estimations varient selon les sources.</p>
         <div class="fam-wrap">
@@ -696,6 +798,17 @@ export default async function handler(req, res) {
             <tbody>${famHtml}</tbody>
           </table>
         </div>
+
+        <h2>Le vocabulaire, en clair</h2>
+        <p class="hx-note">Sept mots qui reviennent sans cesse, et que l'on emploie souvent de travers.</p>
+        <dl class="glo">${motsHtml}</dl>
+
+        <h2>Vérifier par vous-même</h2>
+        <p class="hx-note">
+          Cette page résume&nbsp;; ces textes font foi. Ils sont tous consultables librement,
+          en français, sur le site du Vatican.
+        </p>
+        <ul class="src">${srcHtml}</ul>
 
         <div class="hx-end">
           <strong>Et maintenant&nbsp;?</strong> Depuis Vatican II, l'Église catholique s'engage dans
