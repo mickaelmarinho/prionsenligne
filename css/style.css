@@ -9863,3 +9863,90 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
 }
 .ch-final-amen:focus-visible,
 .ch-final-again:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+
+/* ═══════════════════════════════════════════════
+   FILTRE PAR PAYS — onglet « Aujourd'hui »
+   Le filtre existait uniquement dans l'onglet Semaine, alors qu'il sert
+   surtout ici : un visiteur à Abidjan ou à Montréal arrivait sur une
+   liste surtout française sans moyen de la restreindre. La barre
+   n'apparaît que si plusieurs pays diffusent réellement aujourd'hui.
+═══════════════════════════════════════════════ */
+.country-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.country-filters[hidden] { display: none; }
+
+.cf-label {
+  font-family: 'Outfit', sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--text-soft);
+  margin-right: 2px;
+}
+.cf {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;              /* cible tactile — Apple HIG / WCAG 2.5.5 */
+  padding: 8px 15px;
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  color: var(--text-mid);
+  cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.cf[hidden] { display: none; }
+.cf-flag { display: block; border-radius: 2px; }
+.cf.active {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: white;
+  font-weight: 500;
+}
+@media (hover: hover) and (pointer: fine) {
+  .cf:not(.active):hover { border-color: var(--gold); color: var(--navy); }
+}
+.cf:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+@media (max-width: 640px) {
+  .country-filters { gap: 6px; }
+  .cf { padding: 8px 12px; font-size: 13.5px; }
+}
+
+/* Message quand aucun office ne correspond aux filtres du jour */
+.tl-vide {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 15px 18px;
+  background: var(--cream);
+  border: 1px dashed var(--border-mid);
+  border-radius: var(--r-lg);
+  font-size: 15px;
+  color: var(--text-mid);
+}
+.tl-vide i { color: var(--gold); }
+#tl-vide-reset, #tl-vide-passes {
+  min-height: 44px;              /* cible tactile — Apple HIG / WCAG 2.5.5 */
+  padding: 8px 16px;
+  background: var(--navy);
+  color: var(--cream);
+  border: none;
+  border-radius: 999px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+}
+#tl-vide-reset:focus-visible, #tl-vide-passes:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }

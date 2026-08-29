@@ -124,17 +124,115 @@ function initFilters() {
 
   function applyFilters() {
     const showAll = active.size === 0;
+    let visibles = 0;
     document.querySelectorAll('.tl-item').forEach(item => {
-      const show = showAll || active.has(item.dataset.type);
+      const okType = showAll || active.has(item.dataset.type);
+      const okPays = PaysFiltre.actif === 'all' || item.dataset.country === PaysFiltre.actif;
+      const show = okType && okPays;
       item.style.display = show ? '' : 'none';
-      if (show) item.style.animation = 'fadeIn .2s ease';
+      if (show) { item.style.animation = 'fadeIn .2s ease'; visibles++; }
     });
+
+    // Combinaison sans résultat : on l'explique au lieu de changer le choix
+    // dans le dos de la personne — un réglage qui se modifie seul déroute.
+    syncVide(visibles);
     syncHint();
   }
 
+  function syncVide(correspondants) {
+    let bloc = document.getElementById('tl-vide');
+
+    // On compte ce qui est RÉELLEMENT affiché : un office peut satisfaire le
+    // filtre tout en restant invisible parce qu'il est déjà passé, donc replié.
+    // Sans cette distinction, l'écran paraissait vide sans explication — cas
+    // courant en soirée, quand tout ce qui correspond est terminé.
+    const affiches = [...document.querySelectorAll('.tl-item')]
+      .filter(e => e.style.display !== 'none' && e.offsetParent !== null).length;
+
+    if (affiches > 0) { bloc?.remove(); return; }
+    const toutPasse = correspondants > 0;
+    if (!bloc) {
+      const container = document.getElementById('timeline');
+      if (!container) return;
+      bloc = document.createElement('p');
+      bloc.id = 'tl-vide';
+      bloc.className = 'tl-vide';
+      container.prepend(bloc);
+      bloc.addEventListener('click', e => {
+        // Afficher les offices déjà passés
+        if (e.target.closest('#tl-vide-passes')) {
+          document.getElementById('tl-past-toggle')?.click();
+          applyFilters();
+          return;
+        }
+        // Revenir à tous les pays
+        if (!e.target.closest('#tl-vide-reset')) return;
+        PaysFiltre.actif = 'all';
+        try { localStorage.setItem(PaysFiltre.KEY, 'all'); } catch (_) {}
+        syncPaysBtns();
+        applyFilters();
+      });
+    }
+
+    const pays = document.querySelector('.cf.active')?.textContent.trim() || '';
+    const pourPays = PaysFiltre.actif !== 'all' ? ` pour «&nbsp;${pays}&nbsp;»` : '';
+
+    bloc.innerHTML = toutPasse
+      ? `<i class="fa-solid fa-circle-info"></i> ` +
+        `<span>Tous les offices correspondants${pourPays} sont déjà passés aujourd'hui.</span> ` +
+        `<button type="button" id="tl-vide-passes">Les afficher quand même</button>`
+      : `<i class="fa-solid fa-circle-info"></i> ` +
+        `<span>Aucun office ne correspond à ces filtres aujourd'hui${pourPays}.</span>` +
+        (PaysFiltre.actif !== 'all' ? ` <button type="button" id="tl-vide-reset">Voir tous les pays</button>` : '');
+  }
+
+  function syncPaysBtns() {
+    document.querySelectorAll('.cf').forEach(b => {
+      b.classList.toggle('active', b.dataset.country === PaysFiltre.actif);
+      b.setAttribute('aria-pressed', String(b.dataset.country === PaysFiltre.actif));
+    });
+  }
+
+  function initPaysFilter() {
+    const barre = document.getElementById('country-filters');
+    if (!barre) return;
+    PaysFiltre.init();
+
+    // La barre ne s'affiche que si plusieurs pays sont réellement proposés
+    // aujourd'hui — inutile de montrer un choix qui n'en est pas un.
+    const presents = new Set([...document.querySelectorAll('.tl-item')].map(i => i.dataset.country));
+    barre.hidden = presents.size < 2;
+    if (barre.hidden) return;
+
+    // On masque les pays sans aucun office aujourd'hui
+    barre.querySelectorAll('.cf').forEach(b => {
+      const c = b.dataset.country;
+      b.hidden = c !== 'all' && !presents.has(c);
+    });
+    if (PaysFiltre.actif !== 'all' && !presents.has(PaysFiltre.actif)) PaysFiltre.actif = 'all';
+
+    syncPaysBtns();
+    if (PaysFiltre.suggere) { PaysFiltre.suggere = false; try { localStorage.setItem(PaysFiltre.KEY, PaysFiltre.actif); } catch (_) {} }
+
+    if (!barre.dataset.bound) {
+      barre.dataset.bound = '1';
+      barre.addEventListener('click', e => {
+        const b = e.target.closest('.cf');
+        if (!b) return;
+        PaysFiltre.actif = b.dataset.country;
+        try { localStorage.setItem(PaysFiltre.KEY, PaysFiltre.actif); } catch (_) {}
+        syncPaysBtns();
+        applyFilters();
+      });
+    }
+  }
+  window._pelInitPaysFilter = initPaysFilter;
+
   // Exposé pour ré-appliquer le filtre après (re)génération de la timeline,
   // qui peut survenir APRÈS initFilters (items injectés dynamiquement).
-  window._pelApplyFilters = applyFilters;
+  // La timeline peut être régénérée après coup : on recalcule alors les pays
+  // réellement présents avant de réappliquer le filtrage.
+  window._pelApplyFilters = () => { initPaysFilter(); applyFilters(); };
   // Exposé pour l'onboarding des nouveaux inscrits : applique + persiste
   // (local et compte) un jeu de favoris choisi hors de ce module.
   window._pelSetOfficeFilters = arr => {
@@ -178,6 +276,7 @@ function initFilters() {
 
   // État initial (boutons + filtrage) selon la sélection restaurée
   syncButtons();
+  initPaysFilter();
   applyFilters();
 }
 
@@ -6110,6 +6209,60 @@ function downloadICS(filename, ics) {
   setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 200);
 }
 
+/* ────────────────────────────────────────────
+   PAYS D'UN CRÉNEAU — pour le filtre de l'onglet « Aujourd'hui »
+   Même règle que la vue Semaine : une source française suffit à classer
+   le créneau en « fr » ; sinon on retient la première nationalité
+   rencontrée. Les sources sans indicatif « f » sont françaises.
+──────────────────────────────────────────────*/
+function entryCountry(entry) {
+  let etranger = null;
+  for (const key of (entry && entry.srcs) || []) {
+    const src = SOURCES[key];
+    if (!src) continue;
+    if (!src.f) return 'fr';
+    if (!etranger) etranger = src.f;
+  }
+  return etranger || 'fr';
+}
+
+/* Pays déduit du fuseau horaire de l'appareil, pour proposer d'emblée les
+   sources du visiteur. Le site connaissait déjà son fuseau (il l'affiche
+   dans la bannière d'horaires) sans jamais s'en servir pour les sources. */
+const TZ_PAYS = {
+  'Europe/Brussels': 'be',
+  'Europe/Zurich': 'ch', 'Europe/Bern': 'ch', 'Europe/Geneva': 'ch',
+  'America/Toronto': 'ca', 'America/Montreal': 'ca', 'America/Halifax': 'ca',
+  'America/Winnipeg': 'ca', 'America/Edmonton': 'ca', 'America/Vancouver': 'ca',
+  'Africa/Abidjan': 'ci',
+};
+function paysDuVisiteur() {
+  try { return TZ_PAYS[_userTimezone()] || null; }
+  catch (_) { return null; }
+}
+
+/* État du filtre par pays — volontairement HORS de initFilters().
+   Cette fonction est appelée deux fois (au chargement, puis après la mise à
+   jour du planning) : un état gardé dans sa portée aurait été dupliqué, et
+   le clic sur un pays aurait modifié une instance pendant que les filtres
+   par type en consultaient une autre. */
+const PaysFiltre = {
+  KEY: 'pel_office_country',
+  actif: 'all',
+  suggere: false,
+  init() {
+    if (this._pret) return;
+    this._pret = true;
+    try { this.actif = localStorage.getItem(this.KEY) || 'all'; } catch (_) {}
+    // Première visite : on propose d'emblée le pays du visiteur, déduit de
+    // son fuseau. Il reste libre de revenir à « Tous ».
+    if (this.actif === 'all') {
+      const p = paysDuVisiteur();
+      if (p) { this.actif = p; this.suggere = true; }
+    }
+  },
+};
+
 function initTodayTimeline() {
   const container = document.getElementById('timeline');
   if (!container) return;
@@ -6283,6 +6436,7 @@ function initTodayTimeline() {
     art.dataset.label    = slot.label;
     art.dataset.desc     = slot.desc || '';
     art.dataset.slotId   = tlSlotId;
+    art.dataset.country  = entryCountry(entry);
     art.innerHTML = `
       <div class="tl-time">
         <span class="tl-time-h">${esc(timeInfo.display)}</span>

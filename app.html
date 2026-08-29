@@ -35,7 +35,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <link rel="stylesheet" href="css/style.css?v=213" />
+  <link rel="stylesheet" href="css/style.css?v=214" />
   <!-- PWA / iOS standalone -->
   <meta name="theme-color" content="#1a2744" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -225,6 +225,20 @@
 
       <!-- Filtres + Timeline -->
       <div class="today-main">
+
+        <!-- Filtre par pays — il n'existait que dans l'onglet Semaine, alors
+             qu'il sert surtout ici : quelqu'un à Abidjan ou à Montréal arrivait
+             sur une liste surtout française, sans moyen de la restreindre.
+             Le pays est présélectionné d'après le fuseau de l'appareil. -->
+        <div class="country-filters" id="country-filters" hidden>
+          <span class="cf-label">Pays</span>
+          <button class="cf active cf-all" data-country="all">Tous</button>
+          <button class="cf" data-country="fr"><img class="cf-flag" src="https://flagcdn.com/w20/fr.png" width="16" height="12" alt="" aria-hidden="true"> France</button>
+          <button class="cf" data-country="be"><img class="cf-flag" src="https://flagcdn.com/w20/be.png" width="16" height="12" alt="" aria-hidden="true"> Belgique</button>
+          <button class="cf" data-country="ch"><img class="cf-flag" src="https://flagcdn.com/w20/ch.png" width="16" height="12" alt="" aria-hidden="true"> Suisse</button>
+          <button class="cf" data-country="ca"><img class="cf-flag" src="https://flagcdn.com/w20/ca.png" width="16" height="12" alt="" aria-hidden="true"> Québec</button>
+          <button class="cf" data-country="ci"><img class="cf-flag" src="https://flagcdn.com/w20/ci.png" width="16" height="12" alt="" aria-hidden="true"> Côte d'Ivoire</button>
+        </div>
 
         <div class="prayer-filters">
           <button class="pf active pf-all"   data-filter="all"><i class="fa-solid fa-grip"></i> Tout</button>
@@ -1247,10 +1261,10 @@
       });
     }
   </script>
-  <script src="js/app.js?v=213"></script>
+  <script src="js/app.js?v=214"></script>
   <!-- Concordance thématique (chargée AVANT bible.js qui la consomme) -->
-  <script src="js/bible-themes.js?v=213"></script>
-  <script src="js/bible.js?v=213"></script>
+  <script src="js/bible-themes.js?v=214"></script>
+  <script src="js/bible.js?v=214"></script>
   <!-- Supabase — build UMD explicite (évite que jsdelivr serve le build CJS/ESM).
        Version ÉPINGLÉE : le tag flottant @2 nous a déjà cassé la présence
        Realtime lors d'une mise à jour silencieuse de la lib (juillet 2026).
@@ -1259,8 +1273,8 @@
   <!-- Cloudflare Turnstile — anti-bot invisible (cf. auth.js). Chargé en async
        pour ne pas bloquer le rendu ; le widget est rendu à la demande. -->
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-  <script src="js/auth.js?v=213"></script>
-  <script src="js/admin.js?v=213"></script>
+  <script src="js/auth.js?v=214"></script>
+  <script src="js/admin.js?v=214"></script>
   <script>document.addEventListener('DOMContentLoaded', initAuth);</script>
   <!-- Vercel Web Analytics — sans cookies, RGPD-friendly (aucune donnée personnelle) -->
   <script defer src="/_vercel/insights/script.js"></script>
