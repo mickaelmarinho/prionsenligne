@@ -556,6 +556,222 @@ export default async function handler(req, res) {
     return;
   }
 
+  /* ── Comment prier le chapelet ─────────────────────────────────────
+     Page durable sur le sujet le plus cherché du domaine. Elle renvoie
+     au chapelet numérique du site, sa fonction la plus aboutie.
+     Les textes des prières reprennent exactement ceux de l'application
+     (forme traditionnelle, au vouvoiement) : deux versions différentes
+     sur le même site sèmeraient le doute. */
+  if (p === 'chapelet-guide') {
+    const canonical = `${SITE}/comment-prier-le-chapelet`;
+    const title = "Comment prier le chapelet — guide simple et complet | PrionsEnLigne";
+    const desc = "Apprendre à prier le chapelet pas à pas : le déroulement, les mystères de chaque jour, le texte des prières et le temps que cela prend. Guide clair, pour débuter ou reprendre.";
+
+    const ETAPES = [
+      ['Le signe de croix', "Sur le crucifix du chapelet. «&nbsp;Au nom du Père, et du Fils, et du Saint-Esprit. Amen.&nbsp;»"],
+      ['Le Je crois en Dieu', "Toujours sur le crucifix. On professe sa foi avant d'entrer dans la prière."],
+      ['Un Notre Père', "Sur le premier gros grain."],
+      ['Trois Je vous salue Marie', "Sur les trois petits grains qui suivent. La tradition les offre pour la foi, l'espérance et la charité."],
+      ['Un Gloire au Père', "Puis on arrive à la médaille : le chapelet proprement dit commence."],
+      ['Les cinq dizaines', "Pour chacune&nbsp;: on annonce le mystère, on médite, puis un Notre Père, dix Je vous salue Marie sur les dix petits grains, et un Gloire au Père."],
+      ['La conclusion', "Le Salve Regina, en tenant le crucifix, et un dernier signe de croix."],
+    ];
+
+    const MYSTERES = [
+      ['Joyeux', 'Lundi et samedi', ["L'Annonciation", 'La Visitation', 'La Nativité', 'La Présentation de Jésus au Temple', 'Le Recouvrement de Jésus au Temple']],
+      ['Lumineux', 'Jeudi', ['Le Baptême de Jésus dans le Jourdain', 'Les Noces de Cana', "L'annonce du Royaume", 'La Transfiguration', "L'institution de l'Eucharistie"]],
+      ['Douloureux', 'Mardi et vendredi', ["L'Agonie au jardin des Oliviers", 'La Flagellation', "Le Couronnement d'épines", 'Le Portement de la Croix', 'La Crucifixion et la mort de Jésus']],
+      ['Glorieux', 'Mercredi et dimanche', ['La Résurrection', "L'Ascension", 'La Pentecôte', "L'Assomption de la Vierge Marie", 'Le Couronnement de Marie au Ciel']],
+    ];
+
+    const PRIERES = [
+      ['Notre Père', "Notre Père, qui êtes aux cieux, que votre Nom soit sanctifié, que votre règne vienne, que votre volonté soit faite sur la terre comme au ciel. Donnez-nous aujourd'hui notre pain de ce jour. Pardonnez-nous nos offenses, comme nous pardonnons aussi à ceux qui nous ont offensés. Et ne nous soumettez pas à la tentation, mais délivrez-nous du Mal. Amen."],
+      ['Je vous salue, Marie', "Je vous salue, Marie pleine de grâces, le Seigneur est avec vous. Vous êtes bénie entre toutes les femmes et Jésus, le fruit de vos entrailles, est béni. Sainte Marie, Mère de Dieu, priez pour nous pauvres pécheurs, maintenant et à l'heure de notre mort. Amen."],
+      ['Gloire au Père', "Gloire au Père, et au Fils, et au Saint-Esprit. Comme il était au commencement, maintenant et toujours, dans les siècles des siècles. Amen."],
+      ['Salve Regina', "Salut, ô Reine, Mère de miséricorde, notre vie, notre douceur et notre espérance, salut. Enfants d'Ève, exilés, nous crions vers vous. Vers vous nous soupirons, gémissant et pleurant dans cette vallée de larmes. Ô vous, notre avocate, tournez vers nous vos regards miséricordieux. Et après cet exil, montrez-nous Jésus, le fruit béni de vos entrailles. Ô clémente, ô miséricordieuse, ô douce Vierge Marie."],
+    ];
+
+    /* Questions réellement tapées dans les moteurs de recherche par les
+       personnes qui débutent. Elles valent mieux que du texte de remplissage :
+       ce sont celles qui bloquent vraiment. */
+    const FAQ = [
+      ['Faut-il un chapelet béni&nbsp;?',
+       "Non. Un chapelet béni est un sacramental, ce qui est précieux, mais nullement une condition. On peut prier avec n'importe quel chapelet — et même sans."],
+      ['Peut-on prier sans chapelet&nbsp;?',
+       "Oui, sur les doigts&nbsp;: chaque main compte cinq Je vous salue Marie, deux tours font une dizaine. Beaucoup prient ainsi dans les transports ou en marchant."],
+      ['Peut-on le prier en voiture ou en marchant&nbsp;?',
+       "Oui. Le chapelet accompagne bien une activité régulière qui ne demande pas de réfléchir. C'est même l'une des raisons de sa forme répétitive."],
+      ['Et si je me distrais sans arrêt&nbsp;?',
+       "C'est l'expérience de tout le monde, y compris des saints. On revient simplement au mystère, sans se troubler ni recommencer. La distraction subie n'ôte rien à la prière."],
+      ['Faut-il faire les cinq dizaines d\'un coup&nbsp;?',
+       "Non. On peut les répartir dans la journée&nbsp;: une le matin, une le soir. L'important est de revenir, pas de tenir un compte."],
+      ['Peut-on le prier à plusieurs&nbsp;?',
+       "Oui, et c'est l'usage le plus ancien&nbsp;: une personne dit la première moitié de la prière, les autres répondent la seconde."],
+    ];
+
+    const faqHtml = FAQ.map(([q, r]) => `
+        <div class="fq"><h3 class="fq-q">${q}</h3><p class="fq-r">${r}</p></div>`).join('');
+
+    const etapesHtml = ETAPES.map(([nom, txt], i) => `
+        <li class="et">
+          <span class="et-n">${i + 1}</span>
+          <div><h3 class="et-t">${nom}</h3><p class="et-d">${txt}</p></div>
+        </li>`).join('');
+
+    const mystHtml = MYSTERES.map(([nom, jours, list]) => `
+        <article class="my my-${nom.toLowerCase()}">
+          <div class="my-jours">${jours}</div>
+          <h3 class="my-nom">Mystères ${nom.toLowerCase()}</h3>
+          <ol class="my-list">${list.map(m => `<li>${m}</li>`).join('')}</ol>
+        </article>`).join('');
+
+    const prieresHtml = PRIERES.map(([nom, txt]) => `
+        <div class="pr"><h3 class="pr-nom">${nom}</h3><p class="pr-txt">${txt}</p></div>`).join('');
+
+    const bodyHtml = `
+      <style>
+        .cg-lede{font-family:var(--serif);font-size:19px;line-height:1.6;color:var(--navy);margin:-4px 0 26px}
+        .cg h2{font-family:var(--serif);font-size:26px;color:var(--navy);margin:38px 0 6px}
+        .cg-note{margin:0 0 18px;color:var(--soft);font-size:14.5px}
+        .cg p{max-width:65ch}
+        /* Étapes */
+        .et-list{list-style:none;margin:18px 0 0;padding:0}
+        .et{display:flex;gap:14px;padding:0 0 18px}
+        .et-n{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:var(--navy);color:#fff;
+          display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px}
+        .et-t{font-family:var(--serif);font-size:20px;color:var(--navy);margin:2px 0 4px}
+        .et-d{margin:0;font-size:16px;line-height:1.6}
+        /* Mystères */
+        .my-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-top:16px}
+        .my{background:#fff;border:1px solid rgba(0,0,0,.07);border-top:3px solid var(--gold);border-radius:9px;padding:16px 18px}
+        .my-joyeux{border-top-color:#c9a84c}.my-lumineux{border-top-color:#4a7fb5}
+        .my-douloureux{border-top-color:#a03229}.my-glorieux{border-top-color:#3a6448}
+        .my-jours{font-size:12.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--soft)}
+        .my-nom{font-family:var(--serif);font-size:20px;color:var(--navy);margin:3px 0 9px}
+        .my-list{margin:0;padding-left:20px}
+        .my-list li{font-size:15.5px;line-height:1.5;margin-bottom:5px}
+        /* Prières */
+        .pr{background:#fff;border-radius:9px;padding:15px 18px;margin-bottom:12px;border:1px solid rgba(0,0,0,.06)}
+        .pr-nom{font-size:12.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin:0 0 7px}
+        .pr-txt{font-family:var(--serif);font-size:17.5px;line-height:1.6;margin:0}
+        /* Encadré app */
+        .cg-cta{background:var(--navy);border-radius:12px;padding:24px 22px;margin:32px 0 0;text-align:center}
+        .cg-cta h2{color:#fff;margin:0 0 8px;font-size:24px}
+        .cg-cta p{color:rgba(255,255,255,.82);font-size:16px;margin:0 auto 18px;max-width:46ch}
+        .cg-cta a{display:inline-flex;align-items:center;gap:9px;background:var(--gold);color:var(--navy);
+          font-weight:600;font-size:16px;padding:13px 26px;border-radius:999px;text-decoration:none;min-height:44px}
+        .cg-tip{background:rgba(201,168,76,.1);border-radius:8px;padding:16px 20px;margin-top:22px;font-size:16px;line-height:1.6}
+        .cg-tip strong{color:var(--navy)}
+        /* Questions fréquentes */
+        .fq{padding:14px 0;border-bottom:1px solid rgba(0,0,0,.08)}
+        .fq:last-of-type{border-bottom:none}
+        .fq-q{font-family:var(--serif);font-size:19px;color:var(--navy);margin:0 0 5px}
+        .fq-r{margin:0;font-size:16px;line-height:1.6;color:var(--soft)}
+      </style>
+
+      <div class="cg">
+        <p class="cg-lede">
+          Le chapelet n'est pas une prière compliquée. C'est une prière répétitive et
+          apaisante, où l'on médite la vie du Christ avec le regard de sa mère. Une
+          vingtaine de minutes, et rien d'autre qu'un chapelet — ou vos dix doigts.
+        </p>
+
+        <h2>D'où vient cette prière</h2>
+        <p>
+          Le chapelet naît au Moyen Âge d'un usage tout simple&nbsp;: les fidèles qui ne
+          savaient pas lire récitaient cent cinquante Je vous salue Marie, en écho aux cent
+          cinquante psaumes que chantaient les moines. D'où son autre nom, le rosaire, et sa
+          division en dizaines.
+        </p>
+        <p>
+          La tradition en attribue la révélation à saint Dominique, au XIII<sup>e</sup> siècle&nbsp;;
+          les historiens y voient plutôt une formation progressive sur plusieurs siècles. Sa forme
+          actuelle est fixée par saint Pie&nbsp;V en 1569. À Fatima, en 1917, la Vierge en
+          demande la récitation quotidienne. En 2002, Jean-Paul&nbsp;II ajoute les mystères
+          lumineux, jusque-là absents&nbsp;: c'est pourquoi certains chapelets anciens n'en
+          parlent pas.
+        </p>
+
+        <h2>Le déroulement, pas à pas</h2>
+        <p class="cg-note">La suite complète, du signe de croix à la conclusion.</p>
+        <ul class="et-list">${etapesHtml}</ul>
+        <p class="cg-note" style="margin-top:14px">
+          Comptez une vingtaine de minutes pour les cinq dizaines, un peu moins en priant seul.
+        </p>
+
+        <h2>Les mystères selon le jour</h2>
+        <p class="cg-note">
+          Chaque dizaine s'accompagne d'un épisode de la vie du Christ que l'on médite.
+          Ils se répartissent sur la semaine — c'est l'usage courant, non une obligation.
+        </p>
+        <div class="my-grid">${mystHtml}</div>
+
+        <h2>Le texte des prières</h2>
+        <p class="cg-note">
+          Dans la forme traditionnelle, celle du chapelet de ce site. La traduction
+          liturgique en usage depuis 2013 dit «&nbsp;Notre Père, qui es aux cieux&nbsp;»
+          et «&nbsp;ne nous laisse pas entrer en tentation&nbsp;»&nbsp;: les deux se prient.
+        </p>
+        ${prieresHtml}
+
+        <h2>Questions fréquentes</h2>
+        <p class="cg-note">Celles qui arrêtent le plus souvent quand on débute.</p>
+        ${faqHtml}
+
+        <div class="cg-tip">
+          <strong>Si vous débutez&nbsp;:</strong> commencez par une seule dizaine. Mieux vaut
+          une dizaine chaque jour que cinq une fois par mois. La régularité compte plus que
+          la quantité — et l'on n'est pas obligé de tout savoir par cœur pour commencer.
+        </div>
+
+        <div class="cg-cta">
+          <h2>Le chapelet guidé, sur ce site</h2>
+          <p>
+            Un vrai chapelet en image, qui avance grain par grain avec vous. En mode tactile
+            ou en audio guidé, avec les mystères du jour déjà sélectionnés. En six langues.
+          </p>
+          <a href="/agenda#open-chapelet">Ouvrir le chapelet</a>
+        </div>
+      </div>`;
+
+    // Deux balisages : le mode d'emploi et les questions fréquentes, que
+    // Google peut afficher directement dans ses résultats.
+    const propre = s => String(s).replace(/&nbsp;/g, ' ').replace(/<[^>]+>/g, '').trim();
+    const jsonLd = JSON.stringify([
+      {
+        '@context': 'https://schema.org',
+        '@type': 'HowTo',
+        name: 'Comment prier le chapelet',
+        description: desc,
+        inLanguage: 'fr',
+        totalTime: 'PT20M',
+        step: ETAPES.map(([nom, txt], i) => ({
+          '@type': 'HowToStep', position: i + 1, name: nom, text: propre(txt),
+        })),
+        mainEntityOfPage: canonical,
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        inLanguage: 'fr',
+        mainEntity: FAQ.map(([q, r]) => ({
+          '@type': 'Question',
+          name: propre(q),
+          acceptedAnswer: { '@type': 'Answer', text: propre(r) },
+        })),
+      },
+    ]);
+
+    res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800');
+    res.status(200).send(pageShell({
+      title, desc, canonical,
+      h1: 'Comment prier le chapelet',
+      sub: 'Un guide simple, pour débuter ou pour reprendre',
+      bodyHtml, jsonLd,
+    }));
+    return;
+  }
+
   /* ── Histoire du christianisme et de ses branches ──────────────────
      Page de fond : un seul sujet traité sérieusement vaut mieux que
      beaucoup d'articles courts. Le ton est descriptif et respectueux
@@ -934,7 +1150,8 @@ export default async function handler(req, res) {
         </div>
       </div>`;
 
-    const jsonLd = {
+    // Sérialisé ici : le gabarit insère la chaîne telle quelle.
+    const jsonLd = JSON.stringify({
       '@context': 'https://schema.org',
       '@type': 'Article',
       headline: "Histoire du christianisme et de ses branches",
@@ -942,7 +1159,7 @@ export default async function handler(req, res) {
       inLanguage: 'fr',
       mainEntityOfPage: canonical,
       publisher: { '@type': 'Organization', name: 'PrionsEnLigne', logo: { '@type': 'ImageObject', url: `${SITE}/icons/icon-512.png` } },
-    };
+    });
 
     res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800');
     res.status(200).send(pageShell({

@@ -89,6 +89,10 @@
       "destination": "/api/seo?p=histoire"
     },
     {
+      "source": "/comment-prier-le-chapelet",
+      "destination": "/api/seo?p=chapelet-guide"
+    },
+    {
       "source": "/affiche",
       "destination": "/api/seo?p=affiche"
     }
