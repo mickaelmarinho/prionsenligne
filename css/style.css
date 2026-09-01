@@ -5267,7 +5267,10 @@ body:has(.chapelet-fab) .greg-btn { right: 88px; }   /* 54 (FAB) + 20 (marge dro
 }
 
 @media (max-width: 899px) {
-  .today-main { flex-direction: column; gap: 0; }
+  /* En colonne, « align-items: flex-start » hérité faisait dimensionner les
+     enfants sur leur contenu : la timeline dépassait de 35 px hors de l'écran
+     et chaque office était rogné à droite. */
+  .today-main { flex-direction: column; gap: 0; align-items: stretch; }
   /* Filtres en rangée scrollable horizontalement */
   .prayer-filters {
     width: 100%;          /* contraint au parent — évite le débordement */
@@ -9919,8 +9922,17 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
 .cf:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
 @media (max-width: 640px) {
-  .country-filters { gap: 6px; }
-  .cf { padding: 8px 12px; font-size: 13.5px; }
+  /* Comme les filtres par type : une rangée qui défile latéralement, plutôt
+     qu'un pavé de boutons qui repousserait la timeline vers le bas. */
+  .country-filters {
+    gap: 6px;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 4px;
+  }
+  .cf { padding: 8px 12px; font-size: 13.5px; flex-shrink: 0; }
 }
 
 /* Message quand aucun office ne correspond aux filtres du jour */
@@ -9950,3 +9962,43 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   cursor: pointer;
 }
 #tl-vide-reset:focus-visible, #tl-vide-passes:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+
+/* ═══════════════════════════════════════════════
+   COLONNE DE FILTRES — pays + types réunis
+   .today-main est une rangée : filtres à gauche, timeline à droite.
+   Les deux barres doivent donc partager UN seul enfant, sans quoi la
+   barre pays formait une troisième colonne et disloquait la page.
+═══════════════════════════════════════════════ */
+.today-filters {
+  display: flex;
+  flex-direction: column;
+  /* .today-main aligne ses enfants en flex-start : sans largeur explicite,
+     cette colonne se dimensionnerait sur son contenu et déborderait de
+     l'écran sur téléphone. */
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+@media (min-width: 900px) {
+  /* C'est la colonne entière qui suit le défilement, et non plus les
+     seuls filtres par type. */
+  .today-filters {
+    width: 160px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 76px;
+    align-self: flex-start;
+  }
+  .prayer-filters { position: static; width: 100%; top: auto; }
+  /* Pays en colonne, comme les types : boutons pleine largeur */
+  .country-filters {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 5px;
+    margin-bottom: 14px;
+  }
+  .country-filters .cf { justify-content: flex-start; }
+  .cf-label { margin: 0 0 2px; }
+}

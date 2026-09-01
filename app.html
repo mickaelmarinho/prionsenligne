@@ -35,7 +35,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <link rel="stylesheet" href="css/style.css?v=215" />
+  <link rel="stylesheet" href="css/style.css?v=216" />
   <!-- PWA / iOS standalone -->
   <meta name="theme-color" content="#1a2744" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -131,9 +131,15 @@
         <div class="hm-item" id="hm-install"><i class="fa-solid fa-download"></i> Ajouter à l'écran d'accueil</div>
 
         <div class="hm-divider"></div>
+        <!-- Les pages de fond ont leur propre groupe : elles vont se multiplier
+             et n'ont rien à voir avec les pages de service. -->
+        <div class="hm-section-label">À lire</div>
+        <a href="/comment-prier-le-chapelet" class="hm-item"><i class="fa-solid fa-circle-dot"></i> Comment prier le chapelet</a>
+        <a href="/histoire-du-christianisme" class="hm-item"><i class="fa-solid fa-book-open"></i> Histoire du christianisme</a>
+
+        <div class="hm-divider"></div>
         <div class="hm-section-label">Le site</div>
         <a href="/" class="hm-item hm-home-link"><i class="fa-solid fa-house"></i> Accueil &amp; présentation</a>
-        <a href="/histoire-du-christianisme" class="hm-item"><i class="fa-solid fa-book-open"></i> Histoire du christianisme</a>
         <div class="hm-item" id="hm-about"><i class="fa-solid fa-circle-info"></i> À propos</div>
         <div class="hm-item" id="hm-contact"><i class="fa-solid fa-envelope"></i> Nous contacter</div>
         <a href="/paroisses" class="hm-item hm-paroisses"><i class="fa-solid fa-church"></i> Pour les paroisses <span class="hm-badge">affiche à imprimer</span></a>
@@ -226,6 +232,10 @@
       <!-- Filtres + Timeline -->
       <div class="today-main">
 
+        <!-- Les deux barres de filtres forment UNE seule colonne : .today-main
+             est une rangée, et les laisser côte à côte en créerait deux. -->
+        <div class="today-filters">
+
         <!-- Filtre par pays — il n'existait que dans l'onglet Semaine, alors
              qu'il sert surtout ici : quelqu'un à Abidjan ou à Montréal arrivait
              sur une liste surtout française, sans moyen de la restreindre.
@@ -250,6 +260,8 @@
           <button class="pf pf-soiree"       data-filter="soiree"><i class="fa-solid fa-hands-praying"></i> Prière du soir</button>
           <button class="pf pf-complies"     data-filter="complies"><i class="fa-solid fa-moon"></i> Complies</button>
         </div>
+
+        </div><!-- /today-filters -->
 
         <!-- Timeline — générée dynamiquement par initTodayTimeline() selon le jour réel -->
         <div class="timeline" id="timeline">
@@ -1262,10 +1274,10 @@
       });
     }
   </script>
-  <script src="js/app.js?v=215"></script>
+  <script src="js/app.js?v=216"></script>
   <!-- Concordance thématique (chargée AVANT bible.js qui la consomme) -->
-  <script src="js/bible-themes.js?v=215"></script>
-  <script src="js/bible.js?v=215"></script>
+  <script src="js/bible-themes.js?v=216"></script>
+  <script src="js/bible.js?v=216"></script>
   <!-- Supabase — build UMD explicite (évite que jsdelivr serve le build CJS/ESM).
        Version ÉPINGLÉE : le tag flottant @2 nous a déjà cassé la présence
        Realtime lors d'une mise à jour silencieuse de la lib (juillet 2026).
@@ -1274,8 +1286,8 @@
   <!-- Cloudflare Turnstile — anti-bot invisible (cf. auth.js). Chargé en async
        pour ne pas bloquer le rendu ; le widget est rendu à la demande. -->
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-  <script src="js/auth.js?v=215"></script>
-  <script src="js/admin.js?v=215"></script>
+  <script src="js/auth.js?v=216"></script>
+  <script src="js/admin.js?v=216"></script>
   <script>document.addEventListener('DOMContentLoaded', initAuth);</script>
   <!-- Vercel Web Analytics — sans cookies, RGPD-friendly (aucune donnée personnelle) -->
   <script defer src="/_vercel/insights/script.js"></script>
