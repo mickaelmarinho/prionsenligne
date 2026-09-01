@@ -156,6 +156,13 @@ function pageShell({ title, desc, canonical, h1, sub, bodyHtml, jsonLd, otherLin
   .brand img{width:30px;height:30px;display:block}
   header .wrap{max-width:1100px}
   .open-app{background:var(--gold);color:var(--ink);font-weight:600;font-size:14px;padding:8px 16px;border-radius:999px;text-decoration:none}
+  /* Retour vers l app — cible tactile de 44 px comme partout ailleurs */
+  .back-app{display:inline-flex;align-items:center;min-height:44px;padding:8px 14px;margin-left:auto;margin-right:10px;color:rgba(255,255,255,.9);font-size:14px;text-decoration:none;border-radius:999px;border:1px solid rgba(255,255,255,.22)}
+  .back-app:hover{background:rgba(255,255,255,.1);color:#fff}
+  @media (max-width:560px){
+    .back-app{font-size:0;padding:8px 12px;border:none;margin-right:2px}
+    .back-app::before{content:"← Retour";font-size:14px}
+  }
   /* État connecté : pastille compte (initiale + prénom), comme dans l'app */
   .open-app.account{background:rgba(255,255,255,.08);color:#fff;border:1px solid rgba(255,255,255,.18);display:inline-flex;align-items:center;gap:8px;padding:5px 14px 5px 5px}
   .open-app.account .acc-ini{width:26px;height:26px;border-radius:50%;background:var(--gold);color:var(--navy);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;text-transform:uppercase}
@@ -201,6 +208,10 @@ ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
 <body>
 <header><div class="wrap">
   <a class="brand" href="/" aria-label="Accueil"><img src="/icons/icon.svg" alt="" width="30" height="30"></a>
+  <!-- Retour explicite : le logo mène à la page de présentation, si bien que
+       personne ne savait revenir à l'agenda depuis ces pages. Lien simple et
+       toujours identique, plutôt qu'un retour « intelligent » imprévisible. -->
+  <a class="back-app" href="/agenda">&larr; Retour à l'agenda</a>
   <a class="open-app" href="/agenda#login" id="seo-account">Se connecter</a>
 </div></header>
 <main><div class="wrap">
