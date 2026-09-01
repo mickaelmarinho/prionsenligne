@@ -256,14 +256,17 @@ function changerJour(delta) {
   const n = Math.min(JOUR_OFFSET_MAX, Math.max(0, jourOffset + delta));
   if (n === jourOffset) return;
   jourOffset = n;
-  try { initDate(); } catch (_) {}
+  // « true » : recharger le saint sans condition. Au retour sur aujourd'hui,
+  // le champ contient celui de la veille consultée, et le repli habituel ne
+  // remplace que s'il est vide — le mauvais saint serait resté affiché.
+  try { initDate(true); } catch (_) {}
   try { initTodayTimeline(); } catch (_) {}
   try { window._pelApplyFilters?.(); } catch (_) {}
   try { window._pelUpdateBadges?.(); } catch (_) {}
   document.getElementById('timeline')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
-function initDate() {
+function initDate(forcerSaint) {
   const now    = jourAffiche();
   const days   = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
   const months = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
@@ -289,7 +292,7 @@ function initDate() {
   // sous une autre date induirait en erreur. On le recharge donc à chaque
   // changement, sans attendre le délai de secours.
   const fe = document.getElementById('js-feast');
-  if (jourOffset !== 0) {
+  if (jourOffset !== 0 || forcerSaint) {
     if (fe) fe.textContent = '…';
     const pill = document.getElementById('js-feast-type');
     if (pill) pill.textContent = '—';
