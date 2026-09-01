@@ -8309,6 +8309,22 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   border-color: var(--gold);
   box-shadow: 0 0 0 3px rgba(201,168,76,.15);
 }
+/* Safari (iOS surtout) ajoute sa propre croix d'effacement et ses marges
+   internes sur les champs « search ». Elle venait se superposer à la nôtre :
+   deux croix mal alignées dans le même coin. On neutralise celle du système
+   et on garde la nôtre, qui suit la charte du site. */
+.bible-search {
+  -webkit-appearance: none;
+  appearance: none;
+}
+.bible-search::-webkit-search-cancel-button,
+.bible-search::-webkit-search-decoration,
+.bible-search::-webkit-search-results-button,
+.bible-search::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
 .bible-search-clear {
   position: absolute;
   right: 6px;
@@ -9868,73 +9884,6 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
 .ch-final-again:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
 
-/* ═══════════════════════════════════════════════
-   FILTRE PAR PAYS — onglet « Aujourd'hui »
-   Le filtre existait uniquement dans l'onglet Semaine, alors qu'il sert
-   surtout ici : un visiteur à Abidjan ou à Montréal arrivait sur une
-   liste surtout française sans moyen de la restreindre. La barre
-   n'apparaît que si plusieurs pays diffusent réellement aujourd'hui.
-═══════════════════════════════════════════════ */
-.country-filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-.country-filters[hidden] { display: none; }
-
-.cf-label {
-  font-family: 'Outfit', sans-serif;
-  font-size: 12.5px;
-  font-weight: 600;
-  letter-spacing: .07em;
-  text-transform: uppercase;
-  color: var(--text-soft);
-  margin-right: 2px;
-}
-.cf {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  min-height: 44px;              /* cible tactile — Apple HIG / WCAG 2.5.5 */
-  padding: 8px 15px;
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  font-family: 'Outfit', sans-serif;
-  font-size: 14px;
-  color: var(--text-mid);
-  cursor: pointer;
-  transition: background .15s, color .15s, border-color .15s;
-}
-.cf[hidden] { display: none; }
-.cf-flag { display: block; border-radius: 2px; }
-.cf.active {
-  background: var(--navy);
-  border-color: var(--navy);
-  color: white;
-  font-weight: 500;
-}
-@media (hover: hover) and (pointer: fine) {
-  .cf:not(.active):hover { border-color: var(--gold); color: var(--navy); }
-}
-.cf:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-
-@media (max-width: 640px) {
-  /* Comme les filtres par type : une rangée qui défile latéralement, plutôt
-     qu'un pavé de boutons qui repousserait la timeline vers le bas. */
-  .country-filters {
-    gap: 6px;
-    width: 100%;
-    max-width: 100%;
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    padding-bottom: 4px;
-  }
-  .cf { padding: 8px 12px; font-size: 13.5px; flex-shrink: 0; }
-}
-
 /* Message quand aucun office ne correspond aux filtres du jour */
 .tl-vide {
   display: flex;
@@ -9992,13 +9941,66 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
     align-self: flex-start;
   }
   .prayer-filters { position: static; width: 100%; top: auto; }
-  /* Pays en colonne, comme les types : boutons pleine largeur */
-  .country-filters {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 5px;
-    margin-bottom: 14px;
-  }
-  .country-filters .cf { justify-content: flex-start; }
-  .cf-label { margin: 0 0 2px; }
 }
+
+
+/* ═══════════════════════════════════════════════
+   NAVIGATION ENTRE LES JOURS — onglet « Aujourd'hui »
+   Deux flèches discrètes de part et d'autre de la date, pour consulter
+   les jours suivants sans passer par la vue Semaine.
+═══════════════════════════════════════════════ */
+.day-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: -10px;      /* la flèche gauche ne décale pas la date */
+}
+.day-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  color: var(--text-soft);
+  font-size: 14px;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.day-arrow[hidden] { display: none; }
+/* Zone de contact portée à 44 px sans grossir le dessin */
+.day-arrow { position: relative; }
+.day-arrow::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+}
+@media (hover: hover) and (pointer: fine) {
+  .day-arrow:hover { background: rgba(201,168,76,.16); color: var(--navy); }
+}
+.day-arrow:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+.day-today-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  margin-top: 6px;
+  padding: 8px 16px;
+  background: var(--navy);
+  color: var(--cream);
+  border: none;
+  border-radius: 999px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 14px;
+  cursor: pointer;
+}
+.day-today-btn[hidden] { display: none; }
+.day-today-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }

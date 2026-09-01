@@ -127,8 +127,7 @@ function initFilters() {
     let visibles = 0;
     document.querySelectorAll('.tl-item').forEach(item => {
       const okType = showAll || active.has(item.dataset.type);
-      const okPays = PaysFiltre.actif === 'all' || item.dataset.country === PaysFiltre.actif;
-      const show = okType && okPays;
+      const show = okType;
       item.style.display = show ? '' : 'none';
       if (show) { item.style.animation = 'fadeIn .2s ease'; visibles++; }
     });
@@ -159,80 +158,26 @@ function initFilters() {
       bloc.className = 'tl-vide';
       container.prepend(bloc);
       bloc.addEventListener('click', e => {
-        // Afficher les offices déjà passés
-        if (e.target.closest('#tl-vide-passes')) {
-          document.getElementById('tl-past-toggle')?.click();
-          applyFilters();
-          return;
-        }
-        // Revenir à tous les pays
-        if (!e.target.closest('#tl-vide-reset')) return;
-        PaysFiltre.actif = 'all';
-        try { localStorage.setItem(PaysFiltre.KEY, 'all'); } catch (_) {}
-        syncPaysBtns();
+        if (!e.target.closest('#tl-vide-passes')) return;
+        document.getElementById('tl-past-toggle')?.click();
         applyFilters();
       });
     }
-
-    const pays = document.querySelector('.cf.active')?.textContent.trim() || '';
-    const pourPays = PaysFiltre.actif !== 'all' ? ` pour «&nbsp;${pays}&nbsp;»` : '';
 
     bloc.innerHTML = toutPasse
       ? `<i class="fa-solid fa-circle-info"></i> ` +
-        `<span>Tous les offices correspondants${pourPays} sont déjà passés aujourd'hui.</span> ` +
+        `<span>Tous les offices correspondants sont déjà passés aujourd'hui.</span> ` +
         `<button type="button" id="tl-vide-passes">Les afficher quand même</button>`
       : `<i class="fa-solid fa-circle-info"></i> ` +
-        `<span>Aucun office ne correspond à ces filtres aujourd'hui${pourPays}.</span>` +
-        (PaysFiltre.actif !== 'all' ? ` <button type="button" id="tl-vide-reset">Voir tous les pays</button>` : '');
+        `<span>Aucun office ne correspond à ces filtres aujourd'hui.</span>`;
   }
 
-  function syncPaysBtns() {
-    document.querySelectorAll('.cf').forEach(b => {
-      b.classList.toggle('active', b.dataset.country === PaysFiltre.actif);
-      b.setAttribute('aria-pressed', String(b.dataset.country === PaysFiltre.actif));
-    });
-  }
-
-  function initPaysFilter() {
-    const barre = document.getElementById('country-filters');
-    if (!barre) return;
-    PaysFiltre.init();
-
-    // La barre ne s'affiche que si plusieurs pays sont réellement proposés
-    // aujourd'hui — inutile de montrer un choix qui n'en est pas un.
-    const presents = new Set([...document.querySelectorAll('.tl-item')].map(i => i.dataset.country));
-    barre.hidden = presents.size < 2;
-    if (barre.hidden) return;
-
-    // On masque les pays sans aucun office aujourd'hui
-    barre.querySelectorAll('.cf').forEach(b => {
-      const c = b.dataset.country;
-      b.hidden = c !== 'all' && !presents.has(c);
-    });
-    if (PaysFiltre.actif !== 'all' && !presents.has(PaysFiltre.actif)) PaysFiltre.actif = 'all';
-
-    syncPaysBtns();
-    if (PaysFiltre.suggere) { PaysFiltre.suggere = false; try { localStorage.setItem(PaysFiltre.KEY, PaysFiltre.actif); } catch (_) {} }
-
-    if (!barre.dataset.bound) {
-      barre.dataset.bound = '1';
-      barre.addEventListener('click', e => {
-        const b = e.target.closest('.cf');
-        if (!b) return;
-        PaysFiltre.actif = b.dataset.country;
-        try { localStorage.setItem(PaysFiltre.KEY, PaysFiltre.actif); } catch (_) {}
-        syncPaysBtns();
-        applyFilters();
-      });
-    }
-  }
-  window._pelInitPaysFilter = initPaysFilter;
 
   // Exposé pour ré-appliquer le filtre après (re)génération de la timeline,
   // qui peut survenir APRÈS initFilters (items injectés dynamiquement).
   // La timeline peut être régénérée après coup : on recalcule alors les pays
   // réellement présents avant de réappliquer le filtrage.
-  window._pelApplyFilters = () => { initPaysFilter(); applyFilters(); };
+  window._pelApplyFilters = applyFilters;
   // Exposé pour l'onboarding des nouveaux inscrits : applique + persiste
   // (local et compte) un jeu de favoris choisi hors de ce module.
   window._pelSetOfficeFilters = arr => {
@@ -276,7 +221,6 @@ function initFilters() {
 
   // État initial (boutons + filtrage) selon la sélection restaurée
   syncButtons();
-  initPaysFilter();
   applyFilters();
 }
 
@@ -293,25 +237,84 @@ function getParisDate() {
 /* ────────────────────────────────────────────
    3. DATE AUTOMATIQUE
 ──────────────────────────────────────────────*/
+/* ────────────────────────────────────────────
+   JOUR CONSULTÉ — navigation par flèches
+   L'onglet « Aujourd'hui » montrait uniquement le jour même. On peut
+   désormais avancer d'un jour à l'autre sans passer par la vue Semaine.
+   Borné à une semaine : au-delà, c'est la vue Semaine qui sert.
+──────────────────────────────────────────────*/
+let jourOffset = 0;
+const JOUR_OFFSET_MAX = 6;
+
+function jourAffiche() {
+  const d = getParisDate();
+  d.setDate(d.getDate() + jourOffset);
+  return d;
+}
+
+function changerJour(delta) {
+  const n = Math.min(JOUR_OFFSET_MAX, Math.max(0, jourOffset + delta));
+  if (n === jourOffset) return;
+  jourOffset = n;
+  try { initDate(); } catch (_) {}
+  try { initTodayTimeline(); } catch (_) {}
+  try { window._pelApplyFilters?.(); } catch (_) {}
+  try { window._pelUpdateBadges?.(); } catch (_) {}
+  document.getElementById('timeline')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function initDate() {
-  const now    = getParisDate();
+  const now    = jourAffiche();
   const days   = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
   const months = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
   const label  = `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
   const el = document.getElementById('js-date');
   if (el) el.textContent = label;
+
+  // Flèches : on ne recule pas avant aujourd'hui, on ne dépasse pas la semaine.
+  const prev = document.getElementById('day-prev');
+  const next = document.getElementById('day-next');
+  const back = document.getElementById('day-today');
+  if (prev) prev.hidden = jourOffset === 0;
+  if (next) next.hidden = jourOffset >= JOUR_OFFSET_MAX;
+  if (back) back.hidden = jourOffset === 0;
+
+  if (!document.body.dataset.jourNavPret) {
+    document.body.dataset.jourNavPret = '1';
+    prev?.addEventListener('click', () => changerJour(-1));
+    next?.addEventListener('click', () => changerJour(1));
+    back?.addEventListener('click', () => changerJour(-jourOffset));
+  }
+  // Sur un autre jour, le saint doit suivre : afficher celui d'aujourd'hui
+  // sous une autre date induirait en erreur. On le recharge donc à chaque
+  // changement, sans attendre le délai de secours.
+  const fe = document.getElementById('js-feast');
+  if (jourOffset !== 0) {
+    if (fe) fe.textContent = '…';
+    const pill = document.getElementById('js-feast-type');
+    if (pill) pill.textContent = '—';
+    fetch(`/api/nominis?day=${now.getDate()}&month=${now.getMonth() + 1}&year=${now.getFullYear()}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => {
+        const cur = document.getElementById('js-feast');
+        if (cur) cur.textContent = d?.nom || '—';
+      })
+      .catch(() => { const cur = document.getElementById('js-feast'); if (cur) cur.textContent = '—'; });
+    return;
+  }
+
   // Feast display handled by initCalendar() → renderCalendar()
   // Fallback : si le bandeau reste à « — » après 800 ms (pas de saint curated pour aujourd'hui),
   // on tente une enrichissement direct via Nominis (n'attend pas la nav vers l'onglet Mois).
   setTimeout(() => {
-    const fe = document.getElementById('js-feast');
-    if (!fe || (fe.textContent && fe.textContent !== '—')) return;
+    const f = document.getElementById('js-feast');
+    if (!f || (f.textContent && f.textContent !== '—' && f.textContent !== '…')) return;
     fetch(`/api/nominis?day=${now.getDate()}&month=${now.getMonth() + 1}&year=${now.getFullYear()}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         if (!d?.nom) return;
         const cur = document.getElementById('js-feast');
-        if (cur && (!cur.textContent || cur.textContent === '—')) cur.textContent = d.nom;
+        if (cur && (!cur.textContent || cur.textContent === '—' || cur.textContent === '…')) cur.textContent = d.nom;
       })
       .catch(() => {});
   }, 800);
@@ -6209,65 +6212,11 @@ function downloadICS(filename, ics) {
   setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 200);
 }
 
-/* ────────────────────────────────────────────
-   PAYS D'UN CRÉNEAU — pour le filtre de l'onglet « Aujourd'hui »
-   Même règle que la vue Semaine : une source française suffit à classer
-   le créneau en « fr » ; sinon on retient la première nationalité
-   rencontrée. Les sources sans indicatif « f » sont françaises.
-──────────────────────────────────────────────*/
-function entryCountry(entry) {
-  let etranger = null;
-  for (const key of (entry && entry.srcs) || []) {
-    const src = SOURCES[key];
-    if (!src) continue;
-    if (!src.f) return 'fr';
-    if (!etranger) etranger = src.f;
-  }
-  return etranger || 'fr';
-}
-
-/* Pays déduit du fuseau horaire de l'appareil, pour proposer d'emblée les
-   sources du visiteur. Le site connaissait déjà son fuseau (il l'affiche
-   dans la bannière d'horaires) sans jamais s'en servir pour les sources. */
-const TZ_PAYS = {
-  'Europe/Brussels': 'be',
-  'Europe/Zurich': 'ch', 'Europe/Bern': 'ch', 'Europe/Geneva': 'ch',
-  'America/Toronto': 'ca', 'America/Montreal': 'ca', 'America/Halifax': 'ca',
-  'America/Winnipeg': 'ca', 'America/Edmonton': 'ca', 'America/Vancouver': 'ca',
-  'Africa/Abidjan': 'ci',
-};
-function paysDuVisiteur() {
-  try { return TZ_PAYS[_userTimezone()] || null; }
-  catch (_) { return null; }
-}
-
-/* État du filtre par pays — volontairement HORS de initFilters().
-   Cette fonction est appelée deux fois (au chargement, puis après la mise à
-   jour du planning) : un état gardé dans sa portée aurait été dupliqué, et
-   le clic sur un pays aurait modifié une instance pendant que les filtres
-   par type en consultaient une autre. */
-const PaysFiltre = {
-  KEY: 'pel_office_country',
-  actif: 'all',
-  suggere: false,
-  init() {
-    if (this._pret) return;
-    this._pret = true;
-    try { this.actif = localStorage.getItem(this.KEY) || 'all'; } catch (_) {}
-    // Première visite : on propose d'emblée le pays du visiteur, déduit de
-    // son fuseau. Il reste libre de revenir à « Tous ».
-    if (this.actif === 'all') {
-      const p = paysDuVisiteur();
-      if (p) { this.actif = p; this.suggere = true; }
-    }
-  },
-};
-
 function initTodayTimeline() {
   const container = document.getElementById('timeline');
   if (!container) return;
 
-  const now  = getParisDate();
+  const now  = jourAffiche();
   const dow  = now.getDay();
   const slots = getDaySchedule(now);
 
@@ -6436,7 +6385,6 @@ function initTodayTimeline() {
     art.dataset.label    = slot.label;
     art.dataset.desc     = slot.desc || '';
     art.dataset.slotId   = tlSlotId;
-    art.dataset.country  = entryCountry(entry);
     art.innerHTML = `
       <div class="tl-time">
         <span class="tl-time-h">${esc(timeInfo.display)}</span>
@@ -6852,6 +6800,17 @@ function initBadges() {
       if (!badgeEl) return;
 
       let label, cls;
+
+      // Jour futur : ni « En direct » ni compte à rebours, qui se rapportent
+      // à l'instant présent. On affiche simplement l'heure de début.
+      if (jourOffset > 0) {
+        const hStr = String(sh);
+        const mStr = sm > 0 ? String(sm).padStart(2, '0') : '00';
+        badgeEl.textContent = `À ${hStr}h${mStr === '00' ? '' : mStr}`;
+        badgeEl.className = 'tl-badge badge-later';
+        item.classList.remove('tl-past');
+        return;
+      }
 
       if (nowMin >= endMin) {
         // ── Terminé ──
