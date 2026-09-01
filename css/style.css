@@ -10004,3 +10004,32 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
 }
 .day-today-btn[hidden] { display: none; }
 .day-today-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+
+/* ═══════════════════════════════════════════════
+   COUVERTURE DE LA BIBLE — une seule, donc plus grande
+   La règle mobile dimensionnait encore la couverture au tiers de la
+   largeur, héritage des trois Bibles proposées autrefois. Seule, elle
+   devenait minuscule : la croix, élément flex, se comprimait à 10 px
+   tandis que ses barres en position absolue gardaient 36 px — elles
+   débordaient donc de 27 px sur « LA SAINTE / BIBLE ».
+═══════════════════════════════════════════════ */
+.bible-cover-cross {
+  flex-shrink: 0;   /* ne doit jamais se comprimer : ses barres déborderaient */
+}
+.bible-cover-title-block { flex-shrink: 0; }
+
+@media (max-width: 640px) {
+  .bible-shelf-single .bible-cover {
+    width: 175px;
+    max-width: 62vw;
+    aspect-ratio: 175 / 240;
+    height: auto;
+    flex: 0 0 auto;
+  }
+  /* La couverture retrouvant sa taille, le texte reprend ses proportions */
+  .bible-shelf-single .bible-cover-bible   { font-size: 30px; }
+  .bible-shelf-single .bible-cover-version { font-size: 13px; }
+  .bible-shelf-single .bible-cover-the,
+  .bible-shelf-single .bible-cover-year    { font-size: 9px; }
+}
