@@ -567,6 +567,215 @@ export default async function handler(req, res) {
     return;
   }
 
+  /* ── Comment prier une neuvaine ────────────────────────────────────
+     Deuxième page-pilier. Sujet très cherché, et qui ramène le lecteur
+     neuf jours de suite. Un point pastoral y est traité franchement :
+     la neuvaine n'est pas une formule magique — c'est la dérive la plus
+     courante sur ce thème, et la taire serait manquer à l'honnêteté. */
+  if (p === 'neuvaine-guide') {
+    const canonical = `${SITE}/comment-prier-une-neuvaine`;
+    const title = "Comment prier une neuvaine — guide simple et complet | PrionsEnLigne";
+    const desc = "Prier une neuvaine pas à pas : ce que c'est, comment s'y prendre, les grandes neuvaines de l'année et celles que l'on demande le plus. Que faire si l'on oublie un jour.";
+
+    const ETAPES = [
+      ['Choisir votre intention', "Une seule, et clairement formulée&nbsp;: une guérison, un travail, une réconciliation, une décision à prendre. Neuf jours sur une intention précise valent mieux que neuf jours de demandes vagues."],
+      ['Choisir à qui vous vous adressez', "À l'Esprit Saint, à la Vierge Marie, ou à un saint dont l'histoire rejoint votre intention. La page vous en propose plus bas."],
+      ['Fixer un moment', "Le même chaque jour si possible&nbsp;: au lever, à midi, avant de dormir. C'est la régularité qui porte la neuvaine, bien plus que la longueur de la prière."],
+      ['Prier neuf jours de suite', "La même prière chaque jour, à laquelle on ajoute son intention. Beaucoup y joignent une dizaine de chapelet, une messe ou un petit sacrifice."],
+      ['Terminer par l\'action de grâce', "Le neuvième jour, on remercie — quelle que soit la réponse reçue, et même si elle se fait attendre. C'est ce qui distingue la prière de la transaction."],
+    ];
+
+    const GRANDES = [
+      ['À l\'Esprit Saint', "De l'Ascension à la Pentecôte", "La neuvaine originelle&nbsp;: celle des apôtres réunis au Cénacle avec Marie. La seule inscrite dans le calendrier liturgique lui-même."],
+      ['De Noël', '16 au 24 décembre', "Les neuf jours qui préparent la Nativité, souvent priés en famille autour de la crèche."],
+      ['De l\'Immaculée Conception', '30 novembre au 8 décembre', "Prépare la fête du 8 décembre, très suivie à Lyon et dans toute la francophonie."],
+      ['À la Divine Miséricorde', 'Du Vendredi saint au samedi suivant', "Demandée par le Christ à sainte Faustine, elle s'achève au dimanche de la Miséricorde."],
+      ['De l\'Assomption', '7 au 15 août', "Prépare la grande fête mariale du 15 août."],
+      ['À Notre-Dame de Lourdes', '3 au 11 février', "Priée pour les malades, en union avec le sanctuaire."],
+    ];
+
+    const SAINTS = [
+      ['Sainte Rita', '22 mai', "Les causes difficiles et les situations qui semblent sans issue. La plus demandée de toutes."],
+      ['Saint Jude', '28 octobre', "Les causes désespérées, quand tout a déjà été tenté."],
+      ['Saint Antoine de Padoue', '13 juin', "Les objets perdus, mais aussi les décisions à prendre et les pauvres."],
+      ['Sainte Thérèse de l\'Enfant-Jésus', '1<sup>er</sup> octobre', "La confiance et l'abandon. Sa neuvaine dite « aux roses » est très répandue."],
+      ['Saint Joseph', '19 mars', "Le travail, la famille, et la grâce d'une bonne mort."],
+      ['Saint Padre Pio', '23 septembre', "La souffrance, les malades et la confession."],
+    ];
+
+    const FAQ = [
+      ['Faut-il commencer un jour précis&nbsp;?',
+       "Non, sauf pour les neuvaines liées à une fête, qui se terminent la veille de celle-ci. Pour toutes les autres, on commence le jour où l'on décide de commencer."],
+      ["Et si j'oublie un jour&nbsp;?",
+       "Ce n'est pas grave et il n'y a rien à «&nbsp;annuler&nbsp;». Reprenez le lendemain, ou recommencez si vous préférez. Une neuvaine n'est pas un mécanisme qui se dérègle&nbsp;: c'est une prière."],
+      ['Est-ce que ça marche&nbsp;?',
+       "C'est la question qu'il faut se poser franchement. La neuvaine n'est pas une formule qui obligerait Dieu&nbsp;: la prière n'agit pas comme une mécanique, et croire qu'un nombre de jours produirait un résultat relèverait de la superstition, non de la foi. Ce que la neuvaine change à coup sûr, c'est celui qui prie&nbsp;: elle apprend la persévérance, et elle place l'intention devant Dieu jour après jour. La réponse, elle, lui appartient — et prend souvent une forme que l'on n'attendait pas."],
+      ['Peut-on prier pour quelqu\'un d\'autre&nbsp;?',
+       "Oui, et c'est même l'usage le plus fréquent&nbsp;: on prie pour un malade, un proche éloigné de la foi, un couple en difficulté. La personne n'a pas besoin d'être au courant."],
+      ['Peut-on en prier plusieurs à la fois&nbsp;?',
+       "Rien ne l'interdit, mais mieux vaut une neuvaine tenue jusqu'au bout que trois commencées et abandonnées."],
+      ['Faut-il une prière particulière&nbsp;?',
+       "Non. Un Notre Père, un Je vous salue Marie et votre intention formulée avec vos mots suffisent. Les textes propres à chaque saint sont une aide, jamais une obligation."],
+    ];
+
+    const etapesHtml = ETAPES.map(([nom, txt], i) => `
+        <li class="et">
+          <span class="et-n">${i + 1}</span>
+          <div><h3 class="et-t">${nom}</h3><p class="et-d">${txt}</p></div>
+        </li>`).join('');
+
+    const grandesHtml = GRANDES.map(([nom, quand, txt]) => `
+        <article class="nv">
+          <div class="nv-quand">${quand}</div>
+          <h3 class="nv-nom">Neuvaine ${nom.charAt(0).toLowerCase() + nom.slice(1)}</h3>
+          <p class="nv-txt">${txt}</p>
+        </article>`).join('');
+
+    const saintsHtml = SAINTS.map(([nom, fete, pour]) => `
+        <tr><th scope="row">${nom}</th><td class="st-f">${fete}</td><td class="st-p">${pour}</td></tr>`).join('');
+
+    const faqHtml = FAQ.map(([q, r]) => `
+        <div class="fq"><h3 class="fq-q">${q}</h3><p class="fq-r">${r}</p></div>`).join('');
+
+    const bodyHtml = `
+      <style>
+        .cg-lede{font-family:var(--serif);font-size:19px;line-height:1.6;color:var(--navy);margin:-4px 0 26px}
+        .cg h2{font-family:var(--serif);font-size:26px;color:var(--navy);margin:38px 0 6px}
+        .cg-note{margin:0 0 18px;color:var(--soft);font-size:14.5px}
+        .cg p{max-width:65ch}
+        .et-list{list-style:none;margin:18px 0 0;padding:0}
+        .et{display:flex;gap:14px;padding:0 0 18px}
+        .et-n{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:var(--navy);color:#fff;
+          display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px}
+        .et-t{font-family:var(--serif);font-size:20px;color:var(--navy);margin:2px 0 4px}
+        .et-d{margin:0;font-size:16px;line-height:1.6}
+        .nv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-top:16px}
+        .nv{background:#fff;border:1px solid rgba(0,0,0,.07);border-top:3px solid var(--gold);border-radius:9px;padding:16px 18px}
+        .nv-quand{font-size:12.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--soft)}
+        .nv-nom{font-family:var(--serif);font-size:19px;color:var(--navy);margin:3px 0 7px}
+        .nv-txt{margin:0;font-size:15.5px;line-height:1.55;color:var(--soft)}
+        .st-wrap{overflow-x:auto}
+        table.st{border-collapse:collapse;width:100%;min-width:460px;margin-top:14px;font-size:15.5px}
+        table.st th,table.st td{text-align:left;padding:11px 12px;border-bottom:1px solid rgba(0,0,0,.08);vertical-align:top}
+        table.st th{font-weight:600;color:var(--navy);white-space:nowrap}
+        .st-f{white-space:nowrap;color:var(--gold);font-weight:600}
+        .st-p{color:var(--soft);font-size:15px}
+        .fq{padding:14px 0;border-bottom:1px solid rgba(0,0,0,.08)}
+        .fq:last-of-type{border-bottom:none}
+        .fq-q{font-family:var(--serif);font-size:19px;color:var(--navy);margin:0 0 5px}
+        .fq-r{margin:0;font-size:16px;line-height:1.6;color:var(--soft)}
+        .cg-tip{background:rgba(201,168,76,.1);border-radius:8px;padding:16px 20px;margin-top:22px;font-size:16px;line-height:1.6}
+        .cg-tip strong{color:var(--navy)}
+        .cg-cta{background:var(--navy);border-radius:12px;padding:24px 22px;margin:32px 0 0;text-align:center}
+        .cg-cta h2{color:#fff;margin:0 0 8px;font-size:24px}
+        .cg-cta p{color:rgba(255,255,255,.82);font-size:16px;margin:0 auto 18px;max-width:46ch}
+        .cg-cta a{display:inline-flex;align-items:center;gap:9px;background:var(--gold);color:var(--navy);
+          font-weight:600;font-size:16px;padding:13px 26px;border-radius:999px;text-decoration:none;min-height:44px}
+        .cg-apres{font-size:14.5px;color:var(--soft);text-align:center;margin:16px 0 0;line-height:1.6}
+        .cg-apres a{color:var(--navy)}
+      </style>
+
+      <div class="cg">
+        <p class="cg-lede">
+          Une neuvaine, c'est prier neuf jours de suite pour une même intention. Rien de
+          compliqué, rien à savoir par cœur&nbsp;: il faut surtout de la constance — et
+          c'est précisément ce qu'elle vient former en nous.
+        </p>
+
+        <h2>D'où viennent ces neuf jours</h2>
+        <p>
+          Le modèle est dans les Actes des Apôtres. Après l'Ascension, les apôtres retournent
+          à Jérusalem et se retirent au Cénacle avec Marie, «&nbsp;assidus à la prière&nbsp;».
+          Neuf jours plus tard, à la Pentecôte, l'Esprit Saint descend sur eux.
+        </p>
+        <p>
+          Toutes les neuvaines reprennent cette attente de neuf jours. La forme s'est répandue
+          au Moyen Âge, puis largement à partir du XVII<sup>e</sup> siècle.
+        </p>
+
+        <h2>Comment s'y prendre</h2>
+        <p class="cg-note">Cinq étapes, et rien d'autre.</p>
+        <ul class="et-list">${etapesHtml}</ul>
+
+        <h2>Les grandes neuvaines de l'année</h2>
+        <p class="cg-note">Celles qui préparent une fête, et se terminent donc à date fixe.</p>
+        <div class="nv-grid">${grandesHtml}</div>
+
+        <h2>Les saints le plus souvent invoqués</h2>
+        <p class="cg-note">
+          On s'adresse volontiers à un saint dont la vie fait écho à ce que l'on traverse.
+          Rien n'oblige à choisir dans cette liste.
+        </p>
+        <div class="st-wrap">
+          <table class="st">
+            <thead><tr><th scope="col">Saint</th><th scope="col">Fête</th><th scope="col">Invoqué pour</th></tr></thead>
+            <tbody>${saintsHtml}</tbody>
+          </table>
+        </div>
+
+        <h2>Questions fréquentes</h2>
+        <p class="cg-note">Y compris celle que l'on n'ose pas toujours poser.</p>
+        ${faqHtml}
+
+        <div class="cg-tip">
+          <strong>Si vous débutez&nbsp;:</strong> choisissez une intention qui vous tient
+          vraiment à cœur, et une prière courte. Trois minutes tenues neuf jours valent mieux
+          qu'un quart d'heure abandonné au troisième.
+        </div>
+
+        <div class="cg-cta">
+          <h2>Prier pendant votre neuvaine</h2>
+          <p>
+            Beaucoup joignent une dizaine de chapelet à leur prière quotidienne. Le chapelet
+            guidé du site vous accompagne grain par grain, en mode tactile ou en audio.
+          </p>
+          <a href="/agenda#open-chapelet">Ouvrir le chapelet</a>
+        </div>
+
+        <p class="cg-apres">
+          Certains aiment tenir un support écrit pendant les neuf jours&nbsp;:
+          <a href="/comment-prier-le-chapelet">notre guide du chapelet</a> peut y aider, et
+          des carnets de neuvaines à imprimer existent sur
+          <a href="https://www.etsy.com/shop/FatimaLightCo" target="_blank" rel="noopener">la boutique</a>.
+        </p>
+      </div>`;
+
+    const propre = s => String(s).replace(/&nbsp;/g, ' ').replace(/<[^>]+>/g, '').trim();
+    const jsonLd = JSON.stringify([
+      {
+        '@context': 'https://schema.org',
+        '@type': 'HowTo',
+        name: 'Comment prier une neuvaine',
+        description: desc,
+        inLanguage: 'fr',
+        totalTime: 'P9D',
+        step: ETAPES.map(([nom, txt], i) => ({
+          '@type': 'HowToStep', position: i + 1, name: nom, text: propre(txt),
+        })),
+        mainEntityOfPage: canonical,
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        inLanguage: 'fr',
+        mainEntity: FAQ.map(([q, r]) => ({
+          '@type': 'Question',
+          name: propre(q),
+          acceptedAnswer: { '@type': 'Answer', text: propre(r) },
+        })),
+      },
+    ]);
+
+    res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800');
+    res.status(200).send(pageShell({
+      title, desc, canonical,
+      h1: 'Comment prier une neuvaine',
+      sub: 'Neuf jours pour une intention — un guide simple',
+      bodyHtml, jsonLd,
+    }));
+    return;
+  }
+
   /* ── Comment prier le chapelet ─────────────────────────────────────
      Page durable sur le sujet le plus cherché du domaine. Elle renvoie
      au chapelet numérique du site, sa fonction la plus aboutie.

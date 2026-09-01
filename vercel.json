@@ -93,6 +93,10 @@
       "destination": "/api/seo?p=chapelet-guide"
     },
     {
+      "source": "/comment-prier-une-neuvaine",
+      "destination": "/api/seo?p=neuvaine-guide"
+    },
+    {
       "source": "/affiche",
       "destination": "/api/seo?p=affiche"
     }
