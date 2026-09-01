@@ -594,13 +594,15 @@ export default async function handler(req, res) {
       ['À Notre-Dame de Lourdes', '3 au 11 février', "Priée pour les malades, en union avec le sanctuaire."],
     ];
 
+    // Chacun renvoie à sa fiche : le lecteur qui choisit un saint veut
+    // souvent savoir qui il était avant de le prier neuf jours durant.
     const SAINTS = [
-      ['Sainte Rita', '22 mai', "Les causes difficiles et les situations qui semblent sans issue. La plus demandée de toutes."],
-      ['Saint Jude', '28 octobre', "Les causes désespérées, quand tout a déjà été tenté."],
-      ['Saint Antoine de Padoue', '13 juin', "Les objets perdus, mais aussi les décisions à prendre et les pauvres."],
-      ['Sainte Thérèse de l\'Enfant-Jésus', '1<sup>er</sup> octobre', "La confiance et l'abandon. Sa neuvaine dite « aux roses » est très répandue."],
-      ['Saint Joseph', '19 mars', "Le travail, la famille, et la grâce d'une bonne mort."],
-      ['Saint Padre Pio', '23 septembre', "La souffrance, les malades et la confession."],
+      ['Sainte Rita', 'sainte-rita-de-cascia', '22 mai', "Les causes difficiles et les situations qui semblent sans issue. La plus demandée de toutes."],
+      ['Saint Jude', 'saint-jude-thaddee', '28 octobre', "Les causes désespérées, quand tout a déjà été tenté."],
+      ['Saint Antoine de Padoue', 'saint-antoine-de-padoue', '13 juin', "Les objets perdus, mais aussi les décisions à prendre et les pauvres."],
+      ['Sainte Thérèse de l\'Enfant-Jésus', 'sainte-therese-de-lisieux', '1<sup>er</sup> octobre', "La confiance et l'abandon. Sa neuvaine dite « aux roses » est très répandue."],
+      ['Saint Joseph', 'saint-joseph', '19 mars', "Le travail, la famille, et la grâce d'une bonne mort."],
+      ['Saint Padre Pio', 'saint-padre-pio', '23 septembre', "La souffrance, les malades et la confession."],
     ];
 
     const FAQ = [
@@ -631,8 +633,8 @@ export default async function handler(req, res) {
           <p class="nv-txt">${txt}</p>
         </article>`).join('');
 
-    const saintsHtml = SAINTS.map(([nom, fete, pour]) => `
-        <tr><th scope="row">${nom}</th><td class="st-f">${fete}</td><td class="st-p">${pour}</td></tr>`).join('');
+    const saintsHtml = SAINTS.map(([nom, slug, fete, pour]) => `
+        <tr><th scope="row"><a href="/saints/${slug}">${nom}</a></th><td class="st-f">${fete}</td><td class="st-p">${pour}</td></tr>`).join('');
 
     const faqHtml = FAQ.map(([q, r]) => `
         <div class="fq"><h3 class="fq-q">${q}</h3><p class="fq-r">${r}</p></div>`).join('');
@@ -658,6 +660,7 @@ export default async function handler(req, res) {
         table.st{border-collapse:collapse;width:100%;min-width:460px;margin-top:14px;font-size:15.5px}
         table.st th,table.st td{text-align:left;padding:11px 12px;border-bottom:1px solid rgba(0,0,0,.08);vertical-align:top}
         table.st th{font-weight:600;color:var(--navy);white-space:nowrap}
+        table.st th a{color:var(--navy);text-decoration-thickness:1px;text-underline-offset:2px}
         .st-f{white-space:nowrap;color:var(--gold);font-weight:600}
         .st-p{color:var(--soft);font-size:15px}
         .fq{padding:14px 0;border-bottom:1px solid rgba(0,0,0,.08)}
