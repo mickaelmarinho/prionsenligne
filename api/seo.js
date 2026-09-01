@@ -634,7 +634,11 @@ export default async function handler(req, res) {
         </article>`).join('');
 
     const saintsHtml = SAINTS.map(([nom, slug, fete, pour]) => `
-        <tr><th scope="row"><a href="/saints/${slug}">${nom}</a></th><td class="st-f">${fete}</td><td class="st-p">${pour}</td></tr>`).join('');
+        <tr>
+          <th scope="row"><a href="/saints/${slug}">${nom}</a></th>
+          <td class="st-f" data-lbl="Fête">${fete}</td>
+          <td class="st-p" data-lbl="Invoqué pour">${pour}</td>
+        </tr>`).join('');
 
     const faqHtml = FAQ.map(([q, r]) => `
         <div class="fq"><h3 class="fq-q">${q}</h3><p class="fq-r">${r}</p></div>`).join('');
@@ -663,6 +667,19 @@ export default async function handler(req, res) {
         table.st th a{color:var(--navy);text-decoration-thickness:1px;text-underline-offset:2px}
         .st-f{white-space:nowrap;color:var(--gold);font-weight:600}
         .st-p{color:var(--soft);font-size:15px}
+        /* Sur téléphone, le tableau devenait plus large que l'écran : il
+           fallait le faire glisser de côté pour lire « Invoqué pour ».
+           Chaque saint devient donc un bloc, sans défilement latéral. */
+        @media (max-width:640px){
+          .st-wrap{overflow-x:visible}
+          table.st,table.st tbody,table.st tr,table.st th,table.st td{display:block;width:auto;min-width:0}
+          table.st thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+          table.st tr{background:#fff;border:1px solid rgba(0,0,0,.07);border-radius:9px;padding:14px 16px;margin-bottom:12px}
+          table.st th,table.st td{border-bottom:none;padding:0;white-space:normal}
+          table.st th{font-family:var(--serif);font-size:19px;margin-bottom:3px}
+          .st-f{font-size:13px;letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px}
+          .st-p::before{content:attr(data-lbl) " : ";font-weight:600;color:var(--navy)}
+        }
         .fq{padding:14px 0;border-bottom:1px solid rgba(0,0,0,.08)}
         .fq:last-of-type{border-bottom:none}
         .fq-q{font-family:var(--serif);font-size:19px;color:var(--navy);margin:0 0 5px}
@@ -1155,7 +1172,11 @@ export default async function handler(req, res) {
         </article>`).join('');
 
     const famHtml = FAMILLES.map(([nom, nb, note]) => `
-        <tr><th scope="row">${nom}</th><td class="fam-n">${nb}</td><td class="fam-d">${note}</td></tr>`).join('');
+        <tr>
+          <th scope="row">${nom}</th>
+          <td class="fam-n" data-lbl="Fidèles">${nb}</td>
+          <td class="fam-d" data-lbl="En bref">${note}</td>
+        </tr>`).join('');
 
     const debatsHtml = DEBATS.map(([nom, pour, contre]) => `
         <article class="deb">
@@ -1227,6 +1248,18 @@ export default async function handler(req, res) {
         table.fam th{font-weight:600;color:var(--navy);white-space:nowrap}
         .fam-n{white-space:nowrap;color:var(--gold);font-weight:600}
         .fam-d{color:var(--soft);font-size:14.5px}
+        /* Même traitement que le guide des neuvaines : en dessous de 640 px,
+           le tableau dépassait de l'écran et imposait un défilement latéral.
+           Chaque famille devient un bloc lisible d'un seul tenant. */
+        @media (max-width:640px){
+          .fam-wrap{overflow-x:visible}
+          table.fam,table.fam tbody,table.fam tr,table.fam th,table.fam td{display:block;width:auto;min-width:0}
+          table.fam thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+          table.fam tr{background:#fff;border:1px solid rgba(0,0,0,.07);border-radius:9px;padding:14px 16px;margin-bottom:12px}
+          table.fam th,table.fam td{border-bottom:none;padding:0;white-space:normal}
+          table.fam th{font-family:var(--serif);font-size:19px;margin-bottom:3px}
+          .fam-n{font-size:15px;margin-bottom:6px}
+        }
         .hx-end{background:rgba(201,168,76,.1);border-radius:8px;padding:18px 20px;margin-top:34px;font-size:16px;line-height:1.65}
         .hx-end strong{color:var(--navy)}
         /* Arbre des branches — tronc vertical, branches vers la droite.
