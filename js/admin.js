@@ -190,7 +190,96 @@
       </div>
     `;
   }
-  let _adminTab = 'mod'; // 'mod' | 'planning'
+  let _adminTab = 'mod'; // 'mod' | 'planning' | 'inscrits'
+
+  /* ── Inscrits ────────────────────────────────────────────────────
+     auth.users n'est pas lisible depuis le navigateur, et c'est tant
+     mieux. On appelle une fonction SECURITY DEFINER qui vérifie le
+     drapeau is_admin du jeton et ne renvoie que des agrégats.
+     Cf. supabase/admin_user_stats.sql — à exécuter une fois. */
+  async function loadInscrits(sb) {
+    if (!sb) return { erreur: 'nosb' };
+    const { data, error } = await sb.rpc('admin_user_stats');
+    if (error) {
+      // 42883 = fonction inexistante : la migration n'a pas encore été jouée.
+      const manquante = /function .*admin_user_stats.* does not exist/i.test(error.message || '')
+        || error.code === '42883' || error.code === 'PGRST202';
+      return { erreur: manquante ? 'migration' : (error.message || 'inconnue') };
+    }
+    return data || {};
+  }
+
+  function renderInscrits(s) {
+    if (!s || s.erreur === 'nosb') {
+      return `<div class="mod-empty">Connexion à la base indisponible.</div>`;
+    }
+    if (s.erreur === 'migration') {
+      return `
+        <div class="adm-st-todo">
+          <div class="adm-st-todo-t"><i class="fa-solid fa-database"></i> Une étape à faire une seule fois</div>
+          <p>La fonction qui calcule ces statistiques n'existe pas encore dans la base.
+             Ouvrez Supabase → <strong>SQL Editor</strong>, collez le contenu du fichier
+             <code>supabase/admin_user_stats.sql</code> du dépôt, exécutez, puis revenez ici.</p>
+          <p class="adm-st-todo-note">Elle ne renvoie que des totaux : aucun email, aucun nom.</p>
+        </div>`;
+    }
+    if (s.erreur) {
+      return `<div class="mod-empty">Erreur : ${esc(s.erreur)}</div>`;
+    }
+
+    const n = v => (v === null || v === undefined) ? '—' : Number(v).toLocaleString('fr-FR');
+    const jour = iso => iso ? new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
+
+    // Complète les jours sans inscription : une courbe trouée se lit mal.
+    const parJour = new Map((s.par_jour || []).map(p => [p.d, p.n]));
+    const barres = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(Date.now() - i * 86400000);
+      const cle = d.toISOString().slice(0, 10);
+      barres.push({ cle, d, n: parJour.get(cle) || 0 });
+    }
+    const max = Math.max(1, ...barres.map(b => b.n));
+    const barresHtml = barres.map(b => {
+      const h = Math.round((b.n / max) * 100);
+      const lbl = b.d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+      return `<div class="adm-st-bar${b.n ? '' : ' vide'}" style="height:${Math.max(h, 3)}%"
+                   title="${lbl} — ${b.n} inscription${b.n > 1 ? 's' : ''}"></div>`;
+    }).join('');
+
+    const cartes = [
+      ['Inscrits au total', n(s.total), 'depuis le ' + jour(s.premier)],
+      ['Comptes confirmés', n(s.confirmes), s.total ? Math.round((s.confirmes / s.total) * 100) + ' % des inscrits' : ''],
+      ['Nouveaux — 7 jours', n(s.j7), ''],
+      ['Nouveaux — 30 jours', n(s.j30), ''],
+      ['Revenus — 7 jours', n(s.actifs_j7), 'connexion récente'],
+      ['Revenus — 30 jours', n(s.actifs_j30), 'connexion récente'],
+    ].map(([lbl, val, sub]) => `
+      <div class="adm-st-card">
+        <div class="adm-st-val">${val}</div>
+        <div class="adm-st-lbl">${lbl}</div>
+        ${sub ? `<div class="adm-st-sub">${esc(sub)}</div>` : ''}
+      </div>`).join('');
+
+    return `
+      <div class="mod-hero">
+        <div class="mod-hero-title">Les inscrits</div>
+        <div class="mod-hero-sub">Comptes créés sur le site — chiffres seuls, rien de nominatif</div>
+      </div>
+      <div class="adm-st-grid">${cartes}</div>
+      <div class="adm-st-chart-wrap">
+        <div class="adm-st-chart-head">
+          <span>Inscriptions par jour</span>
+          <span class="adm-st-chart-max">30 derniers jours — pic à ${max}</span>
+        </div>
+        <div class="adm-st-chart">${barresHtml}</div>
+      </div>
+      <p class="adm-st-foot">
+        Dernière inscription le ${jour(s.dernier)}.
+        « Revenus » compte les personnes qui se sont reconnectées sur la période,
+        pas celles qui ont seulement visité le site sans compte.
+      </p>`;
+  }
+
   let _planningDate = new Date();  // date affichée dans l'onglet Planning
 
   async function loadStats(sb) {
@@ -605,6 +694,9 @@
         <button class="adm-tab ${_adminTab === 'planning' ? 'active' : ''}" data-tab="planning">
           <i class="fa-solid fa-calendar-days"></i> Planning
         </button>
+        <button class="adm-tab ${_adminTab === 'inscrits' ? 'active' : ''}" data-tab="inscrits">
+          <i class="fa-solid fa-users"></i> Inscrits
+        </button>
       </div>
     `;
 
@@ -658,6 +750,11 @@
       body.querySelector('#mod-refresh')?.addEventListener('click', loadAdminPanel);
       // Live presence — abonnement Realtime à chaque (ré)ouverture du panneau
       _startPresenceLiveUpdate();
+    } else if (_adminTab === 'inscrits') {
+      _stopPresenceLiveUpdate();
+      body.innerHTML = tabsHtml + `<div class="mod-loading"><i class="fa-solid fa-spinner fa-spin"></i> Lecture des comptes…</div>`;
+      const s = await loadInscrits(sb).catch(e => ({ erreur: e?.message || 'inconnue' }));
+      body.innerHTML = tabsHtml + renderInscrits(s);
     } else {
       // Arrête le suivi presence quand on quitte l'onglet
       _stopPresenceLiveUpdate();
@@ -805,6 +902,13 @@
 
   function showAdminButtonIfAdmin() {
     const user = window._pelUser;
+    /* Drapeau lu par js/seo-badge.js sur les pages de contenu, qui ne
+       chargent ni Supabase ni l'application. Il n'ouvre aucun accès : le
+       badge n'affiche que ce qui est déjà public dans la page. */
+    try {
+      if (isAdmin(user)) localStorage.setItem('pel.admin', '1');
+      else localStorage.removeItem('pel.admin');
+    } catch (_) {}
     if (!isAdmin(user)) {
       $id('hm-admin-row')?.classList.add('hidden');
       $id('hm-admin-divider')?.classList.add('hidden');
@@ -844,5 +948,10 @@
   setTimeout(showAdminButtonIfAdmin, 600);
 
   // Exposition globale (utile pour debug)
-  window._pelAdmin = { open: openAdminPanel, close: closeAdminPanel, reload: loadAdminPanel };
+  window._pelAdmin = {
+    open: openAdminPanel, close: closeAdminPanel, reload: loadAdminPanel,
+    // Rendu isolé de l'onglet Inscrits : permet de vérifier l'affichage
+    // (courbe, cartes, message de migration) sans session administrateur.
+    renderInscrits,
+  };
 })();
