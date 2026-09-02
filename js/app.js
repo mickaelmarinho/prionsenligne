@@ -6252,6 +6252,7 @@ function initTodayTimeline() {
       <div class="tl-pastoral-text">
         <strong>La participation physique à la messe reste irremplaçable.</strong>
         Les diffusions ci-dessous sont une aide pour ceux qui ne peuvent pas se rendre à leur paroisse (malades, isolés, diaspora). Si votre santé et vos circonstances le permettent, rejoignez votre paroisse.
+        <a href="/trouver-une-eglise" class="tl-pastoral-link"><i class="fa-solid fa-location-dot"></i> Trouver une église et ses horaires près de chez vous</a>
         <a href="/paroisses" class="tl-pastoral-link"><i class="fa-solid fa-church"></i> Vous animez une paroisse&nbsp;? Affichez PrionsEnLigne (affiche A4 à imprimer)</a>
       </div>`;
     container.appendChild(banner);

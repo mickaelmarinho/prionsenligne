@@ -64,6 +64,12 @@
   </url>
 
   <url>
+    <loc>https://prionsenligne.fr/trouver-une-eglise</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <url>
     <loc>https://prionsenligne.fr/priere-notre-pere</loc>
     <changefreq>yearly</changefreq>
     <priority>0.8</priority>

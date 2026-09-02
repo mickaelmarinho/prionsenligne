@@ -105,6 +105,10 @@
       "destination": "/api/seo?p=notre-pere"
     },
     {
+      "source": "/trouver-une-eglise",
+      "destination": "/api/seo?p=trouver-eglise"
+    },
+    {
       "source": "/affiche",
       "destination": "/api/seo?p=affiche"
     }

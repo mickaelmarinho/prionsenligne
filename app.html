@@ -35,7 +35,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <link rel="stylesheet" href="css/style.css?v=224" />
+  <link rel="stylesheet" href="css/style.css?v=225" />
   <!-- PWA / iOS standalone -->
   <meta name="theme-color" content="#1a2744" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -138,6 +138,7 @@
         <a href="/comment-prier-une-neuvaine" class="hm-item"><i class="fa-solid fa-calendar-day"></i> Comment prier une neuvaine</a>
         <a href="/comment-se-confesser" class="hm-item"><i class="fa-solid fa-hands-praying"></i> Comment se confesser</a>
         <a href="/priere-notre-pere" class="hm-item"><i class="fa-solid fa-cross"></i> Le Notre Père</a>
+        <a href="/trouver-une-eglise" class="hm-item"><i class="fa-solid fa-location-dot"></i> Trouver une église</a>
         <a href="/histoire-du-christianisme" class="hm-item"><i class="fa-solid fa-book-open"></i> Histoire du christianisme</a>
 
         <div class="hm-divider"></div>
@@ -613,6 +614,7 @@
 
       <nav class="footer-col">
         <span class="footer-nav-title">Le site</span>
+        <a class="footer-nav-link" href="/trouver-une-eglise">Trouver une église</a>
         <a class="footer-nav-link" href="/paroisses">Pour les paroisses</a>
         <a class="footer-nav-link" href="/fonds-ecran">Fonds d'écran à offrir</a>
         <a class="footer-nav-link" href="https://www.etsy.com/shop/FatimaLightCo" target="_blank" rel="noopener">Boutique à imprimer</a>
@@ -1304,10 +1306,10 @@
       });
     }
   </script>
-  <script src="js/app.js?v=224"></script>
+  <script src="js/app.js?v=225"></script>
   <!-- Concordance thématique (chargée AVANT bible.js qui la consomme) -->
-  <script src="js/bible-themes.js?v=224"></script>
-  <script src="js/bible.js?v=224"></script>
+  <script src="js/bible-themes.js?v=225"></script>
+  <script src="js/bible.js?v=225"></script>
   <!-- Supabase — build UMD explicite (évite que jsdelivr serve le build CJS/ESM).
        Version ÉPINGLÉE : le tag flottant @2 nous a déjà cassé la présence
        Realtime lors d'une mise à jour silencieuse de la lib (juillet 2026).
@@ -1316,8 +1318,8 @@
   <!-- Cloudflare Turnstile — anti-bot invisible (cf. auth.js). Chargé en async
        pour ne pas bloquer le rendu ; le widget est rendu à la demande. -->
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-  <script src="js/auth.js?v=224"></script>
-  <script src="js/admin.js?v=224"></script>
+  <script src="js/auth.js?v=225"></script>
+  <script src="js/admin.js?v=225"></script>
   <script>document.addEventListener('DOMContentLoaded', initAuth);</script>
   <!-- Vercel Web Analytics — sans cookies, RGPD-friendly (aucune donnée personnelle) -->
   <script defer src="/_vercel/insights/script.js"></script>

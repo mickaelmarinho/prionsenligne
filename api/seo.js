@@ -1012,6 +1012,170 @@ export default async function handler(req, res) {
     return;
   }
 
+  /* ── Trouver une église près de chez soi ───────────────────────────
+     Le site disait « rejoignez votre paroisse » et « voir les paroisses »
+     sans jamais dire où elles se trouvent : /paroisses s'adresse aux
+     équipes paroissiales, pas aux fidèles. Cette page comble le trou.
+
+     Nous ne tenons pas d'annuaire nous-mêmes : il serait périmé en trois
+     mois. On renvoie aux annuaires officiels, qui sont tenus par les
+     paroisses elles-mêmes — et on le dit, avec la réserve qui va avec. */
+  if (p === 'trouver-eglise') {
+    const canonical = `${SITE}/trouver-une-eglise`;
+    const title = "Trouver une église près de chez vous — horaires des messes et des confessions | PrionsEnLigne";
+    const desc = "Où trouver les horaires des messes et des confessions près de chez vous : les annuaires officiels pour la France, la Belgique, la Suisse, le Québec et ailleurs. Liens directs, mis à jour par les paroisses.";
+
+    // [pays, nom du service, url, éditeur, ce qu'on y trouve, lien secondaire]
+    const ANNUAIRES = [
+      ['France', 'Messes Info', 'https://messes.info/',
+       'Conférence des évêques de France',
+       "L'annuaire de référence&nbsp;: on cherche par ville ou en autorisant la géolocalisation, et l'on obtient les églises autour de soi avec les horaires des messes. Les paroisses y publient aussi leurs <strong>créneaux de confession</strong> et leurs temps d'adoration.",
+       ['Carte des diocèses de France', 'https://eglise.catholique.fr/guide-eglise-catholique-france/carte-des-dioceses/']],
+      ['Belgique', 'EgliseInfo.be', 'https://www.egliseinfo.be/',
+       'initiative de laïcs, soutenue par les diocèses',
+       "Messes, adorations, chapelets et confessions, cherchables par commune. Les cinq diocèses francophones y renvoient.",
+       ['Horaires des messes sur Cathobel', 'https://www.cathobel.be/messes/horaire-messe-belgique/']],
+      ['Suisse', 'cath.ch', 'https://cath.ch/horaire-des-messes',
+       'portail catholique suisse romand',
+       "Recherche des célébrations par localité pour toute la Suisse romande.",
+       ['Église catholique dans le canton de Vaud', 'https://www.cath-vd.ch/horaires-des-messes/']],
+      ['Québec et Canada', 'Les sites diocésains', 'https://ecdq.org/diocese-de-quebec/trouver-une-eglise/',
+       'chaque diocèse publie les siens',
+       "Il n'existe pas d'annuaire national unique&nbsp;: chaque diocèse tient le sien. Celui de Québec propose une carte de ses églises&nbsp;; cherchez «&nbsp;diocèse de&nbsp;» suivi de votre ville pour les autres.",
+       null],
+      ['Paris', 'Les paroisses du diocèse', 'https://dioceseparis.fr/-paroisses-.html',
+       'diocèse de Paris',
+       "La liste complète des paroisses parisiennes, arrondissement par arrondissement, avec les coordonnées de chacune.",
+       null],
+    ];
+
+    const cartesHtml = ANNUAIRES.map(([pays, nom, url, editeur, txt, second]) => `
+        <article class="an">
+          <div class="an-pays">${pays}</div>
+          <h3 class="an-nom"><a href="${url}" target="_blank" rel="noopener">${nom}</a></h3>
+          <p class="an-ed">${editeur}</p>
+          <p class="an-txt">${txt}</p>
+          ${second ? `<p class="an-2"><a href="${second[1]}" target="_blank" rel="noopener">${second[0]}</a></p>` : ''}
+        </article>`).join('');
+
+    const FAQ = [
+      ["Comment connaître les horaires de confession&nbsp;?",
+       "En France sur Messes Info et en Belgique sur EgliseInfo.be, les paroisses peuvent publier leurs créneaux de confession au même titre que leurs messes. Toutes ne le font pas. L'usage le plus courant reste la demi-heure qui précède la messe du samedi soir ou du dimanche matin&nbsp;; en cas de doute, un appel au secrétariat paroissial règle la question en une minute."],
+      ["Ces horaires sont-ils fiables&nbsp;?",
+       "Ils sont saisis par les paroisses elles-mêmes, et la mise à jour dépend d'elles. La plupart sont à jour&nbsp;; certaines ne l'ont pas été depuis des mois. Avant un long déplacement, mieux vaut vérifier sur le site de la paroisse ou par téléphone — surtout en été, pendant les vacances scolaires et les fêtes."],
+      ["Pourquoi ne tenez-vous pas votre propre annuaire&nbsp;?",
+       "Parce qu'il serait périmé en trois mois. Recenser des dizaines de milliers de paroisses n'a de sens que si quelqu'un met l'information à jour en permanence&nbsp;: c'est précisément ce que font les services diocésains. Nous préférons vous y conduire directement plutôt que d'entretenir une copie qui vieillirait mal."],
+      ["Et en Afrique, à Haïti, ailleurs&nbsp;?",
+       "Il n'existe pas encore d'annuaire en ligne comparable dans la plupart de ces pays. Le plus sûr reste le site ou la page du diocèse — cherchez «&nbsp;archidiocèse de&nbsp;» ou «&nbsp;diocèse de&nbsp;» suivi de votre ville — ou tout simplement de demander à la paroisse la plus proche&nbsp;: les horaires y sont affichés à la porte."],
+      ["Je ne peux pas me déplacer, que faire&nbsp;?",
+       "Les messes diffusées en direct sont là pour cela, et notre agenda les rassemble à leur heure réelle. Elles sont une aide véritable pour les malades, les personnes âgées et les isolés — l'Église ne les tient pas pour l'équivalent d'une participation physique, mais elle ne demande à personne l'impossible."],
+    ];
+
+    const faqHtml = FAQ.map(([q, r]) => `
+        <div class="fq"><h3 class="fq-q">${q}</h3><p class="fq-r">${r}</p></div>`).join('');
+
+    const bodyHtml = `
+      <style>
+        .cg-lede{font-family:var(--serif);font-size:19px;line-height:1.6;color:var(--navy);margin:-4px 0 26px}
+        .cg h2{font-family:var(--serif);font-size:26px;color:var(--navy);margin:38px 0 6px}
+        .cg-note{margin:0 0 18px;color:var(--soft);font-size:14.5px}
+        .cg p{max-width:65ch}
+        .an-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px;margin-top:16px}
+        .an{background:#fff;border:1px solid rgba(0,0,0,.07);border-top:3px solid var(--gold);border-radius:9px;padding:16px 18px}
+        .an-pays{font-size:12.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--soft)}
+        .an-nom{font-family:var(--serif);font-size:21px;margin:3px 0 2px}
+        .an-nom a{color:var(--navy);text-decoration-thickness:1px;text-underline-offset:3px}
+        .an-ed{margin:0 0 8px;font-size:13px;color:var(--soft);font-style:italic}
+        .an-txt{margin:0;font-size:15.5px;line-height:1.55;color:var(--soft)}
+        .an-2{margin:10px 0 0;font-size:14px}
+        .an-2 a{color:var(--navy)}
+        .fq{padding:14px 0;border-bottom:1px solid rgba(0,0,0,.08)}
+        .fq:last-of-type{border-bottom:none}
+        .fq-q{font-family:var(--serif);font-size:19px;color:var(--navy);margin:0 0 5px}
+        .fq-r{margin:0;font-size:16px;line-height:1.6;color:var(--soft)}
+        .cg-tip{background:rgba(201,168,76,.1);border-radius:8px;padding:16px 20px;margin-top:22px;font-size:16px;line-height:1.6}
+        .cg-tip strong{color:var(--navy)}
+        .cg-cta{background:var(--navy);border-radius:12px;padding:24px 22px;margin:32px 0 0;text-align:center}
+        .cg-cta h2{color:#fff;margin:0 0 8px;font-size:24px}
+        .cg-cta p{color:rgba(255,255,255,.82);font-size:16px;margin:0 auto 18px;max-width:46ch}
+        .cg-cta a{display:inline-flex;align-items:center;gap:9px;background:var(--gold);color:var(--navy);
+          font-weight:600;font-size:16px;padding:13px 26px;border-radius:999px;text-decoration:none;min-height:44px}
+        .cg-apres{font-size:14.5px;color:var(--soft);text-align:center;margin:16px 0 0;line-height:1.6}
+        .cg-apres a{color:var(--navy)}
+      </style>
+
+      <div class="cg">
+        <p class="cg-lede">
+          Nous ne tenons pas d'annuaire des paroisses&nbsp;: il serait périmé en trois mois.
+          Voici, pays par pays, les annuaires officiels tenus par les diocèses eux-mêmes —
+          messes, confessions, adoration.
+        </p>
+
+        <h2>Les annuaires officiels</h2>
+        <p class="cg-note">
+          Tous sont gratuits et sans inscription. Les horaires y sont saisis par les paroisses.
+        </p>
+        <div class="an-grid">${cartesHtml}</div>
+
+        <div class="cg-tip">
+          <strong>Le plus rapide&nbsp;:</strong> ouvrez
+          <a href="https://messes.info/" target="_blank" rel="noopener">messes.info</a> et
+          autorisez la géolocalisation. Vous obtenez en un geste les églises autour de vous et
+          l'heure de leur prochaine messe, sans rien avoir à taper.
+        </div>
+
+        <h2>Questions fréquentes</h2>
+        <p class="cg-note">Y compris celle de la fiabilité, qu'il vaut mieux poser franchement.</p>
+        ${faqHtml}
+
+        <div class="cg-cta">
+          <h2>En attendant, prier chez soi</h2>
+          <p>
+            Les offices du jour, les messes diffusées en direct et le chapelet guidé sont
+            réunis dans l'agenda du site.
+          </p>
+          <a href="/agenda">Ouvrir l'agenda</a>
+        </div>
+
+        <p class="cg-apres">
+          Vous animez une paroisse&nbsp;?
+          <a href="/paroisses">Une affiche à imprimer</a> vous attend pour faire connaître le
+          site à vos fidèles.
+        </p>
+      </div>`;
+
+    const propre = s => String(s).replace(/&nbsp;/g, ' ').replace(/<[^>]+>/g, '').trim();
+    const jsonLd = JSON.stringify([
+      {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: 'Trouver une église près de chez vous',
+        description: desc,
+        inLanguage: 'fr',
+        mainEntityOfPage: canonical,
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        inLanguage: 'fr',
+        mainEntity: FAQ.map(([q, r]) => ({
+          '@type': 'Question',
+          name: propre(q),
+          acceptedAnswer: { '@type': 'Answer', text: propre(r) },
+        })),
+      },
+    ]);
+
+    res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800');
+    res.status(200).send(pageShell({
+      title, desc, canonical,
+      h1: 'Trouver une église près de chez vous',
+      sub: 'Les annuaires officiels, pays par pays',
+      bodyHtml, jsonLd,
+    }));
+    return;
+  }
+
   /* ── Le Notre Père ─────────────────────────────────────────────────
      Le texte le plus cherché du domaine, et de loin. Deux pièges à
      éviter : donner l'ancienne traduction (« ne nous soumets pas à la
@@ -1418,10 +1582,10 @@ export default async function handler(req, res) {
         <div class="cg-cta">
           <h2>Trouver une église près de chez vous</h2>
           <p>
-            Les horaires de confession sont affichés par la plupart des paroisses, souvent
-            avant la messe du samedi ou du dimanche.
+            Les annuaires officiels donnent les horaires des messes et, pour beaucoup de
+            paroisses, les créneaux de confession. France, Belgique, Suisse, Québec.
           </p>
-          <a href="/paroisses">Voir les paroisses</a>
+          <a href="/trouver-une-eglise">Trouver une église</a>
         </div>
 
         <p class="cg-apres">
