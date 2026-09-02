@@ -62,6 +62,29 @@ function stripHtml(s) {
   return String(s || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 }
 
+/* ─── Longueurs utiles pour Google ────────────────────────────────
+   Un titre est coupé autour de 60 caractères, une description autour
+   de 160 : au-delà, la fin n'est jamais lue. Plusieurs pages du site
+   dépassaient largement — jusqu'à 99 et 254 — et se voyaient donc
+   tronquées en plein milieu dans les résultats de recherche.
+
+   titre() n'ajoute la marque que si elle tient dans la fenêtre : mieux
+   vaut perdre « | PrionsEnLigne » que la fin du sujet.
+   resume() coupe au dernier espace, jamais au milieu d'un mot. */
+const MARQUE = ' | PrionsEnLigne';
+function titre(base) {
+  const t = String(base || '').replace(/\s+/g, ' ').trim();
+  return (t.length + MARQUE.length <= 60) ? t + MARQUE : t;
+}
+function resume(texte, max = 155) {
+  const t = String(texte || '').replace(/\s+/g, ' ').trim();
+  if (t.length <= max) return t;
+  const coupe = t.slice(0, max);
+  const esp = coupe.lastIndexOf(' ');
+  const gard = esp > max * 0.6 ? coupe.slice(0, esp) : coupe;
+  return gard.replace(/[\s,;:.—-]+$/, '') + '…';
+}
+
 // ─── Récupération du saint du jour (Nominis) ─────────────────────
 async function fetchSaint({ y, m, d }) {
   const url = `https://nominis.cef.fr/json/saintdujour.php?jour=${d}&mois=${m}&annee=${y}`;
@@ -339,6 +362,9 @@ export default async function handler(req, res) {
   const p = (req.query.p || '').toString();
   const now = parisNow();
   const dateLabel = frDate(now);
+  /* Sans le jour de la semaine : une dizaine de caractères gagnés dans
+     les titres, où chaque caractère compte. Personne ne cherche « mercredi ». */
+  const dateCourte = `${now.d} ${MONTHS[now.m - 1]} ${now.y}`;
 
   // ── /api/seo?p=kto-live → JSON (avant le Content-Type HTML) ──
   if (p === 'kto-live') {
@@ -360,10 +386,13 @@ export default async function handler(req, res) {
     const saint = await fetchSaint(now);
     const canonical = `${SITE}/saint-du-jour`;
     const nom = saint?.nom || 'Saint du jour';
-    const title = `${nom} — Saint du jour, ${dateLabel} | PrionsEnLigne`;
-    const desc = saint
-      ? `${nom} — saint fêté le ${dateLabel}. ${saint.description || saint.contenu.slice(0, 120)}`.slice(0, 300)
-      : `Découvrez le saint fêté aujourd'hui, ${dateLabel}, et priez avec PrionsEnLigne.`;
+    // La date est lâchée à son tour quand le nom du saint est très long
+    let baseTitre = `${nom} — saint du jour, ${dateCourte}`;
+    if (baseTitre.length > 60) baseTitre = `${nom} — saint du jour`;
+    const title = titre(baseTitre);
+    const desc = resume(saint
+      ? `${nom}, saint fêté le ${dateLabel}. ${saint.description || saint.contenu}`
+      : `Le saint fêté aujourd'hui, ${dateLabel}, sa vie et sa prière.`);
     const bodyHtml = saint
       ? `<p class="sub">Saint fêté le ${esc(dateLabel)}</p>
          <div class="card">
@@ -391,10 +420,10 @@ export default async function handler(req, res) {
   if (p === 'evangile') {
     const ev = await fetchGospel(now);
     const canonical = `${SITE}/evangile-du-jour`;
-    const title = `Évangile du jour — ${dateLabel}${ev?.ref ? ' ('+ev.ref+')' : ''} | PrionsEnLigne`;
-    const desc = ev
-      ? `Évangile du ${dateLabel}${ev.ref ? ' — '+ev.ref : ''}. ${ev.contenu.slice(0, 160)}`.slice(0, 300)
-      : `Lisez et méditez l'Évangile du jour, ${dateLabel}, avec PrionsEnLigne.`;
+    const title = titre(`Évangile du jour — ${dateCourte}${ev?.ref ? ' ('+ev.ref+')' : ''}`);
+    const desc = resume(ev
+      ? `Évangile du ${dateLabel}${ev.ref ? ' — '+ev.ref : ''}. ${ev.contenu}`
+      : `L'Évangile du jour, ${dateLabel}, à lire et à méditer.`);
     const bodyHtml = ev
       ? `<p class="sub">Lecture du ${esc(dateLabel)}${ev.fete ? ' — '+esc(ev.fete) : ''}</p>
          <div class="card">
@@ -422,8 +451,8 @@ export default async function handler(req, res) {
   // ── /saints (index / hub) ──
   if (p === 'saints') {
     const canonical = `${SITE}/saints`;
-    const title = 'Saints de la francophonie — Vies, fêtes et prières | PrionsEnLigne';
-    const desc = "Découvrez les grands saints du monde francophone : France, Belgique, Suisse, Québec, Afrique, Haïti. Vie, date de fête, patronage et prière pour chacun.";
+    const title = titre('Saints de la francophonie — vies, fêtes et prières');
+    const desc = resume("Les grands saints du monde francophone : France, Belgique, Suisse, Québec, Afrique, Haïti. Vie, fête, patronage et prière pour chacun.");
     // Regroupe par région (libellé country)
     const groups = {};
     for (const s of SAINTS) {
@@ -461,8 +490,15 @@ export default async function handler(req, res) {
     }
     const canonical = `${SITE}/saints/${saint.slug}`;
     const region = COUNTRY_LABELS[saint.country] || saint.region;
-    const title = `${saint.name} — vie, fête le ${saint.feast} | PrionsEnLigne`;
-    const desc = `${saint.name}, fêté le ${saint.feast} (${region}). ${saint.patron}. ${saint.desc}`.slice(0, 300);
+    /* Certains noms font à eux seuls cinquante caractères (« Saints
+       Charles Lwanga et les martyrs de l'Ouganda ») : le titre se
+       dépouille alors par étapes plutôt que de se faire couper. */
+    let baseSaint = `${saint.name} — vie et fête le ${saint.feast}`;
+    if (baseSaint.length > 60) baseSaint = `${saint.name} — fête le ${saint.feast}`;
+    if (baseSaint.length > 60) baseSaint = saint.name;
+    const title = titre(baseSaint);
+    // « Fête le » plutôt que « fêté le » : la moitié de ces saints sont des saintes.
+    const desc = resume(`${saint.name} — fête le ${saint.feast} (${region}). ${saint.patron}. ${saint.desc}`);
     const bodyHtml = `
       <p class="sub">Fête le ${esc(saint.feast)} · ${esc(region)}</p>
       <div class="card">
@@ -487,8 +523,8 @@ export default async function handler(req, res) {
   // ── /messe-en-direct (evergreen) ──
   if (p === 'messe') {
     const canonical = `${SITE}/messe-en-direct`;
-    const title = `Messe en direct aujourd'hui — radios & TV catholiques | PrionsEnLigne`;
-    const desc = "Suivez la messe en direct chaque jour : Radio Maria, KTO, Lourdes, Notre-Dame de Paris, et de nombreux sanctuaires francophones (France, Belgique, Suisse, Québec). Horaires et accès gratuit.";
+    const title = titre(`Messe en direct aujourd'hui — radios et TV`);
+    const desc = resume("La messe en direct chaque jour : Radio Maria, KTO, Lourdes, Notre-Dame de Paris. Horaires du jour pour la France, la Belgique, la Suisse et le Québec.");
     const bodyHtml = `
       <p class="sub">Toutes les messes diffusées en direct, mises à jour chaque jour</p>
       <div class="card">
@@ -519,8 +555,8 @@ export default async function handler(req, res) {
   // ── /fonds-ecran (fonds d'écran de prière à offrir) ──
   if (p === 'fonds-ecran') {
     const canonical = `${SITE}/fonds-ecran`;
-    const title = "Fonds d'écran de prière à offrir — versets bibliques | PrionsEnLigne";
-    const desc = "Six fonds d'écran gratuits pour téléphone, ornés d'un verset biblique (Psaume 23, Ave Maria, Isaïe 41…). À télécharger librement — style sobre et élégant, offert par PrionsEnLigne.";
+    const title = titre("Fonds d'écran de prière — versets bibliques");
+    const desc = resume("Six fonds d'écran gratuits pour téléphone, ornés d'un verset biblique : Psaume 23, Ave Maria, Isaïe 41. Style sobre, à télécharger et à offrir.");
     const WP = [
       ['sois-sans-crainte-isaie-41-10.jpg',               '« Sois sans crainte, je suis avec toi. »',             'Isaïe 41, 10'],
       ['que-ton-coeur-ne-se-trouble-point-jean-14-27.jpg', '« Que ton cœur ne se trouble point. »',                'Jean 14, 27'],
@@ -578,8 +614,8 @@ export default async function handler(req, res) {
      courante sur ce thème, et la taire serait manquer à l'honnêteté. */
   if (p === 'neuvaine-guide') {
     const canonical = `${SITE}/comment-prier-une-neuvaine`;
-    const title = "Comment prier une neuvaine — guide simple et complet | PrionsEnLigne";
-    const desc = "Prier une neuvaine pas à pas : ce que c'est, comment s'y prendre, les grandes neuvaines de l'année et celles que l'on demande le plus. Que faire si l'on oublie un jour.";
+    const title = titre("Comment prier une neuvaine — guide simple");
+    const desc = resume("Prier une neuvaine pas à pas : ce que c'est, comment s'y prendre, les grandes neuvaines de l'année, et que faire si l'on oublie un jour.");
 
     const ETAPES = [
       ['Choisir votre intention', "Une seule, et clairement formulée&nbsp;: une guérison, un travail, une réconciliation, une décision à prendre. Neuf jours sur une intention précise valent mieux que neuf jours de demandes vagues."],
@@ -808,8 +844,8 @@ export default async function handler(req, res) {
      sur le même site sèmeraient le doute. */
   if (p === 'chapelet-guide') {
     const canonical = `${SITE}/comment-prier-le-chapelet`;
-    const title = "Comment prier le chapelet — guide simple et complet | PrionsEnLigne";
-    const desc = "Apprendre à prier le chapelet pas à pas : le déroulement, les mystères de chaque jour, le texte des prières et le temps que cela prend. Guide clair, pour débuter ou reprendre.";
+    const title = titre("Comment prier le chapelet — guide simple");
+    const desc = resume("Le chapelet pas à pas : le déroulement, les mystères de chaque jour, le texte des prières et le temps que cela prend. Pour débuter ou reprendre.");
 
     const ETAPES = [
       ['Le signe de croix', "Sur le crucifix du chapelet. «&nbsp;Au nom du Père, et du Fils, et du Saint-Esprit. Amen.&nbsp;»"],
@@ -1026,8 +1062,8 @@ export default async function handler(req, res) {
      paroisses elles-mêmes — et on le dit, avec la réserve qui va avec. */
   if (p === 'trouver-eglise') {
     const canonical = `${SITE}/trouver-une-eglise`;
-    const title = "Trouver une église près de chez vous — horaires des messes et des confessions | PrionsEnLigne";
-    const desc = "Où trouver les horaires des messes et des confessions près de chez vous : les annuaires officiels pour la France, la Belgique, la Suisse, le Québec et ailleurs. Liens directs, mis à jour par les paroisses.";
+    const title = titre("Trouver une église près de chez vous");
+    const desc = resume("Les horaires des messes et des confessions près de chez vous : les annuaires officiels pour la France, la Belgique, la Suisse et le Québec.");
 
     // [pays, nom du service, url, éditeur, ce qu'on y trouve, lien secondaire]
     const ANNUAIRES = [
@@ -1188,8 +1224,8 @@ export default async function handler(req, res) {
      placent ailleurs dans la messe. Les deux sont traitées de front. */
   if (p === 'notre-pere') {
     const canonical = `${SITE}/priere-notre-pere`;
-    const title = "Le Notre Père — texte officiel, explication et origine | PrionsEnLigne";
-    const desc = "Le texte exact du Notre Père dans la traduction liturgique en vigueur depuis 2017, l'explication de ses sept demandes, son origine dans l'Évangile, la version latine et pourquoi la finale « car c'est à toi qu'appartiennent… » n'en fait pas partie.";
+    const title = titre("Le Notre Père — texte officiel et explication");
+    const desc = resume("Le texte officiel du Notre Père en vigueur depuis 2017, l'explication de ses sept demandes, la version latine et son origine dans l'Évangile.");
 
     // Les sept demandes — l'ordre est celui de saint Matthieu.
     const DEMANDES = [
@@ -1381,8 +1417,8 @@ export default async function handler(req, res) {
      doctrine. Rien n'est dramatisé, rien n'est édulcoré non plus. */
   if (p === 'confession-guide') {
     const canonical = `${SITE}/comment-se-confesser`;
-    const title = "Comment se confesser — le déroulement, les mots à dire, l'acte de contrition | PrionsEnLigne";
-    const desc = "Se confesser pas à pas : comment se préparer, ce que l'on dit en entrant, le texte de l'acte de contrition, ce que fait le prêtre. Guide clair, même si votre dernière confession remonte à très longtemps.";
+    const title = titre("Comment se confesser — le déroulement pas à pas");
+    const desc = resume("Se confesser pas à pas : la préparation, ce que l'on dit en entrant, l'acte de contrition, ce que fait le prêtre. Même après des années.");
 
     // Examen de conscience — présenté en questions plutôt qu'en liste de
     // fautes : on cherche à aider quelqu'un à réfléchir, pas à l'accabler.
@@ -1645,8 +1681,8 @@ export default async function handler(req, res) {
      positions différentes, qu'on confond souvent. */
   if (p === 'histoire') {
     const canonical = `${SITE}/histoire-du-christianisme`;
-    const title = "Histoire du christianisme et de ses branches — des origines aux sédévacantistes | PrionsEnLigne";
-    const desc = "Comment le christianisme s'est divisé au fil des siècles : le schisme de 1054, la Réforme, l'anglicanisme, Vatican II, les traditionalistes et les sédévacantistes. Une frise claire pour comprendre qui croit quoi, et pourquoi.";
+    const title = titre("Histoire du christianisme et de ses branches");
+    const desc = resume("Comment le christianisme s'est divisé : le schisme de 1054, la Réforme, Vatican II, les traditionalistes et les sédévacantistes. Une frise claire.");
 
     // [année, titre, texte] — la frise principale
     const FRISE = [
@@ -2052,8 +2088,8 @@ export default async function handler(req, res) {
 
   if (p === 'paroisses') {
     const canonical = `${SITE}/paroisses`;
-    const title = 'PrionsEnLigne pour les paroisses — outil gratuit pour vos fidèles | PrionsEnLigne';
-    const desc = "Un outil gratuit, sans publicité, pour accompagner les fidèles empêchés (malades, personnes âgées, isolés, diaspora) : offices, messes en direct, chapelet guidé, calendrier liturgique. Affiche imprimable avec QR code pour votre paroisse.";
+    const title = titre('PrionsEnLigne pour les paroisses');
+    const desc = resume("Un outil gratuit et sans publicité pour vos fidèles empêchés : offices, messes en direct, chapelet guidé. Avec une affiche à imprimer et son QR code.");
     const bodyHtml = `
       <p class="sub">Chers prêtres, diacres et équipes paroissiales</p>
       <div class="card">
