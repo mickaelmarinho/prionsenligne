@@ -101,6 +101,10 @@
       "destination": "/api/seo?p=confession-guide"
     },
     {
+      "source": "/priere-notre-pere",
+      "destination": "/api/seo?p=notre-pere"
+    },
+    {
       "source": "/affiche",
       "destination": "/api/seo?p=affiche"
     }

@@ -1012,6 +1012,199 @@ export default async function handler(req, res) {
     return;
   }
 
+  /* ── Le Notre Père ─────────────────────────────────────────────────
+     Le texte le plus cherché du domaine, et de loin. Deux pièges à
+     éviter : donner l'ancienne traduction (« ne nous soumets pas à la
+     tentation », abandonnée en 2017), et esquiver la question de la
+     doxologie finale, que les protestants disent et les catholiques
+     placent ailleurs dans la messe. Les deux sont traitées de front. */
+  if (p === 'notre-pere') {
+    const canonical = `${SITE}/priere-notre-pere`;
+    const title = "Le Notre Père — texte officiel, explication et origine | PrionsEnLigne";
+    const desc = "Le texte exact du Notre Père dans la traduction liturgique en vigueur depuis 2017, l'explication de ses sept demandes, son origine dans l'Évangile, la version latine et pourquoi la finale « car c'est à toi qu'appartiennent… » n'en fait pas partie.";
+
+    // Les sept demandes — l'ordre est celui de saint Matthieu.
+    const DEMANDES = [
+      ['Que ton nom soit sanctifié',
+       "La première demande ne réclame rien pour soi. Sanctifier le nom de Dieu, c'est demander qu'il soit reconnu pour ce qu'il est — d'abord dans notre propre manière de vivre, car c'est par les croyants que ce nom est honoré ou déshonoré aux yeux des autres."],
+      ['Que ton règne vienne',
+       "Non pas un royaume terrestre, mais l'accomplissement de ce que le Christ a inauguré. On demande à la fois qu'il advienne à la fin des temps, et qu'il commence dès maintenant là où l'on se trouve."],
+      ['Que ta volonté soit faite sur la terre comme au ciel',
+       "La demande la plus exigeante&nbsp;: elle engage à renoncer à imposer la sienne. C'est la prière du Christ lui-même à Gethsémani, quelques heures avant sa Passion."],
+      ['Donne-nous aujourd\'hui notre pain de ce jour',
+       "Le pain matériel, sans détour&nbsp;: de quoi vivre aujourd'hui, pas de quoi être à l'abri pour dix ans. La tradition y lit aussi le pain eucharistique. Le mot grec employé par Matthieu, <i>epiousios</i>, n'apparaît nulle part ailleurs dans toute la littérature grecque&nbsp;; on le traduit par «&nbsp;de ce jour&nbsp;» faute de mieux."],
+      ['Pardonne-nous nos offenses, comme nous pardonnons aussi à ceux qui nous ont offensés',
+       "La seule demande assortie d'une condition, et le Christ y revient juste après pour insister. On ne demande pas un pardon gratuit&nbsp;: on demande à être pardonné dans la mesure où l'on pardonne soi-même."],
+      ['Et ne nous laisse pas entrer en tentation',
+       "Dieu ne tente personne&nbsp;: on lui demande de ne pas nous laisser franchir le pas quand l'épreuve se présente. C'est précisément ce que l'ancienne formule — «&nbsp;ne nous soumets pas à la tentation&nbsp;» — laissait entendre à tort, d'où le changement de 2017."],
+      ['Mais délivre-nous du Mal',
+       "Le texte grec permet de comprendre «&nbsp;du mal&nbsp;» ou «&nbsp;du Malin&nbsp;». La liturgie française met une majuscule&nbsp;: il ne s'agit pas des contrariétés de l'existence, mais de celui qui s'oppose au dessein de Dieu."],
+    ];
+
+    const FAQ = [
+      ["Pourquoi le texte a-t-il changé en 2017&nbsp;?",
+       "La sixième demande disait «&nbsp;ne nous soumets pas à la tentation&nbsp;», ce qui laissait croire que Dieu pourrait pousser au péché — le contraire de ce qu'enseigne l'Écriture. La traduction «&nbsp;ne nous laisse pas entrer en tentation&nbsp;» est entrée en vigueur le 3 décembre 2017, premier dimanche de l'Avent, dans toute la francophonie."],
+      ["Faut-il dire «&nbsp;car c'est à toi qu'appartiennent le règne, la puissance et la gloire&nbsp;»&nbsp;?",
+       "Cette finale, appelée doxologie, ne figure pas dans les plus anciens manuscrits de l'Évangile&nbsp;: elle a été ajoutée très tôt dans l'usage liturgique. Les Églises protestantes l'ont conservée dans la prière elle-même. Les catholiques la disent aussi, mais à la messe seulement, après une courte prière du prêtre qui la sépare du Notre Père. En dehors de la messe, on s'arrête donc à «&nbsp;délivre-nous du Mal&nbsp;»."],
+      ["D'où vient cette prière&nbsp;?",
+       "Du Christ lui-même, qui la donne à ses disciples. On la trouve deux fois dans les Évangiles&nbsp;: en Matthieu 6, 9-13, dans le Sermon sur la montagne, et en Luc 11, 2-4, sous une forme plus brève, en réponse à un disciple qui demandait&nbsp;: «&nbsp;Seigneur, apprends-nous à prier.&nbsp;»"],
+      ["Pourquoi «&nbsp;notre&nbsp;» Père et non «&nbsp;mon&nbsp;» Père&nbsp;?",
+       "Parce que la prière est au pluriel d'un bout à l'autre — donne-nous, pardonne-nous, délivre-nous. Même dit seul, on ne la prie jamais pour soi seul&nbsp;: c'est la prière de toute l'Église, et elle inclut nécessairement ceux qu'on aurait préféré laisser dehors."],
+      ["Combien de fois faut-il le dire&nbsp;?",
+       "Aucune règle. Il est dit une fois à chaque messe, une fois par dizaine de chapelet, et il ouvre plusieurs offices du bréviaire. Beaucoup le prient simplement au lever et au coucher."],
+      ["Y a-t-il une posture particulière&nbsp;?",
+       "Non. À la messe, l'usage varie selon les paroisses&nbsp;: mains ouvertes, mains jointes, parfois en se tenant par la main. Aucune de ces manières n'est prescrite ni interdite."],
+      ["Peut-on le dire pour quelqu'un qui ne croit pas&nbsp;?",
+       "Oui. Prier pour un proche éloigné de la foi est un usage très ancien, et le Notre Père est la forme la plus simple de cette prière."],
+    ];
+
+    const demandesHtml = DEMANDES.map(([nom, txt], i) => `
+        <li class="et">
+          <span class="et-n">${i + 1}</span>
+          <div><h3 class="et-t">${nom}</h3><p class="et-d">${txt}</p></div>
+        </li>`).join('');
+
+    const faqHtml = FAQ.map(([q, r]) => `
+        <div class="fq"><h3 class="fq-q">${q}</h3><p class="fq-r">${r}</p></div>`).join('');
+
+    const bodyHtml = `
+      <style>
+        .cg-lede{font-family:var(--serif);font-size:19px;line-height:1.6;color:var(--navy);margin:-4px 0 26px}
+        .cg h2{font-family:var(--serif);font-size:26px;color:var(--navy);margin:38px 0 6px}
+        .cg-note{margin:0 0 18px;color:var(--soft);font-size:14.5px}
+        .cg p{max-width:65ch}
+        .np{background:#fff;border:1px solid rgba(0,0,0,.07);border-top:3px solid var(--gold);
+          border-radius:10px;padding:26px 26px 24px;margin-top:16px}
+        .np p{font-family:var(--serif);font-size:21px;line-height:1.7;color:var(--navy);margin:0;max-width:none}
+        /* Sélecteur doublé : « .np p » l'emportait sinon, et la référence
+           s'affichait dans la même typographie que la prière elle-même. */
+        .np .np-src{margin-top:18px;padding-top:14px;border-top:1px solid rgba(0,0,0,.07);
+          font-family:'Outfit',sans-serif;font-size:13px;line-height:1.5;color:var(--soft);letter-spacing:.02em}
+        .np-lat{background:rgba(26,39,68,.04);border-radius:9px;padding:20px 22px;margin-top:14px}
+        .np-lat p{font-family:var(--serif);font-style:italic;font-size:17.5px;line-height:1.65;color:var(--soft);margin:0}
+        .et-list{list-style:none;margin:18px 0 0;padding:0}
+        .et{display:flex;gap:14px;padding:0 0 18px}
+        .et-n{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:var(--navy);color:#fff;
+          display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px}
+        .et-t{font-family:var(--serif);font-size:20px;color:var(--navy);margin:2px 0 4px}
+        .et-d{margin:0;font-size:16px;line-height:1.6}
+        .fq{padding:14px 0;border-bottom:1px solid rgba(0,0,0,.08)}
+        .fq:last-of-type{border-bottom:none}
+        .fq-q{font-family:var(--serif);font-size:19px;color:var(--navy);margin:0 0 5px}
+        .fq-r{margin:0;font-size:16px;line-height:1.6;color:var(--soft)}
+        .cg-tip{background:rgba(201,168,76,.1);border-radius:8px;padding:16px 20px;margin-top:22px;font-size:16px;line-height:1.6}
+        .cg-tip strong{color:var(--navy)}
+        .cg-cta{background:var(--navy);border-radius:12px;padding:24px 22px;margin:32px 0 0;text-align:center}
+        .cg-cta h2{color:#fff;margin:0 0 8px;font-size:24px}
+        .cg-cta p{color:rgba(255,255,255,.82);font-size:16px;margin:0 auto 18px;max-width:46ch}
+        .cg-cta a{display:inline-flex;align-items:center;gap:9px;background:var(--gold);color:var(--navy);
+          font-weight:600;font-size:16px;padding:13px 26px;border-radius:999px;text-decoration:none;min-height:44px}
+        .cg-apres{font-size:14.5px;color:var(--soft);text-align:center;margin:16px 0 0;line-height:1.6}
+        .cg-apres a{color:var(--navy)}
+      </style>
+
+      <div class="cg">
+        <p class="cg-lede">
+          C'est la seule prière que le Christ ait lui-même enseignée, et la plus dite au monde.
+          Voici son texte exact — celui en vigueur depuis 2017 —, ce que veut dire chacune de
+          ses demandes, et d'où elle vient.
+        </p>
+
+        <h2>Le texte</h2>
+        <p class="cg-note">Traduction liturgique officielle, en usage dans toute la francophonie.</p>
+        <div class="np">
+          <p>
+            Notre Père, qui es aux cieux,<br>
+            que ton nom soit sanctifié,<br>
+            que ton règne vienne,<br>
+            que ta volonté soit faite sur la terre comme au ciel.<br><br>
+            Donne-nous aujourd'hui notre pain de ce jour.<br>
+            Pardonne-nous nos offenses,<br>
+            comme nous pardonnons aussi à ceux qui nous ont offensés.<br>
+            Et ne nous laisse pas entrer en tentation,<br>
+            mais délivre-nous du Mal.<br><br>
+            Amen.
+          </p>
+          <p class="np-src">Matthieu 6, 9-13 — traduction liturgique de l'AELF, en vigueur depuis le 3 décembre 2017.</p>
+        </div>
+
+        <h2>En latin</h2>
+        <p class="cg-note">Le <i>Pater noster</i>, encore chanté dans de nombreuses assemblées.</p>
+        <div class="np-lat">
+          <p>
+            Pater noster, qui es in cælis, sanctificetur nomen tuum&nbsp;; adveniat regnum tuum&nbsp;;
+            fiat voluntas tua, sicut in cælo et in terra. Panem nostrum quotidianum da nobis hodie&nbsp;;
+            et dimitte nobis debita nostra, sicut et nos dimittimus debitoribus nostris&nbsp;;
+            et ne nos inducas in tentationem, sed libera nos a malo. Amen.
+          </p>
+        </div>
+
+        <h2>Les sept demandes, une par une</h2>
+        <p class="cg-note">
+          Trois regardent Dieu, quatre regardent les hommes. L'ordre n'a rien d'accidentel.
+        </p>
+        <ul class="et-list">${demandesHtml}</ul>
+
+        <h2>Questions fréquentes</h2>
+        <p class="cg-note">Dont les deux qui reviennent toujours&nbsp;: le changement de 2017, et la finale.</p>
+        ${faqHtml}
+
+        <div class="cg-tip">
+          <strong>Une manière de le prier autrement&nbsp;:</strong> prenez une seule demande, et
+          restez-y toute la journée. Sept jours, sept demandes — beaucoup découvrent ainsi une
+          prière qu'ils récitaient depuis quarante ans sans plus l'entendre.
+        </div>
+
+        <div class="cg-cta">
+          <h2>Le prier chaque jour</h2>
+          <p>
+            Le Notre Père ouvre chaque dizaine du chapelet. Le chapelet guidé du site vous
+            accompagne grain par grain, en mode tactile ou en audio.
+          </p>
+          <a href="/agenda#open-chapelet">Ouvrir le chapelet</a>
+        </div>
+
+        <p class="cg-apres">
+          Pour aller plus loin&nbsp;: <a href="/comment-prier-le-chapelet">comment prier le chapelet</a>,
+          <a href="/comment-prier-une-neuvaine">comment prier une neuvaine</a>, ou
+          <a href="/evangile-du-jour">l'évangile du jour</a>.
+        </p>
+      </div>`;
+
+    const propre = s => String(s).replace(/&nbsp;/g, ' ').replace(/<[^>]+>/g, '').trim();
+    const jsonLd = JSON.stringify([
+      {
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        headline: 'Le Notre Père — texte officiel, explication et origine',
+        description: desc,
+        inLanguage: 'fr',
+        mainEntityOfPage: canonical,
+        author: { '@type': 'Organization', name: 'PrionsEnLigne' },
+        publisher: { '@type': 'Organization', name: 'PrionsEnLigne' },
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        inLanguage: 'fr',
+        mainEntity: FAQ.map(([q, r]) => ({
+          '@type': 'Question',
+          name: propre(q),
+          acceptedAnswer: { '@type': 'Answer', text: propre(r) },
+        })),
+      },
+    ]);
+
+    res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800');
+    res.status(200).send(pageShell({
+      title, desc, canonical,
+      h1: 'Le Notre Père',
+      sub: 'Le texte officiel, et ce que disent ses sept demandes',
+      bodyHtml, jsonLd,
+    }));
+    return;
+  }
+
   /* ── Comment se confesser ──────────────────────────────────────────
      Troisième guide durable. Le sujet est très cherché, et presque
      toujours par quelqu'un que la démarche intimide : « ça fait vingt
