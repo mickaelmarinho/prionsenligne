@@ -250,6 +250,20 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
 .hamburger-overlay.show { opacity: 1; pointer-events: all; }
 
 /* ── Dropdown / drawer burger ── */
+/* Masqué à l'œil, jamais aux lecteurs d'écran ni aux moteurs.
+   display:none les rendrait muets, d'où ce découpage à 1 px. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .hamburger-menu {
   position: absolute;
   top: calc(100% + 10px);

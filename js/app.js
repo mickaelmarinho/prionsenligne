@@ -13,7 +13,22 @@ function initTabs() {
   const bnTabs   = document.querySelectorAll('.bn[data-tab]');
   const sections = document.querySelectorAll('.tab-section');
 
+  /* Titre de niveau 1 de la page. Il n'existait que dans le <noscript> :
+     tout visiteur ayant JavaScript n'en avait aucun, et un lecteur d'écran
+     n'avait donc rien pour annoncer où il se trouve — c'est par les titres
+     qu'on navigue quand on n'y voit pas. Il est masqué à l'œil, pas aux
+     machines, et suit l'onglet ouvert. */
+  const TITRES = {
+    aujourd:    "Agenda des prières du jour",
+    semaine:    "Les prières de la semaine",
+    mois:       "Calendrier liturgique",
+    bible:      "Bible catholique Crampon",
+    sources:    "Les sources du site",
+  };
+  const h1 = document.getElementById('app-h1');
+
   function activateTab(tabId) {
+    if (h1 && TITRES[tabId]) h1.textContent = TITRES[tabId];
     sections.forEach(s => s.classList.remove('active'));
     navTabs.forEach(b => b.classList.remove('active'));
     bnTabs.forEach(b => b.classList.remove('active'));
