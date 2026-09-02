@@ -261,6 +261,14 @@ h1, h2, h3, .logo-name, .day-feast, .month-title, .src-name, .tl-prayer {
   min-width: 190px;
   box-shadow: 0 8px 30px rgba(0,0,0,.15);
   z-index: 300;
+  /* Le menu s'est allongé au fil des guides ajoutés : sur ordinateur,
+     faute de hauteur maximale, « Soutenir le projet » tombait sous le bas
+     de l'écran et rien ne permettait d'y accéder. La version mobile avait
+     ce défilement depuis le début ; il manquait ici.
+     96 px : la hauteur de l'en-tête, plus le décalage sous le bouton. */
+  max-height: calc(100vh - 96px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   /* Animation douce : pas de display:none — utilise opacity + transform */
   opacity: 0;
   pointer-events: none;
