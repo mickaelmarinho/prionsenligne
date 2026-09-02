@@ -2167,15 +2167,21 @@ export default async function handler(req, res) {
   .brand span{color:var(--gold)}
   .tagline{font-style:italic;color:var(--soft);font-size:18px;margin-top:4px}
   .hr{width:70px;height:3px;background:var(--gold);margin:16px 0}
-  .lead{font-size:20px;line-height:1.5;color:var(--ink);max-width:150mm;margin-top:2mm}
+  /* Tout était empilé depuis le haut, la note pastorale poussée en bas par
+     un margin-top:auto : le mou de la page s'accumulait donc en un seul
+     trou, juste au-dessus d'elle. Le bloc central prend maintenant l'espace
+     restant et s'y centre — le vide se répartit au lieu de s'entasser. */
+  .mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%}
+  .lead{font-size:21px;line-height:1.5;color:var(--ink);max-width:150mm}
   .lead strong{color:var(--navy)}
-  .qr-wrap{margin:6mm 0 4mm;padding:5mm;background:#fff;border:1px solid #e0d9c8;border-radius:8px}
-  .qr-wrap svg{width:46mm;height:46mm;display:block}
+  .qr-wrap{margin:7mm 0 4mm;padding:5mm;background:#fff;border:1px solid #e0d9c8;border-radius:8px}
+  /* Une affiche se lit à distance : le QR gagne à être généreux. */
+  .qr-wrap svg{width:54mm;height:54mm;display:block}
   .scan{font-family:system-ui,sans-serif;font-size:15px;color:var(--navy);font-weight:600}
-  .url{font-family:system-ui,sans-serif;font-size:26px;color:var(--gold);font-weight:700;letter-spacing:.5px;margin-top:3mm}
-  .features{font-size:15px;color:var(--soft);margin-top:5mm;line-height:1.7;max-width:150mm}
-  .pastoral{margin-top:auto;font-size:13px;color:var(--soft);font-style:italic;max-width:150mm;line-height:1.5}
-  .free{font-family:system-ui,sans-serif;display:inline-block;margin-top:4mm;background:rgba(201,168,76,.18);color:var(--navy);font-weight:600;font-size:13px;padding:5px 16px;border-radius:999px}
+  .url{font-family:system-ui,sans-serif;font-size:29px;color:var(--gold);font-weight:700;letter-spacing:.5px;margin-top:3mm}
+  .features{font-size:16px;color:var(--soft);margin-top:6mm;line-height:1.7;max-width:150mm}
+  .pastoral{font-size:13px;color:var(--soft);font-style:italic;max-width:150mm;line-height:1.5;padding-top:4mm}
+  .free{font-family:system-ui,sans-serif;display:inline-block;margin-top:5mm;background:rgba(201,168,76,.18);color:var(--navy);font-weight:600;font-size:13px;padding:5px 16px;border-radius:999px}
   @media print {
     body{background:#fff;padding:0;gap:0}
     .toolbar{display:none}
@@ -2198,14 +2204,16 @@ export default async function handler(req, res) {
     <div class="brand">Prions<span>EnLigne</span></div>
     <div class="tagline">Prier ensemble, chaque jour</div>
     <div class="hr"></div>
-    <p class="lead">Vous ne pouvez pas toujours vous rendre à l'église&nbsp;?<br>
-      <strong>Restez unis à la prière de l'Église</strong>, où que vous soyez.</p>
-    <div class="qr-wrap">${QR_SVG}</div>
-    <div class="scan">Scannez avec l'appareil photo de votre téléphone</div>
-    <div class="url">prionsenligne.fr</div>
-    <div class="features">Offices du bréviaire · Messes en direct · Chapelet guidé à voix haute<br>
-      Bible · Calendrier liturgique des saints</div>
-    <span class="free">100&nbsp;% gratuit · sans publicité</span>
+    <div class="mid">
+      <p class="lead">Vous ne pouvez pas toujours vous rendre à l'église&nbsp;?<br>
+        <strong>Restez unis à la prière de l'Église</strong>, où que vous soyez.</p>
+      <div class="qr-wrap">${QR_SVG}</div>
+      <div class="scan">Scannez avec l'appareil photo de votre téléphone</div>
+      <div class="url">prionsenligne.fr</div>
+      <div class="features">Offices du bréviaire · Messes en direct · Chapelet guidé à voix haute<br>
+        Bible · Calendrier liturgique des saints</div>
+      <span class="free">100&nbsp;% gratuit · sans publicité</span>
+    </div>
     <p class="pastoral">La participation physique à la messe reste irremplaçable. Cet outil accompagne ceux qui ne peuvent pas se déplacer (malades, personnes âgées, isolés) et invite chacun à rejoindre sa paroisse dès qu'il le peut.</p>
   </div>
   </div>
