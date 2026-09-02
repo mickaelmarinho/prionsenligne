@@ -9717,36 +9717,60 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
    Le réglage existait déjà, mais dans le menu, écrit en petit : ceux
    qui en ont le plus besoin ne le trouvaient pas. Il est désormais
    visible en permanence, et un appui suffit.
+
+   Le pavé crème carré posé sur l'en-tête bleu faisait tache : c'était la
+   seule pièce claire de la barre, plus haute que le bouton Menu voisin.
+   Il reprend donc la même pilule translucide que lui — le « + » doré
+   suffit à signaler ce qu'il fait. La zone tactile reste à 44 px grâce
+   au pseudo-élément, sans que le bouton ait à grossir.
 ═══════════════════════════════════════════════ */
 .textsize-btn {
+  position: relative;
   display: inline-flex;
   align-items: baseline;
   justify-content: center;
-  gap: 1px;
-  min-width: 44px;
-  min-height: 44px;
-  padding: 0 10px;
-  background: var(--cream);
-  border: 1px solid var(--border-mid);
-  border-radius: 10px;
-  color: var(--navy);
+  gap: 2px;
+  height: 33px;
+  padding: 0 13px;
+  background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 20px;
+  color: var(--cream);
   cursor: pointer;
   font-family: 'Outfit', sans-serif;
   transition: background .15s, border-color .15s, color .15s;
 }
-.ts-btn-a    { font-size: 19px; font-weight: 600; line-height: 1; }
-.ts-btn-plus { font-size: 13px; font-weight: 600; line-height: 1; }
+/* Zone d'appui confortable, invisible, débordant du bouton */
+.textsize-btn::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; top: 50%;
+  height: 44px;
+  transform: translateY(-50%);
+}
+.ts-btn-a    { font-size: 17px; font-weight: 700; line-height: 1; letter-spacing: .3px; }
+.ts-btn-plus { font-size: 12px; font-weight: 700; line-height: 1; color: var(--gold); }
 
-/* Repère discret quand un agrandissement est actif */
+/* Repère quand un agrandissement est actif : la pilule se cerne d'or.
+   Un aplat doré plein aurait fait doublon avec le bouton « Se connecter »
+   juste à côté ; le contour suffit à dire que le réglage est enclenché. */
 .textsize-btn.is-on {
-  background: var(--navy);
-  border-color: var(--navy);
+  background: rgba(201,168,76,.22);
+  border-color: var(--gold);
   color: var(--gold);
 }
 @media (hover: hover) and (pointer: fine) {
-  .textsize-btn:hover { background: var(--navy); border-color: var(--navy); color: white; }
+  .textsize-btn:hover { background: rgba(255,255,255,.2); }
+  .textsize-btn.is-on:hover { background: rgba(201,168,76,.34); }
 }
 .textsize-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+/* Sur téléphone le bouton Menu passe à 36 px : sans cela les deux pilules
+   voisines n'auraient pas la même hauteur. Déclaré ici, après la règle de
+   base — placé plus haut dans la feuille, il aurait été écrasé par elle. */
+@media (max-width: 640px) {
+  .textsize-btn { height: 36px; }
+}
 
 /* Confirmation du niveau atteint — sans elle, on ne sait pas ce qui a changé */
 .textsize-toast {
