@@ -7985,7 +7985,13 @@ function initContact() {
   const overlay  = document.getElementById('contact-overlay');
   const modal    = document.getElementById('contact-modal');
   const closeBtn = document.getElementById('contact-close');
-  const trigger  = document.getElementById('hm-contact');
+  /* Le formulaire n'était accessible que depuis le menu burger. Il l'est
+     aussi depuis le pied de page : tous les déclencheurs portent désormais
+     data-contact-open, plutôt qu'un identifiant unique. */
+  const triggers = [
+    document.getElementById('hm-contact'),
+    ...document.querySelectorAll('[data-contact-open]'),
+  ].filter(Boolean);
   const form     = document.getElementById('contact-form');
   const textarea = document.getElementById('contact-message');
   const counter  = document.getElementById('contact-count');
@@ -8009,7 +8015,7 @@ function initContact() {
     if (feedback) { feedback.className = 'contact-feedback hidden'; feedback.textContent = ''; }
   }
 
-  trigger?.addEventListener('click', openContact);
+  triggers.forEach(el => el.addEventListener('click', openContact));
   closeBtn?.addEventListener('click', closeContact);
   overlay?.addEventListener('click', closeContact);
   modal?.addEventListener('click', e => { if (e.target === modal) closeContact(); });

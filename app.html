@@ -35,7 +35,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <link rel="stylesheet" href="css/style.css?v=222" />
+  <link rel="stylesheet" href="css/style.css?v=223" />
   <!-- PWA / iOS standalone -->
   <meta name="theme-color" content="#1a2744" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -572,42 +572,69 @@
   ═══════════════════════════════════════════ -->
   <footer class="site-footer">
     <div class="footer-inner">
+      <!-- Onze liens sous un seul intitulé « Chaque jour » : l'intitulé
+           mentait pour la moitié d'entre eux, et l'œil n'avait aucun repère.
+           Ils sont désormais rangés par nature — consulter, lire, le reste —
+           ce qui remplit aussi les 350 px vides laissés à gauche. -->
       <div class="footer-brand">
         <div class="logo">
           <img src="/icons/icon.svg" alt="" class="logo-img" width="30" height="30" aria-hidden="true">
+          <span class="footer-brand-name">PrionsEnLigne</span>
         </div>
         <p class="footer-tagline">Prier ensemble, chaque jour</p>
+        <p class="footer-pitch">
+          Les offices, les messes en direct, le chapelet et la Bible catholique,
+          réunis sur une seule page. Gratuit, sans publicité.
+        </p>
+        <!-- Le formulaire de contact n'existait que dans le menu burger :
+             personne ne l'y cherchait. Il ouvre la même fenêtre. -->
+        <button type="button" class="footer-contact" data-contact-open>
+          <i class="fa-solid fa-envelope" aria-hidden="true"></i> Nous écrire
+        </button>
       </div>
-      <!-- Le bloc « Navigation » qui reprenait Aujourd'hui / Semaine /
-           Calendrier / Sources a été retiré : ces destinations sont déjà
-           dans la barre principale, et il s'agissait de boutons d'onglet,
-           sans valeur pour le référencement. -->
-      <nav class="footer-nav">
+
+      <nav class="footer-col">
         <span class="footer-nav-title">Chaque jour</span>
         <a class="footer-nav-link" href="/saint-du-jour">Saint du jour</a>
         <a class="footer-nav-link" href="/evangile-du-jour">Évangile du jour</a>
         <a class="footer-nav-link" href="/messe-en-direct">Messe en direct</a>
         <a class="footer-nav-link" href="/saints">Saints de la francophonie</a>
+      </nav>
+
+      <nav class="footer-col">
+        <span class="footer-nav-title">À lire</span>
         <a class="footer-nav-link" href="/comment-prier-le-chapelet">Comment prier le chapelet</a>
         <a class="footer-nav-link" href="/comment-prier-une-neuvaine">Comment prier une neuvaine</a>
         <a class="footer-nav-link" href="/comment-se-confesser">Comment se confesser</a>
         <a class="footer-nav-link" href="/histoire-du-christianisme">Histoire du christianisme</a>
+      </nav>
+
+      <nav class="footer-col">
+        <span class="footer-nav-title">Le site</span>
         <a class="footer-nav-link" href="/paroisses">Pour les paroisses</a>
         <a class="footer-nav-link" href="/fonds-ecran">Fonds d'écran à offrir</a>
         <a class="footer-nav-link" href="https://www.etsy.com/shop/FatimaLightCo" target="_blank" rel="noopener">Boutique à imprimer</a>
       </nav>
-      <div class="footer-legal">
-        <p>Textes liturgiques :</p>
-        <p><a href="https://www.aelf.org" target="_blank" rel="noopener">AELF</a> — Association Épiscopale<br>Liturgique Francophone</p>
-        <p style="margin-top:12px">Sources :<br>
-          <a href="https://www.radiomaria.fr" target="_blank" rel="noopener">Radio Maria</a> ·
-          <a href="https://www.rcf.fr/radio-notre-dame" target="_blank" rel="noopener">Notre-Dame</a> ·
-          <a href="https://rcf.fr" target="_blank" rel="noopener">RCF</a> ·
-          <a href="https://radio-esperance.fr" target="_blank" rel="noopener">Espérance</a> ·
-          <a href="https://www.radiofidelite.fr" target="_blank" rel="noopener">Fidélité</a> ·
-          <a href="https://www.ktotv.com" target="_blank" rel="noopener">KTO</a>
-        </p>
-      </div>
+    </div>
+
+    <!-- Les crédits étaient alignés à droite, en colonne étroite, sur deux
+         hauteurs différentes du reste. Sur une ligne centrée, ils redeviennent
+         ce qu'ils sont : une mention, pas une colonne de navigation. -->
+    <div class="footer-sources">
+      <p>
+        Textes liturgiques&nbsp;:
+        <a href="https://www.aelf.org" target="_blank" rel="noopener">AELF</a>
+        — Association Épiscopale Liturgique Francophone
+      </p>
+      <p>
+        Diffusions&nbsp;:
+        <a href="https://www.radiomaria.fr" target="_blank" rel="noopener">Radio Maria</a> ·
+        <a href="https://www.rcf.fr/radio-notre-dame" target="_blank" rel="noopener">Notre-Dame</a> ·
+        <a href="https://rcf.fr" target="_blank" rel="noopener">RCF</a> ·
+        <a href="https://radio-esperance.fr" target="_blank" rel="noopener">Espérance</a> ·
+        <a href="https://www.radiofidelite.fr" target="_blank" rel="noopener">Fidélité</a> ·
+        <a href="https://www.ktotv.com" target="_blank" rel="noopener">KTO</a>
+      </p>
     </div>
     <hr class="footer-divider">
     <div class="footer-bottom">
@@ -1275,10 +1302,10 @@
       });
     }
   </script>
-  <script src="js/app.js?v=222"></script>
+  <script src="js/app.js?v=223"></script>
   <!-- Concordance thématique (chargée AVANT bible.js qui la consomme) -->
-  <script src="js/bible-themes.js?v=222"></script>
-  <script src="js/bible.js?v=222"></script>
+  <script src="js/bible-themes.js?v=223"></script>
+  <script src="js/bible.js?v=223"></script>
   <!-- Supabase — build UMD explicite (évite que jsdelivr serve le build CJS/ESM).
        Version ÉPINGLÉE : le tag flottant @2 nous a déjà cassé la présence
        Realtime lors d'une mise à jour silencieuse de la lib (juillet 2026).
@@ -1287,8 +1314,8 @@
   <!-- Cloudflare Turnstile — anti-bot invisible (cf. auth.js). Chargé en async
        pour ne pas bloquer le rendu ; le widget est rendu à la demande. -->
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-  <script src="js/auth.js?v=222"></script>
-  <script src="js/admin.js?v=222"></script>
+  <script src="js/auth.js?v=223"></script>
+  <script src="js/admin.js?v=223"></script>
   <script>document.addEventListener('DOMContentLoaded', initAuth);</script>
   <!-- Vercel Web Analytics — sans cookies, RGPD-friendly (aucune donnée personnelle) -->
   <script defer src="/_vercel/insights/script.js"></script>
