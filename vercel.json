@@ -97,6 +97,10 @@
       "destination": "/api/seo?p=neuvaine-guide"
     },
     {
+      "source": "/comment-se-confesser",
+      "destination": "/api/seo?p=confession-guide"
+    },
+    {
       "source": "/affiche",
       "destination": "/api/seo?p=affiche"
     }

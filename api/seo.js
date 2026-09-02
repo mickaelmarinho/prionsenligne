@@ -1012,6 +1012,268 @@ export default async function handler(req, res) {
     return;
   }
 
+  /* ── Comment se confesser ──────────────────────────────────────────
+     Troisième guide durable. Le sujet est très cherché, et presque
+     toujours par quelqu'un que la démarche intimide : « ça fait vingt
+     ans », « je ne sais pas quoi dire ». La page répond donc d'abord à
+     cette gêne — le déroulement exact, les mots à prononcer — avant la
+     doctrine. Rien n'est dramatisé, rien n'est édulcoré non plus. */
+  if (p === 'confession-guide') {
+    const canonical = `${SITE}/comment-se-confesser`;
+    const title = "Comment se confesser — le déroulement, les mots à dire, l'acte de contrition | PrionsEnLigne";
+    const desc = "Se confesser pas à pas : comment se préparer, ce que l'on dit en entrant, le texte de l'acte de contrition, ce que fait le prêtre. Guide clair, même si votre dernière confession remonte à très longtemps.";
+
+    // Examen de conscience — présenté en questions plutôt qu'en liste de
+    // fautes : on cherche à aider quelqu'un à réfléchir, pas à l'accabler.
+    const EXAMEN = [
+      ['Envers Dieu', [
+        "Ai-je fait une place à la prière, ou seulement quand j'avais besoin de quelque chose&nbsp;?",
+        "Ai-je manqué la messe du dimanche par simple négligence&nbsp;?",
+        "Me suis-je servi du nom de Dieu à la légère, ou pour blesser&nbsp;?",
+        "Ai-je cherché des réponses ailleurs — voyance, superstitions — plutôt qu'auprès de lui&nbsp;?",
+      ]],
+      ['Envers les autres', [
+        "Ai-je menti, trompé, trahi une confiance&nbsp;?",
+        "Ai-je parlé dans le dos de quelqu'un, révélé ce qui ne m'appartenait pas&nbsp;?",
+        "Ai-je été dur, méprisant, violent en paroles&nbsp;?",
+        "Ai-je gardé de la rancune, refusé de pardonner, entretenu une brouille&nbsp;?",
+        "Ai-je manqué à mes engagements — conjugaux, familiaux, professionnels&nbsp;?",
+        "Ai-je pris ce qui ne m'appartenait pas, ou profité de quelqu'un de plus faible&nbsp;?",
+        "Ai-je vu un besoin autour de moi et détourné le regard&nbsp;?",
+      ]],
+      ['Envers soi-même', [
+        "Ai-je laissé un excès prendre le dessus — alcool, écrans, jeu, achats, pornographie&nbsp;?",
+        "Ai-je usé de mon corps ou de celui d'un autre comme d'un objet&nbsp;?",
+        "Me suis-je laissé aller au découragement au point de douter d'être aimé de Dieu&nbsp;?",
+        "Ai-je gâché mon temps et mes forces alors que d'autres comptaient sur moi&nbsp;?",
+      ]],
+    ];
+
+    const ETAPES = [
+      ['Entrer et se signer',
+       "Vous choisissez le confessionnal, où l'on n'est pas vu, ou le face-à-face, selon ce qui est proposé. Le prêtre commence par le signe de croix&nbsp;: vous le faites avec lui."],
+      ['Dire depuis quand',
+       "La formule d'usage est&nbsp;: «&nbsp;Bénissez-moi mon père parce que j'ai péché. Ma dernière confession remonte à…&nbsp;» Si vous ne savez plus, dites-le tel quel — «&nbsp;cela fait très longtemps, je ne sais plus&nbsp;». Cela arrive tous les jours."],
+      ['Dire ses péchés',
+       "Simplement, sans détour et sans se justifier. On dit ce que l'on a fait, pas ce que les autres ont fait. Pour les fautes graves, on indique aussi à peu près combien de fois. Si les mots ne viennent pas, dites-le au prêtre&nbsp;: c'est son métier de vous aider à avancer, et il le fera sans vous brusquer."],
+      ['Écouter ce que dit le prêtre',
+       "Quelques mots, souvent brefs&nbsp;: un conseil, un encouragement. Puis il vous donne une pénitence — le plus souvent une prière, parfois un geste concret."],
+      ['Dire l\'acte de contrition',
+       "Une courte prière par laquelle on exprime son regret. Le texte est plus bas sur cette page&nbsp;; il n'est pas obligatoire de le connaître par cœur, et vos propres mots conviennent."],
+      ['Recevoir l\'absolution',
+       "Le prêtre étend la main et prononce la formule qui se termine par «&nbsp;…je te pardonne tous tes péchés, au nom du Père, et du Fils, et du Saint-Esprit&nbsp;». Vous répondez «&nbsp;Amen&nbsp;». C'est fini. Il ne reste qu'à accomplir la pénitence reçue."],
+    ];
+
+    const FAQ = [
+      ["Cela fait vingt ans — puis-je quand même y aller&nbsp;?",
+       "Oui, et c'est la situation que les prêtres rencontrent le plus souvent. Dites simplement en entrant depuis combien de temps vous n'êtes pas venu&nbsp;: il adaptera. Aucune durée n'est un obstacle, et il n'y a rien à rattraper avant de venir."],
+      ["Faut-il vraiment tout dire&nbsp;?",
+       "L'Église demande de confesser les péchés graves — ceux qui portent sur une matière importante, commis en connaissance de cause et librement — avec leur nature et, autant que possible, leur nombre approximatif. Les fautes légères ne sont pas obligatoires&nbsp;; les confesser reste vivement encouragé, parce que c'est là qu'on progresse. On ne demande ni récit détaillé ni circonstances scabreuses."],
+      ["Et si j'oublie un péché&nbsp;?",
+       "Un oubli involontaire n'annule rien&nbsp;: le pardon reçu vaut pour l'ensemble. Vous le direz simplement la prochaine fois. Ce qui invaliderait la confession, c'est de taire volontairement une faute grave."],
+      ["Le prêtre peut-il répéter ce que je lui dis&nbsp;?",
+       "Jamais, sous aucun prétexte et envers personne&nbsp;: c'est le secret sacramentel, absolu en droit de l'Église (canon 983). Un prêtre qui le violerait serait excommunié. Il ne peut pas non plus se servir de ce qu'il a entendu, même sans le révéler."],
+      ["Peut-on se confesser sans être vu&nbsp;?",
+       "Oui. Le confessionnal traditionnel, avec sa grille, existe précisément pour cela, et il est proposé dans la plupart des églises. Le choix vous revient&nbsp;: personne ne vous demandera de justifier votre préférence."],
+      ["Combien de temps cela dure-t-il&nbsp;?",
+       "Rarement plus d'un quart d'heure, souvent cinq minutes. Une confession après une longue absence est un peu plus longue, sans plus."],
+      ["Faut-il connaître des prières par cœur&nbsp;?",
+       "Non. Le prêtre vous guide de bout en bout et vous souffle ce qu'il faut dire si vous hésitez."],
+      ["À quelle fréquence&nbsp;?",
+       "L'obligation minimale est d'une fois par an pour qui a conscience d'une faute grave&nbsp;; c'est l'un des préceptes de l'Église. Beaucoup s'en tiennent aux grandes fêtes, d'autres viennent tous les mois. Ce rythme mensuel est celui que recommandent le plus souvent les confesseurs."],
+      ["Peut-on se confesser par téléphone ou en visioconférence&nbsp;?",
+       "Non&nbsp;: le sacrement suppose la présence physique, et l'Église l'a rappelé pendant la pandémie. Si vous ne pouvez vraiment pas vous déplacer et que la situation est grave, vous pouvez faire un acte de contrition sincère, avec l'intention ferme de vous confesser dès que ce sera possible."],
+      ["Peut-on communier sans s'être confessé&nbsp;?",
+       "Oui, si l'on n'a pas conscience d'une faute grave&nbsp;: la confession n'est pas un passage obligé avant chaque communion. En revanche, quand on a conscience d'un péché grave, la confession vient d'abord."],
+      ["Et pour un enfant&nbsp;?",
+       "La première confession précède habituellement la première communion, vers 8 ans. Le prêtre adapte entièrement sa manière&nbsp;; il n'y a rien à préparer d'autre que d'expliquer à l'enfant qu'il va parler de ce qui l'a rendu triste ou fâché avec les autres."],
+    ];
+
+    const examenHtml = EXAMEN.map(([titre, qs]) => `
+        <article class="ex">
+          <h3 class="ex-t">${titre}</h3>
+          <ul class="ex-l">${qs.map(q => `<li>${q}</li>`).join('')}</ul>
+        </article>`).join('');
+
+    const etapesHtml = ETAPES.map(([nom, txt], i) => `
+        <li class="et">
+          <span class="et-n">${i + 1}</span>
+          <div><h3 class="et-t">${nom}</h3><p class="et-d">${txt}</p></div>
+        </li>`).join('');
+
+    const faqHtml = FAQ.map(([q, r]) => `
+        <div class="fq"><h3 class="fq-q">${q}</h3><p class="fq-r">${r}</p></div>`).join('');
+
+    const bodyHtml = `
+      <style>
+        .cg-lede{font-family:var(--serif);font-size:19px;line-height:1.6;color:var(--navy);margin:-4px 0 26px}
+        .cg h2{font-family:var(--serif);font-size:26px;color:var(--navy);margin:38px 0 6px}
+        .cg-note{margin:0 0 18px;color:var(--soft);font-size:14.5px}
+        .cg p{max-width:65ch}
+        .ex-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:16px}
+        .ex{background:#fff;border:1px solid rgba(0,0,0,.07);border-top:3px solid var(--gold);border-radius:9px;padding:16px 18px}
+        .ex-t{font-family:var(--serif);font-size:20px;color:var(--navy);margin:0 0 8px}
+        .ex-l{margin:0;padding-left:18px}
+        .ex-l li{font-size:15.5px;line-height:1.55;color:var(--soft);margin-bottom:7px}
+        .et-list{list-style:none;margin:18px 0 0;padding:0}
+        .et{display:flex;gap:14px;padding:0 0 18px}
+        .et-n{flex:0 0 auto;width:30px;height:30px;border-radius:50%;background:var(--navy);color:#fff;
+          display:flex;align-items:center;justify-content:center;font-weight:600;font-size:15px}
+        .et-t{font-family:var(--serif);font-size:20px;color:var(--navy);margin:2px 0 4px}
+        .et-d{margin:0;font-size:16px;line-height:1.6}
+        .dial{background:#fff;border:1px solid rgba(0,0,0,.07);border-left:3px solid var(--navy);
+          border-radius:9px;padding:18px 20px;margin-top:16px}
+        .dial p{margin:0 0 12px;font-size:16px;line-height:1.6}
+        .dial p:last-child{margin-bottom:0}
+        .dial b{color:var(--navy)}
+        .prayer{background:rgba(201,168,76,.1);border-radius:9px;padding:20px 22px;margin-top:16px}
+        .prayer h3{font-family:var(--serif);font-size:19px;color:var(--navy);margin:0 0 8px}
+        .prayer p{font-family:var(--serif);font-size:18px;line-height:1.65;color:var(--navy);margin:0}
+        .prayer + .prayer{margin-top:12px}
+        .fq{padding:14px 0;border-bottom:1px solid rgba(0,0,0,.08)}
+        .fq:last-of-type{border-bottom:none}
+        .fq-q{font-family:var(--serif);font-size:19px;color:var(--navy);margin:0 0 5px}
+        .fq-r{margin:0;font-size:16px;line-height:1.6;color:var(--soft)}
+        .cg-tip{background:rgba(201,168,76,.1);border-radius:8px;padding:16px 20px;margin-top:22px;font-size:16px;line-height:1.6}
+        .cg-tip strong{color:var(--navy)}
+        .cg-cta{background:var(--navy);border-radius:12px;padding:24px 22px;margin:32px 0 0;text-align:center}
+        .cg-cta h2{color:#fff;margin:0 0 8px;font-size:24px}
+        .cg-cta p{color:rgba(255,255,255,.82);font-size:16px;margin:0 auto 18px;max-width:46ch}
+        .cg-cta a{display:inline-flex;align-items:center;gap:9px;background:var(--gold);color:var(--navy);
+          font-weight:600;font-size:16px;padding:13px 26px;border-radius:999px;text-decoration:none;min-height:44px}
+        .cg-apres{font-size:14.5px;color:var(--soft);text-align:center;margin:16px 0 0;line-height:1.6}
+        .cg-apres a{color:var(--navy)}
+      </style>
+
+      <div class="cg">
+        <p class="cg-lede">
+          Se confesser intimide presque toujours, et d'abord parce qu'on ne sait pas comment
+          cela se passe. Voici le déroulement exact, les mots que l'on prononce, et les
+          réponses aux questions que l'on n'ose pas poser.
+        </p>
+
+        <h2>Ce qu'est ce sacrement</h2>
+        <p>
+          La confession — l'Église parle du sacrement de réconciliation, ou de pénitence — est
+          le geste par lequel un baptisé reconnaît ses fautes devant un prêtre et en reçoit le
+          pardon de Dieu. Le prêtre n'est pas un juge qui évalue&nbsp;: il est le témoin et
+          l'instrument de ce pardon.
+        </p>
+        <p>
+          Trois choses seulement sont requises du pénitent&nbsp;: le regret de ce qu'il a fait,
+          l'aveu de ses fautes, et la volonté de réparer autant qu'il le peut. Ni éloquence,
+          ni vocabulaire particulier, ni perfection préalable.
+        </p>
+
+        <h2>Se préparer&nbsp;: l'examen de conscience</h2>
+        <p class="cg-note">
+          Quelques minutes suffisent. Il ne s'agit pas de dresser un inventaire, mais de
+          regarder honnêtement où l'on en est. Ces questions ne sont qu'un point de départ.
+        </p>
+        <div class="ex-grid">${examenHtml}</div>
+
+        <h2>Le déroulement, pas à pas</h2>
+        <p class="cg-note">Six moments, et rien d'autre.</p>
+        <ul class="et-list">${etapesHtml}</ul>
+
+        <h2>Ce qui se dit exactement</h2>
+        <p class="cg-note">Le dialogue habituel, pour n'avoir aucune surprise.</p>
+        <div class="dial">
+          <p><b>Le prêtre&nbsp;:</b> «&nbsp;Au nom du Père, et du Fils, et du Saint-Esprit.&nbsp;»</p>
+          <p><b>Vous&nbsp;:</b> «&nbsp;Amen. Bénissez-moi mon père parce que j'ai péché.
+            Ma dernière confession remonte à trois mois&nbsp;» — ou «&nbsp;à plusieurs années,
+            je ne sais plus exactement&nbsp;».</p>
+          <p><b>Vous&nbsp;:</b> vous dites ensuite vos fautes, puis&nbsp;: «&nbsp;Je m'accuse
+            de tous ces péchés et de ceux dont je ne me souviens pas.&nbsp;»</p>
+          <p><b>Le prêtre&nbsp;:</b> quelques mots, puis la pénitence à accomplir.</p>
+          <p><b>Vous&nbsp;:</b> l'acte de contrition.</p>
+          <p><b>Le prêtre&nbsp;:</b> l'absolution. Vous répondez «&nbsp;Amen&nbsp;».</p>
+        </div>
+
+        <h2>L'acte de contrition</h2>
+        <p class="cg-note">
+          Deux formules parmi les plus répandues. Vos propres mots font tout aussi bien&nbsp;:
+          ce qui compte est le regret, non la formule.
+        </p>
+        <div class="prayer">
+          <h3>Formule traditionnelle</h3>
+          <p>
+            Mon Dieu, j'ai un très grand regret de vous avoir offensé, parce que vous êtes
+            infiniment bon, infiniment aimable, et que le péché vous déplaît. Je prends la
+            ferme résolution, avec le secours de votre sainte grâce, de ne plus vous offenser
+            et de faire pénitence. Amen.
+          </p>
+        </div>
+        <div class="prayer">
+          <h3>Formule brève</h3>
+          <p>
+            Seigneur Jésus, Fils de Dieu, prends pitié de moi qui suis pécheur.
+          </p>
+        </div>
+
+        <h2>Questions fréquentes</h2>
+        <p class="cg-note">Y compris celles que l'on garde pour soi.</p>
+        ${faqHtml}
+
+        <div class="cg-tip">
+          <strong>Si la démarche vous coûte&nbsp;:</strong> allez dans une église où vous
+          n'êtes pas connu, et dites au prêtre dès la première phrase que vous êtes mal à
+          l'aise et que cela fait longtemps. C'est la phrase qu'il entend le plus souvent, et
+          elle suffit à ce qu'il prenne les choses en main.
+        </div>
+
+        <div class="cg-cta">
+          <h2>Trouver une église près de chez vous</h2>
+          <p>
+            Les horaires de confession sont affichés par la plupart des paroisses, souvent
+            avant la messe du samedi ou du dimanche.
+          </p>
+          <a href="/paroisses">Voir les paroisses</a>
+        </div>
+
+        <p class="cg-apres">
+          Beaucoup préparent leur confession par une prière&nbsp;:
+          <a href="/comment-prier-le-chapelet">le chapelet</a> ou
+          <a href="/comment-prier-une-neuvaine">une neuvaine</a> en sont les formes les plus
+          courantes.
+        </p>
+      </div>`;
+
+    const propre = s => String(s).replace(/&nbsp;/g, ' ').replace(/<[^>]+>/g, '').trim();
+    const jsonLd = JSON.stringify([
+      {
+        '@context': 'https://schema.org',
+        '@type': 'HowTo',
+        name: 'Comment se confesser',
+        description: desc,
+        inLanguage: 'fr',
+        step: ETAPES.map(([nom, txt], i) => ({
+          '@type': 'HowToStep', position: i + 1, name: nom, text: propre(txt),
+        })),
+        mainEntityOfPage: canonical,
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        inLanguage: 'fr',
+        mainEntity: FAQ.map(([q, r]) => ({
+          '@type': 'Question',
+          name: propre(q),
+          acceptedAnswer: { '@type': 'Answer', text: propre(r) },
+        })),
+      },
+    ]);
+
+    res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=604800');
+    res.status(200).send(pageShell({
+      title, desc, canonical,
+      h1: 'Comment se confesser',
+      sub: "Le déroulement, les mots à dire — même après des années",
+      bodyHtml, jsonLd,
+    }));
+    return;
+  }
+
   /* ── Histoire du christianisme et de ses branches ──────────────────
      Page de fond : un seul sujet traité sérieusement vaut mieux que
      beaucoup d'articles courts. Le ton est descriptif et respectueux
