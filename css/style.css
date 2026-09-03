@@ -6135,6 +6135,15 @@ body.player-open .chapelet-fab { bottom: 152px; } /* au-dessus du lecteur radio 
   gap: 12px;
   min-width: 0;
 }
+/* Le conteneur du titre et du sous-titre. Sans min-width:0, une boîte flex
+   refuse de descendre sous la largeur de son contenu : avec un nom d'office
+   long (« Chapelet + prière du soir — RCF Bruxelles — 20h00 »), le bloc
+   poussait la croix de fermeture à plus de 300 px hors de l'écran. D'où un
+   défaut qui n'apparaissait que sur certains offices, jamais sur d'autres.
+   L'ellipse du titre ne pouvait pas s'appliquer non plus, pour la même raison. */
+.chat-header-info > div {
+  min-width: 0;
+}
 .chat-header-icon {
   font-size: 22px;
   color: var(--gold);

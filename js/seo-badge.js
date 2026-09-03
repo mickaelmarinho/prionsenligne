@@ -145,14 +145,21 @@
     const s = document.createElement('style');
     s.id = 'pelseo-style';
     s.textContent = `
-      .pelseo-pill{position:fixed;left:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));
+      /* --pelseo-bas : hauteur à réserver sous la pastille. Vaut la barre de
+         navigation du bas quand l'application en affiche une — sinon le badge
+         se posait dessus et masquait Calendrier, Bible et Sources. */
+      .pelseo-pill{position:fixed;left:14px;bottom:calc(var(--pelseo-bas,0px) + 14px + env(safe-area-inset-bottom,0px));
         z-index:9998;display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 14px;
         border-radius:999px;border:1px solid rgba(255,255,255,.18);background:#1a2744;color:#f5f0e8;
         font:500 13px/1 'Outfit',system-ui,sans-serif;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,.28)}
       .pelseo-pill:hover{background:#243458}
+      /* Réduite à sa pastille de couleur tant qu'on ne s'en sert pas : sur un
+         téléphone, une étiquette permanente mange trop de l'écran. */
+      .pelseo-pill.repliee{min-height:30px;width:30px;padding:0;justify-content:center;opacity:.75}
+      .pelseo-pill.repliee .pelseo-txt{display:none}
       .pelseo-dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
       .pelseo-dot.ok{background:#4c9a63}.pelseo-dot.warn{background:#d9a441}.pelseo-dot.ko{background:#c1554b}
-      .pelseo-panel{position:fixed;left:14px;bottom:calc(58px + env(safe-area-inset-bottom,0px));
+      .pelseo-panel{position:fixed;left:14px;bottom:calc(var(--pelseo-bas,0px) + 58px + env(safe-area-inset-bottom,0px));
         z-index:9999;width:min(340px,calc(100vw - 28px));max-height:min(70vh,520px);overflow:auto;
         background:#fff;border-radius:12px;box-shadow:0 18px 50px rgba(0,0,0,.3);
         font:400 13.5px/1.5 'Outfit',system-ui,sans-serif;color:#1e1c18;padding:14px 16px 12px}
@@ -190,11 +197,21 @@
 
     styles();
 
+    /* Hauteur de la barre de navigation du bas, quand il y en a une : la
+       pastille doit se poser au-dessus, pas devant. Mesurée sur l'élément
+       réel plutôt que codée en dur — elle change selon l'écran. */
+    const barre = document.querySelector('.bottom-nav');
+    if (barre) {
+      const h = Math.round(barre.getBoundingClientRect().height);
+      if (h > 0) document.documentElement.style.setProperty('--pelseo-bas', h + 'px');
+    }
+
     const pill = document.createElement('button');
     pill.type = 'button';
-    pill.className = 'pelseo-pill';
+    pill.className = 'pelseo-pill repliee';
     pill.setAttribute('aria-expanded', 'false');
-    pill.innerHTML = `<span class="pelseo-dot ${etat}"></span> SEO — ${resume}`;
+    pill.title = `SEO — ${resume}`;
+    pill.innerHTML = `<span class="pelseo-dot ${etat}"></span><span class="pelseo-txt">SEO — ${resume}</span>`;
 
     const url = location.origin + location.pathname;
     const panel = document.createElement('div');
@@ -223,8 +240,10 @@
         Search Console — d'où le lien ci-dessus.
       </p>`;
 
+    // Repliée au repos, dépliée avec son texte tant que le détail est ouvert.
     pill.addEventListener('click', () => {
       panel.hidden = !panel.hidden;
+      pill.classList.toggle('repliee', panel.hidden);
       pill.setAttribute('aria-expanded', String(!panel.hidden));
     });
     panel.querySelector('.pelseo-off').addEventListener('click', () => {
