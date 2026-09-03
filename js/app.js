@@ -29,6 +29,8 @@ function initTabs() {
 
   function activateTab(tabId) {
     if (h1 && TITRES[tabId]) h1.textContent = TITRES[tabId];
+    // Compteur anonyme : savoir quels onglets servent vraiment.
+    window.pelStat?.('onglet', tabId);
     sections.forEach(s => s.classList.remove('active'));
     navTabs.forEach(b => b.classList.remove('active'));
     bnTabs.forEach(b => b.classList.remove('active'));
@@ -3808,6 +3810,7 @@ function initChapelet() {
   });
 
   fab.addEventListener('click', () => {
+    window.pelStat?.('action', 'chapelet-ouvert');
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
     // Restaure préférences mémorisées
@@ -6220,6 +6223,7 @@ function buildICS(events, calName = 'PrionsEnLigne — Prières') {
   return lines.join('\r\n');
 }
 function downloadICS(filename, ics) {
+  window.pelStat?.('action', 'export-calendrier');
   const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
@@ -7717,6 +7721,7 @@ function initChat() {
     const sb   = window._sbClient;
     const user = window._pelUser;
     if (!sb || !user || !currentOfficeId || !text.trim()) return;
+    window.pelStat?.('action', 'intention-postee');
 
     // Modération préventive (Claude Haiku) — bloque les messages inappropriés
     // AVANT l'INSERT Supabase. Fail open : si l'API moderation tombe, on
@@ -8823,6 +8828,7 @@ function initGregorianPlayer() {
   });
 
   btn.addEventListener('click', () => {
+    window.pelStat?.('action', 'gregorien');
     if (failed) { window.open(FALLBACK, '_blank', 'noopener'); return; }
     // Cas spécial : autoplay bloqué au reload → un clic relance la lecture
     if (btn.classList.contains('greg-needs-resume')) {

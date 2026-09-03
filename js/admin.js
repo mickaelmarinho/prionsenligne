@@ -209,6 +209,102 @@
     return data || {};
   }
 
+  /* ── Usage ───────────────────────────────────────────────────────
+     Ce que les gens font, sans savoir qui le fait : la base ne contient
+     que des compteurs. Cf. supabase/usage_stats.sql. */
+  let _usageJours = 30;
+
+  async function loadUsage(sb) {
+    if (!sb) return { erreur: 'nosb' };
+    const { data, error } = await sb.rpc('admin_usage_stats', { p_jours: _usageJours });
+    if (error) {
+      const manquante = /does not exist/i.test(error.message || '')
+        || error.code === '42883' || error.code === 'PGRST202';
+      return { erreur: manquante ? 'migration' : (error.message || 'inconnue') };
+    }
+    return data || {};
+  }
+
+  const USAGE_LIBELLES = {
+    aujourd: "Aujourd'hui", semaine: 'Semaine', mois: 'Calendrier',
+    bible: 'Bible', sources: 'Sources',
+    'chapelet-ouvert': 'Chapelet ouvert', 'intention-postee': 'Intention déposée',
+    'export-calendrier': 'Journée exportée', gregorien: 'Chant grégorien',
+  };
+
+  function renderUsage(s) {
+    if (!s || s.erreur === 'nosb') return `<div class="mod-empty">Connexion à la base indisponible.</div>`;
+    if (s.erreur === 'migration') {
+      return `
+        <div class="adm-st-todo">
+          <div class="adm-st-todo-t"><i class="fa-solid fa-database"></i> Une étape à faire une seule fois</div>
+          <p>Ouvrez Supabase → <strong>SQL Editor</strong>, collez le contenu de
+             <code>supabase/usage_stats.sql</code>, exécutez, puis revenez ici.</p>
+          <p class="adm-st-todo-note">Les compteurs ne démarrent qu'à partir de ce moment&nbsp;: les jours précédents resteront vides.</p>
+        </div>`;
+    }
+    if (s.erreur) return `<div class="mod-empty">Erreur : ${esc(s.erreur)}</div>`;
+
+    const n = v => Number(v || 0).toLocaleString('fr-FR');
+    const visites = Number(s.visites || 0);
+    const moyenne = visites ? Math.round(Number(s.secondes || 0) / visites) : 0;
+    const duree = moyenne >= 60
+      ? `${Math.floor(moyenne / 60)} min ${String(moyenne % 60).padStart(2, '0')}`
+      : `${moyenne} s`;
+
+    const barres = (liste, libelles) => {
+      const arr = (liste || []).filter(x => x && x.n);
+      if (!arr.length) return `<p class="adm-st-foot">Rien d'enregistré sur la période.</p>`;
+      const max = Math.max(...arr.map(x => Number(x.n)));
+      return `<div class="adm-us-list">${arr.map(x => {
+        const lbl = (libelles && libelles[x.cle]) || x.cle;
+        return `<div class="adm-us-row">
+            <span class="adm-us-lbl" title="${esc(x.cle)}">${esc(lbl)}</span>
+            <span class="adm-us-bar"><i style="width:${Math.max(2, Math.round(x.n / max * 100))}%"></i></span>
+            <span class="adm-us-n">${n(x.n)}</span>
+          </div>`;
+      }).join('')}</div>`;
+    };
+
+    // Les heures creuses gardent leur colonne : c'est le creux qui informe.
+    const parHeure = new Map((s.heures || []).map(h => [String(h.cle), Number(h.n)]));
+    const maxH = Math.max(1, ...parHeure.values());
+    const heures = Array.from({ length: 24 }, (_, i) => {
+      const v = parHeure.get(String(i)) || 0;
+      return `<div class="adm-st-bar${v ? '' : ' vide'}" style="height:${Math.max(Math.round(v / maxH * 100), 3)}%"
+                   title="${i}h — ${v} arrivée${v > 1 ? 's' : ''}"></div>`;
+    }).join('');
+
+    return `
+      <div class="mod-hero">
+        <div class="mod-hero-title">Ce que les gens viennent chercher</div>
+        <div class="mod-hero-sub">Compteurs anonymes — la base ne sait pas qui fait quoi</div>
+      </div>
+
+      <div class="adm-us-periode">
+        ${[7, 30, 90].map(j => `<button class="adm-us-p${j === _usageJours ? ' active' : ''}" data-jours="${j}">${j} jours</button>`).join('')}
+      </div>
+
+      <div class="adm-st-grid">
+        <div class="adm-st-card"><div class="adm-st-val">${n(visites)}</div><div class="adm-st-lbl">Visites</div></div>
+        <div class="adm-st-card"><div class="adm-st-val">${duree}</div><div class="adm-st-lbl">Durée moyenne</div></div>
+      </div>
+
+      <div class="adm-st-chart-wrap">
+        <div class="adm-st-chart-head"><span>Heures d'arrivée</span><span class="adm-st-chart-max">0 h → 23 h</span></div>
+        <div class="adm-st-chart">${heures}</div>
+      </div>
+
+      <div class="adm-us-bloc"><h4>Onglets ouverts</h4>${barres(s.onglets, USAGE_LIBELLES)}</div>
+      <div class="adm-us-bloc"><h4>Fonctions utilisées</h4>${barres(s.actions, USAGE_LIBELLES)}</div>
+      <div class="adm-us-bloc"><h4>Pages les plus vues</h4>${barres(s.pages, null)}</div>
+
+      <p class="adm-st-foot">
+        Une «&nbsp;visite&nbsp;» est comptée quand la page se ferme, après trois secondes au moins.
+        Les durées sont plafonnées à deux heures&nbsp;: au-delà, c'est un onglet oublié, pas une lecture.
+      </p>`;
+  }
+
   function renderInscrits(s) {
     if (!s || s.erreur === 'nosb') {
       return `<div class="mod-empty">Connexion à la base indisponible.</div>`;
@@ -697,6 +793,9 @@
         <button class="adm-tab ${_adminTab === 'inscrits' ? 'active' : ''}" data-tab="inscrits">
           <i class="fa-solid fa-users"></i> Inscrits
         </button>
+        <button class="adm-tab ${_adminTab === 'usage' ? 'active' : ''}" data-tab="usage">
+          <i class="fa-solid fa-chart-simple"></i> Usage
+        </button>
       </div>
     `;
 
@@ -755,6 +854,14 @@
       body.innerHTML = tabsHtml + `<div class="mod-loading"><i class="fa-solid fa-spinner fa-spin"></i> Lecture des comptes…</div>`;
       const s = await loadInscrits(sb).catch(e => ({ erreur: e?.message || 'inconnue' }));
       body.innerHTML = tabsHtml + renderInscrits(s);
+    } else if (_adminTab === 'usage') {
+      _stopPresenceLiveUpdate();
+      body.innerHTML = tabsHtml + `<div class="mod-loading"><i class="fa-solid fa-spinner fa-spin"></i> Lecture des compteurs…</div>`;
+      const u = await loadUsage(sb).catch(e => ({ erreur: e?.message || 'inconnue' }));
+      body.innerHTML = tabsHtml + renderUsage(u);
+      body.querySelectorAll('[data-jours]').forEach(b => {
+        b.addEventListener('click', () => { _usageJours = Number(b.dataset.jours); loadAdminPanel(); });
+      });
     } else {
       // Arrête le suivi presence quand on quitte l'onglet
       _stopPresenceLiveUpdate();
@@ -952,6 +1059,6 @@
     open: openAdminPanel, close: closeAdminPanel, reload: loadAdminPanel,
     // Rendu isolé de l'onglet Inscrits : permet de vérifier l'affichage
     // (courbe, cartes, message de migration) sans session administrateur.
-    renderInscrits,
+    renderInscrits, renderUsage,
   };
 })();

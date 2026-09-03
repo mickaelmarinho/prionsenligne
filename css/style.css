@@ -4204,6 +4204,37 @@ body:has(.chapelet-fab) .greg-btn { right: 88px; }   /* 54 (FAB) + 20 (marge dro
 }
 .adm-st-todo-note { font-size: 12.5px; color: var(--text-soft); }
 
+/* ── Onglet « Usage » ── */
+.adm-us-periode { display: flex; gap: 8px; margin: 14px 14px 0; }
+.adm-us-periode button {
+  flex: 1;
+  min-height: 36px;
+  border: 1px solid var(--border-mid);
+  background: #fff;
+  border-radius: 999px;
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  color: var(--text-mid);
+  cursor: pointer;
+}
+.adm-us-periode button.active { background: var(--navy); border-color: var(--navy); color: #fff; }
+
+.adm-us-bloc { margin: 18px 14px 0; }
+.adm-us-bloc h4 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--navy);
+  margin-bottom: 8px;
+}
+.adm-us-list { display: flex; flex-direction: column; gap: 7px; }
+.adm-us-row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+/* Le libellé est borné : une adresse de page longue écraserait la barre */
+.adm-us-lbl { flex: 0 0 38%; color: var(--text-mid); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.adm-us-bar { flex: 1; height: 8px; background: rgba(0,0,0,.07); border-radius: 4px; overflow: hidden; }
+.adm-us-bar i { display: block; height: 100%; background: var(--gold); border-radius: 4px; }
+.adm-us-n { flex: 0 0 auto; min-width: 42px; text-align: right; color: var(--navy); font-weight: 600; }
+
 .adm-presence-card {
   margin: 14px;
   background: linear-gradient(135deg, var(--navy) 0%, #2a3a5c 100%);

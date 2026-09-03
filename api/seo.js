@@ -328,7 +328,8 @@ ${jsonLd ? `<script type="application/ld+json">${jsonLd}</script>` : ''}
 <!-- Badge SEO : ne s'affiche que pour un administrateur connecté
      (drapeau localStorage posé par l'application). Le script sort
      immédiatement pour tout le monde d'autre. -->
-<script defer src="/js/seo-badge.js?v=230"></script>
+<script defer src="/js/stats.js?v=231"></script>
+<script defer src="/js/seo-badge.js?v=231"></script>
 </body>
 </html>`;
 }
