@@ -45,6 +45,81 @@
       "source": "/chapelet",
       "destination": "/agenda",
       "permanent": true
+    },
+    {
+      "source": "/bible",
+      "destination": "/agenda#bible",
+      "permanent": true
+    },
+    {
+      "source": "/histoire",
+      "destination": "/histoire-du-christianisme",
+      "permanent": true
+    },
+    {
+      "source": "/confession",
+      "destination": "/comment-se-confesser",
+      "permanent": true
+    },
+    {
+      "source": "/se-confesser",
+      "destination": "/comment-se-confesser",
+      "permanent": true
+    },
+    {
+      "source": "/notre-pere",
+      "destination": "/priere-notre-pere",
+      "permanent": true
+    },
+    {
+      "source": "/pater",
+      "destination": "/priere-notre-pere",
+      "permanent": true
+    },
+    {
+      "source": "/neuvaine",
+      "destination": "/comment-prier-une-neuvaine",
+      "permanent": true
+    },
+    {
+      "source": "/neuvaine-guide",
+      "destination": "/comment-prier-une-neuvaine",
+      "permanent": true
+    },
+    {
+      "source": "/chapelet-guide",
+      "destination": "/comment-prier-le-chapelet",
+      "permanent": true
+    },
+    {
+      "source": "/trouver-eglise",
+      "destination": "/trouver-une-eglise",
+      "permanent": true
+    },
+    {
+      "source": "/eglises",
+      "destination": "/trouver-une-eglise",
+      "permanent": true
+    },
+    {
+      "source": "/saint",
+      "destination": "/saint-du-jour",
+      "permanent": true
+    },
+    {
+      "source": "/evangile",
+      "destination": "/evangile-du-jour",
+      "permanent": true
+    },
+    {
+      "source": "/paroisse",
+      "destination": "/paroisses",
+      "permanent": true
+    },
+    {
+      "source": "/fonds-ecrans",
+      "destination": "/fonds-ecran",
+      "permanent": true
     }
   ],
   "rewrites": [
